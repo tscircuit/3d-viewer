@@ -8,9 +8,12 @@ import { cube, sphere } from "@jscad/modeling/src/primitives"
 import * as renderingDefaults from "@jscad/regl-renderer/types/rendering/renderDefaults"
 import { light } from "./themes"
 import { useState } from "react"
+import soup from "./plated-hole-board.json"
+// import soup from "./bug-pads-and-traces.json"
 
 // import { downloadGeometry } from "./helpers"
 import { Renderer } from "./hooks/render"
+import { soupToJscadShape } from "./soup-to-3d"
 
 const shape = union(
   subtract(cube({ size: 3 }), sphere({ radius: 2 })),
@@ -23,10 +26,8 @@ function App() {
   const [solids] = useState<any[]>([shape3])
   return (
     <div className="App">
-      <h1>jscad ui</h1>
-      {/* <button onClick={() => downloadGeometry(shape3)}>Download</button> */}
       <Renderer
-        solids={solids}
+        solids={soupToJscadShape(soup as any)}
         height={500}
         width={800}
         options={{
