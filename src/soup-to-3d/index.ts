@@ -8,11 +8,12 @@ import {
   rectangle,
   cuboid,
   cylinder,
+  circle,
 } from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
 import { subtract, union } from "@jscad/modeling/src/operations/booleans"
-
-const M = 0.05
+import { platedHole } from "../geoms/plated-hole"
+import { M, colors } from "../geoms/constants"
 
 export const soupToJscadShape = (soup: AnySoupElement[]): Geom3[] => {
   const board = su(soup).pcb_board.list()[0]
@@ -21,11 +22,16 @@ export const soupToJscadShape = (soup: AnySoupElement[]): Geom3[] => {
   }
 
   const plated_holes = su(soup).pcb_plated_hole.list()
+  const pads = su(soup).pcb_smtpad.list()
 
   // PCB Board
   let boardGeom = cuboid({ size: [board.width, board.height, 1.2] })
 
   const platedHoleGeoms: Geom3[] = []
+  const padGeoms: Geom3[] = []
+  const ctx = {
+    pcbThickness: 1.2,
+  }
 
   for (const plated_hole of plated_holes) {
     if (plated_hole.shape === "circle" || !plated_hole.shape) {
@@ -35,47 +41,36 @@ export const soupToJscadShape = (soup: AnySoupElement[]): Geom3[] => {
       })
       boardGeom = subtract(boardGeom, cyGeom)
 
-      // We need to create a plated hole geometry and insert it into the board
-      // hole
-
-      // TODO cache this geometry
-      const platedHoleGeom = colorize(
-        [0.9, 0.6, 0.2],
-        subtract(
-          union(
-            cylinder({
-              center: [plated_hole.x, plated_hole.y, 0],
-              radius: plated_hole.hole_diameter / 2,
-              height: 1.2,
-            }),
-            cylinder({
-              center: [plated_hole.x, plated_hole.y, 1.2 / 2],
-              radius: plated_hole.outer_diameter / 2,
-              height: M,
-            }),
-            cylinder({
-              center: [plated_hole.x, plated_hole.y, -1.2 / 2],
-              radius: plated_hole.outer_diameter / 2,
-              height: M,
-            })
-          ),
-          cylinder({
-            center: [plated_hole.x, plated_hole.y, 0],
-            radius: plated_hole.hole_diameter / 2 - M,
-            height: 1.5,
-          })
-        )
-      )
+      const platedHoleGeom = platedHole(plated_hole, ctx)
       platedHoleGeoms.push(platedHoleGeom)
+    }
+  }
 
-      // const hole = sphere({ radius: / 2 })
-      // const hole_position = translate([plated_hole.x, plated_hole.y, 0], hole)
-      // shape = shape.union(hole_position)
+  for (const pad of pads) {
+    if (pad.shape === "rect") {
+      const padGeom = colorize(
+        colors.copper,
+        cuboid({
+          center: [pad.x, pad.y, 1.2 / 2 + M],
+          size: [pad.width, pad.height, M],
+        })
+      )
+      padGeoms.push(padGeom)
+    } else if (pad.shape === "circle") {
+      const padGeom = colorize(
+        colors.copper,
+        cylinder({
+          center: [pad.x, pad.y, 1.2 / 2 + M],
+          radius: pad.radius,
+          height: M,
+        })
+      )
+      padGeoms.push(padGeom)
     }
   }
 
   // Colorize to a PCB green color: #05A32E
-  boardGeom = colorize([0x05 / 255, 0xa3 / 255, 0x2e / 255], boardGeom)
+  boardGeom = colorize(colors.fr4Green, boardGeom)
 
-  return [boardGeom, ...platedHoleGeoms]
+  return [boardGeom, ...platedHoleGeoms, ...padGeoms]
 }
