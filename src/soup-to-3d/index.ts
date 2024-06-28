@@ -136,13 +136,13 @@ export const soupToJscadShape = (soup: AnySoupElement[]): Geom3[] => {
           traceGeom,
           cylinder({
             center: [via.x, via.y, 0],
-            radius: via.hole_diameter / 2 - M,
+            radius: via.outer_diameter / 2,
             height: 5,
           })
         )
       }
 
-      traceGeom = colorize(colors.copper, traceGeom)
+      traceGeom = colorize(colors.fr4GreenSolderWithMask, traceGeom)
 
       traceGeoms.push(traceGeom)
     }
