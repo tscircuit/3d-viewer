@@ -6,7 +6,7 @@ import {
   useLoader,
 } from "@react-three/fiber"
 import { Suspense, useEffect, useRef, useState } from "react"
-import { OrbitControls, Grid } from "@react-three/drei"
+import { OrbitControls, Grid, Outlines } from "@react-three/drei"
 import * as THREE from "three"
 import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
 import { soupToJscadShape } from "./soup-to-3d"
@@ -76,13 +76,14 @@ function TestStl({
   const mesh = useRef<THREE.Mesh>()
 
   return (
-    <mesh ref={mesh} rotation={[-Math.PI / 2, 0, 0]}>
+    <mesh ref={mesh}>
       <primitive object={geom} attach="geometry" />
       <meshStandardMaterial
         color={color}
         transparent={index === 0}
         opacity={index === 0 ? 0.8 : 1}
       />
+      {/* <Outlines thickness={0.05} color="black" opacity={0.25} /> */}
     </mesh>
   )
 }
@@ -103,13 +104,18 @@ function Scene() {
     <>
       <OrbitControls />
       <ambientLight intensity={Math.PI / 2} />
-      <pointLight position={[-10, -10, 10]} decay={0} intensity={Math.PI} />
-      <pointLight position={[10, -10, 10]} decay={0} intensity={Math.PI / 2} />
+      <pointLight position={[-10, -10, 10]} decay={0} intensity={Math.PI / 4} />
       {/* <Box /> */}
       {(stls ?? []).map((stl, i) => (
         <TestStl index={i} {...stl} key={stl.url} />
       ))}
-      <Grid infiniteGrid={true} cellSize={1} sectionSize={10} />
+      {/* <axesHelper args={[5]} /> */}
+      <Grid
+        rotation={[Math.PI / 2, 0, 0]}
+        infiniteGrid={true}
+        cellSize={1}
+        sectionSize={10}
+      />
     </>
   )
 }
@@ -134,12 +140,22 @@ export default function App() {
           height: 120,
         }}
       >
-        <Canvas camera={{ position: [1, 1, 1] }}>
+        <Canvas
+          camera={{
+            up: [0, 0, 1],
+            // rotation: [-Math.PI / 2, 0, 0],
+            // lookAt: new THREE.Vector3(0, 0, 0),
+            position: [1, 1, 1],
+          }}
+        >
           <ambientLight intensity={Math.PI / 2} />
           <CubeWithLabeledSides />
         </Canvas>
       </div>
-      <Canvas camera={{ position: [5, 5, 5] }}>
+      <Canvas
+        scene={{ up: [0, 0, 1] }}
+        camera={{ up: [0, 0, 1], position: [5, 5, 5] }}
+      >
         <RotationTracker />
         <Scene />
       </Canvas>
