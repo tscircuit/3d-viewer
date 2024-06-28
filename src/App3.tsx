@@ -1,8 +1,20 @@
-import { Canvas, useFrame, extend, useThree } from "@react-three/fiber"
-import { useRef, useState } from "react"
+import {
+  Canvas,
+  useFrame,
+  extend,
+  useThree,
+  useLoader,
+} from "@react-three/fiber"
+import { Suspense, useEffect, useRef, useState } from "react"
 import { OrbitControls, Grid } from "@react-three/drei"
 import * as THREE from "three"
 import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
+import { soupToJscadShape } from "./soup-to-3d"
+import soup from "./bug-pads-and-traces.json"
+// import soup from "./plated-hole-board.json"
+import stlSerializer from "@jscad/stl-serializer"
+// import { STLLoader } from "three/examples/jsm/loaders/STLLoader"
+import { STLLoader } from "three-stdlib"
 
 extend({ OrbitControls })
 
@@ -22,26 +34,75 @@ function Box(props) {
   )
 }
 
+function blobToBase64Url(blob: Blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      resolve(reader.result)
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
+const jscadGeom = soupToJscadShape(soup as any)
+
+console.log(jscadGeom)
+const stlPromises = jscadGeom.map((a) => {
+  const rawData = stlSerializer.serialize({ binary: true }, [a])
+
+  const blobData = new Blob(rawData)
+
+  const $urlForStl = blobToBase64Url(blobData)
+
+  return $urlForStl.then((url) => ({
+    url,
+    color: a.color,
+  }))
+})
+
+// const entities = entitiesFromSolids({}, ...soupToJscadShape(soup as any))
+// console.log(entities)
+
+function TestStl({ url, color }: { url: string; color: any }) {
+  const geom = useLoader(STLLoader, url)
+  const mesh = useRef<THREE.Mesh>()
+
+  return (
+    <mesh ref={mesh} rotation={[-Math.PI / 2, 0, 0]}>
+      <primitive object={geom} attach="geometry" />
+      <meshStandardMaterial color={color} />
+    </mesh>
+  )
+}
+
 function Scene() {
+  const [stls, setStls] = useState<Array<{
+    url: string
+    color: number[]
+  }> | null>(null)
+  useEffect(() => {
+    async function loadStls() {
+      const stls = await Promise.all(stlPromises)
+      setStls(stls as any)
+    }
+    loadStls()
+  }, [])
   return (
     <>
       <OrbitControls />
       <ambientLight intensity={Math.PI / 2} />
-      <spotLight
-        position={[10, 10, 10]}
-        angle={0.15}
-        penumbra={1}
-        decay={0}
-        intensity={Math.PI}
-      />
       <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
-      <Box />
+      {/* <Box /> */}
+      {(stls ?? []).map((stl) => (
+        <TestStl {...stl} key={stl.url} />
+      ))}
       <Grid infiniteGrid={true} cellSize={1} sectionSize={10} />
     </>
   )
 }
 
-export const RotationTracker = ({ onRotationChange }: any) => {
+export const RotationTracker = () => {
   useFrame(({ camera }) => {
     window.TSCI_MAIN_CAMERA_ROTATION = camera.rotation
   })

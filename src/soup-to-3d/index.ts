@@ -50,7 +50,7 @@ export const soupToJscadShape = (soup: AnySoupElement[]): Geom3[] => {
   }
 
   const addPlatedHole = (plated_hole: PCBPlatedHole) => {
-    if (plated_hole.shape === "circle") {
+    if (plated_hole.shape === "circle" || !plated_hole.shape) {
       const cyGeom = cylinder({
         center: [plated_hole.x, plated_hole.y, 0],
         radius: plated_hole.hole_diameter / 2 + M,
