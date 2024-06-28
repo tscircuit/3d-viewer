@@ -38,6 +38,7 @@ export const soupToJscadShape = (soup: AnySoupElement[]): Geom3[] => {
   const plated_holes = su(soup).pcb_plated_hole.list()
   const pads = su(soup).pcb_smtpad.list()
   const traces = su(soup).pcb_trace.list()
+  const pcb_vias = su(soup).pcb_via.list()
 
   // PCB Board
   let boardGeom = cuboid({ size: [board.width, board.height, 1.2] })
@@ -119,22 +120,34 @@ export const soupToJscadShape = (soup: AnySoupElement[]): Geom3[] => {
       const layer = route[0].route_type === "wire" ? route[0].layer : "top"
       const layerSign = layer === "top" ? 1 : -1
       // traceGeoms.push(traceGeom)
-      const traceGeom = colorize(
-        colors.copper,
-        translate(
-          [0, 0, (layerSign * 1.2) / 2],
-          extrudeLinear(
-            { height: M * layerSign },
-            expand({ delta: 0.1, corners: "edge" }, linePath)
-          )
+      let traceGeom = translate(
+        [0, 0, (layerSign * 1.2) / 2],
+        extrudeLinear(
+          { height: M * layerSign },
+          expand({ delta: 0.1, corners: "edge" }, linePath)
         )
       )
+
+      // HACK: Subtract all vias from every trace- this mostly is because the
+      // vias aren't inside the route- we should probably pre-filter to make sure
+      // that vias are only near the route
+      for (const via of pcb_vias) {
+        traceGeom = subtract(
+          traceGeom,
+          cylinder({
+            center: [via.x, via.y, 0],
+            radius: via.hole_diameter / 2 - M,
+            height: 5,
+          })
+        )
+      }
+
+      traceGeom = colorize(colors.copper, traceGeom)
 
       traceGeoms.push(traceGeom)
     }
     for (const via of mixedRoute.filter((p) => p.route_type === "via")) {
       if (via.route_type !== "via") continue // TODO remove when ts is smart
-      console.log(via)
 
       addPlatedHole({
         x: via.x,
@@ -147,8 +160,6 @@ export const soupToJscadShape = (soup: AnySoupElement[]): Geom3[] => {
       })
     }
   }
-
-  const pcb_vias = su(soup).pcb_via.list()
 
   for (const via of pcb_vias) {
     addPlatedHole({

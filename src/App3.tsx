@@ -47,7 +47,6 @@ function blobToBase64Url(blob: Blob) {
 
 const jscadGeom = soupToJscadShape(soup as any)
 
-console.log(jscadGeom)
 const stlPromises = jscadGeom.map((a) => {
   const rawData = stlSerializer.serialize({ binary: true }, [a])
 
@@ -64,14 +63,26 @@ const stlPromises = jscadGeom.map((a) => {
 // const entities = entitiesFromSolids({}, ...soupToJscadShape(soup as any))
 // console.log(entities)
 
-function TestStl({ url, color }: { url: string; color: any }) {
+function TestStl({
+  url,
+  color,
+  index,
+}: {
+  index: number
+  url: string
+  color: any
+}) {
   const geom = useLoader(STLLoader, url)
   const mesh = useRef<THREE.Mesh>()
 
   return (
     <mesh ref={mesh} rotation={[-Math.PI / 2, 0, 0]}>
       <primitive object={geom} attach="geometry" />
-      <meshStandardMaterial color={color} />
+      <meshStandardMaterial
+        color={color}
+        transparent={index === 0}
+        opacity={index === 0 ? 0.8 : 1}
+      />
     </mesh>
   )
 }
@@ -92,10 +103,11 @@ function Scene() {
     <>
       <OrbitControls />
       <ambientLight intensity={Math.PI / 2} />
-      <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
+      <pointLight position={[-10, -10, 10]} decay={0} intensity={Math.PI} />
+      <pointLight position={[10, -10, 10]} decay={0} intensity={Math.PI / 2} />
       {/* <Box /> */}
-      {(stls ?? []).map((stl) => (
-        <TestStl {...stl} key={stl.url} />
+      {(stls ?? []).map((stl, i) => (
+        <TestStl index={i} {...stl} key={stl.url} />
       ))}
       <Grid infiniteGrid={true} cellSize={1} sectionSize={10} />
     </>
