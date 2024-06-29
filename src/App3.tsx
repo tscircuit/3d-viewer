@@ -152,8 +152,8 @@ function Scene() {
       {(stls ?? []).map((stl, i) => (
         <TestStl index={i} {...stl} key={stl.url} />
       ))}
-      <TestObj url="https://modules.easyeda.com/3dmodel/4ee8413127e64716b804db03d4b340ae" />
-      {/* <TestObj url="/easyeda-models/84af7f0f6529479fb6b1c809c61d205f" /> */}
+      {/* <TestObj url="https://modules.easyeda.com/3dmodel/4ee8413127e64716b804db03d4b340ae" /> */}
+      <TestObj url="/easyeda-models/84af7f0f6529479fb6b1c809c61d205f" />
       {/* <axesHelper args={[5]} /> */}
       <Grid
         rotation={[Math.PI / 2, 0, 0]}
