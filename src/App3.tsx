@@ -5,7 +5,7 @@ import {
   useThree,
   useLoader,
 } from "@react-three/fiber"
-import { Suspense, useEffect, useRef, useState } from "react"
+import { Suspense, useEffect, useMemo, useRef, useState } from "react"
 import { OrbitControls, Grid, Outlines } from "@react-three/drei"
 import * as THREE from "three"
 import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
@@ -14,7 +14,7 @@ import soup from "./bug-pads-and-traces.json"
 // import soup from "./plated-hole-board.json"
 import stlSerializer from "@jscad/stl-serializer"
 // import { STLLoader } from "three/examples/jsm/loaders/STLLoader"
-import { STLLoader } from "three-stdlib"
+import { MTLLoader, OBJLoader, STLLoader } from "three-stdlib"
 
 extend({ OrbitControls })
 
@@ -88,6 +88,49 @@ function TestStl({
   )
 }
 
+function TestObj({ url }: { url: string }) {
+  // const group = useLoader(OBJLoader, url)
+  // const materials = useLoader(MTLLoader, url)
+  // const obj = useLoader(OBJLoader, url)
+
+  const [content, setContent] = useState<string | null>(null)
+  const [obj, setObj] = useState<any | null>(null)
+  useEffect(() => {
+    async function loadUrlContent() {
+      const response = await fetch(url)
+      const text = await response.text()
+      setContent(text)
+
+      // Extract all the sections of the file that have newmtl...endmtl to
+      // separate into mtlContent and objContent
+
+      const mtlContent = text
+        .match(/newmtl[\s\S]*?endmtl/g)
+        ?.join("\n")!
+        .replace(/d 0\./g, "d 1.")!
+      const objContent = text.replace(/newmtl[\s\S]*?endmtl/g, "")
+
+      // console.log({ mtlContent, objContent })
+      console.log("MTL", mtlContent)
+      // console.log("OBJ", objContent)
+
+      const mtlLoader = new MTLLoader()
+      mtlLoader.setMaterialOptions({
+        invertTrProperty: true,
+      })
+      const materials = mtlLoader.parse(mtlContent, "test.mtl")
+      console.log(materials)
+
+      const objLoader = new OBJLoader()
+      objLoader.setMaterials(materials)
+      setObj(objLoader.parse(objContent))
+    }
+    loadUrlContent()
+  }, [url])
+
+  return <>{obj && <primitive object={obj} />}</>
+}
+
 function Scene() {
   const [stls, setStls] = useState<Array<{
     url: string
@@ -109,6 +152,8 @@ function Scene() {
       {(stls ?? []).map((stl, i) => (
         <TestStl index={i} {...stl} key={stl.url} />
       ))}
+      <TestObj url="https://modules.easyeda.com/3dmodel/4ee8413127e64716b804db03d4b340ae" />
+      {/* <TestObj url="/easyeda-models/84af7f0f6529479fb6b1c809c61d205f" /> */}
       {/* <axesHelper args={[5]} /> */}
       <Grid
         rotation={[Math.PI / 2, 0, 0]}
