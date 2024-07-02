@@ -10,7 +10,8 @@ export const platedHole = (
   plated_hole: PCBPlatedHole,
   ctx: GeomContext
 ): Geom3 => {
-  if (plated_hole.shape === "circle" || !plated_hole.shape) {
+  if (!(plated_hole as any).shape) plated_hole.shape = "circle"
+  if (plated_hole.shape === "circle") {
     return colorize(
       colors.copper,
       subtract(

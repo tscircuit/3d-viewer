@@ -43,7 +43,7 @@ export const CubeWithLabeledSides = ({}: any) => {
     state.camera.lookAt(0, 0, 0)
   })
   return (
-    <mesh ref={ref} rotation={[Math.PI / 2, 0, 0]}>
+    <mesh ref={ref as any} rotation={[Math.PI / 2, 0, 0]}>
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color="white" />
       <Text position={[0, 0, 0.51]} fontSize={0.25} color="black">

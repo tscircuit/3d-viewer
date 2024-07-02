@@ -76,7 +76,7 @@ function TestStl({
   const mesh = useRef<THREE.Mesh>()
 
   return (
-    <mesh ref={mesh}>
+    <mesh ref={mesh as any}>
       <primitive object={threeGeom} attach="geometry" />
       <meshStandardMaterial
         color={color}

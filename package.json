@@ -1,11 +1,11 @@
 {
   "name": "3d-viewer",
   "version": "0.0.1",
-  "type": "module",
+  "main": "./dist/index.cjs",
   "scripts": {
     "start": "bun run dev",
     "dev": "bunx --bun vite",
-    "build": "tsc -b && vite build",
+    "build": "tsup ./src/index.tsx --dts --sourcemap",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
@@ -42,7 +42,8 @@
     "@vitejs/plugin-react": "^4.3.1",
     "storybook": "^8.1.10",
     "strip-ansi": "^7.1.0",
-    "typescript": "^5.5.2",
+    "tsup": "^8.1.0",
+    "typescript": "^5.5.3",
     "vite": "^5.3.1",
     "vite-tsconfig-paths": "^4.3.2"
   }

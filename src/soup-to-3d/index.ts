@@ -32,7 +32,8 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
   }
 
   const addPlatedHole = (plated_hole: PCBPlatedHole) => {
-    if (plated_hole.shape === "circle" || !plated_hole.shape) {
+    if (!(plated_hole as any).shape) plated_hole.shape = "circle"
+    if (plated_hole.shape === "circle") {
       const cyGeom = cylinder({
         center: [plated_hole.x, plated_hole.y, 0],
         radius: plated_hole.hole_diameter / 2 + M,
@@ -98,7 +99,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
       // TODO break into segments based on layers
       const linePath = line(route.map((p) => [p.x, p.y]))
 
-      const layer = route[0].route_type === "wire" ? route[0].layer : "top"
+      const layer = route[0]!.route_type === "wire" ? route[0]!.layer : "top"
       const layerSign = layer === "top" ? 1 : -1
       // traceGeoms.push(traceGeom)
       let traceGeom = translate(
