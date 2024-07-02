@@ -1,4 +1,4 @@
-import type { StorybookConfig } from "@storybook/react-vite";
+import type { StorybookConfig } from "@storybook/react-vite"
 
 const config: StorybookConfig = {
   stories: ["../stories/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
@@ -13,5 +13,17 @@ const config: StorybookConfig = {
     name: "@storybook/react-vite",
     options: {},
   },
-};
-export default config;
+  async viteFinal(config) {
+    if (config.server) {
+      config.server.proxy = {
+        "/easyeda-models": {
+          target: "https://modules.easyeda.com/3dmodel/",
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/easyeda-models/, ""),
+        },
+      }
+    }
+    return config
+  },
+}
+export default config
