@@ -41,6 +41,7 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "storybook": "^8.1.10",
+    "strip-ansi": "^7.1.0",
     "typescript": "^5.5.2",
     "vite": "^5.3.1",
     "vite-tsconfig-paths": "^4.3.2"
