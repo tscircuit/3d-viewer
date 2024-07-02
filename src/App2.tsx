@@ -13,7 +13,7 @@ import soup from "./plated-hole-board.json"
 
 // import { downloadGeometry } from "./helpers"
 import { Renderer } from "./hooks/render"
-import { soupToJscadShape } from "./soup-to-3d"
+import { createBoardGeomFromSoup } from "./soup-to-3d"
 
 const shape = union(
   subtract(cube({ size: 3 }), sphere({ radius: 2 })),
@@ -27,7 +27,7 @@ function App() {
   return (
     <div className="App">
       <Renderer
-        solids={soupToJscadShape(soup as any)}
+        solids={createBoardGeomFromSoup(soup as any)}
         height={500}
         width={800}
         options={{

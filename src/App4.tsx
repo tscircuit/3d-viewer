@@ -9,7 +9,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react"
 import { OrbitControls, Grid, Outlines } from "@react-three/drei"
 import * as THREE from "three"
 import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
-import { soupToJscadShape } from "./soup-to-3d"
+import { createBoardGeomFromSoup } from "./soup-to-3d"
 import soup from "./bug-pads-and-traces.json"
 // import soup from "./plated-hole-board.json"
 import stlSerializer from "@jscad/stl-serializer"
@@ -20,7 +20,7 @@ import { entitiesFromSolids } from "@jscad/regl-renderer"
 
 extend({ OrbitControls })
 
-const jscadGeom = soupToJscadShape(soup as any)
+const jscadGeom = createBoardGeomFromSoup(soup as any)
 
 const threejs = CommonToThree(THREE)(entitiesFromSolids({}, ...jscadGeom), {
   smooth: false,

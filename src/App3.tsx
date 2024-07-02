@@ -9,7 +9,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react"
 import { OrbitControls, Grid, Outlines } from "@react-three/drei"
 import * as THREE from "three"
 import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
-import { soupToJscadShape } from "./soup-to-3d"
+import { createBoardGeomFromSoup } from "./soup-to-3d"
 import soup from "./bug-pads-and-traces.json"
 // import soup from "./plated-hole-board.json"
 import stlSerializer from "@jscad/stl-serializer"
@@ -45,7 +45,7 @@ function blobToBase64Url(blob: Blob) {
   })
 }
 
-const jscadGeom = soupToJscadShape(soup as any)
+const jscadGeom = createBoardGeomFromSoup(soup as any)
 
 const stlPromises = jscadGeom.map((a) => {
   const rawData = stlSerializer.serialize({ binary: true }, [a])
@@ -72,12 +72,12 @@ function TestStl({
   url: string
   color: any
 }) {
-  const geom = useLoader(STLLoader, url)
+  const threeGeom = useLoader(STLLoader, url)
   const mesh = useRef<THREE.Mesh>()
 
   return (
     <mesh ref={mesh}>
-      <primitive object={geom} attach="geometry" />
+      <primitive object={threeGeom} attach="geometry" />
       <meshStandardMaterial
         color={color}
         transparent={index === 0}
