@@ -1,7 +1,16 @@
 import { useEffect, useState } from "react"
+import { Euler, Vector3 } from "three"
 import { MTLLoader, OBJLoader } from "three-stdlib"
 
-export function MixedStlModel({ url }: { url: string }) {
+export function MixedStlModel({
+  url,
+  position,
+  rotation,
+}: {
+  url: string
+  position?: Vector3 | [number, number, number]
+  rotation?: Euler | [number, number, number]
+}) {
   // const group = useLoader(OBJLoader, url)
   // const materials = useLoader(MTLLoader, url)
   // const obj = useLoader(OBJLoader, url)
@@ -12,7 +21,6 @@ export function MixedStlModel({ url }: { url: string }) {
       const response = await fetch(url)
       const text = await response.text()
 
-      console.log(text)
       // Extract all the sections of the file that have newmtl...endmtl to
       // separate into mtlContent and objContent
 
@@ -27,7 +35,6 @@ export function MixedStlModel({ url }: { url: string }) {
         invertTrProperty: true,
       })
       const materials = mtlLoader.parse(mtlContent, "test.mtl")
-      console.log(materials)
 
       const objLoader = new OBJLoader()
       objLoader.setMaterials(materials)
@@ -36,5 +43,9 @@ export function MixedStlModel({ url }: { url: string }) {
     loadUrlContent()
   }, [url])
 
-  return <>{obj && <primitive object={obj} />}</>
+  return (
+    <group rotation={rotation} position={position}>
+      {obj && <primitive object={obj} />}
+    </group>
+  )
 }
