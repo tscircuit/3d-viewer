@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
+    "start": "bun run dev",
     "dev": "bunx --bun vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
@@ -23,6 +24,7 @@
     "three-stdlib": "^2.30.3"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.8.3",
     "@chromatic-com/storybook": "^1.5.0",
     "@storybook/addon-essentials": "^8.1.10",
     "@storybook/addon-interactions": "^8.1.10",
@@ -40,6 +42,7 @@
     "@vitejs/plugin-react": "^4.3.1",
     "storybook": "^8.1.10",
     "typescript": "^5.5.2",
-    "vite": "^5.3.1"
+    "vite": "^5.3.1",
+    "vite-tsconfig-paths": "^4.3.2"
   }
 }
