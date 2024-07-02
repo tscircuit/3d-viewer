@@ -34,7 +34,17 @@ export function MixedStlModel({
       mtlLoader.setMaterialOptions({
         invertTrProperty: true,
       })
-      const materials = mtlLoader.parse(mtlContent, "test.mtl")
+      const materials = mtlLoader.parse(
+        // Grayscale the colors, for some reason everything from JLCPCB is
+        // a bit red, it doesn't look right. The grayscale version looks OK,
+        // it's a HACK because we only take the second color rather than
+        // averaging the colors
+        mtlContent.replace(
+          /Kd\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/g,
+          "Kd $2 $2 $2"
+        ),
+        "test.mtl"
+      )
 
       const objLoader = new OBJLoader()
       objLoader.setMaterials(materials)
