@@ -5,6 +5,7 @@ import { useMemo } from "react"
 import { createBoardGeomFromSoup } from "./soup-to-3d"
 import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { STLModel } from "./three-components/STLModel"
+import { CadViewerContainer } from "./CadViewerContainer"
 
 interface Props {
   soup?: AnySoupElement[]
@@ -24,10 +25,10 @@ export const CadViewer = ({ soup, children }: Props) => {
 
   // TODO canvas/camera etc.
   return (
-    <div>
+    <CadViewerContainer>
       {stls.map(({ stlUrl, color }) => (
         <STLModel stlUrl={stlUrl} color={color} />
       ))}
-    </div>
+    </CadViewerContainer>
   )
 }
