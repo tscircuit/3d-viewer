@@ -73,6 +73,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
   }
 
   for (const { route: mixedRoute } of traces) {
+    if (mixedRoute.length < 2) continue
     const subRoutes = mixedRoute.reduce(
       (c, p) => {
         // @ts-ignore
