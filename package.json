@@ -1,7 +1,10 @@
 {
-  "name": "3d-viewer",
-  "version": "0.0.1",
-  "main": "./dist/index.cjs",
+  "name": "@tscircuit/3d-viewer",
+  "version": "0.0.4",
+  "main": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "start": "bun run dev",
     "dev": "bunx --bun vite",
