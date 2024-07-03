@@ -7,6 +7,7 @@ import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { STLModel } from "./three-components/STLModel"
 import { CadViewerContainer } from "./CadViewerContainer"
 import { MixedStlModel } from "./three-components/MixedStlModel"
+import { Euler } from "three"
 
 interface Props {
   soup?: AnySoupElement[]
@@ -35,8 +36,36 @@ export const CadViewer = ({ soup, children }: Props) => {
           opacity={index === 0 ? 0.95 : 1}
         />
       ))}
+      {cad_components.map((cad_component) => {
+        const url = cad_component.model_obj_url ?? cad_component.model_stl_url
+        if (!url) return null
+        return (
+          <MixedStlModel
+            key={cad_component.cad_component_id}
+            url={url}
+            position={
+              cad_component.position
+                ? [
+                    cad_component.position.x,
+                    cad_component.position.y,
+                    cad_component.position.z,
+                  ]
+                : undefined
+            }
+            rotation={
+              cad_component.rotation
+                ? new Euler(
+                    cad_component.rotation.x,
+                    cad_component.rotation.y,
+                    cad_component.rotation.z
+                  )
+                : undefined
+            }
+          />
+        )
+      })}
       {/* <MixedStlModel url="/easyeda-models/84af7f0f6529479fb6b1c809c61d205f" /> */}
-      <MixedStlModel
+      {/* <MixedStlModel
         url="/easyeda-models/dc694c23844346e9981bdbac7bb76421"
         position={[0, 0, 0.5]}
         rotation={[0, 0, Math.PI / 2]}
@@ -50,7 +79,7 @@ export const CadViewer = ({ soup, children }: Props) => {
         url="/easyeda-models/c7acac53bcbc44d68fbab8f60a747688"
         position={[6.75, 0, 0.5]}
         rotation={[0, 0, 0]}
-      />
+      /> */}
     </CadViewerContainer>
   )
 }
