@@ -8,7 +8,9 @@ declare global {
     TSCI_MAIN_CAMERA_ROTATION: THREE.Euler
   }
 }
-window.TSCI_MAIN_CAMERA_ROTATION = new THREE.Euler(0, 0, 0)
+if (typeof window !== "undefined") {
+  window.TSCI_MAIN_CAMERA_ROTATION = new THREE.Euler(0, 0, 0)
+}
 
 function computePointInFront(rotationVector, distance) {
   // Create a quaternion from the rotation vector
@@ -101,16 +103,3 @@ export const CubeWithLabeledSides = ({}: any) => {
     </mesh>
   )
 }
-
-// const LabeledCubeScene = () => {
-//   return (
-//     <Canvas camera={{ position: [1.5, 1.5, 1.5] }}>
-//       <ambientLight intensity={0.5} />
-//       <pointLight position={[10, 10, 10]} />
-//       <LabeledCube />
-//       <OrbitControls />
-//     </Canvas>
-//   )
-// }
-
-// export default LabeledCubeScene
