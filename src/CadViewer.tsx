@@ -19,7 +19,10 @@ export const CadViewer = ({ soup, children }: Props) => {
 
   // TODO convert board
 
-  const boardGeom = useMemo(() => createBoardGeomFromSoup(soup), [soup])
+  const boardGeom = useMemo(() => {
+    if (!soup.some((e) => e.type === "pcb_board")) return null
+    return createBoardGeomFromSoup(soup)
+  }, [soup])
 
   const { stls, loading } = useStlsFromGeom(boardGeom)
 
