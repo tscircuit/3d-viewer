@@ -16,7 +16,7 @@ function blobToBase64Url(blob: Blob): Promise<string> {
 type StlObj = { stlUrl: string; color: number[] }
 
 export const useStlsFromGeom = (
-  geom: Geom3[] | Geom3
+  geom: Geom3[] | Geom3 | null
 ): {
   stls: StlObj[]
   loading: boolean
@@ -25,6 +25,7 @@ export const useStlsFromGeom = (
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!geom) return
     const generateStls = async () => {
       setLoading(true)
       const geometries = Array.isArray(geom) ? geom : [geom]
