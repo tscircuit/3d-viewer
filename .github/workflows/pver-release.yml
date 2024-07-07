@@ -13,7 +13,7 @@ jobs:
           node-version: 20
           registry-url: https://registry.npmjs.org/
       - run: npm install -g pver
-      - run: npm ci
+      - run: npm i
       - run: pver release
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
