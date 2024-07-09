@@ -56,31 +56,15 @@ export const CadViewer = ({ soup, children }: Props) => {
             rotation={
               cad_component.rotation
                 ? new Euler(
-                    cad_component.rotation.x,
-                    cad_component.rotation.y,
-                    cad_component.rotation.z
+                    (cad_component.rotation.x * Math.PI) / 180,
+                    (cad_component.rotation.y * Math.PI) / 180,
+                    (cad_component.rotation.z * Math.PI) / 180
                   )
                 : undefined
             }
           />
         )
       })}
-      {/* <MixedStlModel url="/easyeda-models/84af7f0f6529479fb6b1c809c61d205f" /> */}
-      {/* <MixedStlModel
-        url="/easyeda-models/dc694c23844346e9981bdbac7bb76421"
-        position={[0, 0, 0.5]}
-        rotation={[0, 0, Math.PI / 2]}
-      />
-      <MixedStlModel
-        url="/easyeda-models/c7acac53bcbc44d68fbab8f60a747688"
-        position={[-5.65, 0, 0.5]}
-        rotation={[0, 0, Math.PI / 2]}
-      />
-      <MixedStlModel
-        url="/easyeda-models/c7acac53bcbc44d68fbab8f60a747688"
-        position={[6.75, 0, 0.5]}
-        rotation={[0, 0, 0]}
-      /> */}
     </CadViewerContainer>
   )
 }

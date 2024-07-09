@@ -17,6 +17,31 @@ export const Default = () => (
   <CadViewer soup={(bugsPadsAndTracesSoup as any[]).concat([cad_component])} />
 )
 
+export const SSOPRotated = () => (
+  <CadViewer
+    soup={(bugsPadsAndTracesSoup as any[]).concat([
+      {
+        type: "cad_component",
+        cad_component_id: "cad_component_1",
+        pcb_component_id: "pcb_component_1",
+        source_component_id: "source_component_1",
+        position: {
+          x: 0,
+          y: 0,
+          z: 0,
+        },
+        rotation: {
+          x: 0,
+          y: 0,
+          z: 90,
+        },
+        model_obj_url:
+          "https://modules.easyeda.com/3dmodel/47443b588a77418ba6b4ea51975c36c0",
+      },
+    ])}
+  />
+)
+
 export default {
   title: "CadComponent",
   component: Default,
