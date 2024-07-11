@@ -59,13 +59,14 @@ export function MixedStlModel({
   // }, [url])
   const obj = useGlobalObjLoader(url)
 
-  return (
-    <group
-      rotation={rotation}
-      position={position}
-      key={Boolean(obj).toString()}
-    >
-      {obj && <primitive object={obj} />}
-    </group>
-  )
+  if (!obj) {
+    return (
+      <mesh position={position}>
+        <boxGeometry args={[0.5, 0.5, 0.5]} />
+        <meshStandardMaterial transparent color="red" opacity={0.25} />
+      </mesh>
+    )
+  }
+
+  return <primitive rotation={rotation} position={position} object={obj} />
 }
