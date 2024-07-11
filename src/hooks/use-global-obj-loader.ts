@@ -26,6 +26,7 @@ export function useGlobalObjLoader(url: string | null): Group | null {
     if (!url) return
 
     const cache = window.TSCIRCUIT_OBJ_LOADER_CACHE
+    let hasUrlChanged = false
 
     async function loadAndParseObj() {
       const response = await fetch(url!)
@@ -75,14 +76,16 @@ export function useGlobalObjLoader(url: string | null): Group | null {
 
     loadUrl()
       .then((result) => {
+        if (hasUrlChanged) return
         setObj(result)
       })
       .catch((error) => {
         console.error(error)
       })
 
-    // Cleanup function
-    return () => setObj(null)
+    return () => {
+      hasUrlChanged = true
+    }
   }, [url])
 
   return obj
