@@ -15,6 +15,7 @@ import soup from "./bug-pads-and-traces.json"
 import stlSerializer from "@jscad/stl-serializer"
 // import { STLLoader } from "three/examples/jsm/loaders/STLLoader"
 import { MTLLoader, OBJLoader, STLLoader } from "three-stdlib"
+import packageJson from "../package.json"
 
 export const RotationTracker = () => {
   useFrame(({ camera }) => {
@@ -68,6 +69,22 @@ export const CadViewerContainer = ({ children }: { children: any }) => {
         />
         {children}
       </Canvas>
+      <div
+        style={{
+          position: "absolute",
+          right: 24,
+          bottom: 24,
+          fontFamily: "sans-serif",
+          color: "white",
+          WebkitTextStroke: "0.5px rgba(0, 0, 0, 0.5)",
+          // color: "rgba(255, 255, 255, 0.75)",
+          // textShadow:
+          //   "0px 0px 1px rgba(0, 0, 0, 0.5), 0px 0px 2px rgba(0, 0, 0, 0.5)",
+          fontSize: 11,
+        }}
+      >
+        @{packageJson.version}
+      </div>
     </div>
   )
 }
