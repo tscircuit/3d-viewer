@@ -23,6 +23,5 @@ export function MixedStlModel({
     )
   }
 
-  console.log("obj", obj)
   return <primitive rotation={rotation} position={position} object={obj} />
 }
