@@ -8,6 +8,7 @@ import { STLModel } from "./three-components/STLModel"
 import { CadViewerContainer } from "./CadViewerContainer"
 import { MixedStlModel } from "./three-components/MixedStlModel"
 import { Euler } from "three"
+import { JscadModel } from "./three-components/JscadModel"
 
 interface Props {
   soup?: AnySoupElement[]
@@ -70,7 +71,7 @@ export const CadViewer = ({ soup, children }: Props) => {
           return (
             <JscadModel
               key={cad_component.cad_component_id}
-              jscadPlan={cad_component.model_jscad}
+              jscadPlan={cad_component.model_jscad as any}
             />
           )
         }
