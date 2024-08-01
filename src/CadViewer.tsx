@@ -39,31 +39,41 @@ export const CadViewer = ({ soup, children }: Props) => {
       ))}
       {cad_components.map((cad_component) => {
         const url = cad_component.model_obj_url ?? cad_component.model_stl_url
-        if (!url) return null
-        return (
-          <MixedStlModel
-            key={cad_component.cad_component_id}
-            url={url}
-            position={
-              cad_component.position
-                ? [
-                    cad_component.position.x,
-                    cad_component.position.y,
-                    cad_component.position.z,
-                  ]
-                : undefined
-            }
-            rotation={
-              cad_component.rotation
-                ? new Euler(
-                    (cad_component.rotation.x * Math.PI) / 180,
-                    (cad_component.rotation.y * Math.PI) / 180,
-                    (cad_component.rotation.z * Math.PI) / 180
-                  )
-                : undefined
-            }
-          />
-        )
+        if (url) {
+          return (
+            <MixedStlModel
+              key={cad_component.cad_component_id}
+              url={url}
+              position={
+                cad_component.position
+                  ? [
+                      cad_component.position.x,
+                      cad_component.position.y,
+                      cad_component.position.z,
+                    ]
+                  : undefined
+              }
+              rotation={
+                cad_component.rotation
+                  ? new Euler(
+                      (cad_component.rotation.x * Math.PI) / 180,
+                      (cad_component.rotation.y * Math.PI) / 180,
+                      (cad_component.rotation.z * Math.PI) / 180,
+                    )
+                  : undefined
+              }
+            />
+          )
+        }
+
+        if (cad_component.model_jscad) {
+          return (
+            <JscadModel
+              key={cad_component.cad_component_id}
+              jscadPlan={cad_component.model_jscad}
+            />
+          )
+        }
       })}
     </CadViewerContainer>
   )
