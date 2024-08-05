@@ -19,8 +19,8 @@ if (typeof window !== "undefined" && !window.TSCIRCUIT_OBJ_LOADER_CACHE) {
   window.TSCIRCUIT_OBJ_LOADER_CACHE = new Map<string, CacheItem>()
 }
 
-export function useGlobalObjLoader(url: string | null): Group | null {
-  const [obj, setObj] = useState<Group | null>(null)
+export function useGlobalObjLoader(url: string | null): Group | null | Error {
+  const [obj, setObj] = useState<Group | null | Error>(null)
 
   useEffect(() => {
     if (!url) return
@@ -29,30 +29,34 @@ export function useGlobalObjLoader(url: string | null): Group | null {
     let hasUrlChanged = false
 
     async function loadAndParseObj() {
-      const response = await fetch(url!)
-      const text = await response.text()
+      try {
+        const response = await fetch(url!)
+        const text = await response.text()
 
-      const mtlContent = text
-        .match(/newmtl[\s\S]*?endmtl/g)
-        ?.join("\n")!
-        .replace(/d 0\./g, "d 1.")!
-      const objContent = text.replace(/newmtl[\s\S]*?endmtl/g, "")
+        const mtlContent = text
+          .match(/newmtl[\s\S]*?endmtl/g)
+          ?.join("\n")!
+          .replace(/d 0\./g, "d 1.")!
+        const objContent = text.replace(/newmtl[\s\S]*?endmtl/g, "")
 
-      const mtlLoader = new MTLLoader()
-      mtlLoader.setMaterialOptions({
-        invertTrProperty: true,
-      })
-      const materials = mtlLoader.parse(
-        mtlContent.replace(
-          /Kd\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/g,
-          "Kd $2 $2 $2"
-        ),
-        "test.mtl"
-      )
+        const mtlLoader = new MTLLoader()
+        mtlLoader.setMaterialOptions({
+          invertTrProperty: true,
+        })
+        const materials = mtlLoader.parse(
+          mtlContent.replace(
+            /Kd\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/g,
+            "Kd $2 $2 $2"
+          ),
+          "test.mtl"
+        )
 
-      const objLoader = new OBJLoader()
-      objLoader.setMaterials(materials)
-      return objLoader.parse(objContent)
+        const objLoader = new OBJLoader()
+        objLoader.setMaterials(materials)
+        return objLoader.parse(objContent)
+      } catch (error) {
+        return error as Error
+      }
     }
 
     function loadUrl() {
@@ -67,6 +71,10 @@ export function useGlobalObjLoader(url: string | null): Group | null {
       }
       // If it's not in the cache, create a new promise and cache it
       const promise = loadAndParseObj().then((result) => {
+        if (result instanceof Error) {
+          // If the result is an Error, return it
+          return result
+        }
         cache.set(url!, { ...cache.get(url!)!, result })
         return result
       })
