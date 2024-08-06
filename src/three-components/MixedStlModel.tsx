@@ -23,5 +23,16 @@ export function MixedStlModel({
     )
   }
 
+  // Check if obj is valid before rendering
+  if (obj instanceof Error) {
+    return (
+      <mesh position={position}>
+        <boxGeometry args={[0.5, 0.5, 0.5]} />
+        <meshStandardMaterial transparent color="red" opacity={0.5} />
+        <meshBasicMaterial color="black" />
+      </mesh>
+    )
+  }
+
   return <primitive rotation={rotation} position={position} object={obj} />
 }
