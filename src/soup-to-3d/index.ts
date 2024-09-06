@@ -17,6 +17,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
   }
 
   const plated_holes = su(soup).pcb_plated_hole.list()
+  const holes = su(soup).pcb_hole.list()
   const pads = su(soup).pcb_smtpad.list()
   const traces = su(soup).pcb_trace.list()
   const pcb_vias = su(soup).pcb_via.list()
@@ -25,6 +26,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
   let boardGeom = cuboid({ size: [board.width, board.height, 1.2] })
 
   const platedHoleGeoms: Geom3[] = []
+  const holeGeoms: Geom3[] = []
   const padGeoms: Geom3[] = []
   const traceGeoms: Geom3[] = []
   const ctx = {
@@ -49,6 +51,16 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
     addPlatedHole(plated_hole)
   }
 
+  for (const hole of holes) {
+    if (hole.hole_shape === "round") {
+      const cyGeom = cylinder({
+        center: [hole.x, hole.y, 0],
+        radius: hole.hole_diameter / 2 + M,
+      })
+      boardGeom = subtract(boardGeom, cyGeom)
+    }
+  }
+
   for (const pad of pads) {
     if (pad.shape === "rect") {
       const padGeom = colorize(
@@ -56,7 +68,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
         cuboid({
           center: [pad.x, pad.y, 1.2 / 2 + M],
           size: [pad.width, pad.height, M],
-        })
+        }),
       )
       padGeoms.push(padGeom)
     } else if (pad.shape === "circle") {
@@ -66,7 +78,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
           center: [pad.x, pad.y, 1.2 / 2 + M],
           radius: pad.radius,
           height: M,
-        })
+        }),
       )
       padGeoms.push(padGeom)
     }
@@ -94,7 +106,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
       {
         current: [] as typeof mixedRoute,
         allPrev: [] as Array<typeof mixedRoute>,
-      }
+      },
     )
     for (const route of subRoutes.allPrev.concat([subRoutes.current])) {
       // TODO break into segments based on layers
@@ -107,8 +119,8 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
         [0, 0, (layerSign * 1.2) / 2],
         extrudeLinear(
           { height: M * layerSign },
-          expand({ delta: 0.1, corners: "edge" }, linePath)
-        )
+          expand({ delta: 0.1, corners: "edge" }, linePath),
+        ),
       )
 
       // HACK: Subtract all vias from every trace- this mostly is because the
@@ -121,7 +133,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
             center: [via.x, via.y, 0],
             radius: via.outer_diameter / 2,
             height: 5,
-          })
+          }),
         )
       }
 
