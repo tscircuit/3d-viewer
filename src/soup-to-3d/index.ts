@@ -2,27 +2,35 @@ import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import type { AnySoupElement, PCBPlatedHole } from "@tscircuit/soup"
 import { su } from "@tscircuit/soup-util"
 import { translate } from "@jscad/modeling/src/operations/transforms"
-import { cuboid, cylinder, line } from "@jscad/modeling/src/primitives"
+import {
+  cuboid,
+  cylinder,
+  line
+} from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
 import { subtract } from "@jscad/modeling/src/operations/booleans"
 import { platedHole } from "../geoms/plated-hole"
 import { M, colors } from "../geoms/constants"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { expand } from "@jscad/modeling/src/operations/expansions"
+import { createOutlinedBoard } from "src/geoms/createOutlinedBoard"
 
 export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
   const board = su(soup).pcb_board.list()[0]
   if (!board) {
     throw new Error("No pcb_board found")
   }
-
+  console.log(board)
   const plated_holes = su(soup).pcb_plated_hole.list()
   const pads = su(soup).pcb_smtpad.list()
   const traces = su(soup).pcb_trace.list()
   const pcb_vias = su(soup).pcb_via.list()
 
   // PCB Board
-  let boardGeom = cuboid({ size: [board.width, board.height, 1.2] })
+  let boardGeom: Geom3
+  if (board.outline && board.outline.length > 0)
+    boardGeom = createOutlinedBoard(board.outline, 1.2)
+  else boardGeom = cuboid({ size: [board.height, board.width, 1.2] })
 
   const platedHoleGeoms: Geom3[] = []
   const padGeoms: Geom3[] = []
@@ -56,7 +64,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
         cuboid({
           center: [pad.x, pad.y, 1.2 / 2 + M],
           size: [pad.width, pad.height, M],
-        })
+        }),
       )
       padGeoms.push(padGeom)
     } else if (pad.shape === "circle") {
@@ -66,7 +74,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
           center: [pad.x, pad.y, 1.2 / 2 + M],
           radius: pad.radius,
           height: M,
-        })
+        }),
       )
       padGeoms.push(padGeom)
     }
@@ -94,7 +102,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
       {
         current: [] as typeof mixedRoute,
         allPrev: [] as Array<typeof mixedRoute>,
-      }
+      },
     )
     for (const route of subRoutes.allPrev.concat([subRoutes.current])) {
       // TODO break into segments based on layers
@@ -107,8 +115,8 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
         [0, 0, (layerSign * 1.2) / 2],
         extrudeLinear(
           { height: M * layerSign },
-          expand({ delta: 0.1, corners: "edge" }, linePath)
-        )
+          expand({ delta: 0.1, corners: "edge" }, linePath),
+        ),
       )
 
       // HACK: Subtract all vias from every trace- this mostly is because the
@@ -121,7 +129,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
             center: [via.x, via.y, 0],
             radius: via.outer_diameter / 2,
             height: 5,
-          })
+          }),
         )
       }
 
