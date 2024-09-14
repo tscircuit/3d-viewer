@@ -2,25 +2,20 @@ import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import type { AnySoupElement, PCBPlatedHole } from "@tscircuit/soup"
 import { su } from "@tscircuit/soup-util"
 import { translate } from "@jscad/modeling/src/operations/transforms"
-import {
-  cuboid,
-  cylinder,
-  line
-} from "@jscad/modeling/src/primitives"
+import { cuboid, cylinder, line } from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
 import { subtract } from "@jscad/modeling/src/operations/booleans"
 import { platedHole } from "../geoms/plated-hole"
 import { M, colors } from "../geoms/constants"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { expand } from "@jscad/modeling/src/operations/expansions"
-import { createOutlinedBoard } from "src/geoms/createOutlinedBoard"
+import { createBoardWithOutline } from "src/geoms/create-board-with-outline"
 
 export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
   const board = su(soup).pcb_board.list()[0]
   if (!board) {
     throw new Error("No pcb_board found")
   }
-  console.log(board)
   const plated_holes = su(soup).pcb_plated_hole.list()
   const holes = su(soup).pcb_hole.list()
   const pads = su(soup).pcb_smtpad.list()
@@ -30,7 +25,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
   // PCB Board
   let boardGeom: Geom3
   if (board.outline && board.outline.length > 0)
-    boardGeom = createOutlinedBoard(board.outline, 1.2)
+    boardGeom = createBoardWithOutline(board.outline, 1.2)
   else boardGeom = cuboid({ size: [board.height, board.width, 1.2] })
 
   const platedHoleGeoms: Geom3[] = []
