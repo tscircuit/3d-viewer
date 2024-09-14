@@ -5,12 +5,12 @@ import type { Vec2 } from "@jscad/modeling/src/maths/types"
 import type { Point } from "@tscircuit/soup"
 import { translate } from "@jscad/modeling/src/operations/transforms"
 
-const arePointsAntiClockwise = (points: Vec2[]): boolean => {
+const arePointsClockwise = (points: Vec2[]): boolean => {
   let area = 0
   for (let i = 0; i < points.length; i++) {
     const j = (i + 1) % points.length
-    area += points[i][0] * points[j][1]
-    area -= points[j][0] * points[i][1]
+    area += points[i]![0] * points[j]![1]
+    area -= points[j]![0] * points[i]![1]
   }
   const signedArea = area / 2
   return signedArea <= 0
@@ -19,7 +19,7 @@ const arePointsAntiClockwise = (points: Vec2[]): boolean => {
 export const createBoardWithOutline = (points: Point[], depth = 1.2): Geom3 => {
   let outline: Vec2[] = points.map((point) => [point.x, point.y])
 
-  if (arePointsAntiClockwise(outline)) {
+  if (arePointsClockwise(outline)) {
     outline = outline.reverse()
   }
 
