@@ -7,14 +7,14 @@ function CustomBoard({ boardOutline }) {
         name="R1"
         footprint={"0402"}
         resistance={"1k"}
-        pcbX={0}
+        pcbX={5}
         pcbY={2}
       />
       <resistor
         name="R2"
         footprint={"0402"}
         resistance={"1k"}
-        pcbX={0}
+        pcbX={5}
         pcbY={0}
       />
       <trace from={".R1 > .right"} to={".R2 > .left"} />
@@ -24,7 +24,7 @@ function CustomBoard({ boardOutline }) {
           holeDiameter={0.5}
           outerDiameter={0.7}
           shape="circle"
-          pcbX={0}
+          pcbX={5}
           pcbY={-1}
         />
         <platedhole
@@ -32,7 +32,7 @@ function CustomBoard({ boardOutline }) {
           holeDiameter={0.2}
           outerDiameter={0.4}
           shape="circle"
-          pcbX={0}
+          pcbX={5}
           pcbY={3}
         />
       </component>
