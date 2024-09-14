@@ -22,6 +22,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
   }
   console.log(board)
   const plated_holes = su(soup).pcb_plated_hole.list()
+  const holes = su(soup).pcb_hole.list()
   const pads = su(soup).pcb_smtpad.list()
   const traces = su(soup).pcb_trace.list()
   const pcb_vias = su(soup).pcb_via.list()
@@ -33,6 +34,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
   else boardGeom = cuboid({ size: [board.height, board.width, 1.2] })
 
   const platedHoleGeoms: Geom3[] = []
+  const holeGeoms: Geom3[] = []
   const padGeoms: Geom3[] = []
   const traceGeoms: Geom3[] = []
   const ctx = {
@@ -55,6 +57,16 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
 
   for (const plated_hole of plated_holes) {
     addPlatedHole(plated_hole)
+  }
+
+  for (const hole of holes) {
+    if (hole.hole_shape === "round") {
+      const cyGeom = cylinder({
+        center: [hole.x, hole.y, 0],
+        radius: hole.hole_diameter / 2 + M,
+      })
+      boardGeom = subtract(boardGeom, cyGeom)
+    }
   }
 
   for (const pad of pads) {
