@@ -1,11 +1,16 @@
-import type { AnySoupElement } from "@tscircuit/soup"
-import { useRenderedElements } from "@tscircuit/react-fiber"
+import { Circuit } from "@tscircuit/core"
+import { useMemo } from "react"
+import type { AnyCircuitElement } from "circuit-json"
 
 export const useConvertChildrenToSoup = (
   children?: any,
-  defaultSoup?: AnySoupElement[],
-): AnySoupElement[] => {
-  const { elements } = useRenderedElements(children)
-
-  return (elements as any) ?? defaultSoup!
+  defaultSoup?: AnyCircuitElement[],
+): AnyCircuitElement[] => {
+  return useMemo(() => {
+    if (!children) return
+    const circuit = new Circuit()
+    circuit.add(children)
+    circuit.render()
+    return circuit.getCircuitJson() as any
+  }, [children])
 }

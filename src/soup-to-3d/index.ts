@@ -26,7 +26,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
   let boardGeom: Geom3
   if (board.outline && board.outline.length > 0)
     boardGeom = createBoardWithOutline(board.outline, 1.2)
-  else boardGeom = cuboid({ size: [board.height, board.width, 1.2] })
+  else boardGeom = cuboid({ size: [board.width, board.height, 1.2] })
 
   const platedHoleGeoms: Geom3[] = []
   const holeGeoms: Geom3[] = []
