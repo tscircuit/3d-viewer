@@ -16,7 +16,9 @@ interface Props {
 }
 
 export const CadViewer = ({ soup, children }: Props) => {
-  soup ??= useConvertChildrenToSoup(children, soup)
+  soup ??= useConvertChildrenToSoup(children, soup) as any
+
+  if (!soup) return null
 
   const boardGeom = useMemo(() => {
     if (!soup.some((e) => e.type === "pcb_board")) return null
