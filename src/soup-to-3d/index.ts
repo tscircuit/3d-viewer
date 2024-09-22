@@ -55,7 +55,8 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
   }
 
   for (const hole of holes) {
-    if (hole.hole_shape === "round") {
+    // @ts-expect-error
+    if (hole.hole_shape === "round" || hole.hole_shape === "circle") {
       const cyGeom = cylinder({
         center: [hole.x, hole.y, 0],
         radius: hole.hole_diameter / 2 + M,
