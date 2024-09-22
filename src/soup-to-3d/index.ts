@@ -140,6 +140,18 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
           }),
         )
       }
+      for (const ph of plated_holes) {
+        if (ph.shape === "circle") {
+          traceGeom = subtract(
+            traceGeom,
+            cylinder({
+              center: [ph.x, ph.y, 0],
+              radius: ph.outer_diameter / 2,
+              height: 5,
+            }),
+          )
+        }
+      }
 
       traceGeom = colorize(colors.fr4GreenSolderWithMask, traceGeom)
 
