@@ -145,19 +145,6 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
 
       traceGeoms.push(traceGeom)
     }
-    for (const via of mixedRoute.filter((p) => p.route_type === "via")) {
-      if (via.route_type !== "via") continue // TODO remove when ts is smart
-
-      addPlatedHole({
-        x: via.x,
-        y: via.y,
-        hole_diameter: 0.8,
-        outer_diameter: 1.6,
-        shape: "circle",
-        layers: ["top", "bottom"],
-        type: "pcb_plated_hole",
-      })
-    }
   }
 
   for (const via of pcb_vias) {
@@ -169,6 +156,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
       shape: "circle",
       layers: ["top", "bottom"],
       type: "pcb_plated_hole",
+      pcb_plated_hole_id: "",
     })
   }
 
