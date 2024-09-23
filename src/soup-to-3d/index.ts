@@ -66,11 +66,12 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
   }
 
   for (const pad of pads) {
+    const layerSign = pad.layer === "bottom" ? -1 : 1;
     if (pad.shape === "rect") {
       const padGeom = colorize(
         colors.copper,
         cuboid({
-          center: [pad.x, pad.y, 1.2 / 2 + M],
+          center: [pad.x, pad.y, (layerSign * 1.2) / 2 + layerSign * M],
           size: [pad.width, pad.height, M],
         }),
       )
@@ -79,7 +80,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
       const padGeom = colorize(
         colors.copper,
         cylinder({
-          center: [pad.x, pad.y, 1.2 / 2 + M],
+          center: [pad.x, pad.y, (layerSign * 1.2) / 2 + layerSign * M],
           radius: pad.radius,
           height: M,
         }),
