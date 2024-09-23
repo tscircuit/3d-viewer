@@ -52,11 +52,40 @@ export const KeyswitchSocket = (props: {
   />
 )
 
+/**
+ * Keyswitch (Brown)
+ *
+ * https://www.lcsc.com/datasheet/lcsc_datasheet_1912111437_Kailh-CPG1511F01S03_C400227.pdf
+ */
+const Keyswitch = (props: { name: string; pcbX?: number; pcbY?: number }) => {
+  return (
+    <chip
+      {...props}
+      cadModel={{
+        objUrl: "/easyeda/C400227",
+        rotationOffset: { x: 180, y: 0, z: -90 },
+      }}
+      footprint={
+        <footprint>
+          <smtpad
+            shape="rect"
+            width="0.1mm"
+            height="0.1mm"
+            portHints={["pin1"]}
+            layer="top"
+          />
+          <hole diameter={2.5} pcbX={0} pcbY={0} />
+        </footprint>
+      }
+    />
+  )
+}
+
 export const Default = () => (
   <CadViewer>
-    <board width="20mm" height="20mm">
-      <resistor name="R1" resistance="1k" pcbY={8} footprint="0402" />
-      <KeyswitchSocket name="SW1" layer="bottom" pcbX={0} pcbY={0} />
+    <board width="30mm" height="30mm">
+      <KeyswitchSocket name="SK1" layer="bottom" pcbX={0} pcbY={0} />
+      <Keyswitch name="SW1" pcbX={0.55} pcbY={-3.81} />
     </board>
   </CadViewer>
 )
