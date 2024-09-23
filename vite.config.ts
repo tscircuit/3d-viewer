@@ -7,11 +7,8 @@ export default defineConfig({
   plugins: [react(), tsconfigPaths()],
   server: {
     proxy: {
-      "/easyeda-models": {
-        target: "https://modules.easyeda.com/3dmodel/",
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/easyeda-models/, ""),
-      },
+      // Use .storybook/main.ts to configure the proxy, for some reason it
+      // doesn't work when configured here
     },
   },
 })
