@@ -5,7 +5,15 @@ import { convertCSGToThreeGeom } from "jscad-fiber"
 import * as THREE from "three"
 import { useMemo } from "react"
 
-export const JscadModel = ({ jscadPlan }: { jscadPlan: JscadOperation }) => {
+export const JscadModel = ({
+  jscadPlan,
+  positionOffset,
+  rotationOffset,
+}: {
+  jscadPlan: JscadOperation
+  positionOffset?: [number, number, number]
+  rotationOffset?: [number, number, number]
+}) => {
   const { threeGeom, material } = useMemo(() => {
     const jscadObject = executeJscadOperations(jscad as any, jscadPlan)
 
@@ -20,5 +28,12 @@ export const JscadModel = ({ jscadPlan }: { jscadPlan: JscadOperation }) => {
 
   if (!threeGeom) return null
 
-  return <mesh geometry={threeGeom} material={material} />
+  return (
+    <mesh
+      geometry={threeGeom}
+      material={material}
+      position={positionOffset}
+      rotation={rotationOffset}
+    />
+  )
 }

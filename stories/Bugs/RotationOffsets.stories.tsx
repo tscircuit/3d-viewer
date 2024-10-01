@@ -91,7 +91,7 @@ const soup: AnySoupElement[] = [
   },
   {
     type: "schematic_text",
-    text: 100,
+    text: "100",
     schematic_text_id: "schematic_text_1",
     schematic_component_id: "schematic_component_simple_resistor_0",
     anchor: "left",
@@ -166,7 +166,7 @@ const soup: AnySoupElement[] = [
     supplier_part_numbers: {},
     ftype: "simple_resistor",
     resistance: 1000,
-    pcbRotation: "90deg",
+    // rotation: 90, // Removed as it's not a valid property for source_component
   },
   {
     type: "schematic_component",
@@ -248,7 +248,7 @@ const soup: AnySoupElement[] = [
   },
   {
     type: "schematic_text",
-    text: 1000,
+    text: "1000",
     schematic_text_id: "schematic_text_3",
     schematic_component_id: "schematic_component_simple_resistor_1",
     anchor: "left",
@@ -320,6 +320,7 @@ const soup: AnySoupElement[] = [
     type: "source_trace",
     source_trace_id: "source_trace_0",
     connected_source_port_ids: ["source_port_2", "source_port_1"],
+    connected_source_net_ids: [],
   },
   {
     type: "schematic_trace",
@@ -360,7 +361,7 @@ const soup: AnySoupElement[] = [
         from: {
           x: -0.5,
           y: 0,
-          ti: 0,
+          // ti: 0,
         },
         to: {
           x: -0.6000000000000001,
@@ -371,7 +372,7 @@ const soup: AnySoupElement[] = [
         from: {
           x: 3.061616997868383e-17,
           y: 2.5,
-          ti: 1,
+          // ti: 1,
         },
         to: {
           x: 0,

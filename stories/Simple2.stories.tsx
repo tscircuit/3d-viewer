@@ -4,7 +4,7 @@ import { CadViewer } from "src/CadViewer"
 export const Default = () => (
   <CadViewer>
     <board width="10mm" height="40mm">
-      <chip name="U1" footprint="dip16" />
+      <chip name="U1" footprint="tssop16" />
     </board>
   </CadViewer>
 )

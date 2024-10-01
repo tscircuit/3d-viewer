@@ -9,6 +9,8 @@ import { CadViewerContainer } from "./CadViewerContainer"
 import { MixedStlModel } from "./three-components/MixedStlModel"
 import { Euler } from "three"
 import { JscadModel } from "./three-components/JscadModel"
+import { Footprinter3d } from "jscad-electronics"
+import { FootprinterModel } from "./three-components/FootprinterModel"
 
 interface Props {
   soup?: AnySoupElement[]
@@ -74,6 +76,23 @@ export const CadViewer = ({ soup, children }: Props) => {
             <JscadModel
               key={cad_component.cad_component_id}
               jscadPlan={cad_component.model_jscad as any}
+            />
+          )
+        }
+
+        if (cad_component.footprinter_string) {
+          return (
+            <FootprinterModel
+              positionOffset={
+                cad_component.position
+                  ? [
+                      cad_component.position.x,
+                      cad_component.position.y,
+                      cad_component.position.z,
+                    ]
+                  : undefined
+              }
+              footprint={cad_component.footprinter_string}
             />
           )
         }
