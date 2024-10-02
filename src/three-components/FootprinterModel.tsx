@@ -28,7 +28,7 @@ export const FootprinterModel = ({
           // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
           key={index}
           positionOffset={positionOffset}
-          rotationOffset={[Math.PI / 2, 0, 0]}
+          rotationOffset={[0, 0, 0]}
           jscadPlan={plan}
         />
       ))}
