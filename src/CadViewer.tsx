@@ -11,6 +11,7 @@ import { Euler } from "three"
 import { JscadModel } from "./three-components/JscadModel"
 import { Footprinter3d } from "jscad-electronics"
 import { FootprinterModel } from "./three-components/FootprinterModel"
+import { tuple } from "./utils/tuple"
 
 interface Props {
   soup?: AnySoupElement[]
@@ -44,6 +45,14 @@ export const CadViewer = ({ soup, children }: Props) => {
       ))}
       {cad_components.map((cad_component) => {
         const url = cad_component.model_obj_url ?? cad_component.model_stl_url
+        const rotationOffset = cad_component.rotation
+          ? tuple(
+              (cad_component.rotation.x * Math.PI) / 180,
+              (cad_component.rotation.y * Math.PI) / 180,
+              (cad_component.rotation.z * Math.PI) / 180,
+            )
+          : undefined
+
         if (url) {
           return (
             <MixedStlModel
@@ -58,15 +67,7 @@ export const CadViewer = ({ soup, children }: Props) => {
                     ]
                   : undefined
               }
-              rotation={
-                cad_component.rotation
-                  ? new Euler(
-                      (cad_component.rotation.x * Math.PI) / 180,
-                      (cad_component.rotation.y * Math.PI) / 180,
-                      (cad_component.rotation.z * Math.PI) / 180,
-                    )
-                  : undefined
-              }
+              rotation={rotationOffset}
             />
           )
         }
@@ -76,6 +77,7 @@ export const CadViewer = ({ soup, children }: Props) => {
             <JscadModel
               key={cad_component.cad_component_id}
               jscadPlan={cad_component.model_jscad as any}
+              rotationOffset={rotationOffset}
             />
           )
         }
@@ -92,6 +94,7 @@ export const CadViewer = ({ soup, children }: Props) => {
                     ]
                   : undefined
               }
+              rotationOffset={rotationOffset}
               footprint={cad_component.footprinter_string}
             />
           )
