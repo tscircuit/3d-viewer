@@ -9,7 +9,12 @@ const { createJSCADRoot } = createJSCADRenderer(jscadPlanner as any)
 export const FootprinterModel = ({
   positionOffset,
   footprint,
-}: { positionOffset: any; footprint: string }) => {
+  rotationOffset,
+}: {
+  positionOffset: any
+  footprint: string
+  rotationOffset?: [number, number, number]
+}) => {
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const jscadPlan = useMemo(() => {
     if (!footprint) return null
@@ -28,7 +33,7 @@ export const FootprinterModel = ({
           // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
           key={index}
           positionOffset={positionOffset}
-          rotationOffset={[0, 0, 0]}
+          rotationOffset={rotationOffset}
           jscadPlan={plan}
         />
       ))}
