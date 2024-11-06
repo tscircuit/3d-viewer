@@ -1,38 +1,67 @@
-import { useEffect, useState } from "react"
+import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { useGlobalObjLoader } from "src/hooks/use-global-obj-loader"
-import { Euler, Vector3 } from "three"
-import { MTLLoader, OBJLoader } from "three-stdlib"
+import type { Euler, Vector3 } from "three"
 
 export function MixedStlModel({
   url,
   position,
   rotation,
+  componentId,
+  name,
+  onHover,
+  isHovered,
 }: {
   url: string
   position?: Vector3 | [number, number, number]
   rotation?: Euler | [number, number, number]
+  componentId: string
+  name: string
+  onHover: (id: string | null) => void
+  isHovered: boolean
 }) {
   const obj = useGlobalObjLoader(url)
 
   if (!obj) {
     return (
-      <mesh position={position}>
-        <boxGeometry args={[0.5, 0.5, 0.5]} />
-        <meshStandardMaterial transparent color="red" opacity={0.25} />
-      </mesh>
+      <ContainerWithTooltip
+        componentId={componentId}
+        name={name}
+        isHovered={isHovered}
+        onHover={onHover}
+      >
+        <mesh position={position}>
+          <boxGeometry args={[0.5, 0.5, 0.5]} />
+          <meshStandardMaterial transparent color="red" opacity={0.25} />
+        </mesh>
+      </ContainerWithTooltip>
     )
   }
 
   // Check if obj is valid before rendering
   if (obj instanceof Error) {
     return (
-      <mesh position={position}>
-        <boxGeometry args={[0.5, 0.5, 0.5]} />
-        <meshStandardMaterial transparent color="red" opacity={0.5} />
-        <meshBasicMaterial color="black" />
-      </mesh>
+      <ContainerWithTooltip
+        componentId={componentId}
+        name={name}
+        isHovered={isHovered}
+        onHover={onHover}
+      >
+        <mesh position={position}>
+          <boxGeometry args={[0.5, 0.5, 0.5]} />
+          <meshStandardMaterial transparent color="red" opacity={0.5} />
+          <meshBasicMaterial color="red" />
+        </mesh>
+      </ContainerWithTooltip>
     )
   }
-
-  return <primitive rotation={rotation} position={position} object={obj} />
+  return (
+    <ContainerWithTooltip
+      componentId={componentId}
+      name={name}
+      isHovered={isHovered}
+      onHover={onHover}
+    >
+      <primitive rotation={rotation} position={position} object={obj} />
+    </ContainerWithTooltip>
+  )
 }
