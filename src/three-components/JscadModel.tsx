@@ -4,15 +4,24 @@ import jscad from "@jscad/modeling"
 import { convertCSGToThreeGeom } from "jscad-fiber"
 import * as THREE from "three"
 import { useMemo } from "react"
+import ContainerWithTooltip from "src/ContainerWithTooltip"
 
 export const JscadModel = ({
   jscadPlan,
   positionOffset,
   rotationOffset,
+  componentId,
+  name,
+  onHover,
+  isHovered,
 }: {
   jscadPlan: JscadOperation
   positionOffset?: [number, number, number]
   rotationOffset?: [number, number, number]
+  componentId: string
+  name: string
+  onHover: (id: string | null) => void
+  isHovered: boolean
 }) => {
   const { threeGeom, material } = useMemo(() => {
     const jscadObject = executeJscadOperations(jscad as any, jscadPlan)
@@ -25,15 +34,32 @@ export const JscadModel = ({
     })
     return { threeGeom, material }
   }, [jscadPlan])
-
+  useMemo(() => {
+    if (isHovered) {
+      const color = new THREE.Color(material.color.getHex())
+      material.emissive.copy(color)
+      // material.emissive.setRGB(0,0,0)
+      material.emissiveIntensity = 0.1
+    } else {
+      material.emissiveIntensity = 0
+    }
+  }, [isHovered, material])
   if (!threeGeom) return null
 
   return (
-    <mesh
-      geometry={threeGeom}
-      material={material}
+    <ContainerWithTooltip
+      componentId={componentId}
+      name={name}
+      isHovered={isHovered}
+      onHover={onHover}
       position={positionOffset}
-      rotation={rotationOffset}
-    />
+    >
+      <mesh
+        geometry={threeGeom}
+        material={material}
+        position={positionOffset}
+        rotation={rotationOffset}
+      />
+    </ContainerWithTooltip>
   )
 }

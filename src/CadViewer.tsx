@@ -1,7 +1,7 @@
 import type { AnySoupElement } from "@tscircuit/soup"
 import { useConvertChildrenToSoup } from "./hooks/use-convert-children-to-soup"
 import { su } from "@tscircuit/soup-util"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { createBoardGeomFromSoup } from "./soup-to-3d"
 import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { STLModel } from "./three-components/STLModel"
@@ -19,6 +19,7 @@ interface Props {
 }
 
 export const CadViewer = ({ soup, children }: Props) => {
+  const [hoveredComponent, setHoveredComponent] = useState<string | null>(null)
   soup ??= useConvertChildrenToSoup(children, soup) as any
 
   if (!soup) return null
@@ -44,6 +45,9 @@ export const CadViewer = ({ soup, children }: Props) => {
         />
       ))}
       {cad_components.map((cad_component) => {
+        const componentName = su(soup).source_component.getUsing({
+          source_component_id: cad_component.source_component_id,
+        })?.name
         const url = cad_component.model_obj_url ?? cad_component.model_stl_url
         const rotationOffset = cad_component.rotation
           ? tuple(
@@ -68,6 +72,10 @@ export const CadViewer = ({ soup, children }: Props) => {
                   : undefined
               }
               rotation={rotationOffset}
+              componentId={cad_component.cad_component_id}
+              name={componentName || cad_component.cad_component_id}
+              onHover={setHoveredComponent}
+              isHovered={hoveredComponent === cad_component.cad_component_id}
             />
           )
         }
@@ -78,6 +86,10 @@ export const CadViewer = ({ soup, children }: Props) => {
               key={cad_component.cad_component_id}
               jscadPlan={cad_component.model_jscad as any}
               rotationOffset={rotationOffset}
+              componentId={cad_component.cad_component_id}
+              name={componentName || cad_component.cad_component_id}
+              onHover={setHoveredComponent}
+              isHovered={hoveredComponent === cad_component.cad_component_id}
             />
           )
         }
@@ -96,6 +108,10 @@ export const CadViewer = ({ soup, children }: Props) => {
               }
               rotationOffset={rotationOffset}
               footprint={cad_component.footprinter_string}
+              componentId={cad_component.cad_component_id}
+              name={componentName || cad_component.cad_component_id}
+              onHover={setHoveredComponent}
+              isHovered={hoveredComponent === cad_component.cad_component_id}
             />
           )
         }
