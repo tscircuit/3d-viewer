@@ -38,8 +38,8 @@ export const JscadModel = ({
     if (isHovered) {
       const color = new THREE.Color(material.color.getHex())
       material.emissive.copy(color)
-      // material.emissive.setRGB(0,0,0)
-      material.emissiveIntensity = 0.1
+      material.emissive.setRGB(0, 0, 1)
+      material.emissiveIntensity = 0.2
     } else {
       material.emissiveIntensity = 0
     }
