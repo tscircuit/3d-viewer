@@ -4,7 +4,7 @@ import { su } from "@tscircuit/soup-util"
 import { translate } from "@jscad/modeling/src/operations/transforms"
 import { cuboid, cylinder, line } from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
-import { subtract } from "@jscad/modeling/src/operations/booleans"
+import { subtract, union } from "@jscad/modeling/src/operations/booleans"
 import { platedHole } from "../geoms/plated-hole"
 import { M, colors } from "../geoms/constants"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
@@ -37,13 +37,36 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
   }
 
   const addPlatedHole = (plated_hole: PCBPlatedHole) => {
-    if (!(plated_hole as any).shape) plated_hole.shape = "circle"
     if (plated_hole.shape === "circle") {
       const cyGeom = cylinder({
         center: [plated_hole.x, plated_hole.y, 0],
         radius: plated_hole.hole_diameter / 2 + M,
       })
+     
       boardGeom = subtract(boardGeom, cyGeom)
+
+      const platedHoleGeom = platedHole(plated_hole, ctx)
+      platedHoleGeoms.push(platedHoleGeom)
+    } else if (plated_hole.shape === "pill") {
+      // Create pill-shaped hole in board
+      const holeRadius = plated_hole.hole_height! / 2
+      const pillHole = union(
+        cuboid({
+          center: [plated_hole.x, plated_hole.y, 0],
+          size: [plated_hole.hole_width! - plated_hole.hole_height!, plated_hole.hole_height!, 1.5],
+        }),
+        cylinder({
+          center: [plated_hole.x - (plated_hole.hole_width! - plated_hole.hole_height!) / 2, plated_hole.y, 0],
+          radius: holeRadius,
+          height: 1.5,
+        }),
+        cylinder({
+          center: [plated_hole.x + (plated_hole.hole_width! - plated_hole.hole_height!) / 2, plated_hole.y, 0],
+          radius: holeRadius,
+          height: 1.5,
+        })
+      )
+      boardGeom = subtract(boardGeom, pillHole)
 
       const platedHoleGeom = platedHole(plated_hole, ctx)
       platedHoleGeoms.push(platedHoleGeom)
