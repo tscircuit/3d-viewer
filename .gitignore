@@ -26,4 +26,3 @@ dist-ssr
 *storybook.log
 .aider*
 .vercel
-.env
