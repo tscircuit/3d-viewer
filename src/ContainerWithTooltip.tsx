@@ -1,7 +1,8 @@
 import { Html } from "@react-three/drei"
-import { GroupProps } from "@react-three/fiber"
-import { useState } from "react"
+import { GroupProps, useFrame, useThree } from "@react-three/fiber"
+import { useRef, useState } from "react"
 import type { Vector3 } from "three"
+import * as THREE from "three"
 
 const ContainerWithTooltip = ({
   children,
@@ -19,17 +20,37 @@ const ContainerWithTooltip = ({
   isHovered: boolean
 }) => {
   const [mousePosition, setMousePosition] = useState<[number, number, number]>([0, 0, 0])
+  const { camera } = useThree()
+  const mouseRef = useRef(new THREE.Vector2())
   
+  // Update tooltip position on every frame when hovered
+  useFrame(() => {
+    if (isHovered) {
+      // Project the stored mouse coordinates into 3D space
+      const vector = new THREE.Vector3(mouseRef.current.x, mouseRef.current.y, 0.5)
+      vector.unproject(camera)
+      setMousePosition([vector.x, vector.y, vector.z])
+    }
+  })
+
   const groupProps: GroupProps = {
     position,
     onPointerEnter: (e) => {
       e.stopPropagation()
-      setMousePosition([e.point.x, e.point.y, e.point.z])
+      // Store normalized mouse coordinates
+      mouseRef.current.set(
+        (e.clientX / window.innerWidth) * 2 - 1,
+        -(e.clientY / window.innerHeight) * 2 + 1
+      )
       onHover(componentId)
     },
     onPointerMove: (e) => {
       e.stopPropagation()
-      setMousePosition([e.point.x, e.point.y, e.point.z])
+      // Update normalized mouse coordinates
+      mouseRef.current.set(
+        (e.clientX / window.innerWidth) * 2 - 1,
+        -(e.clientY / window.innerHeight) * 2 + 1
+      )
     },
     onPointerLeave: (e) => {
       e.stopPropagation()
