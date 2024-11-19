@@ -1,15 +1,15 @@
-import { Grid, OrbitControls } from "@react-three/drei";
-import { Canvas, useFrame } from "@react-three/fiber";
-import packageJson from "../package.json";
-import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides";
+import { Grid, OrbitControls } from "@react-three/drei"
+import { Canvas, useFrame } from "@react-three/fiber"
+import packageJson from "../package.json"
+import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
 
 export const RotationTracker = () => {
   useFrame(({ camera }) => {
-    window.TSCI_MAIN_CAMERA_ROTATION = camera.rotation;
-  });
+    window.TSCI_MAIN_CAMERA_ROTATION = camera.rotation
+  })
 
-  return <></>;
-};
+  return <></>
+}
 
 export const CadViewerContainer = ({ children }: { children: any }) => {
   return (
@@ -73,5 +73,5 @@ export const CadViewerContainer = ({ children }: { children: any }) => {
         @{packageJson.version}
       </div>
     </div>
-  );
-};
+  )
+}

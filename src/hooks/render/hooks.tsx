@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from "react"
 
 // Based off a tweet and codesandbox:
 // https://mobile.twitter.com/hieuhlc/status/1164369876825169920
@@ -6,28 +6,28 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 function useKeyPress(
   targetKey: string,
   onKeyDown: () => void,
-  onKeyUp: () => void
+  onKeyUp: () => void,
 ): void {
   const downHandler = useCallback(
     ({ key }: KeyboardEvent) => {
       if (key === targetKey) onKeyDown()
     },
-    [onKeyDown, targetKey]
+    [onKeyDown, targetKey],
   )
 
   const upHandler = useCallback(
     ({ key }: KeyboardEvent) => {
       if (key === targetKey) onKeyUp()
     },
-    [onKeyUp, targetKey]
+    [onKeyUp, targetKey],
   )
 
   useEffect(() => {
-    window.addEventListener('keydown', downHandler)
-    window.addEventListener('keyup', upHandler)
+    window.addEventListener("keydown", downHandler)
+    window.addEventListener("keyup", upHandler)
     return () => {
-      window.removeEventListener('keydown', downHandler)
-      window.removeEventListener('keyup', upHandler)
+      window.removeEventListener("keydown", downHandler)
+      window.removeEventListener("keyup", upHandler)
     }
   }, [downHandler, upHandler])
 }
@@ -35,7 +35,7 @@ function useKeyPress(
 const useAnimationFrame = (
   enabled: boolean,
   callback: (time: number, delta: number) => void,
-  deps: React.DependencyList
+  deps: React.DependencyList,
 ): void => {
   const frame = useRef<number>()
   const last = useRef(performance.now())

@@ -252,7 +252,7 @@ const Renderer = React.forwardRef<HTMLDivElement, RendererProps>(
             payload: [event.delta[0], -event.delta[1]],
           })
       },
-      { domTarget: ref || forwardRef }
+      { domTarget: ref || forwardRef },
     )
 
     usePinch(
@@ -260,14 +260,14 @@ const Renderer = React.forwardRef<HTMLDivElement, RendererProps>(
         if (event.touches === 2)
           dispatch({ type: "SET_ZOOM_DELTA", payload: -event.delta[0] })
       },
-      { domTarget: ref || forwardRef }
+      { domTarget: ref || forwardRef },
     )
 
     useWheel(
       (event) => {
         dispatch({ type: "SET_ZOOM_DELTA", payload: event.delta[1] })
       },
-      { domTarget: ref || forwardRef }
+      { domTarget: ref || forwardRef },
     )
 
     const onShiftDown = React.useCallback(() => {
@@ -350,7 +350,7 @@ const Renderer = React.forwardRef<HTMLDivElement, RendererProps>(
           camera: state.camera,
           speed: options?.viewerOptions?.panSpeed,
         },
-        state.panDelta
+        state.panDelta,
       )
       dispatch({
         type: "SET_CONTROLS",
@@ -379,7 +379,7 @@ const Renderer = React.forwardRef<HTMLDivElement, RendererProps>(
           camera: state.camera,
           speed: options?.viewerOptions?.rotateSpeed,
         },
-        state.rotateDelta
+        state.rotateDelta,
       )
       dispatch({
         type: "SET_CONTROLS",
@@ -403,7 +403,7 @@ const Renderer = React.forwardRef<HTMLDivElement, RendererProps>(
           camera: state.camera,
           speed: options?.viewerOptions?.zoomSpeed,
         },
-        state.zoomDelta
+        state.zoomDelta,
       )
       dispatch({
         type: "SET_CONTROLS",
@@ -431,7 +431,7 @@ const Renderer = React.forwardRef<HTMLDivElement, RendererProps>(
 
     if (!forwardRef) return <div ref={ref} style={{ touchAction: "none" }} />
     return <div ref={forwardRef} style={{ touchAction: "none" }} />
-  }
+  },
 )
 
 Renderer.displayName = "Renderer"

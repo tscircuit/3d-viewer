@@ -72,7 +72,7 @@ export function CommonToThree({
     if (colors)
       geo.setAttribute(
         "color",
-        new BufferAttribute(colors, isTransparent ? 4 : 3)
+        new BufferAttribute(colors, isTransparent ? 4 : 3),
       )
 
     let mesh
@@ -85,13 +85,13 @@ export function CommonToThree({
         mesh = new InstancedMesh(
           geo,
           materials.mesh.make({ color: 0x0084d1 }),
-          list.length
+          list.length,
         )
         list.forEach((item, i) => {
           copyTransformToArray(
             item.transforms,
             mesh.instanceMatrix.array,
-            i * 16
+            i * 16,
           )
         })
         transforms = null
@@ -163,7 +163,7 @@ export function CommonToThree({
 function toCreasedNormals(
   { Vector3, BufferAttribute },
   geometry,
-  creaseAngle = Math.PI / 3 /* 60 degrees */
+  creaseAngle = Math.PI / 3 /* 60 degrees */,
 ) {
   const creaseDot = Math.cos(creaseAngle)
   const hashMultiplier = (1 + 1e-10) * 1e2

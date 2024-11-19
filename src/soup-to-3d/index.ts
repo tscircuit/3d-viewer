@@ -42,29 +42,45 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
         center: [plated_hole.x, plated_hole.y, 0],
         radius: plated_hole.hole_diameter / 2 + M,
       })
-     
+
       boardGeom = subtract(boardGeom, cyGeom)
 
       const platedHoleGeom = platedHole(plated_hole, ctx)
       platedHoleGeoms.push(platedHoleGeom)
     } else if (plated_hole.shape === "pill") {
-      // Create pill-shaped hole in board
-      const holeRadius = plated_hole.hole_height! / 2
+      const shouldRotate = plated_hole.hole_height! > plated_hole.hole_width!
+
+      const holeWidth = shouldRotate
+        ? plated_hole.hole_height!
+        : plated_hole.hole_width!
+      const holeHeight = shouldRotate
+        ? plated_hole.hole_width!
+        : plated_hole.hole_height!
+
+      const holeRadius = holeHeight / 2
+      const rectLength = Math.abs(holeWidth - holeHeight)
+
       const pillHole = union(
         cuboid({
           center: [plated_hole.x, plated_hole.y, 0],
-          size: [plated_hole.hole_width! - plated_hole.hole_height!, plated_hole.hole_height!, 1.5],
+          size: shouldRotate
+            ? [holeHeight, rectLength, 1.5]
+            : [rectLength, holeHeight, 1.5],
         }),
         cylinder({
-          center: [plated_hole.x - (plated_hole.hole_width! - plated_hole.hole_height!) / 2, plated_hole.y, 0],
+          center: shouldRotate
+            ? [plated_hole.x, plated_hole.y - rectLength / 2, 0]
+            : [plated_hole.x - rectLength / 2, plated_hole.y, 0],
           radius: holeRadius,
           height: 1.5,
         }),
         cylinder({
-          center: [plated_hole.x + (plated_hole.hole_width! - plated_hole.hole_height!) / 2, plated_hole.y, 0],
+          center: shouldRotate
+            ? [plated_hole.x, plated_hole.y + rectLength / 2, 0]
+            : [plated_hole.x + rectLength / 2, plated_hole.y, 0],
           radius: holeRadius,
           height: 1.5,
-        })
+        }),
       )
       boardGeom = subtract(boardGeom, pillHole)
 
@@ -89,7 +105,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
   }
 
   for (const pad of pads) {
-    const layerSign = pad.layer === "bottom" ? -1 : 1;
+    const layerSign = pad.layer === "bottom" ? -1 : 1
     if (pad.shape === "rect") {
       const padGeom = colorize(
         colors.copper,
