@@ -12,7 +12,8 @@
     "prepublish": "npm run build",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "format": "biome format . --write"
   },
   "dependencies": {
     "@jscad/modeling": "^2.12.2",

@@ -16,7 +16,7 @@ function blobToBase64Url(blob: Blob): Promise<string> {
 type StlObj = { stlUrl: string; color: number[] }
 
 export const useStlsFromGeom = (
-  geom: Geom3[] | Geom3 | null
+  geom: Geom3[] | Geom3 | null,
 ): {
   stls: StlObj[]
   loading: boolean

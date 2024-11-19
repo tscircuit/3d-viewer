@@ -46,9 +46,9 @@ export function useGlobalObjLoader(url: string | null): Group | null | Error {
         const materials = mtlLoader.parse(
           mtlContent.replace(
             /Kd\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/g,
-            "Kd $2 $2 $2"
+            "Kd $2 $2 $2",
           ),
-          "test.mtl"
+          "test.mtl",
         )
 
         const objLoader = new OBJLoader()
