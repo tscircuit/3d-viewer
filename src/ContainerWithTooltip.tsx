@@ -19,28 +19,33 @@ const ContainerWithTooltip = ({
   onHover: (id: string | null) => void
   isHovered: boolean
 }) => {
-  const [mousePosition, setMousePosition] = useState<[number, number, number]>([0, 0, 0])
+  const [mousePosition, setMousePosition] = useState<[number, number, number]>([
+    0, 0, 0,
+  ])
   const { camera } = useThree()
   const mouseRef = useRef(new THREE.Vector2())
-  
+
   // Update tooltip position on every frame when hovered
   useFrame(() => {
     if (isHovered) {
       // Project the stored mouse coordinates into 3D space
-      const vector = new THREE.Vector3(mouseRef.current.x, mouseRef.current.y, 0.5)
+      const vector = new THREE.Vector3(
+        mouseRef.current.x,
+        mouseRef.current.y,
+        0.5,
+      )
       vector.unproject(camera)
       setMousePosition([vector.x, vector.y, vector.z])
     }
   })
 
   const groupProps: GroupProps = {
-    position,
     onPointerEnter: (e) => {
       e.stopPropagation()
       // Store normalized mouse coordinates
       mouseRef.current.set(
         (e.clientX / window.innerWidth) * 2 - 1,
-        -(e.clientY / window.innerHeight) * 2 + 1
+        -(e.clientY / window.innerHeight) * 2 + 1,
       )
       onHover(componentId)
     },
@@ -49,13 +54,13 @@ const ContainerWithTooltip = ({
       // Update normalized mouse coordinates
       mouseRef.current.set(
         (e.clientX / window.innerWidth) * 2 - 1,
-        -(e.clientY / window.innerHeight) * 2 + 1
+        -(e.clientY / window.innerHeight) * 2 + 1,
       )
     },
     onPointerLeave: (e) => {
       e.stopPropagation()
       onHover(null)
-    }
+    },
   }
 
   return (
