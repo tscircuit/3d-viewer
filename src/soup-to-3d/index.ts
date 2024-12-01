@@ -130,35 +130,47 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
 
   for (const { route: mixedRoute } of traces) {
     if (mixedRoute.length < 2) continue
-    const subRoutes = mixedRoute.reduce(
-      (c, p) => {
-        // @ts-ignore
-        const lastLayer = c.current?.[c.current.length - 1]?.layer
-        if (
-          p.route_type === "via" ||
-          (p.route_type === "wire" && p.layer !== lastLayer)
-        ) {
-          if (c.current.length > 2) {
-            c.allPrev.push(c.current)
-          }
-          c.current = p.route_type === "wire" ? [p] : []
-          return c
-        }
-        c.current.push(p)
-        return c
-      },
-      {
-        current: [] as typeof mixedRoute,
-        allPrev: [] as Array<typeof mixedRoute>,
-      },
-    )
-    for (const route of subRoutes.allPrev.concat([subRoutes.current])) {
-      // TODO break into segments based on layers
-      const linePath = line(route.map((p) => [p.x, p.y]))
 
-      const layer = route[0]!.route_type === "wire" ? route[0]!.layer : "top"
-      const layerSign = layer === "top" ? 1 : -1
-      // traceGeoms.push(traceGeom)
+    // Group routes by continuous segments
+    const routeSegments: (typeof mixedRoute)[] = []
+    let currentSegment: typeof mixedRoute = [mixedRoute[0]!]
+    let currentLayer =
+      mixedRoute[0]!.route_type === "wire" ? mixedRoute[0]!.layer : "top"
+
+    for (let i = 1; i < mixedRoute.length; i++) {
+      const point = mixedRoute[i]!
+
+      if (point.route_type === "via") {
+        // Complete current segment and start a new one
+        routeSegments.push(currentSegment)
+        currentSegment = [point]
+      } else if (point.route_type === "wire" && point.layer !== currentLayer) {
+        // Complete current segment and start a new one on a different layer
+        routeSegments.push(currentSegment)
+        currentLayer = point.layer
+        currentSegment = [point]
+      } else {
+        currentSegment.push(point)
+      }
+    }
+
+    // Add the last segment
+    routeSegments.push(currentSegment)
+
+    // Render each route segment
+    for (const route of routeSegments) {
+      if (route.length < 2) continue
+
+      const linePath = line(route.map((p) => [p.x, p.y]))
+      const layerSign =
+        route[0]!.route_type === "via"
+          ? route[0]!.to_layer === "top"
+            ? 1
+            : -1
+          : route[0]!.layer === "top"
+            ? 1
+            : -1
+
       let traceGeom = translate(
         [0, 0, (layerSign * 1.2) / 2],
         extrudeLinear(
@@ -167,31 +179,27 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
         ),
       )
 
-      // HACK: Subtract all vias from every trace- this mostly is because the
-      // vias aren't inside the route- we should probably pre-filter to make sure
-      // that vias are only near the route
-      for (const via of pcb_vias) {
-        traceGeom = subtract(
-          traceGeom,
+      // Modify via subtraction to preserve trace geometry
+      const viaSubtractions = pcb_vias.map((via) =>
+        cylinder({
+          center: [via.x, via.y, 0],
+          radius: via.outer_diameter / 2,
+          height: 5,
+        }),
+      )
+
+      const holeSubtractions = plated_holes
+        .filter((ph) => ph.shape === "circle")
+        .map((ph) =>
           cylinder({
-            center: [via.x, via.y, 0],
-            radius: via.outer_diameter / 2,
+            center: [ph.x, ph.y, 0],
+            radius: ph.outer_diameter / 2,
             height: 5,
           }),
         )
-      }
-      for (const ph of plated_holes) {
-        if (ph.shape === "circle") {
-          traceGeom = subtract(
-            traceGeom,
-            cylinder({
-              center: [ph.x, ph.y, 0],
-              radius: ph.outer_diameter / 2,
-              height: 5,
-            }),
-          )
-        }
-      }
+
+      // Subtract vias and holes without removing entire trace
+      traceGeom = subtract(traceGeom, ...viaSubtractions, ...holeSubtractions)
 
       traceGeom = colorize(colors.fr4GreenSolderWithMask, traceGeom)
 
