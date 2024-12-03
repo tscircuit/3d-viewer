@@ -19,7 +19,15 @@ interface Props {
 }
 
 export const CadViewer = ({ soup, children }: Props) => {
-  const [hoveredComponent, setHoveredComponent] = useState<string | null>(null)
+  const [hoveredComponent, setHoveredComponent] = useState<{
+    id: string | null
+    name: string | null
+    mousePosition: [number, number, number] | null
+  }>({
+    id: null,
+    name: null,
+    mousePosition: null,
+  })
   soup ??= useConvertChildrenToSoup(children, soup) as any
 
   if (!soup) return null
@@ -33,9 +41,20 @@ export const CadViewer = ({ soup, children }: Props) => {
 
   const cad_components = su(soup).cad_component.list()
 
-  // TODO canvas/camera etc.
+  const handleHover = (
+    componentId: string | null,
+    componentName?: string,
+    mousePosition?: [number, number, number],
+  ) => {
+    setHoveredComponent({
+      id: componentId,
+      name: componentName || null,
+      mousePosition: mousePosition || null,
+    })
+  }
+
   return (
-    <CadViewerContainer>
+    <CadViewerContainer hoveredComponent={hoveredComponent}>
       {stls.map(({ stlUrl, color }, index) => (
         <STLModel
           key={stlUrl}
@@ -74,8 +93,8 @@ export const CadViewer = ({ soup, children }: Props) => {
               rotation={rotationOffset}
               componentId={cad_component.cad_component_id}
               name={componentName || cad_component.cad_component_id}
-              onHover={setHoveredComponent}
-              isHovered={hoveredComponent === cad_component.cad_component_id}
+              onHover={handleHover}
+              isHovered={hoveredComponent.id === cad_component.cad_component_id}
             />
           )
         }
@@ -88,8 +107,8 @@ export const CadViewer = ({ soup, children }: Props) => {
               rotationOffset={rotationOffset}
               componentId={cad_component.cad_component_id}
               name={componentName || cad_component.cad_component_id}
-              onHover={setHoveredComponent}
-              isHovered={hoveredComponent === cad_component.cad_component_id}
+              onHover={handleHover}
+              isHovered={hoveredComponent.id === cad_component.cad_component_id}
             />
           )
         }
@@ -110,8 +129,8 @@ export const CadViewer = ({ soup, children }: Props) => {
               footprint={cad_component.footprinter_string}
               componentId={cad_component.cad_component_id}
               name={componentName || cad_component.cad_component_id}
-              onHover={setHoveredComponent}
-              isHovered={hoveredComponent === cad_component.cad_component_id}
+              onHover={handleHover}
+              isHovered={hoveredComponent.id === cad_component.cad_component_id}
             />
           )
         }

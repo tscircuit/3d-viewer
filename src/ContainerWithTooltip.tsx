@@ -1,6 +1,6 @@
 import { Html } from "@react-three/drei"
-import { GroupProps, useFrame, useThree } from "@react-three/fiber"
-import { useRef, useState } from "react"
+import { GroupProps, useThree } from "@react-three/fiber"
+import { useRef, useCallback } from "react"
 import type { Vector3 } from "three"
 import * as THREE from "three"
 
@@ -16,73 +16,60 @@ const ContainerWithTooltip = ({
   componentId: string
   name: string
   position?: Vector3 | [number, number, number]
-  onHover: (id: string | null) => void
+  onHover: (
+    id: string | null,
+    name?: string,
+    mousePosition?: [number, number, number],
+  ) => void
   isHovered: boolean
 }) => {
-  const [mousePosition, setMousePosition] = useState<[number, number, number]>([
-    0, 0, 0,
-  ])
-  const { camera } = useThree()
-  const mouseRef = useRef(new THREE.Vector2())
+  const lastValidPointRef = useRef<THREE.Vector3 | null>(null)
 
-  // Update tooltip position on every frame when hovered
-  useFrame(() => {
-    if (isHovered) {
-      // Project the stored mouse coordinates into 3D space
-      const vector = new THREE.Vector3(
-        mouseRef.current.x,
-        mouseRef.current.y,
-        0.5,
-      )
-      vector.unproject(camera)
-      setMousePosition([vector.x, vector.y, vector.z])
-    }
-  })
+  const handlePointerEnter = useCallback(
+    (e: any) => {
+      e.stopPropagation()
 
-  const groupProps: GroupProps = {
-    onPointerEnter: (e) => {
-      e.stopPropagation()
-      // Store normalized mouse coordinates
-      mouseRef.current.set(
-        (e.clientX / window.innerWidth) * 2 - 1,
-        -(e.clientY / window.innerHeight) * 2 + 1,
-      )
-      onHover(componentId)
+      try {
+        // Fallback to event position if raycaster fails
+        const point =
+          e.point ||
+          (e.intersections && e.intersections.length > 0
+            ? e.intersections[0].point
+            : null) ||
+          (position
+            ? new THREE.Vector3(...(position as [number, number, number]))
+            : null)
+
+        if (point) {
+          lastValidPointRef.current = point
+          onHover(componentId, name, [point.x, point.y, point.z])
+        } else {
+          onHover(componentId, name)
+        }
+      } catch (error) {
+        console.warn("Hover event error:", error)
+        onHover(componentId, name)
+      }
     },
-    onPointerMove: (e) => {
+    [componentId, name, onHover, position],
+  )
+
+  const handlePointerLeave = useCallback(
+    (e: any) => {
       e.stopPropagation()
-      // Update normalized mouse coordinates
-      mouseRef.current.set(
-        (e.clientX / window.innerWidth) * 2 - 1,
-        -(e.clientY / window.innerHeight) * 2 + 1,
-      )
-    },
-    onPointerLeave: (e) => {
-      e.stopPropagation()
+      lastValidPointRef.current = null
       onHover(null)
     },
+    [onHover],
+  )
+
+  const groupProps: GroupProps = {
+    onPointerEnter: handlePointerEnter,
+    onPointerMove: handlePointerEnter,
+    onPointerLeave: handlePointerLeave,
   }
 
-  return (
-    <group {...groupProps}>
-      {children}
-      {isHovered && (
-        <Html
-          position={mousePosition}
-          style={{
-            fontFamily: "sans-serif",
-            transform: "translate3d(50%, 50%, 0)",
-            backgroundColor: "white",
-            padding: "5px",
-            borderRadius: "3px",
-            pointerEvents: "none",
-          }}
-        >
-          {name}
-        </Html>
-      )}
-    </group>
-  )
+  return <group {...groupProps}>{children}</group>
 }
 
 export default ContainerWithTooltip

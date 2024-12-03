@@ -11,7 +11,19 @@ export const RotationTracker = () => {
   return <></>
 }
 
-export const CadViewerContainer = ({ children }: { children: any }) => {
+import { Html } from "@react-three/drei"
+
+export const CadViewerContainer = ({
+  children,
+  hoveredComponent,
+}: {
+  children: any
+  hoveredComponent: {
+    id: string | null
+    name: string | null
+    mousePosition: [number, number, number] | null
+  }
+}) => {
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
       <div
@@ -26,8 +38,6 @@ export const CadViewerContainer = ({ children }: { children: any }) => {
         <Canvas
           camera={{
             up: [0, 0, 1],
-            // rotation: [-Math.PI / 2, 0, 0],
-            // lookAt: new THREE.Vector3(0, 0, 0),
             position: [1, 1, 1],
           }}
           style={{ zIndex: 10 }}
@@ -55,6 +65,21 @@ export const CadViewerContainer = ({ children }: { children: any }) => {
           sectionSize={10}
         />
         {children}
+        {hoveredComponent.id && hoveredComponent.mousePosition && (
+          <Html
+            position={hoveredComponent.mousePosition}
+            style={{
+              fontFamily: "sans-serif",
+              transform: "translate3d(50%, 50%, 0)",
+              backgroundColor: "white",
+              padding: "5px",
+              borderRadius: "3px",
+              pointerEvents: "none",
+            }}
+          >
+            {hoveredComponent.name}
+          </Html>
+        )}
       </Canvas>
       <div
         style={{
@@ -64,9 +89,6 @@ export const CadViewerContainer = ({ children }: { children: any }) => {
           fontFamily: "sans-serif",
           color: "white",
           WebkitTextStroke: "0.5px rgba(0, 0, 0, 0.5)",
-          // color: "rgba(255, 255, 255, 0.75)",
-          // textShadow:
-          //   "0px 0px 1px rgba(0, 0, 0, 0.5), 0px 0px 2px rgba(0, 0, 0, 0.5)",
           fontSize: 11,
         }}
       >
