@@ -13,8 +13,8 @@
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "format": "biome format .",
-    "format:check": "biome format . --write"
+    "format": "biome format . --write",
+    "format:check": "biome format ."
   },
   "dependencies": {
     "@jscad/modeling": "^2.12.2",
