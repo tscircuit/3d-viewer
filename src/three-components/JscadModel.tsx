@@ -10,17 +10,13 @@ export const JscadModel = ({
   jscadPlan,
   positionOffset,
   rotationOffset,
-  componentId,
-  name,
   onHover,
   isHovered,
 }: {
   jscadPlan: JscadOperation
   positionOffset?: [number, number, number]
   rotationOffset?: [number, number, number]
-  componentId: string
-  name: string
-  onHover: (id: string | null) => void
+  onHover: (e: any) => void
   isHovered: boolean
 }) => {
   const { threeGeom, material } = useMemo(() => {
@@ -34,6 +30,7 @@ export const JscadModel = ({
     })
     return { threeGeom, material }
   }, [jscadPlan])
+
   useMemo(() => {
     if (isHovered) {
       const color = new THREE.Color(material.color.getHex())
@@ -48,8 +45,6 @@ export const JscadModel = ({
 
   return (
     <ContainerWithTooltip
-      componentId={componentId}
-      name={name}
       isHovered={isHovered}
       onHover={onHover}
       position={positionOffset}

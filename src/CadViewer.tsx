@@ -23,15 +23,11 @@ interface Props {
 }
 
 export const CadViewer = ({ soup, children }: Props) => {
-  const [hoveredComponent, setHoveredComponent] = useState<{
-    cad_component_id: string | null
-    name: string | null
-    mousePosition: [number, number, number] | null
-  }>({
-    cad_component_id: null,
-    name: null,
-    mousePosition: null,
-  })
+  const [hoveredComponent, setHoveredComponent] = useState<null | {
+    cad_component_id: string
+    name: string
+    mousePosition: [number, number, number]
+  }>(null)
   soup ??= useConvertChildrenToSoup(children, soup) as any
 
   if (!soup) return null
@@ -64,17 +60,25 @@ export const CadViewer = ({ soup, children }: Props) => {
         >
           <AnyCadComponent
             key={cad_component.cad_component_id}
-            onHover={() => {
+            onHover={(e) => {
+              // TODO this should be done by onUnhover
+              if (!e) {
+                setHoveredComponent(null)
+              }
+              if (!e.mousePosition) return
+
+              const componentName = su(soup as any).source_component.getUsing({
+                source_component_id: cad_component.source_component_id,
+              })?.name
               setHoveredComponent({
                 cad_component_id: cad_component.cad_component_id,
-                name: cad_component.cad_component_id,
-                mousePosition: null,
+                name: componentName ?? "<unknown>",
+                mousePosition: e.mousePosition,
               })
             }}
             cad_component={cad_component}
-            circuitJson={soup as any}
             isHovered={
-              hoveredComponent.cad_component_id ===
+              hoveredComponent?.cad_component_id ===
               cad_component.cad_component_id
             }
           />

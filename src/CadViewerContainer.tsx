@@ -19,10 +19,10 @@ export const CadViewerContainer = ({
 }: {
   children: any
   hoveredComponent: {
-    cad_component_id: string | null
-    name: string | null
-    mousePosition: [number, number, number] | null
-  }
+    cad_component_id: string
+    name: string
+    mousePosition: [number, number, number]
+  } | null
 }) => {
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -65,22 +65,21 @@ export const CadViewerContainer = ({
           sectionSize={10}
         />
         {children}
-        {hoveredComponent.cad_component_id &&
-          hoveredComponent.mousePosition && (
-            <Html
-              position={hoveredComponent.mousePosition}
-              style={{
-                fontFamily: "sans-serif",
-                transform: "translate3d(50%, 50%, 0)",
-                backgroundColor: "white",
-                padding: "5px",
-                borderRadius: "3px",
-                pointerEvents: "none",
-              }}
-            >
-              {hoveredComponent.name}
-            </Html>
-          )}
+        {hoveredComponent && (
+          <Html
+            position={hoveredComponent.mousePosition}
+            style={{
+              fontFamily: "sans-serif",
+              transform: "translate3d(50%, 50%, 0)",
+              backgroundColor: "white",
+              padding: "5px",
+              borderRadius: "3px",
+              pointerEvents: "none",
+            }}
+          >
+            {hoveredComponent.name}
+          </Html>
+        )}
       </Canvas>
       <div
         style={{

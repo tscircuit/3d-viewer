@@ -4,23 +4,17 @@ import { useRef, useCallback } from "react"
 import type { Vector3 } from "three"
 import * as THREE from "three"
 
+const Group = (props: GroupProps) => <group {...props} />
+
 const ContainerWithTooltip = ({
   children,
   isHovered,
   onHover,
-  componentId,
-  name,
   position,
 }: {
   children: React.ReactNode
-  componentId: string
-  name: string
   position?: Vector3 | [number, number, number]
-  onHover: (
-    id: string | null,
-    name?: string,
-    mousePosition?: [number, number, number],
-  ) => void
+  onHover: (e: any) => void
   isHovered: boolean
 }) => {
   const lastValidPointRef = useRef<THREE.Vector3 | null>(null)
@@ -42,34 +36,38 @@ const ContainerWithTooltip = ({
 
         if (point) {
           lastValidPointRef.current = point
-          onHover(componentId, name, [point.x, point.y, point.z])
+          onHover({ mousePosition: [point.x, point.y, point.z] })
         } else {
-          onHover(componentId, name)
+          onHover({})
         }
       } catch (error) {
         console.warn("Hover event error:", error)
-        onHover(componentId, name)
+        onHover({})
       }
     },
-    [componentId, name, onHover, position],
+    [position],
   )
 
   const handlePointerLeave = useCallback(
     (e: any) => {
       e.stopPropagation()
       lastValidPointRef.current = null
+
+      // TODO REPLACE WITH onUnhover
       onHover(null)
     },
     [onHover],
   )
 
-  const groupProps: GroupProps = {
-    onPointerEnter: handlePointerEnter,
-    onPointerMove: handlePointerEnter,
-    onPointerLeave: handlePointerLeave,
-  }
-
-  return <group {...groupProps}>{children}</group>
+  return (
+    <Group
+      onPointerEnter={handlePointerEnter}
+      onPointerMove={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
+    >
+      {children}
+    </Group>
+  )
 }
 
 export default ContainerWithTooltip

@@ -14,19 +14,14 @@ import { FootprinterModel } from "./three-components/FootprinterModel"
 import { tuple } from "./utils/tuple"
 
 export const AnyCadComponent = ({
-  circuitJson,
   cad_component,
   onHover = () => {},
   isHovered = false,
 }: {
-  circuitJson: AnyCircuitElement[]
   cad_component: CadComponent
-  onHover?: () => void
+  onHover?: (e: any) => void
   isHovered?: boolean
 }) => {
-  const componentName = su(circuitJson as any).source_component.getUsing({
-    source_component_id: cad_component.source_component_id,
-  })?.name
   const url = cad_component.model_obj_url ?? cad_component.model_stl_url
   const rotationOffset = cad_component.rotation
     ? tuple(
@@ -51,8 +46,6 @@ export const AnyCadComponent = ({
             : undefined
         }
         rotation={rotationOffset}
-        componentId={cad_component.cad_component_id}
-        name={componentName || cad_component.cad_component_id}
         onHover={onHover}
         isHovered={isHovered}
       />
@@ -65,8 +58,6 @@ export const AnyCadComponent = ({
         key={cad_component.cad_component_id}
         jscadPlan={cad_component.model_jscad as any}
         rotationOffset={rotationOffset}
-        componentId={cad_component.cad_component_id}
-        name={componentName || cad_component.cad_component_id}
         onHover={onHover}
         isHovered={isHovered}
       />
@@ -87,8 +78,6 @@ export const AnyCadComponent = ({
         }
         rotationOffset={rotationOffset}
         footprint={cad_component.footprinter_string}
-        componentId={cad_component.cad_component_id}
-        name={componentName || cad_component.cad_component_id}
         onHover={onHover}
         isHovered={isHovered}
       />
