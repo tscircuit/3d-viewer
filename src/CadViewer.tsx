@@ -1,7 +1,7 @@
 import type { AnySoupElement } from "@tscircuit/soup"
 import { useConvertChildrenToSoup } from "./hooks/use-convert-children-to-soup"
 import { su } from "@tscircuit/soup-util"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { createBoardGeomFromSoup } from "./soup-to-3d"
 import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { STLModel } from "./three-components/STLModel"
@@ -12,6 +12,10 @@ import { JscadModel } from "./three-components/JscadModel"
 import { Footprinter3d } from "jscad-electronics"
 import { FootprinterModel } from "./three-components/FootprinterModel"
 import { tuple } from "./utils/tuple"
+import { AnyCadComponent } from "./AnyCadComponent"
+import { Text } from "@react-three/drei"
+import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
+import { Error3d } from "./three-components/Error3d"
 
 interface Props {
   soup?: AnySoupElement[]
@@ -20,11 +24,11 @@ interface Props {
 
 export const CadViewer = ({ soup, children }: Props) => {
   const [hoveredComponent, setHoveredComponent] = useState<{
-    id: string | null
+    cad_component_id: string | null
     name: string | null
     mousePosition: [number, number, number] | null
   }>({
-    id: null,
+    cad_component_id: null,
     name: null,
     mousePosition: null,
   })
@@ -37,25 +41,13 @@ export const CadViewer = ({ soup, children }: Props) => {
     return createBoardGeomFromSoup(soup)
   }, [soup])
 
-  const { stls, loading } = useStlsFromGeom(boardGeom)
+  const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
 
   const cad_components = su(soup).cad_component.list()
 
-  const handleHover = (
-    componentId: string | null,
-    componentName?: string,
-    mousePosition?: [number, number, number],
-  ) => {
-    setHoveredComponent({
-      id: componentId,
-      name: componentName || null,
-      mousePosition: mousePosition || null,
-    })
-  }
-
   return (
     <CadViewerContainer hoveredComponent={hoveredComponent}>
-      {stls.map(({ stlUrl, color }, index) => (
+      {boardStls.map(({ stlUrl, color }, index) => (
         <STLModel
           key={stlUrl}
           stlUrl={stlUrl}
@@ -63,78 +55,29 @@ export const CadViewer = ({ soup, children }: Props) => {
           opacity={index === 0 ? 0.95 : 1}
         />
       ))}
-      {cad_components.map((cad_component) => {
-        const componentName = su(soup).source_component.getUsing({
-          source_component_id: cad_component.source_component_id,
-        })?.name
-        const url = cad_component.model_obj_url ?? cad_component.model_stl_url
-        const rotationOffset = cad_component.rotation
-          ? tuple(
-              (cad_component.rotation.x * Math.PI) / 180,
-              (cad_component.rotation.y * Math.PI) / 180,
-              (cad_component.rotation.z * Math.PI) / 180,
-            )
-          : undefined
-
-        if (url) {
-          return (
-            <MixedStlModel
-              key={cad_component.cad_component_id}
-              url={url}
-              position={
-                cad_component.position
-                  ? [
-                      cad_component.position.x,
-                      cad_component.position.y,
-                      cad_component.position.z,
-                    ]
-                  : undefined
-              }
-              rotation={rotationOffset}
-              componentId={cad_component.cad_component_id}
-              name={componentName || cad_component.cad_component_id}
-              onHover={handleHover}
-              isHovered={hoveredComponent.id === cad_component.cad_component_id}
-            />
-          )
-        }
-
-        if (cad_component.model_jscad) {
-          return (
-            <JscadModel
-              key={cad_component.cad_component_id}
-              jscadPlan={cad_component.model_jscad as any}
-              rotationOffset={rotationOffset}
-              componentId={cad_component.cad_component_id}
-              name={componentName || cad_component.cad_component_id}
-              onHover={handleHover}
-              isHovered={hoveredComponent.id === cad_component.cad_component_id}
-            />
-          )
-        }
-
-        if (cad_component.footprinter_string) {
-          return (
-            <FootprinterModel
-              positionOffset={
-                cad_component.position
-                  ? [
-                      cad_component.position.x,
-                      cad_component.position.y,
-                      cad_component.position.z,
-                    ]
-                  : undefined
-              }
-              rotationOffset={rotationOffset}
-              footprint={cad_component.footprinter_string}
-              componentId={cad_component.cad_component_id}
-              name={componentName || cad_component.cad_component_id}
-              onHover={handleHover}
-              isHovered={hoveredComponent.id === cad_component.cad_component_id}
-            />
-          )
-        }
-      })}
+      {cad_components.map((cad_component) => (
+        <ThreeErrorBoundary
+          key={cad_component.cad_component_id}
+          fallback={({ error }) => <Error3d error={error} />}
+        >
+          <AnyCadComponent
+            key={cad_component.cad_component_id}
+            onHover={() => {
+              setHoveredComponent({
+                cad_component_id: cad_component.cad_component_id,
+                name: cad_component.cad_component_id,
+                mousePosition: null,
+              })
+            }}
+            cad_component={cad_component}
+            circuitJson={soup as any}
+            isHovered={
+              hoveredComponent.cad_component_id ===
+              cad_component.cad_component_id
+            }
+          />
+        </ThreeErrorBoundary>
+      ))}
     </CadViewerContainer>
   )
 }

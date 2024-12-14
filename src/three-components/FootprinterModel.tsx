@@ -24,25 +24,25 @@ export const FootprinterModel = ({
   isHovered: boolean
 }) => {
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  const jscadPlan = useMemo(() => {
+  const jscadOperations = useMemo(() => {
     if (!footprint) return null
-    const jscadPlan: any[] = []
-    const root = createJSCADRoot(jscadPlan)
+    const jscadOperations: any[] = []
+    const root = createJSCADRoot(jscadOperations)
     root.render(<Footprinter3d footprint={footprint} />)
-    return jscadPlan
+    return jscadOperations
   }, [footprint])
 
-  if (!jscadPlan) return null
+  if (!jscadOperations) return null
 
   return (
     <>
-      {jscadPlan.map((plan, index) => (
+      {jscadOperations.map((operation, index) => (
         <JscadModel
           // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
           key={index}
           positionOffset={positionOffset}
           rotationOffset={rotationOffset}
-          jscadPlan={plan}
+          jscadPlan={operation}
           componentId={componentId}
           name={name}
           onHover={onHover}
