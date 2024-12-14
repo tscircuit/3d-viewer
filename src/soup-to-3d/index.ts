@@ -1,5 +1,4 @@
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
-import { vectorText } from "@jscad/modeling/src/text"
 import type { AnySoupElement, PCBPlatedHole } from "@tscircuit/soup"
 import { su } from "@tscircuit/soup-util"
 import { translate } from "@jscad/modeling/src/operations/transforms"
