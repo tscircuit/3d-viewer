@@ -10,7 +10,9 @@ import { M, colors } from "../geoms/constants"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { expand } from "@jscad/modeling/src/operations/expansions"
 import { createBoardWithOutline } from "src/geoms/create-board-with-outline"
-
+import { Vec2 } from "@jscad/modeling/src/maths/types"
+import { createSilkscreenTextGeoms } from "src/geoms/create-geoms-for-silkscreen-text"
+import { PcbSilkscreenText } from "circuit-json"
 export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
   const board = su(soup).pcb_board.list()[0]
   if (!board) {
@@ -21,6 +23,7 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
   const pads = su(soup).pcb_smtpad.list()
   const traces = su(soup).pcb_trace.list()
   const pcb_vias = su(soup).pcb_via.list()
+  const silkscreenTexts = su(soup).pcb_silkscreen_text.list()
 
   // PCB Board
   let boardGeom: Geom3
@@ -219,9 +222,60 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
       pcb_plated_hole_id: "",
     })
   }
+  // Add silkscreen text
+  const silkscreenGeoms: Geom3[] = []
+  for (const silkscreenText of silkscreenTexts) {
+    const { textOutlines, xOffset, yOffset } = createSilkscreenTextGeoms(
+      silkscreenText as PcbSilkscreenText,
+    )
+
+    for (let outline of textOutlines) {
+      // Create path from outline points with alignment offset
+
+      const alignedOutline = outline.map((point) => [
+        point[0] + xOffset + silkscreenText.anchor_position.x,
+        point[1] + yOffset + silkscreenText.anchor_position.y,
+      ]) as Vec2[]
+      const textPath = line(alignedOutline)
+
+      // Scale expansion delta with font size
+      const fontSize = silkscreenText.font_size || 0.25
+      const expansionDelta = Math.min(
+        Math.max(0.01, fontSize * 0.1),
+        fontSize * 0.2, // Maximum cap scales with font size
+      )
+      const expandedPath = expand(
+        {
+          delta: expansionDelta,
+          corners: "round",
+        },
+        textPath,
+      )
+
+      // Extrude and position the text with smaller height
+      let textGeom = translate(
+        [0, 0, 0.6], // Position above board
+        extrudeLinear(
+          { height: 0.012 }, // Thinner extrusion
+          expandedPath,
+        ),
+      )
+
+      // Color white like silkscreen
+      textGeom = colorize([256, 256, 256], textGeom)
+
+      silkscreenGeoms.push(textGeom)
+    }
+  }
 
   // Colorize to a PCB green color: #05A32E
   boardGeom = colorize(colors.fr4Green, boardGeom)
 
-  return [boardGeom, ...platedHoleGeoms, ...padGeoms, ...traceGeoms]
+  return [
+    boardGeom,
+    ...platedHoleGeoms,
+    ...padGeoms,
+    ...traceGeoms,
+    ...silkscreenGeoms,
+  ]
 }
