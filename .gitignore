@@ -27,3 +27,6 @@ dist-ssr
 .aider*
 .vercel
 .env
+
+.yalc
+yalc.lock
