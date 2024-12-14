@@ -19,10 +19,10 @@ export const CadViewerContainer = ({
 }: {
   children: any
   hoveredComponent: {
-    id: string | null
-    name: string | null
-    mousePosition: [number, number, number] | null
-  }
+    cad_component_id: string
+    name: string
+    mousePosition: [number, number, number]
+  } | null
 }) => {
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -65,7 +65,7 @@ export const CadViewerContainer = ({
           sectionSize={10}
         />
         {children}
-        {hoveredComponent.id && hoveredComponent.mousePosition && (
+        {hoveredComponent && (
           <Html
             position={hoveredComponent.mousePosition}
             style={{

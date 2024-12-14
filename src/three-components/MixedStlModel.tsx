@@ -6,29 +6,20 @@ export function MixedStlModel({
   url,
   position,
   rotation,
-  componentId,
-  name,
   onHover,
   isHovered,
 }: {
   url: string
   position?: Vector3 | [number, number, number]
   rotation?: Euler | [number, number, number]
-  componentId: string
-  name: string
-  onHover: (id: string | null) => void
+  onHover: (e: any) => void
   isHovered: boolean
 }) {
   const obj = useGlobalObjLoader(url)
 
   if (!obj) {
     return (
-      <ContainerWithTooltip
-        componentId={componentId}
-        name={name}
-        isHovered={isHovered}
-        onHover={onHover}
-      >
+      <ContainerWithTooltip isHovered={isHovered} onHover={onHover}>
         <mesh position={position}>
           <boxGeometry args={[0.5, 0.5, 0.5]} />
           <meshStandardMaterial transparent color="red" opacity={0.25} />
@@ -40,12 +31,7 @@ export function MixedStlModel({
   // Check if obj is valid before rendering
   if (obj instanceof Error) {
     return (
-      <ContainerWithTooltip
-        componentId={componentId}
-        name={name}
-        isHovered={isHovered}
-        onHover={onHover}
-      >
+      <ContainerWithTooltip isHovered={isHovered} onHover={onHover}>
         <mesh position={position}>
           <boxGeometry args={[0.5, 0.5, 0.5]} />
           <meshStandardMaterial transparent color="red" opacity={0.5} />
@@ -55,12 +41,7 @@ export function MixedStlModel({
     )
   }
   return (
-    <ContainerWithTooltip
-      componentId={componentId}
-      name={name}
-      isHovered={isHovered}
-      onHover={onHover}
-    >
+    <ContainerWithTooltip isHovered={isHovered} onHover={onHover}>
       <primitive rotation={rotation} position={position} object={obj} />
     </ContainerWithTooltip>
   )

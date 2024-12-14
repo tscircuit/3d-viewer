@@ -31,6 +31,9 @@
       "complexity": {
         "noForEach": "info"
       },
+      "correctness": {
+        "useExhaustiveDependencies": "off"
+      },
       "style": {
         "noUselessElse": "off",
         "noNonNullAssertion": "off",

@@ -10,41 +10,34 @@ export const FootprinterModel = ({
   positionOffset,
   footprint,
   rotationOffset,
-  componentId,
-  name,
   onHover,
   isHovered,
 }: {
   positionOffset: any
   footprint: string
   rotationOffset?: [number, number, number]
-  componentId: string
-  name: string
-  onHover: (id: string | null) => void
+  onHover: (e: any) => void
   isHovered: boolean
 }) => {
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  const jscadPlan = useMemo(() => {
+  const jscadOperations = useMemo(() => {
     if (!footprint) return null
-    const jscadPlan: any[] = []
-    const root = createJSCADRoot(jscadPlan)
+    const jscadOperations: any[] = []
+    const root = createJSCADRoot(jscadOperations)
     root.render(<Footprinter3d footprint={footprint} />)
-    return jscadPlan
+    return jscadOperations
   }, [footprint])
 
-  if (!jscadPlan) return null
+  if (!jscadOperations) return null
 
   return (
     <>
-      {jscadPlan.map((plan, index) => (
+      {jscadOperations.map((operation, index) => (
         <JscadModel
           // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
           key={index}
           positionOffset={positionOffset}
           rotationOffset={rotationOffset}
-          jscadPlan={plan}
-          componentId={componentId}
-          name={name}
+          jscadPlan={operation}
           onHover={onHover}
           isHovered={isHovered}
         />

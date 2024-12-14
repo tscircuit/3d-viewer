@@ -18,24 +18,6 @@ function CustomBoard({ boardOutline }) {
         pcbY={0}
       />
       <trace from={".R1 > .right"} to={".R2 > .left"} />
-      <component name="Holes">
-        <platedhole
-          name="H1"
-          holeDiameter={0.5}
-          outerDiameter={0.7}
-          shape="circle"
-          pcbX={5}
-          pcbY={-1}
-        />
-        <platedhole
-          name="H2"
-          holeDiameter={0.2}
-          outerDiameter={0.4}
-          shape="circle"
-          pcbX={5}
-          pcbY={3}
-        />
-      </component>
     </board>
   )
 }
