@@ -75,6 +75,10 @@ export const CadViewerContainer = ({
               padding: "5px",
               borderRadius: "3px",
               pointerEvents: "none",
+              userSelect: "none",
+              WebkitUserSelect: "none",
+              MozUserSelect: "none",
+              msUserSelect: "none",
             }}
           >
             {hoveredComponent.name}
