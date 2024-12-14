@@ -12,6 +12,8 @@ import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { expand } from "@jscad/modeling/src/operations/expansions"
 import { createBoardWithOutline } from "src/geoms/create-board-with-outline"
 import { Vec2 } from "@jscad/modeling/src/maths/types"
+import { createSilkscreenTextGeoms } from "src/geoms/create-geoms-for-silkscreen-text"
+import { PcbSilkscreenText } from "circuit-json"
 export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
   const board = su(soup).pcb_board.list()[0]
   if (!board) {
@@ -224,67 +226,9 @@ export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
   // Add silkscreen text
   const silkscreenGeoms: Geom3[] = []
   for (const silkscreenText of silkscreenTexts) {
-    // Generate 2D text outlines
-    const textOutlines = vectorText({
-      height: silkscreenText.font_size,
-      input: silkscreenText.text,
-    })
-    // Split number 8 and small e into two parts to fix visual issues
-    textOutlines.forEach((outline) => {
-      if (outline.length === 29) {
-        textOutlines.splice(
-          textOutlines.indexOf(outline),
-          1,
-          outline.slice(0, 15),
-        )
-        textOutlines.splice(
-          textOutlines.indexOf(outline),
-          0,
-          outline.slice(14, 29),
-        )
-      } else if (outline.length === 17) {
-        textOutlines.splice(
-          textOutlines.indexOf(outline),
-          1,
-          outline.slice(0, 10),
-        )
-        textOutlines.splice(
-          textOutlines.indexOf(outline),
-          0,
-          outline.slice(9, 17),
-        )
-      }
-    })
-    // Calculate text bounds and center point
-    const points = textOutlines.flatMap((o) => o)
-    const textBounds = {
-      minX: Math.min(...points.map((p) => p[0])),
-      maxX: Math.max(...points.map((p) => p[0])),
-      minY: Math.min(...points.map((p) => p[1])),
-      maxY: Math.max(...points.map((p) => p[1])),
-    }
-    const textWidth = textBounds.maxX - textBounds.minX
-    const textHeight = textBounds.maxY - textBounds.minY
-    const centerX = (textBounds.minX + textBounds.maxX) / 2
-    const centerY = (textBounds.minY + textBounds.maxY) / 2
-
-    // Calculate offset based on anchor alignment
-    let xOffset = -centerX
-    let yOffset = -centerY
-
-    // Adjust for specific alignments
-    if (silkscreenText.anchor_alignment?.includes("right")) {
-      xOffset = -textBounds.maxX
-    } else if (silkscreenText.anchor_alignment?.includes("left")) {
-      xOffset = -textBounds.minX
-    }
-
-    if (silkscreenText.anchor_alignment?.includes("top")) {
-      yOffset = -textBounds.maxY
-    } else if (silkscreenText.anchor_alignment?.includes("bottom")) {
-      yOffset = -textBounds.minY
-    }
-    // Bottom alignment is default (yOffset = 0)
+    const { textOutlines, xOffset, yOffset } = createSilkscreenTextGeoms(
+      silkscreenText as PcbSilkscreenText,
+    )
 
     for (let outline of textOutlines) {
       // Create path from outline points with alignment offset
