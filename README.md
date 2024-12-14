@@ -7,6 +7,8 @@ A 3D printed circuit board viewer for [tscircuit](https://github.com/tscircuit/t
 
 [Documentation](https://docs.tscircuit.com) &middot; [Website](https://tscircuit.com) &middot; [Twitter](https://x.com/tscircuit) &middot; [Discord](https://tscircuit.com/community/join-redirect) &middot; [Quickstart](https://docs.tscircuit.com/quickstart) &middot; [Online Playground](https://tscircuit.com/playground)
 
+![image](https://github.com/user-attachments/assets/107624fc-f3e5-4652-a90e-a5462afa6fbe)
+
 ## Features
 
 - 3D visualization of PCB layouts
