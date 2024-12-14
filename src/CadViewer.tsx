@@ -58,7 +58,9 @@ export const CadViewer = ({ soup, children }: Props) => {
       {cad_components.map((cad_component) => (
         <ThreeErrorBoundary
           key={cad_component.cad_component_id}
-          fallback={({ error }) => <Error3d error={error} />}
+          fallback={({ error }) => (
+            <Error3d cad_component={cad_component} error={error} />
+          )}
         >
           <AnyCadComponent
             key={cad_component.cad_component_id}
