@@ -1,6 +1,6 @@
 # @tscircuit/3d-viewer
 
-A 3D printed circuit board viewer for [tscircuit](https://github.com/tscircuit/tscircuit).
+A 3D printed circuit board viewer for [Circuit JSON](https://github.com/tscircuit/circuit-json) and [tscircuit](https://github.com/tscircuit/tscircuit)
 
 [![npm version](https://badge.fury.io/js/%40tscircuit%2F3d-viewer.svg)](https://badge.fury.io/js/%40tscircuit%2F3d-viewer)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
