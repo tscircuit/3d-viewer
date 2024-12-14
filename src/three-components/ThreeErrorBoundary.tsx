@@ -22,7 +22,7 @@ export class ThreeErrorBoundary extends React.Component<Props, State> {
 
   override render() {
     if (this.state.hasError && this.state.error) {
-      // return this.props.fallback({ error: this.state.error })
+      return this.props.fallback({ error: this.state.error })
     }
 
     return this.props.children
