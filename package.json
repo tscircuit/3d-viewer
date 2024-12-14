@@ -28,7 +28,7 @@
     "@types/three": "^0.165.0",
     "jscad-electronics": "^0.0.22",
     "jscad-fiber": "^0.0.74",
-    "jscad-planner": "^0.0.8",
+    "jscad-planner": "^0.0.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-use-gesture": "^9.1.3",
