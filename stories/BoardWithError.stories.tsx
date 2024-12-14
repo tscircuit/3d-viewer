@@ -65,7 +65,7 @@ export const BoardWithError: Story = {
         position: { x: 2, y: 3, z: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         model_jscad: {
-          type: "box",
+          type: "INVALID_JSCAD_OPERATION",
           size: [1, 1, 1],
         },
       },
