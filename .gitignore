@@ -31,3 +31,4 @@ dist-ssr
 .yalc
 yalc.lock
 package-lock.json
+storybook-static
