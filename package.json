@@ -13,6 +13,7 @@
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "vercel-build": "bun run build-storybook",
     "format": "biome format . --write",
     "format:check": "biome format ."
   },
@@ -52,6 +53,7 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "circuit-json": "^0.0.77",
+    "circuit-to-svg": "^0.0.91",
     "storybook": "^8.1.10",
     "strip-ansi": "^7.1.0",
     "tsup": "^8.1.0",
