@@ -24,7 +24,7 @@
     "@react-three/drei": "^9.115.0",
     "@react-three/fiber": "^8.16.8",
     "@tscircuit/core": "^0.0.229",
-    "@tscircuit/props": "^0.0.113",
+    "@tscircuit/props": "^0.0.114",
     "@tscircuit/react-fiber": "^1.1.29",
     "@tscircuit/soup": "^0.0.69",
     "@tscircuit/soup-util": "^0.0.26",
