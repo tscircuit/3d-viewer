@@ -20,7 +20,18 @@ export const JscadModel = ({
   isHovered: boolean
 }) => {
   const { threeGeom, material } = useMemo(() => {
-    const jscadObject = executeJscadOperations(jscad as any, jscadPlan)
+    let jscadObject
+    try {
+      jscadObject = executeJscadOperations(jscad as any, jscadPlan)
+    } catch (error) {
+      console.error("Error executing JSCAD operations:", error)
+      return { threeGeom: null, material: null }
+    }
+
+    if (!jscadObject || !jscad.hulls || !jscad.hulls.hull) {
+      console.warn("jscad3.hulls.hull is undefined")
+      return { threeGeom: null, material: null }
+    }
 
     const threeGeom = convertCSGToThreeGeom(jscadObject)
 
