@@ -1,7 +1,10 @@
-import { Grid, OrbitControls } from "@react-three/drei"
+import type * as React from "react"
+import type * as THREE from "three"
+import { useHelper, Grid, OrbitControls } from "@react-three/drei"
 import { Canvas, useFrame } from "@react-three/fiber"
 import packageJson from "../package.json"
 import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
+import { forwardRef, Suspense, useEffect, useRef } from "react"
 
 export const RotationTracker = () => {
   useFrame(({ camera }) => {
@@ -13,17 +16,18 @@ export const RotationTracker = () => {
 
 import { Html } from "@react-three/drei"
 
-export const CadViewerContainer = ({
-  children,
-  hoveredComponent,
-}: {
-  children: any
+interface Props {
   hoveredComponent: {
     cad_component_id: string
     name: string
     mousePosition: [number, number, number]
   } | null
-}) => {
+}
+
+export const CadViewerContainer = forwardRef<
+  THREE.Object3D,
+  React.PropsWithChildren<Props>
+>(({ children, hoveredComponent }, ref) => {
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
       <div
@@ -64,7 +68,7 @@ export const CadViewerContainer = ({
           cellSize={1}
           sectionSize={10}
         />
-        {children}
+        <object3D ref={ref}>{children}</object3D>
         {hoveredComponent && (
           <Html
             position={hoveredComponent.mousePosition}
@@ -100,4 +104,4 @@ export const CadViewerContainer = ({
       </div>
     </div>
   )
-}
+})
