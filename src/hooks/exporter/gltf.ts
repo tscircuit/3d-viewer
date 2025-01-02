@@ -23,6 +23,7 @@ export function useSaveGltfAs(
     link.download = name
     link.href = url
     link.dispatchEvent(new MouseEvent("click"))
+    URL.revokeObjectURL(url)
   }
 
   useEffect(
@@ -48,7 +49,6 @@ export function useExportGltfUrl(
   url: string | undefined,
   error: ErrorEvent | undefined,
 ] {
-  const exporter = useMemo(() => new GLTFExporter(), [])
   const parse = useParser(options)
   const [url, setUrl] = useState<string>()
   const [error, setError] = useState<ErrorEvent>()
