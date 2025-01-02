@@ -9,24 +9,34 @@ type Options = Omit<
 >
 
 export function useSaveGltfAs(
-  filename?: string,
-  options = {} as Options,
+  options = {} as Options & { filename?: string },
 ): [
-  ref3D: React.Ref<THREE.Object3D>,
-  saveAs: typeof filename extends string
-    ? (name?: string) => void
-    : (name: string) => void,
-  error: ErrorEvent | undefined,
+  ref3D: React.ForwardedRef<THREE.Object3D>,
+  saveAs: (filename?: string) => Promise<void>,
 ] {
-  const [ref, url, error] = useExportGltfUrl(options)
+  const parse = useParser(options)
   const link = useMemo(() => document.createElement("a"), [])
-  const saveAs = (name?: string) => {
-    link.download = name ?? filename!
-    link.href = url!
+  const saveAs = async (filename?: string) => {
+    const url = await parse(instance!)
+    link.download = filename ?? options.filename ?? ""
+    link.href = url
     link.dispatchEvent(new MouseEvent("click"))
   }
-  useEffect(() => () => link.remove(), [])
-  return [ref, saveAs, error]
+
+  useEffect(
+    () => () => {
+      link.remove()
+      instance = null
+    },
+    [],
+  )
+
+  let instance: THREE.Object3D | null
+  const ref = useCallback((obj3D: THREE.Object3D | null) => {
+    instance = obj3D!
+  }, [])
+
+  return [ref, saveAs]
 }
 
 export function useExportGltfUrl(
@@ -37,23 +47,35 @@ export function useExportGltfUrl(
   error: ErrorEvent | undefined,
 ] {
   const exporter = useMemo(() => new GLTFExporter(), [])
+  const parse = useParser(options)
   const [url, setUrl] = useState<string>()
   const [error, setError] = useState<ErrorEvent>()
-  const ref = useCallback((instance: THREE.Object3D | null) => {
-    exporter.parse(
-      instance!,
-      (gltf) => {
-        const type = options.binary ? "octet-stream" : "json"
-        const blob = new Blob(
-          [gltf instanceof ArrayBuffer ? gltf : JSON.stringify(gltf)],
-          { type: `application/${type}` },
-        )
-        setUrl(URL.createObjectURL(blob))
-      },
-      setError,
-      options,
-    )
-  }, [])
+  const ref = useCallback(
+    (instance: THREE.Object3D | null) =>
+      parse(instance!).then(setUrl).catch(setError),
+    [],
+  )
   useEffect(() => () => URL.revokeObjectURL(url!), [url])
   return [ref, url, error]
+}
+
+function useParser(options = {} as Options) {
+  const exporter = useMemo(() => new GLTFExporter(), [])
+  return (instance: THREE.Object3D) => {
+    const { promise, resolve, reject } = Promise.withResolvers<string>()
+    exporter.parse(
+      instance,
+      (gltf) => {
+        const type = options.binary ? "gltf-binary" : "gltf+json"
+        const blob = new Blob(
+          [gltf instanceof ArrayBuffer ? gltf : JSON.stringify(gltf)],
+          { type: `model/${type}` },
+        )
+        resolve(URL.createObjectURL(blob))
+      },
+      reject,
+      options,
+    )
+    return promise
+  }
 }
