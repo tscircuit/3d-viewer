@@ -23,7 +23,10 @@ interface Props {
   soup?: AnySoupElement[]
 }
 
-export const CadViewer = forwardRef<THREE.Object3D, React.PropsWithChildren<Props>>(({ soup, children }, ref) => {
+export const CadViewer = forwardRef<
+  THREE.Object3D,
+  React.PropsWithChildren<Props>
+>(({ soup, children }, ref) => {
   const [hoveredComponent, setHoveredComponent] = useState<null | {
     cad_component_id: string
     name: string

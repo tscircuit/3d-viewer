@@ -24,7 +24,10 @@ interface Props {
   } | null
 }
 
-export const CadViewerContainer = forwardRef<THREE.Object3D, React.PropsWithChildren<Props>>(({ children, hoveredComponent }, ref) => {
+export const CadViewerContainer = forwardRef<
+  THREE.Object3D,
+  React.PropsWithChildren<Props>
+>(({ children, hoveredComponent }, ref) => {
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
       <div
