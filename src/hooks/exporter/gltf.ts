@@ -1,7 +1,7 @@
 import type * as React from "react"
 import type * as THREE from "three"
 import { GLTFExporter, type GLTFExporterOptions } from "three-stdlib"
-import { useRef, useEffect, useState, useMemo } from "react"
+import { useEffect, useState, useMemo, useCallback } from "react"
 
 type Options = Omit<
   GLTFExporterOptions,
@@ -32,17 +32,16 @@ export function useSaveGltfAs(
 export function useExportGltfUrl(
   options = {} as Options,
 ): [
-  ref3D: React.Ref<THREE.Object3D>,
+  ref3D: React.ForwardedRef<THREE.Object3D>,
   url: string | undefined,
   error: ErrorEvent | undefined,
 ] {
-  const ref = useRef<THREE.Object3D>(null)
   const exporter = useMemo(() => new GLTFExporter(), [])
   const [url, setUrl] = useState<string>()
   const [error, setError] = useState<ErrorEvent>()
-  useEffect(() => {
+  const ref = useCallback((instance: THREE.Object3D | null) => {
     exporter.parse(
-      ref.current!,
+      instance!,
       (gltf) => {
         const type = options.binary ? "octet-stream" : "json"
         const blob = new Blob(
@@ -54,7 +53,7 @@ export function useExportGltfUrl(
       setError,
       options,
     )
-    return () => URL.revokeObjectURL(url!)
   }, [])
+  useEffect(() => () => URL.revokeObjectURL(url!), [url])
   return [ref, url, error]
 }
