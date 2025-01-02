@@ -17,8 +17,10 @@ export function useSaveGltfAs(
   const parse = useParser(options)
   const link = useMemo(() => document.createElement("a"), [])
   const saveAs = async (filename?: string) => {
+    const name = filename ?? options.filename ?? ""
+    if (options.binary == null) options.binary = name.endsWith(".glb")
     const url = await parse(instance!)
-    link.download = filename ?? options.filename ?? ""
+    link.download = name
     link.href = url
     link.dispatchEvent(new MouseEvent("click"))
   }

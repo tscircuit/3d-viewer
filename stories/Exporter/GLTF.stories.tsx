@@ -1,6 +1,4 @@
-import { useEffect } from "react"
 import { CadViewer, useExportGltfUrl, useSaveGltfAs } from "../../src/index.tsx"
-import { Circuit } from "@tscircuit/core"
 
 export default { title: "GLTF exporter" }
 
@@ -27,7 +25,7 @@ export const SaveButton = () => {
   const [ref, saveAs] = useSaveGltfAs()
 
   return <>
-    <button onClick={() => saveAs("pcb.gltf")}>save</button>
+    <button onClick={() => saveAs("pcb.glb")}>save</button>
 
     <CadViewer ref={ref}>
       <board width="10mm" height="40mm">
