@@ -26,7 +26,7 @@
     "@tscircuit/core": "^0.0.251",
     "@tscircuit/props": "^0.0.125",
     "@tscircuit/react-fiber": "^1.1.29",
-    "@tscircuit/soup": "^0.0.69",
+    "@tscircuit/soup": "^0.0.73",
     "@tscircuit/soup-util": "^0.0.26",
     "@types/three": "^0.165.0",
     "jscad-electronics": "^0.0.23",
