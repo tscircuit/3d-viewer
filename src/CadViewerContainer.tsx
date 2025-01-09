@@ -56,7 +56,7 @@ export const CadViewerContainer = forwardRef<
         camera={{ up: [0, 0, 1], position: [5, 5, 5] }}
       >
         <RotationTracker />
-        {!autoRotateDisabled && <OrbitControls autoRotate autoRotateSpeed={1} />}
+        <OrbitControls autoRotate={!autoRotateDisabled} autoRotateSpeed={1} />
         <ambientLight intensity={Math.PI / 2} />
         <pointLight
           position={[-10, -10, 10]}
@@ -81,9 +81,6 @@ export const CadViewerContainer = forwardRef<
               borderRadius: "3px",
               pointerEvents: "none",
               userSelect: "none",
-              WebkitUserSelect: "none",
-              MozUserSelect: "none",
-              msUserSelect: "none",
             }}
           >
             {hoveredComponent.name}
