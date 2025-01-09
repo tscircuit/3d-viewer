@@ -22,12 +22,13 @@ interface Props {
     name: string
     mousePosition: [number, number, number]
   } | null
+  autoRotateDisabled?: boolean
 }
 
 export const CadViewerContainer = forwardRef<
   THREE.Object3D,
   React.PropsWithChildren<Props>
->(({ children, hoveredComponent }, ref) => {
+>(({ children, hoveredComponent, autoRotateDisabled }, ref) => {
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
       <div
@@ -55,7 +56,7 @@ export const CadViewerContainer = forwardRef<
         camera={{ up: [0, 0, 1], position: [5, 5, 5] }}
       >
         <RotationTracker />
-        <OrbitControls autoRotate autoRotateSpeed={1} />
+        {!autoRotateDisabled && <OrbitControls autoRotate autoRotateSpeed={1} />}
         <ambientLight intensity={Math.PI / 2} />
         <pointLight
           position={[-10, -10, 10]}
