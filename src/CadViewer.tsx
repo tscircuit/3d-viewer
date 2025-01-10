@@ -21,12 +21,13 @@ import { Error3d } from "./three-components/Error3d"
 
 interface Props {
   soup?: AnySoupElement[]
+  autoRotateDisabled?: boolean
 }
 
 export const CadViewer = forwardRef<
   THREE.Object3D,
   React.PropsWithChildren<Props>
->(({ soup, children }, ref) => {
+>(({ soup, children, autoRotateDisabled }, ref) => {
   const [hoveredComponent, setHoveredComponent] = useState<null | {
     cad_component_id: string
     name: string
@@ -46,7 +47,7 @@ export const CadViewer = forwardRef<
   const cad_components = su(soup).cad_component.list()
 
   return (
-    <CadViewerContainer ref={ref} hoveredComponent={hoveredComponent}>
+    <CadViewerContainer ref={ref} hoveredComponent={hoveredComponent} autoRotateDisabled={autoRotateDisabled}>
       {boardStls.map(({ stlUrl, color }, index) => (
         <STLModel
           key={stlUrl}
@@ -65,7 +66,6 @@ export const CadViewer = forwardRef<
           <AnyCadComponent
             key={cad_component.cad_component_id}
             onHover={(e) => {
-              // TODO this should be done by onUnhover
               if (!e) {
                 setHoveredComponent(null)
               }
@@ -81,10 +81,7 @@ export const CadViewer = forwardRef<
               })
             }}
             cad_component={cad_component}
-            isHovered={
-              hoveredComponent?.cad_component_id ===
-              cad_component.cad_component_id
-            }
+            isHovered={hoveredComponent?.cad_component_id === cad_component.cad_component_id}
           />
         </ThreeErrorBoundary>
       ))}
