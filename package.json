@@ -1,6 +1,6 @@
 {
   "name": "@tscircuit/3d-viewer",
-  "version": "0.0.99",
+  "version": "0.0.100",
   "main": "./dist/index.js",
   "files": [
     "dist"
