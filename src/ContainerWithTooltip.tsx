@@ -1,26 +1,33 @@
-import { Html } from "@react-three/drei"
-import { GroupProps, useThree } from "@react-three/fiber"
+import type { GroupProps, ThreeEvent } from "@react-three/fiber"
 import { useRef, useCallback } from "react"
-import type { Vector3 } from "three"
 import * as THREE from "three"
+import type * as React from "react"
+import type { TooltipEvent } from "./events.ts"
 
 const Group = (props: GroupProps) => <group {...props} />
 
-const ContainerWithTooltip = ({
-  children,
-  isHovered,
-  onHover,
-  position,
-}: {
-  children: React.ReactNode
-  position?: Vector3 | [number, number, number]
-  onHover: (e: any) => void
+export interface RaycastEvent {
+  point: THREE.Vector3
+}
+
+export interface HoverProps<E extends RaycastEvent = RaycastEvent> {
+  onHover: (event: E) => void
+  onUnhover: (event: E) => void
   isHovered: boolean
-}) => {
+}
+
+export function ContainerWithTooltip({
+  children,
+  onHover,
+  onUnhover,
+  position,
+}: React.PropsWithChildren<
+  HoverProps & { position?: THREE.Vector3 | [number, number, number] }
+>) {
   const lastValidPointRef = useRef<THREE.Vector3 | null>(null)
 
   const handlePointerEnter = useCallback(
-    (e: any) => {
+    (e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation()
 
       try {
@@ -28,7 +35,7 @@ const ContainerWithTooltip = ({
         const point =
           e.point ||
           (e.intersections && e.intersections.length > 0
-            ? e.intersections[0].point
+            ? e.intersections[0]!.point
             : null) ||
           (position
             ? new THREE.Vector3(...(position as [number, number, number]))
@@ -36,25 +43,24 @@ const ContainerWithTooltip = ({
 
         if (point) {
           lastValidPointRef.current = point
-          onHover({ mousePosition: [point.x, point.y, point.z] })
-        } else {
-          onHover({})
+          onHover({ point })
         }
       } catch (error) {
         console.warn("Hover event error:", error)
-        onHover({})
       }
     },
     [position],
   )
 
   const handlePointerLeave = useCallback(
-    (e: any) => {
+    (e: ThreeEvent<PointerEvent>) => {
+      const point = lastValidPointRef.current
+      if (!point) return
+
       e.stopPropagation()
       lastValidPointRef.current = null
 
-      // TODO REPLACE WITH onUnhover
-      onHover(null)
+      onUnhover({ point })
     },
     [onHover],
   )
@@ -69,5 +75,3 @@ const ContainerWithTooltip = ({
     </Group>
   )
 }
-
-export default ContainerWithTooltip

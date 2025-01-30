@@ -30,7 +30,7 @@ export const CadViewer = forwardRef<
   const [hoveredComponent, setHoveredComponent] = useState<null | {
     cad_component_id: string
     name: string
-    mousePosition: [number, number, number]
+    point: THREE.Vector3
   }>(null)
   soup ??= useConvertChildrenToSoup(children, soup) as any
 
@@ -65,21 +65,16 @@ export const CadViewer = forwardRef<
           <AnyCadComponent
             key={cad_component.cad_component_id}
             onHover={(e) => {
-              // TODO this should be done by onUnhover
-              if (!e) {
-                setHoveredComponent(null)
-              }
-              if (!e.mousePosition) return
-
               const componentName = su(soup as any).source_component.getUsing({
                 source_component_id: cad_component.source_component_id,
               })?.name
               setHoveredComponent({
                 cad_component_id: cad_component.cad_component_id,
                 name: componentName ?? "<unknown>",
-                mousePosition: e.mousePosition,
+                point: e.point,
               })
             }}
+            onUnhover={() => setHoveredComponent(null)}
             cad_component={cad_component}
             isHovered={
               hoveredComponent?.cad_component_id ===

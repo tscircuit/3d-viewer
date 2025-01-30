@@ -20,7 +20,7 @@ interface Props {
   hoveredComponent: {
     cad_component_id: string
     name: string
-    mousePosition: [number, number, number]
+    point: THREE.Vector3
   } | null
 }
 
