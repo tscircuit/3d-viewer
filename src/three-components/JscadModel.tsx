@@ -4,21 +4,22 @@ import jscad from "@jscad/modeling"
 import { convertCSGToThreeGeom } from "jscad-fiber"
 import * as THREE from "three"
 import { useMemo } from "react"
-import ContainerWithTooltip from "src/ContainerWithTooltip"
+import { ContainerWithTooltip, type HoverProps } from "src/ContainerWithTooltip"
 
-export const JscadModel = ({
+export type * as tooltip from "src/ContainerWithTooltip"
+
+export function JscadModel({
   jscadPlan,
   positionOffset,
   rotationOffset,
   onHover,
+  onUnhover,
   isHovered,
-}: {
+}: HoverProps & {
   jscadPlan: JscadOperation
   positionOffset?: [number, number, number]
   rotationOffset?: [number, number, number]
-  onHover: (e: any) => void
-  isHovered: boolean
-}) => {
+}) {
   const { threeGeom, material } = useMemo(() => {
     const jscadObject = executeJscadOperations(jscad as any, jscadPlan)
 
@@ -47,6 +48,7 @@ export const JscadModel = ({
     <ContainerWithTooltip
       isHovered={isHovered}
       onHover={onHover}
+      onUnhover={onUnhover}
       position={positionOffset}
     >
       <mesh

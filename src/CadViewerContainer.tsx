@@ -20,7 +20,7 @@ interface Props {
   hoveredComponent: {
     cad_component_id: string
     name: string
-    mousePosition: [number, number, number]
+    point: THREE.Vector3
   } | null
 }
 
@@ -71,7 +71,7 @@ export const CadViewerContainer = forwardRef<
         <object3D ref={ref}>{children}</object3D>
         {hoveredComponent && (
           <Html
-            position={hoveredComponent.mousePosition}
+            position={hoveredComponent.point}
             style={{
               fontFamily: "sans-serif",
               transform: "translate3d(50%, 50%, 0)",

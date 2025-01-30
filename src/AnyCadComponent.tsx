@@ -1,27 +1,18 @@
-import type { AnyCircuitElement, CadComponent } from "circuit-json"
-import { useConvertChildrenToSoup } from "./hooks/use-convert-children-to-soup"
-import { su } from "@tscircuit/soup-util"
-import { useMemo, useState } from "react"
-import { createBoardGeomFromSoup } from "./soup-to-3d"
-import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
-import { STLModel } from "./three-components/STLModel"
-import { CadViewerContainer } from "./CadViewerContainer"
+import type { CadComponent } from "circuit-json"
+import type { HoverProps } from "./ContainerWithTooltip"
 import { MixedStlModel } from "./three-components/MixedStlModel"
-import { Euler } from "three"
 import { JscadModel } from "./three-components/JscadModel"
-import { Footprinter3d } from "jscad-electronics"
 import { FootprinterModel } from "./three-components/FootprinterModel"
 import { tuple } from "./utils/tuple"
 
-export const AnyCadComponent = ({
+export type * as tooltip from "./ContainerWithTooltip"
+
+export function AnyCadComponent({
   cad_component,
   onHover = () => {},
+  onUnhover = () => {},
   isHovered = false,
-}: {
-  cad_component: CadComponent
-  onHover?: (e: any) => void
-  isHovered?: boolean
-}) => {
+}: HoverProps & { cad_component: CadComponent }) {
   const url = cad_component.model_obj_url ?? cad_component.model_stl_url
   const rotationOffset = cad_component.rotation
     ? tuple(
@@ -47,6 +38,7 @@ export const AnyCadComponent = ({
         }
         rotation={rotationOffset}
         onHover={onHover}
+        onUnhover={onUnhover}
         isHovered={isHovered}
       />
     )
@@ -59,6 +51,7 @@ export const AnyCadComponent = ({
         jscadPlan={cad_component.model_jscad as any}
         rotationOffset={rotationOffset}
         onHover={onHover}
+        onUnhover={onUnhover}
         isHovered={isHovered}
       />
     )
@@ -79,6 +72,7 @@ export const AnyCadComponent = ({
         rotationOffset={rotationOffset}
         footprint={cad_component.footprinter_string}
         onHover={onHover}
+        onUnhover={onUnhover}
         isHovered={isHovered}
       />
     )

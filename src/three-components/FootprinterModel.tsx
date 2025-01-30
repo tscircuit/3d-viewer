@@ -2,23 +2,24 @@ import { Footprinter3d } from "jscad-electronics"
 import { createJSCADRenderer } from "jscad-fiber"
 import { jscadPlanner } from "jscad-planner"
 import { useMemo } from "react"
-import { JscadModel } from "./JscadModel"
+import { JscadModel, type tooltip } from "./JscadModel"
+
+export type * as tooltip from "./JscadModel"
 
 const { createJSCADRoot } = createJSCADRenderer(jscadPlanner as any)
 
-export const FootprinterModel = ({
+export function FootprinterModel({
   positionOffset,
   footprint,
   rotationOffset,
   onHover,
+  onUnhover,
   isHovered,
-}: {
+}: tooltip.HoverProps & {
   positionOffset: any
   footprint: string
   rotationOffset?: [number, number, number]
-  onHover: (e: any) => void
-  isHovered: boolean
-}) => {
+}) {
   const jscadOperations = useMemo(() => {
     if (!footprint) return null
     const jscadOperations: any[] = []
@@ -39,6 +40,7 @@ export const FootprinterModel = ({
           rotationOffset={rotationOffset}
           jscadPlan={operation}
           onHover={onHover}
+          onUnhover={onUnhover}
           isHovered={isHovered}
         />
       ))}
