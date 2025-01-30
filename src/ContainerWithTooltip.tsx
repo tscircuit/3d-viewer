@@ -2,7 +2,6 @@ import type { GroupProps, ThreeEvent } from "@react-three/fiber"
 import { useRef, useCallback } from "react"
 import * as THREE from "three"
 import type * as React from "react"
-import type { TooltipEvent } from "./events.ts"
 
 const Group = (props: GroupProps) => <group {...props} />
 
