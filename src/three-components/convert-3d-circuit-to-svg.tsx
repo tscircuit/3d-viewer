@@ -19,6 +19,18 @@ interface CircuitToSvgOptions {
   backgroundColor?: string
   padding?: number
   zoom?: number
+  camera?: {
+    position: {
+      x: number
+      y: number
+      z: number
+    }
+    lookAt?: {
+      x: number
+      y: number
+      z: number
+    }
+  }
 }
 
 // Setup JSDOM and globals needed for THREE.js
@@ -96,14 +108,13 @@ async function loadModel(url: string): Promise<THREE.Object3D | null> {
   }
 }
 
-export async function circuitToSvg(
+export async function convert3dCircuitToSvg(
   circuitJson: AnySoupElement[],
   options: CircuitToSvgOptions = {}
 ): Promise<string> {
   const {
     width = 800,
     height = 600,
-    viewAngle = "top",
     backgroundColor = "#ffffff",
     padding = 20,
     zoom = 1.5
@@ -114,22 +125,24 @@ export async function circuitToSvg(
     const scene = new THREE.Scene()
     const renderer = new SVGRenderer()
     renderer.setSize(width, height)
-    renderer.setClearColor(backgroundColor)
+    renderer.setClearColor(new THREE.Color(backgroundColor), 1)
 
-    // Modify camera setup for better component visibility
+    // Setup camera for top view
     const camera = new THREE.OrthographicCamera(
       width / -2 / zoom,
       width / 2 / zoom,
       height / 2 / zoom,
       height / -2 / zoom,
-      -1000,  // Changed near plane to negative to see below board
+      -1000,
       1000
     )
-    camera.position.set(0, 0, 100)  // Move camera further out
-    camera.up.set(0, 0, 1)
+
+    // Position camera directly above
+    camera.position.set(0, 0, 100)
+    camera.up.set(0, 1, 0)
     camera.lookAt(0, 0, 0)
 
-    // Add lighting (matching CadViewer's setup)
+    // Add lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, Math.PI / 2)
     scene.add(ambientLight)
     const pointLight = new THREE.PointLight(0xffffff, Math.PI / 4)
@@ -265,9 +278,9 @@ export async function circuitToSvg(
           
           const material = new THREE.MeshStandardMaterial({
             color: new THREE.Color(
-              geom.color[0],
-              geom.color[1],
-              geom.color[2]
+              geom.color?.[0] ?? 0,
+              geom.color?.[1] ?? 0,
+              geom.color?.[2] ?? 0
             ),
             metalness: 0.1,
             roughness: 0.8,
