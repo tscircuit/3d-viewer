@@ -15,7 +15,7 @@ test("convert 3d view to svg of a single resistor component", async () => {
     backgroundColor: "#ffffff",
     padding: 20,
     zoom: 50,
-    viewAngle: "isometric",
+    viewAngle: "isometric" as const,
     camera: {
       position: {
         x: 50,
