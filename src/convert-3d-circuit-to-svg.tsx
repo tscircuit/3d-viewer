@@ -111,7 +111,6 @@ export async function convert3dCircuitToSvg(
   circuitJson: AnySoupElement[],
   options: CircuitToSvgOptions = {},
 ): Promise<string> {
-
   const dom = new JSDOM()
   applyJsdomShim(dom)
 
@@ -144,20 +143,20 @@ export async function convert3dCircuitToSvg(
     camera.position.set(
       options.camera.position.x,
       options.camera.position.y,
-      options.camera.position.z
+      options.camera.position.z,
     )
   } else {
     camera.position.set(0, 0, 100)
   }
 
   camera.up.set(0, 1, 0)
-  
+
   // Use lookAt from options if provided
   if (options.camera?.lookAt) {
     camera.lookAt(
       options.camera.lookAt.x,
       options.camera.lookAt.y,
-      options.camera.lookAt.z
+      options.camera.lookAt.z,
     )
   } else {
     camera.lookAt(0, 0, 0)

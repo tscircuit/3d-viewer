@@ -13,9 +13,9 @@ test("convert 3d view to svg of a single resistor component isometric view", asy
     viewAngle: "isometric" as const,
     camera: {
       position: {
-        x: 57.735,  // 100 * cos(45°) * sin(35.264°)
-        y: 57.735,  // 100 * sin(45°) * sin(35.264°)
-        z: 81.65,   // 100 * cos(35.264°)
+        x: 57.735, // 100 * cos(45°) * sin(35.264°)
+        y: 57.735, // 100 * sin(45°) * sin(35.264°)
+        z: 81.65, // 100 * cos(35.264°)
       },
       lookAt: {
         x: 0,
