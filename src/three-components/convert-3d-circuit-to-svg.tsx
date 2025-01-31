@@ -4,14 +4,13 @@ import { su } from "@tscircuit/soup-util"
 import { Footprinter3d } from "jscad-electronics"
 import { convertCSGToThreeGeom, createJSCADRenderer } from "jscad-fiber"
 import { executeJscadOperations, jscadPlanner } from "jscad-planner"
-import { JSDOM } from "jsdom"
 import * as THREE from "three"
 import { BufferGeometry, Float32BufferAttribute } from "three"
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js"
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js"
 import { SVGRenderer } from "three/examples/jsm/renderers/SVGRenderer.js"
 import { createBoardGeomFromSoup } from "../soup-to-3d"
-
+import type { JSDOM } from "jsdom"
 interface CircuitToSvgOptions {
   width?: number
   height?: number
@@ -32,14 +31,6 @@ interface CircuitToSvgOptions {
     }
   }
 }
-
-// Setup JSDOM and globals needed for THREE.js
-const dom = new JSDOM()
-global.document = dom.window.document
-global.window = dom.window as any
-global.navigator = dom.window.navigator
-global.Element = dom.window.Element
-global.HTMLElement = dom.window.HTMLElement
 
 const { createJSCADRoot } = createJSCADRenderer(jscadPlanner as any)
 
@@ -110,7 +101,8 @@ async function loadModel(url: string): Promise<THREE.Object3D | null> {
 
 export async function convert3dCircuitToSvg(
   circuitJson: AnySoupElement[],
-  options: CircuitToSvgOptions = {}
+  dom: JSDOM,
+  options: CircuitToSvgOptions = {},
 ): Promise<string> {
   const {
     width = 800,

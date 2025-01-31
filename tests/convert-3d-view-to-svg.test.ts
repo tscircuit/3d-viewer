@@ -2,8 +2,14 @@ import type { AnySoupElement } from "@tscircuit/soup"
 import { expect, test } from "bun:test"
 import { convert3dCircuitToSvg } from "../src/three-components/convert-3d-circuit-to-svg.tsx"
 import circuitJson from "./assets/circuit.json"
+import { applyJsdomShim } from "src/utils/jsdom-shim.ts"
+import { JSDOM } from "jsdom"
 
 test("convert 3d view to svg of a single resistor component", async () => {
+
+  const dom = new JSDOM()
+  applyJsdomShim(dom)
+
   const options = {
     width: 800,
     height: 600,
@@ -25,7 +31,7 @@ test("convert 3d view to svg of a single resistor component", async () => {
     }
   }
 
-  const svgString = await convert3dCircuitToSvg(circuitJson as AnySoupElement[], options)
+  const svgString = await convert3dCircuitToSvg(circuitJson as AnySoupElement[], dom, options)
 
   expect(svgString).toMatchSvgSnapshot(import.meta.path)
 })
