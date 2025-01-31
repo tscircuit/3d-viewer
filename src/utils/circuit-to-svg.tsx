@@ -1,11 +1,14 @@
+import jscad from "@jscad/modeling"
 import type { AnySoupElement } from "@tscircuit/soup"
 import { su } from "@tscircuit/soup-util"
 import { Footprinter3d } from "jscad-electronics"
-import { createJSCADRenderer } from "jscad-fiber"
-import { jscadPlanner } from "jscad-planner"
+import { convertCSGToThreeGeom, createJSCADRenderer } from "jscad-fiber"
+import { executeJscadOperations, jscadPlanner } from "jscad-planner"
 import { JSDOM } from "jsdom"
 import * as THREE from "three"
 import { BufferGeometry, Float32BufferAttribute } from "three"
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js"
+import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js"
 import { SVGRenderer } from "three/examples/jsm/renderers/SVGRenderer.js"
 import { createBoardGeomFromSoup } from "../soup-to-3d"
 
@@ -71,6 +74,28 @@ function createGeometryFromPolygons(polygons: any[]) {
   }
 }
 
+async function loadModel(url: string): Promise<THREE.Object3D | null> {
+  try {
+    if (url.endsWith('.stl')) {
+      const loader = new STLLoader()
+      const geometry = await loader.loadAsync(url)
+      const material = new THREE.MeshStandardMaterial({
+        color: 0x888888,
+        metalness: 0.5,
+        roughness: 0.5
+      })
+      return new THREE.Mesh(geometry, material)
+    } else if (url.endsWith('.obj')) {
+      const loader = new OBJLoader()
+      return await loader.loadAsync(url)
+    }
+    return null
+  } catch (error) {
+    console.error('Failed to load model:', error)
+    return null
+  }
+}
+
 export async function circuitToSvg(
   circuitJson: AnySoupElement[],
   options: CircuitToSvgOptions = {}
@@ -91,16 +116,16 @@ export async function circuitToSvg(
     renderer.setSize(width, height)
     renderer.setClearColor(backgroundColor)
 
-    // Setup camera for top view (matching CadViewer's perspective)
+    // Modify camera setup for better component visibility
     const camera = new THREE.OrthographicCamera(
-      width / -2 / zoom,   // Left
-      width / 2 / zoom,    // Right
-      height / 2 / zoom,   // Top
-      height / -2 / zoom,  // Bottom
-      0.1,                 // Near
-      1000                 // Far
+      width / -2 / zoom,
+      width / 2 / zoom,
+      height / 2 / zoom,
+      height / -2 / zoom,
+      -1000,  // Changed near plane to negative to see below board
+      1000
     )
-    camera.position.set(0, 0, 50)
+    camera.position.set(0, 0, 100)  // Move camera further out
     camera.up.set(0, 0, 1)
     camera.lookAt(0, 0, 0)
 
@@ -111,7 +136,127 @@ export async function circuitToSvg(
     pointLight.position.set(-10, -10, 10)
     scene.add(pointLight)
 
-    // Add board geometry with error handling
+    // Add components
+    const components = su(circuitJson).cad_component.list()
+    for (const component of components) {
+      try {
+        // Handle STL/OBJ models first
+        const url = component.model_obj_url ?? component.model_stl_url
+        if (url) {
+          const model = await loadModel(url)
+          if (model) {
+            if (component.position) {
+              model.position.set(
+                component.position.x ?? 0,
+                component.position.y ?? 0,
+                (component.position.z ?? 0) + 0.5
+              )
+            }
+            if (component.rotation) {
+              model.rotation.set(
+                THREE.MathUtils.degToRad(component.rotation.x ?? 0),
+                THREE.MathUtils.degToRad(component.rotation.y ?? 0),
+                THREE.MathUtils.degToRad(component.rotation.z ?? 0)
+              )
+            }
+            scene.add(model)
+            continue
+          }
+        }
+
+        // Handle JSCAD models
+        if (component.model_jscad) {
+          const jscadObject = executeJscadOperations(jscad as any, component.model_jscad)
+          const threeGeom = convertCSGToThreeGeom(jscadObject)
+          const material = new THREE.MeshStandardMaterial({
+            color: 0x888888,
+            metalness: 0.5,
+            roughness: 0.5,
+            side: THREE.DoubleSide
+          })
+          const mesh = new THREE.Mesh(threeGeom, material)
+          
+          if (component.position) {
+            mesh.position.set(
+              component.position.x ?? 0,
+              component.position.y ?? 0,
+              (component.position.z ?? 0) + 0.5
+            )
+          }
+          if (component.rotation) {
+            mesh.rotation.set(
+              THREE.MathUtils.degToRad(component.rotation.x ?? 0),
+              THREE.MathUtils.degToRad(component.rotation.y ?? 0),
+              THREE.MathUtils.degToRad(component.rotation.z ?? 0)
+            )
+          }
+          scene.add(mesh)
+          continue
+        }
+
+        // Handle footprints
+        if (component.footprinter_string) {
+          try {
+            const jscadOperations: any[] = []
+            const root = createJSCADRoot(jscadOperations)
+            root.render(<Footprinter3d footprint={component.footprinter_string} />)
+
+            // Process each operation from the footprinter
+            for (const operation of jscadOperations) {
+              const jscadObject = executeJscadOperations(jscad as any, operation)
+              const threeGeom = convertCSGToThreeGeom(jscadObject)
+              const material = new THREE.MeshStandardMaterial({
+                color: 0x444444,  // Dark gray like in CadViewer
+                metalness: 0.2,
+                roughness: 0.8,
+                side: THREE.DoubleSide
+              })
+              const mesh = new THREE.Mesh(threeGeom, material)
+              
+              if (component.position) {
+                mesh.position.set(
+                  component.position.x ?? 0,
+                  component.position.y ?? 0,
+                  (component.position.z ?? 0) + 0.5
+                )
+              }
+              if (component.rotation) {
+                mesh.rotation.set(
+                  THREE.MathUtils.degToRad(component.rotation.x ?? 0),
+                  THREE.MathUtils.degToRad(component.rotation.y ?? 0),
+                  THREE.MathUtils.degToRad(component.rotation.z ?? 0)
+                )
+              }
+              scene.add(mesh)
+            }
+          } catch (error) {
+            console.error('Failed to create footprint geometry:', error)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to create component:', error)
+        
+        // Add fallback box for failed components (like MixedStlModel does)
+        const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5)
+        const material = new THREE.MeshStandardMaterial({
+          color: 0xff0000,
+          transparent: true,
+          opacity: 0.25
+        })
+        const mesh = new THREE.Mesh(geometry, material)
+        
+        if (component.position) {
+          mesh.position.set(
+            component.position.x ?? 0,
+            component.position.y ?? 0,
+            (component.position.z ?? 0) + 0.5
+          )
+        }
+        scene.add(mesh)
+      }
+    }
+
+    // Add board geometry after components
     const boardGeom = createBoardGeomFromSoup(circuitJson)
     if (boardGeom) {
       for (const geom of boardGeom) {
@@ -126,68 +271,15 @@ export async function circuitToSvg(
             ),
             metalness: 0.1,
             roughness: 0.8,
-            opacity: 0.95,
+            opacity: 0.9,  // Slightly more transparent
             transparent: true,
             side: THREE.DoubleSide
           })
 
           const mesh = new THREE.Mesh(geometry, material)
-          
-          // Apply transforms if present
-          if (geom.transforms) {
-            const matrix = new THREE.Matrix4()
-            matrix.fromArray(geom.transforms)
-            mesh.applyMatrix4(matrix)
-          }
-          
           scene.add(mesh)
         } catch (error) {
           console.error('Failed to create board geometry:', error)
-        }
-      }
-    }
-
-    // Add components using same approach as FootprinterModel
-    const components = su(circuitJson).cad_component.list()
-    for (const component of components) {
-      if (component.footprinter_string) {
-        const jscadOperations: any[] = []
-        const root = createJSCADRoot(jscadOperations)
-        root.render(<Footprinter3d footprint={component.footprinter_string} />)
-
-        for (const operation of jscadOperations) {
-          try {
-            const geometry = createGeometryFromPolygons(operation.polygons)
-            const material = new THREE.MeshStandardMaterial({
-              color: 0x888888,
-              metalness: 0.5,
-              roughness: 0.5,
-              side: THREE.DoubleSide
-            })
-
-            const mesh = new THREE.Mesh(geometry, material)
-            
-            // Position and rotate component
-            if (component.position) {
-              mesh.position.set(
-                component.position.x,
-                component.position.y,
-                component.position.z
-              )
-            }
-            
-            if (component.rotation) {
-              mesh.rotation.set(
-                THREE.MathUtils.degToRad(component.rotation.x),
-                THREE.MathUtils.degToRad(component.rotation.y),
-                THREE.MathUtils.degToRad(component.rotation.z)
-              )
-            }
-            
-            scene.add(mesh)
-          } catch (error) {
-            console.error('Failed to create component geometry:', error)
-          }
         }
       }
     }
