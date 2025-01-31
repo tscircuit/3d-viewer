@@ -4,13 +4,7 @@
     "source_port_id": "source_port_0",
     "name": "pin1",
     "pin_number": 1,
-    "port_hints": [
-      "anode",
-      "pos",
-      "left",
-      "pin1",
-      "1"
-    ],
+    "port_hints": ["anode", "pos", "left", "pin1", "1"],
     "source_component_id": "source_component_0"
   },
   {
@@ -18,13 +12,7 @@
     "source_port_id": "source_port_1",
     "name": "pin2",
     "pin_number": 2,
-    "port_hints": [
-      "cathode",
-      "neg",
-      "right",
-      "pin2",
-      "2"
-    ],
+    "port_hints": ["cathode", "neg", "right", "pin2", "2"],
     "source_component_id": "source_component_0"
   },
   {
@@ -123,10 +111,7 @@
     "shape": "rect",
     "width": 0.6000000000000001,
     "height": 0.6000000000000001,
-    "port_hints": [
-      "1",
-      "left"
-    ],
+    "port_hints": ["1", "left"],
     "x": -0.5,
     "y": 0,
     "subcircuit_id": "subcircuit_source_group_0"
@@ -153,10 +138,7 @@
     "shape": "rect",
     "width": 0.6000000000000001,
     "height": 0.6000000000000001,
-    "port_hints": [
-      "2",
-      "right"
-    ],
+    "port_hints": ["2", "right"],
     "x": 0.5,
     "y": 0,
     "subcircuit_id": "subcircuit_source_group_0"
@@ -178,9 +160,7 @@
     "type": "pcb_port",
     "pcb_port_id": "pcb_port_0",
     "pcb_component_id": "pcb_component_0",
-    "layers": [
-      "top"
-    ],
+    "layers": ["top"],
     "subcircuit_id": "subcircuit_source_group_0",
     "x": -0.5,
     "y": 0,
@@ -190,9 +170,7 @@
     "type": "pcb_port",
     "pcb_port_id": "pcb_port_1",
     "pcb_component_id": "pcb_component_0",
-    "layers": [
-      "top"
-    ],
+    "layers": ["top"],
     "subcircuit_id": "subcircuit_source_group_0",
     "x": 0.5,
     "y": 0,

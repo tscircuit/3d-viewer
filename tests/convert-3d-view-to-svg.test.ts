@@ -6,7 +6,6 @@ import { applyJsdomShim } from "src/utils/jsdom-shim.ts"
 import { JSDOM } from "jsdom"
 
 test("convert 3d view to svg of a single resistor component", async () => {
-
   const dom = new JSDOM()
   applyJsdomShim(dom)
 
@@ -21,17 +20,21 @@ test("convert 3d view to svg of a single resistor component", async () => {
       position: {
         x: 50,
         y: 50,
-        z: 100
+        z: 100,
       },
       lookAt: {
         x: 0,
         y: 0,
-        z: 0
-      }
-    }
+        z: 0,
+      },
+    },
   }
 
-  const svgString = await convert3dCircuitToSvg(circuitJson as AnySoupElement[], dom, options)
+  const svgString = await convert3dCircuitToSvg(
+    circuitJson as AnySoupElement[],
+    dom,
+    options,
+  )
 
   expect(svgString).toMatchSvgSnapshot(import.meta.path)
 })
