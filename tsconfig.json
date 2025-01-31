@@ -22,7 +22,8 @@
     "jsx": "react-jsx",
     "noEmit": true,
     // Include the DOM types
-    "lib": ["es2024", "dom", "dom.iterable"]
+    "lib": ["es2024", "dom", "dom.iterable"],
+    "types": ["bun-types"]
   },
   // Include the necessary files for your project
   "include": ["**/*.ts", "**/*.tsx"],
