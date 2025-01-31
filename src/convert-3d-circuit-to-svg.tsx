@@ -4,13 +4,15 @@ import { su } from "@tscircuit/soup-util"
 import { Footprinter3d } from "jscad-electronics"
 import { convertCSGToThreeGeom, createJSCADRenderer } from "jscad-fiber"
 import { executeJscadOperations, jscadPlanner } from "jscad-planner"
-import type { JSDOM } from "jsdom"
+import { JSDOM } from "jsdom"
 import * as THREE from "three"
 import { BufferGeometry, Float32BufferAttribute } from "three"
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js"
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js"
 import { SVGRenderer } from "three/examples/jsm/renderers/SVGRenderer.js"
-import { createBoardGeomFromSoup } from "../soup-to-3d"
+import { createBoardGeomFromSoup } from "./soup-to-3d"
+import { applyJsdomShim } from "./utils/jsdom-shim"
+
 interface CircuitToSvgOptions {
   width?: number
   height?: number
@@ -107,9 +109,12 @@ async function loadModel(url: string): Promise<THREE.Object3D | null> {
 
 export async function convert3dCircuitToSvg(
   circuitJson: AnySoupElement[],
-  dom: JSDOM,
   options: CircuitToSvgOptions = {},
 ): Promise<string> {
+
+  const dom = new JSDOM()
+  applyJsdomShim(dom)
+
   const {
     width = 800,
     height = 600,
