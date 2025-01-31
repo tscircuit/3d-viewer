@@ -14,7 +14,7 @@
   "scripts": {
     "start": "bun run storybook",
     "dev:old": "bunx --bun vite",
-    "build": "tsup ./src/index.tsx ./src/three-components/convert-3d-circuit-to-svg.tsx --dts --sourcemap",
+    "build": "tsup ./src/index.tsx --dts --sourcemap",
     "prepublish": "npm run build",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
