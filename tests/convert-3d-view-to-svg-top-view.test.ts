@@ -1,22 +1,20 @@
 import type { AnySoupElement } from "@tscircuit/soup"
 import { expect, test } from "bun:test"
-import { JSDOM } from "jsdom"
-import { applyJsdomShim } from "src/utils/jsdom-shim.ts"
 import { convert3dCircuitToSvg } from "../src/convert-3d-circuit-to-svg.tsx"
 import circuitJson from "./assets/circuit.json"
 
-test("convert 3d view to svg of a single resistor component", async () => {
+test("convert 3d view to svg of a single resistor component top view", async () => {
   const options = {
     width: 800,
     height: 600,
     backgroundColor: "#ffffff",
     padding: 20,
     zoom: 50,
-    viewAngle: "isometric" as const,
+    viewAngle: "top" as const,
     camera: {
       position: {
-        x: 50,
-        y: 50,
+        x: 0,
+        y: 0,
         z: 100,
       },
       lookAt: {

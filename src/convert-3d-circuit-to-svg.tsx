@@ -129,7 +129,7 @@ export async function convert3dCircuitToSvg(
   renderer.setSize(width, height)
   renderer.setClearColor(new THREE.Color(backgroundColor), 1)
 
-  // Setup camera for top view
+  // Setup camera based on options
   const camera = new THREE.OrthographicCamera(
     width / -2 / zoom,
     width / 2 / zoom,
@@ -139,10 +139,29 @@ export async function convert3dCircuitToSvg(
     1000,
   )
 
-  // Position camera directly above
-  camera.position.set(0, 0, 100)
+  // Use camera position from options if provided
+  if (options.camera?.position) {
+    camera.position.set(
+      options.camera.position.x,
+      options.camera.position.y,
+      options.camera.position.z
+    )
+  } else {
+    camera.position.set(0, 0, 100)
+  }
+
   camera.up.set(0, 1, 0)
-  camera.lookAt(0, 0, 0)
+  
+  // Use lookAt from options if provided
+  if (options.camera?.lookAt) {
+    camera.lookAt(
+      options.camera.lookAt.x,
+      options.camera.lookAt.y,
+      options.camera.lookAt.z
+    )
+  } else {
+    camera.lookAt(0, 0, 0)
+  }
 
   // Add lighting
   const ambientLight = new THREE.AmbientLight(0xffffff, Math.PI / 2)
