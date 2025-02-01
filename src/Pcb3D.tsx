@@ -2,7 +2,8 @@ import type * as React from "react"
 import type { AnySoupElement } from "@tscircuit/soup"
 import { useMemo } from "react"
 import { su, type SoupUtilObjects } from "@tscircuit/soup-util"
-import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
+import { hash } from "./utils/buffer.ts"
+import { geom2stl } from "./geoms/converter.ts"
 import { createBoardGeomFromSoup } from "./soup-to-3d"
 import { useConvertChildrenToSoup } from "./hooks/use-convert-children-to-soup"
 import { STLModel } from "./three-components/STLModel"
@@ -31,21 +32,23 @@ export function Pcb3D({
 
   if (!soup) return null
 
-  const boardGeom = useMemo(() => {
-    if (!soup.some((e) => e.type === "pcb_board")) return null
-    return createBoardGeomFromSoup(soup)
+  const boardStls = useMemo(() => {
+    if (!soup.some((e) => e.type === "pcb_board")) return []
+    // TODO: dedupe works cause by createBoardGeomFromSoup() call su(soup)
+    return createBoardGeomFromSoup(soup).map((g) => ({
+      stlData: geom2stl(g),
+      color: g.color,
+    }))
   }, [soup])
-
-  const { stls: boardStls } = useStlsFromGeom(boardGeom)
 
   const soupUtil = su(soup)
   const cad_components = soupUtil.cad_component.list()
 
   return [
-    ...boardStls.map(({ stlUrl, color }, index) => (
+    ...boardStls.map(({ stlData, color }, index) => (
       <STLModel
-        key={stlUrl}
-        stlUrl={stlUrl}
+        key={hash(stlData)}
+        stlData={stlData}
         color={color}
         opacity={index === 0 ? 0.95 : 1}
       />
