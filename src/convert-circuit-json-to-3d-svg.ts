@@ -36,8 +36,13 @@ export async function convertCircuitJsonTo3dSvg(
   circuitJson: AnySoupElement[],
   options: CircuitToSvgOptions = {},
 ): Promise<string> {
-  const dom = new JSDOM()
-  applyJsdomShim(dom)
+  const isNode = typeof window === "undefined"
+  let dom: JSDOM | undefined
+
+  if (isNode) {
+    dom = new JSDOM()
+    applyJsdomShim(dom)
+  }
 
   const {
     width = 800,
@@ -61,16 +66,6 @@ export async function convertCircuitJsonTo3dSvg(
   const frustumSize = 100
   const halfFrustumSize = frustumSize / 2 / zoom
 
-  log("Three.js version:", THREE.REVISION)
-  log("Camera prototype checks:", {
-    directInstanceOf: camera instanceof THREE.Camera,
-    directInstanceOfOrthographic: camera instanceof THREE.OrthographicCamera,
-    constructorName: camera.constructor.name,
-    cameraPrototype: Object.getPrototypeOf(camera),
-    threeCamera: THREE.Camera,
-    threeOrthographicCamera: THREE.OrthographicCamera,
-  })
-
   // Set camera properties
   camera.left = -halfFrustumSize * aspect
   camera.right = halfFrustumSize * aspect
@@ -78,15 +73,6 @@ export async function convertCircuitJsonTo3dSvg(
   camera.bottom = -halfFrustumSize
   camera.near = -1000
   camera.far = 1000
-
-  log("Camera frustum:", {
-    left: camera.left,
-    right: camera.right,
-    top: camera.top,
-    bottom: camera.bottom,
-    near: camera.near,
-    far: camera.far,
-  })
 
   // Set camera position
   const position = options.camera?.position ?? { x: 0, y: 0, z: 100 }
@@ -154,36 +140,15 @@ export async function convertCircuitJsonTo3dSvg(
     const scale = (1.0 - padding / 100) / maxDim
     scene.scale.multiplyScalar(scale * 100)
   }
-
-  log("Three.js version:", THREE.REVISION)
-  log("Camera prototype checks:", {
-    directInstanceOf: camera instanceof THREE.Camera,
-    directInstanceOfOrthographic: camera instanceof THREE.OrthographicCamera,
-    constructorName: camera.constructor.name,
-    cameraPrototype: Object.getPrototypeOf(camera),
-    threeCamera: THREE.Camera,
-    threeOrthographicCamera: THREE.OrthographicCamera,
-  })
-
   // Before rendering, ensure camera is updated
   camera.updateProjectionMatrix()
-
-  log("Renderer prototype checks:", {
-    rendererThreeVersion: THREE.REVISION,
-    cameraConstructor: camera.constructor,
-    rendererPrototype: Object.getPrototypeOf(renderer).constructor.name,
-    rendererThreeImport: renderer.constructor.toString(),
-    cameraThreeImport: camera.constructor.toString(),
-    svgRendererPath: require.resolve(
-      "three/examples/jsm/renderers/SVGRenderer.js",
-    ),
-    threePath: require.resolve("three"),
-  })
 
   // Render and return SVG with additional checks
   renderer.render(scene, camera)
 
-  const serialized = new dom.window.XMLSerializer()
+  const serializer =
+    isNode && dom ? new dom.window.XMLSerializer() : new XMLSerializer()
+  const serialized = serializer
     .serializeToString(renderer.domElement)
     .replace(
       /xmlns="[^"]*"\s+xmlns="[^"]*"/,
