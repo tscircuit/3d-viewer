@@ -180,10 +180,15 @@ export async function convertCircuitJsonTo3dSvg(
     threePath: require.resolve("three"),
   })
 
-  return new dom.window.XMLSerializer()
+  // Render and return SVG with additional checks
+  renderer.render(scene, camera)
+
+  const serialized = new dom.window.XMLSerializer()
     .serializeToString(renderer.domElement)
     .replace(
       /xmlns="[^"]*"\s+xmlns="[^"]*"/,
       'xmlns="http://www.w3.org/2000/svg"',
     )
+    
+  return serialized
 }
