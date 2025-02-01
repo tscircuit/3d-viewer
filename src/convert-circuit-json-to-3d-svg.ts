@@ -1,12 +1,10 @@
 import type { AnySoupElement } from "@tscircuit/soup"
 import { su } from "@tscircuit/soup-util"
 import Debug from "debug"
-import { JSDOM } from "jsdom"
 import * as THREE from "three"
 import { SVGRenderer } from "three/examples/jsm/renderers/SVGRenderer.js"
 import { createBoardGeomFromSoup } from "./soup-to-3d"
 import { createGeometryFromPolygons } from "./utils/create-geometry-from-polygons"
-import { applyJsdomShim } from "./utils/jsdom-shim"
 import { renderComponent } from "./utils/render-component"
 
 interface CircuitToSvgOptions {
@@ -36,14 +34,6 @@ export async function convertCircuitJsonTo3dSvg(
   circuitJson: AnySoupElement[],
   options: CircuitToSvgOptions = {},
 ): Promise<string> {
-  const isNode = typeof window === "undefined"
-  let dom: JSDOM | undefined
-
-  if (isNode) {
-    dom = new JSDOM()
-    applyJsdomShim(dom)
-  }
-
   const {
     width = 800,
     height = 600,
@@ -146,9 +136,7 @@ export async function convertCircuitJsonTo3dSvg(
   // Render and return SVG with additional checks
   renderer.render(scene, camera)
 
-  const serializer =
-    isNode && dom ? new dom.window.XMLSerializer() : new XMLSerializer()
-  const serialized = serializer
+  const serialized = new global.window.XMLSerializer()
     .serializeToString(renderer.domElement)
     .replace(
       /xmlns="[^"]*"\s+xmlns="[^"]*"/,

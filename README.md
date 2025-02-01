@@ -96,7 +96,7 @@ const options = {
   }
 }
 
-const svgString = await convert3dCircuitToSvg(circuitJson, dom, options)
+const svgString = await convert3dCircuitToSvg(circuitJson, options)
 ```
 
 The `convert3dCircuitToSvg` function accepts the following options:
