@@ -2,10 +2,12 @@
   "name": "@tscircuit/3d-viewer",
   "version": "0.0.114",
   "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
     }
   },
   "files": [
@@ -14,7 +16,7 @@
   "scripts": {
     "start": "bun run storybook",
     "dev:old": "bunx --bun vite",
-    "build": "tsup ./src/index.tsx --dts --sourcemap",
+    "build": "tsup",
     "prepublish": "npm run build",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
@@ -64,6 +66,7 @@
     "bun-types": "^1.2.1",
     "circuit-json": "^0.0.116",
     "circuit-to-svg": "^0.0.91",
+    "debug": "^4.4.0",
     "storybook": "^8.5.2",
     "strip-ansi": "^7.1.0",
     "tsup": "^8.3.6",

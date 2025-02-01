@@ -1,9 +1,9 @@
 import type { AnySoupElement } from "@tscircuit/soup"
 import { expect, test } from "bun:test"
 import { convertCircuitJsonTo3dSvg } from "../src/convert-circuit-json-to-3d-svg.ts"
-import circuitJson from "./assets/circuit.json"
+import circuitJson from "./assets/capacitor-resistor-default-circuit.json"
 
-test("convert 3d view to svg of a single resistor component top view", async () => {
+test("convert 3d view to svg of capacitor and resistor circuit", async () => {
   const options = {
     width: 800,
     height: 600,

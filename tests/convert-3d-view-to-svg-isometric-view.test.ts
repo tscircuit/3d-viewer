@@ -1,6 +1,6 @@
 import type { AnySoupElement } from "@tscircuit/soup"
 import { expect, test } from "bun:test"
-import { convertCircuitJsonTo3dSvg } from "../src/convert-circuit-json-to-3d-svg.tsx"
+import { convertCircuitJsonTo3dSvg } from "../src/convert-circuit-json-to-3d-svg.ts"
 import circuitJson from "./assets/circuit.json"
 
 test("convert 3d view to svg of a single resistor component isometric view", async () => {
@@ -9,7 +9,7 @@ test("convert 3d view to svg of a single resistor component isometric view", asy
     height: 600,
     backgroundColor: "#ffffff",
     padding: 20,
-    zoom: 50,
+    zoom: 9,
     viewAngle: "isometric" as const,
     camera: {
       position: {
