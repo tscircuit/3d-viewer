@@ -29,7 +29,7 @@ interface CircuitToSvgOptions {
   }
 }
 
-export async function convert3dCircuitToSvg(
+export async function convertCircuitJsonTo3dSvg(
   circuitJson: AnySoupElement[],
   options: CircuitToSvgOptions = {},
 ): Promise<string> {
