@@ -8,7 +8,7 @@ import { JSDOM } from "jsdom"
 test("convert 3d view to svg of a single resistor component top view", async () => {
   const dom = new JSDOM()
   applyJsdomShim(dom)
-  
+
   const options = {
     width: 800,
     height: 600,

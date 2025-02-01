@@ -9,7 +9,7 @@ test("convert 3d view to svg of capacitor and resistor circuit", async () => {
   const dom = new JSDOM()
   applyJsdomShim(dom)
 
-        const options = {
+  const options = {
     width: 800,
     height: 600,
     backgroundColor: "#ffffff",
