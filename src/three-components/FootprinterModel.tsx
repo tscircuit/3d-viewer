@@ -28,7 +28,6 @@ export const FootprinterModel = ({
   onHover: (e: any) => void
   isHovered: boolean
 }) => {
-  console.log(createJSCADRenderer)
   const jscadOperations = useMemo(() => {
     if (!footprint) return null
     const jscadOperations: any[] = []
