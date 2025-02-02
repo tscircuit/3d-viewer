@@ -3,7 +3,7 @@ import { createJSCADRenderer } from "jscad-fiber"
 import { jscadPlanner } from "jscad-planner"
 import { useMemo } from "react"
 import { JscadModel } from "./JscadModel"
-import * as modeling from '@jscad/modeling'
+import * as modeling from "@jscad/modeling"
 
 const jscadModule = {
   ...jscadPlanner,
@@ -28,7 +28,6 @@ export const FootprinterModel = ({
   onHover: (e: any) => void
   isHovered: boolean
 }) => {
-
   console.log(createJSCADRenderer)
   const jscadOperations = useMemo(() => {
     if (!footprint) return null
