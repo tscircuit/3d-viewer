@@ -2,12 +2,12 @@
   "name": "@tscircuit/3d-viewer",
   "version": "0.0.115",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "module": "./dist/index.js",
+  "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "require": "./dist/index.js",
-      "import": "./dist/index.mjs"
+      "import": "./dist/index.js"
     }
   },
   "files": [
@@ -16,7 +16,7 @@
   "scripts": {
     "start": "bun run storybook",
     "dev:old": "bunx --bun vite",
-    "build": "tsup",
+    "build": "tsup ./src/index.tsx --format esm --dts",
     "prepublish": "npm run build",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
@@ -26,7 +26,6 @@
     "format:check": "biome format ."
   },
   "dependencies": {
-    "@jscad/modeling": "^2.12.5",
     "@jscad/regl-renderer": "^2.6.12",
     "@jscad/stl-serializer": "^2.1.20",
     "@react-three/drei": "^9.121.4",
@@ -48,6 +47,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@jscad/modeling": "^2.12.5",
     "@chromatic-com/storybook": "^1.9.0",
     "@storybook/addon-essentials": "^8.5.2",
     "@storybook/addon-interactions": "^8.5.2",

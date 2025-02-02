@@ -18,7 +18,7 @@
     "noImplicitOverride": true,
     "noImplicitAny": false,
     // We are not transpiling, so preserve our source code and do not emit files
-    "module": "preserve",
+    "module": "ES2022",
     "jsx": "react-jsx",
     "noEmit": true,
     // Include the DOM types
