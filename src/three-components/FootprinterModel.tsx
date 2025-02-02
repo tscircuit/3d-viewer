@@ -3,8 +3,17 @@ import { createJSCADRenderer } from "jscad-fiber"
 import { jscadPlanner } from "jscad-planner"
 import { useMemo } from "react"
 import { JscadModel } from "./JscadModel"
+import * as modeling from '@jscad/modeling'
 
-const { createJSCADRoot } = createJSCADRenderer(jscadPlanner as any)
+const jscadModule = {
+  ...jscadPlanner,
+  hulls: {
+    hull: modeling.hulls.hull,
+    hullChain: modeling.hulls.hullChain,
+  },
+}
+
+const { createJSCADRoot } = createJSCADRenderer(jscadModule as any)
 
 export const FootprinterModel = ({
   positionOffset,
@@ -19,6 +28,8 @@ export const FootprinterModel = ({
   onHover: (e: any) => void
   isHovered: boolean
 }) => {
+
+  console.log(createJSCADRenderer)
   const jscadOperations = useMemo(() => {
     if (!footprint) return null
     const jscadOperations: any[] = []
