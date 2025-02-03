@@ -48,8 +48,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@jscad/modeling": "^2.12.5",
     "@chromatic-com/storybook": "^1.9.0",
+    "@jscad/modeling": "^2.12.5",
     "@storybook/addon-essentials": "^8.5.2",
     "@storybook/addon-interactions": "^8.5.2",
     "@storybook/addon-links": "^8.5.2",
@@ -70,6 +70,7 @@
     "circuit-to-svg": "^0.0.91",
     "debug": "^4.4.0",
     "jsdom": "^26.0.0",
+    "semver": "^7.7.0",
     "storybook": "^8.5.2",
     "strip-ansi": "^7.1.0",
     "tsup": "^8.3.6",
