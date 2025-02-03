@@ -16,7 +16,7 @@
   "scripts": {
     "start": "bun run storybook",
     "dev:old": "bunx --bun vite",
-    "build": "tsup ./src/index.tsx --format esm --dts",
+    "build": "tsup ./src/index.tsx --platform browser --format esm --dts",
     "prepublish": "npm run build",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
