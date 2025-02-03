@@ -17,6 +17,9 @@ export const BoardWithError: Story = {
     soup: [
       {
         type: "pcb_board",
+        pcb_board_id: "board_1",
+        thickness: 1.6,
+        num_layers: 2,
         center: { x: 0, y: 0 },
         width: 10,
         height: 10,
