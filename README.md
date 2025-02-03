@@ -1,5 +1,8 @@
 # @tscircuit/3d-viewer
 
+> [!NOTE]
+> We are working on a new vanilla THREE version of the 3d viewer, it's on the [v01 branch](https://github.com/tscircuit/3d-viewer/tree/v01)
+
 A 3D printed circuit board viewer for [Circuit JSON](https://github.com/tscircuit/circuit-json) and [tscircuit](https://github.com/tscircuit/tscircuit)
 
 [![npm version](https://badge.fury.io/js/%40tscircuit%2F3d-viewer.svg)](https://badge.fury.io/js/%40tscircuit%2F3d-viewer)
