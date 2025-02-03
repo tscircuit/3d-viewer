@@ -1,8 +1,8 @@
-import type { AnySoupElement } from "circuit-json"
+import type { AnyCircuitElement } from "circuit-json"
 import { useEffect, useState } from "react"
 import { CadViewer } from "src/CadViewer"
 
-const soup: AnySoupElement[] = [
+const soup: AnyCircuitElement[] = [
   {
     type: "source_component",
     source_component_id: "simple_resistor_0",

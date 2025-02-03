@@ -1,5 +1,5 @@
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
-import type { AnySoupElement, PCBPlatedHole } from "circuit-json"
+import type { AnyCircuitElement, PCBPlatedHole } from "circuit-json"
 import { su } from "@tscircuit/soup-util"
 import { translate } from "@jscad/modeling/src/operations/transforms"
 import { cuboid, cylinder, line } from "@jscad/modeling/src/primitives"
@@ -13,7 +13,7 @@ import { createBoardWithOutline } from "src/geoms/create-board-with-outline"
 import { Vec2 } from "@jscad/modeling/src/maths/types"
 import { createSilkscreenTextGeoms } from "src/geoms/create-geoms-for-silkscreen-text"
 import { PcbSilkscreenText } from "circuit-json"
-export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
+export const createBoardGeomFromSoup = (soup: AnyCircuitElement[]): Geom3[] => {
   const board = su(soup).pcb_board.list()[0]
   if (!board) {
     throw new Error("No pcb_board found")

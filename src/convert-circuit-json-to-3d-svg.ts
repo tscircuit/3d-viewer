@@ -1,4 +1,4 @@
-import type { AnySoupElement } from "circuit-json"
+import type { AnyCircuitElement } from "circuit-json"
 import { su } from "@tscircuit/soup-util"
 import Debug from "debug"
 import * as THREE from "three"
@@ -31,7 +31,7 @@ interface CircuitToSvgOptions {
 const log = Debug("tscircuit:3d-viewer:convert-circuit-json-to-3d-svg")
 
 export async function convertCircuitJsonTo3dSvg(
-  circuitJson: AnySoupElement[],
+  circuitJson: AnyCircuitElement[],
   options: CircuitToSvgOptions = {},
 ): Promise<string> {
   const {

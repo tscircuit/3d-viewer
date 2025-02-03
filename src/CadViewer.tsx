@@ -1,4 +1,4 @@
-import type { AnySoupElement } from "circuit-json"
+import type { AnyCircuitElement } from "circuit-json"
 import type * as React from "react"
 import type * as THREE from "three"
 import { useConvertChildrenToSoup } from "./hooks/use-convert-children-to-soup"
@@ -20,7 +20,7 @@ import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { Error3d } from "./three-components/Error3d"
 
 interface Props {
-  soup?: AnySoupElement[]
+  soup?: AnyCircuitElement[]
   autoRotateDisabled?: boolean
 }
 
