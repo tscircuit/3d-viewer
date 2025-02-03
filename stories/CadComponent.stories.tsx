@@ -14,12 +14,14 @@ const cad_component: CadComponent = {
 }
 
 export const Default = () => (
-  <CadViewer soup={(bugsPadsAndTracesSoup as any[]).concat([cad_component])} />
+  <CadViewer
+    circuitJson={(bugsPadsAndTracesSoup as any[]).concat([cad_component])}
+  />
 )
 
 export const BottomLayer = () => (
   <CadViewer
-    soup={(bugsPadsAndTracesSoup as any[]).concat([
+    circuitJson={(bugsPadsAndTracesSoup as any[]).concat([
       {
         type: "cad_component",
         cad_component_id: "cad_component_1",
@@ -43,7 +45,7 @@ export const BottomLayer = () => (
 
 export const SSOPRotated = () => (
   <CadViewer
-    soup={(bugsPadsAndTracesSoup as any[]).concat([
+    circuitJson={(bugsPadsAndTracesSoup as any[]).concat([
       {
         type: "cad_component",
         cad_component_id: "cad_component_1",

@@ -22,7 +22,7 @@ const cad_component: CadComponent = {
 export const BadStlUrl = () => {
   return (
     <CadViewer
-      soup={(bugsPadsAndTracesSoup as any[]).concat([cad_component])}
+      circuitJson={(bugsPadsAndTracesSoup as any[]).concat([cad_component])}
     />
   )
 }

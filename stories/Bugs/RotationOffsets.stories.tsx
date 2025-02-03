@@ -2,7 +2,7 @@ import type { AnyCircuitElement } from "circuit-json"
 import { useEffect, useState } from "react"
 import { CadViewer } from "src/CadViewer"
 
-const soup: AnyCircuitElement[] = [
+const circuitJson: AnyCircuitElement[] = [
   {
     type: "source_component",
     source_component_id: "simple_resistor_0",
@@ -422,7 +422,7 @@ const soup: AnyCircuitElement[] = [
 ]
 
 export const Default = () => {
-  const [copiedSoup, setCopiedSoup] = useState(soup)
+  const [copiedSoup, setCopiedSoup] = useState(circuitJson)
   // SIMULATE: every 1000ms, copy the soup and reset it to trigger a re-render
   // useEffect(() => {
   //   const timer = setInterval(async () => {
@@ -432,7 +432,7 @@ export const Default = () => {
   //   }, 1000)
   //   return () => clearTimeout(timer)
   // }, [])
-  return <CadViewer soup={copiedSoup} />
+  return <CadViewer circuitJson={copiedSoup} />
 }
 
 export default {

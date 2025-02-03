@@ -14,7 +14,7 @@ type Story = StoryObj<typeof meta>
 
 export const BoardWithError: Story = {
   args: {
-    soup: [
+    circuitJson: [
       {
         type: "pcb_board",
         pcb_board_id: "board_1",

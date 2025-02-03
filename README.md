@@ -56,15 +56,15 @@ const MyPCBViewer = () => {
 export default MyPCBViewer
 ```
 
-### Using with Soup Data
+### Using with circuitJson Data
 
 ```jsx
 import React from "react"
 import { CadViewer } from "@tscircuit/3d-viewer"
-import mySoupData from "./mySoupData.json"
+import mycircuitJsonData from "./mycircuitJsonpData.json"
 
 const MyPCBViewer = () => {
-  return <CadViewer soup={mySoupData} />
+  return <CadViewer circuitJson={mycircuitJsonData} />
 }
 
 export default MyPCBViewer

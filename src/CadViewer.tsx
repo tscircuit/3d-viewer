@@ -20,31 +20,35 @@ import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { Error3d } from "./three-components/Error3d"
 
 interface Props {
+  /**
+   * @deprecated Use circuitJson instead.
+   */
   soup?: AnyCircuitElement[]
+  circuitJson?: AnyCircuitElement[]
   autoRotateDisabled?: boolean
 }
 
 export const CadViewer = forwardRef<
   THREE.Object3D,
   React.PropsWithChildren<Props>
->(({ soup, children, autoRotateDisabled }, ref) => {
+>(({ circuitJson, children, autoRotateDisabled }, ref) => {
   const [hoveredComponent, setHoveredComponent] = useState<null | {
     cad_component_id: string
     name: string
     mousePosition: [number, number, number]
   }>(null)
-  soup ??= useConvertChildrenToSoup(children, soup) as any
+  circuitJson ??= useConvertChildrenToSoup(children, circuitJson) as any
 
-  if (!soup) return null
+  if (!circuitJson) return null
 
   const boardGeom = useMemo(() => {
-    if (!soup.some((e) => e.type === "pcb_board")) return null
-    return createBoardGeomFromSoup(soup)
-  }, [soup])
+    if (!circuitJson.some((e) => e.type === "pcb_board")) return null
+    return createBoardGeomFromSoup(circuitJson)
+  }, [circuitJson])
 
   const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
 
-  const cad_components = su(soup).cad_component.list()
+  const cad_components = su(circuitJson).cad_component.list()
 
   return (
     <CadViewerContainer
@@ -76,7 +80,9 @@ export const CadViewer = forwardRef<
               }
               if (!e.mousePosition) return
 
-              const componentName = su(soup as any).source_component.getUsing({
+              const componentName = su(
+                circuitJson as any,
+              ).source_component.getUsing({
                 source_component_id: cad_component.source_component_id,
               })?.name
               setHoveredComponent({
