@@ -1,7 +1,7 @@
 import { fn } from "@storybook/test"
 import { CadViewer } from "src/CadViewer"
 import bugsPadsAndTracesSoup from "./assets/soic-with-traces.json"
-import type { CadComponent } from "@tscircuit/soup"
+import type { CadComponent } from "circuit-json"
 
 const cad_component: CadComponent = {
   type: "cad_component",

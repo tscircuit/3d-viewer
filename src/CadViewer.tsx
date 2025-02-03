@@ -1,4 +1,4 @@
-import type { AnySoupElement } from "@tscircuit/soup"
+import type { AnySoupElement } from "circuit-json"
 import type * as React from "react"
 import type * as THREE from "three"
 import { useConvertChildrenToSoup } from "./hooks/use-convert-children-to-soup"

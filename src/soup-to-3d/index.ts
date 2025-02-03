@@ -1,5 +1,5 @@
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
-import type { AnySoupElement, PCBPlatedHole } from "@tscircuit/soup"
+import type { AnySoupElement, PCBPlatedHole } from "circuit-json"
 import { su } from "@tscircuit/soup-util"
 import { translate } from "@jscad/modeling/src/operations/transforms"
 import { cuboid, cylinder, line } from "@jscad/modeling/src/primitives"

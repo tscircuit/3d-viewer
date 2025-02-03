@@ -1,4 +1,4 @@
-import type { CadComponent } from "@tscircuit/soup"
+import type { CadComponent } from "circuit-json"
 import { CadViewer } from "src/CadViewer"
 import bugsPadsAndTracesSoup from "./assets/soic-with-traces.json"
 

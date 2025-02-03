@@ -1,4 +1,4 @@
-import type { AnySoupElement } from "@tscircuit/soup"
+import type { AnySoupElement } from "circuit-json"
 import { useEffect, useState } from "react"
 import { CadViewer } from "src/CadViewer"
 
