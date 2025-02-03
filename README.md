@@ -117,8 +117,8 @@ Main component for rendering the 3D PCB viewer.
 
 Props:
 
-- `soup`: (optional) An array of AnyCircuitElement objects representing the PCB layout.
-- `children`: (optional) React children elements describing the PCB layout (alternative to using `soup`).
+- `circuit-json`: (optional) An array of AnyCircuitElement objects representing the PCB layout.
+- `children`: (optional) React children elements describing the PCB layout (alternative to using `circuit-json`).
 
 ### `<board>`
 
