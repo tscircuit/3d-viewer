@@ -3,14 +3,16 @@ import { su } from "@tscircuit/soup-util"
 import Debug from "debug"
 import * as THREE from "three"
 import { SVGRenderer } from "three/examples/jsm/renderers/SVGRenderer.js"
-import { createBoardGeomFromSoup } from "./soup-to-3d"
-import { createGeometryFromPolygons } from "./utils/create-geometry-from-polygons"
-import { renderComponent } from "./utils/render-component"
+import { createBoardGeomFromSoup } from "../soup-to-3d"
+import { createGeometryFromPolygons } from "../utils/create-geometry-from-polygons"
+import { renderComponent } from "../utils/render-component"
+import { createCamera } from "./create-camera/create-camera"
 
 interface CircuitToSvgOptions {
   width?: number
   height?: number
-  viewAngle?: "top" | "isometric" | "front" | "side"
+  /** perspective is an alternative/shorthand to the camera position and lookAt */
+  perspective?: "angled" | "top" | "isometric-angled" | "front" | "side"
   backgroundColor?: string
   padding?: number
   zoom?: number
@@ -49,34 +51,12 @@ export async function convertCircuitJsonTo3dSvg(
   renderer.setClearColor(new THREE.Color(backgroundColor), 1)
 
   // Create camera with explicit type and parameters
-  const camera = new THREE.OrthographicCamera()
-
-  // Set camera properties
-  const aspect = width / height
-  const frustumSize = 100
-  const halfFrustumSize = frustumSize / 2 / zoom
-
-  // Set camera properties
-  camera.left = -halfFrustumSize * aspect
-  camera.right = halfFrustumSize * aspect
-  camera.top = halfFrustumSize
-  camera.bottom = -halfFrustumSize
-  camera.near = -1000
-  camera.far = 1000
-
-  // Set camera position
-  const position = options.camera?.position ?? { x: 0, y: 0, z: 100 }
-  camera.position.set(position.x, position.y, position.z)
-
-  // Set camera up vector
-  camera.up.set(0, 1, 0)
-
-  // Set camera look at
-  const lookAt = options.camera?.lookAt ?? { x: 0, y: 0, z: 0 }
-  camera.lookAt(new THREE.Vector3(lookAt.x, lookAt.y, lookAt.z))
-
-  // Important: Update the camera matrix
-  camera.updateProjectionMatrix()
+  const camera = createCamera({
+    perspective: options.perspective,
+    camera: options.camera,
+    screenSize: { width, height },
+    zoom,
+  })
 
   // Add lighting
   const ambientLight = new THREE.AmbientLight(0xffffff, Math.PI / 2)
@@ -131,7 +111,7 @@ export async function convertCircuitJsonTo3dSvg(
     scene.scale.multiplyScalar(scale * 100)
   }
   // Before rendering, ensure camera is updated
-  camera.updateProjectionMatrix()
+  ;(camera as any).updateProjectionMatrix()
 
   // Render and return SVG with additional checks
   renderer.render(scene, camera)
