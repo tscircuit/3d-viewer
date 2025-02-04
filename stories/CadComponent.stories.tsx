@@ -1,7 +1,7 @@
 import { fn } from "@storybook/test"
 import { CadViewer } from "src/CadViewer"
 import bugsPadsAndTracesSoup from "./assets/soic-with-traces.json"
-import type { CadComponent } from "@tscircuit/soup"
+import type { CadComponent } from "circuit-json"
 
 const cad_component: CadComponent = {
   type: "cad_component",
@@ -14,12 +14,14 @@ const cad_component: CadComponent = {
 }
 
 export const Default = () => (
-  <CadViewer soup={(bugsPadsAndTracesSoup as any[]).concat([cad_component])} />
+  <CadViewer
+    circuitJson={(bugsPadsAndTracesSoup as any[]).concat([cad_component])}
+  />
 )
 
 export const BottomLayer = () => (
   <CadViewer
-    soup={(bugsPadsAndTracesSoup as any[]).concat([
+    circuitJson={(bugsPadsAndTracesSoup as any[]).concat([
       {
         type: "cad_component",
         cad_component_id: "cad_component_1",
@@ -43,7 +45,7 @@ export const BottomLayer = () => (
 
 export const SSOPRotated = () => (
   <CadViewer
-    soup={(bugsPadsAndTracesSoup as any[]).concat([
+    circuitJson={(bugsPadsAndTracesSoup as any[]).concat([
       {
         type: "cad_component",
         cad_component_id: "cad_component_1",

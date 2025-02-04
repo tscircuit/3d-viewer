@@ -1,4 +1,4 @@
-import type { PCBPlatedHole } from "@tscircuit/soup"
+import type { PCBPlatedHole } from "circuit-json"
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import { cuboid, cylinder } from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"

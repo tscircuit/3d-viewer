@@ -1,5 +1,5 @@
 import jscad from "@jscad/modeling"
-import type { AnySoupElement } from "@tscircuit/soup"
+import type { AnyCircuitElement } from "circuit-json"
 import { Footprinter3d } from "jscad-electronics"
 import { convertCSGToThreeGeom } from "jscad-fiber/three"
 import { createJSCADRenderer } from "jscad-fiber"

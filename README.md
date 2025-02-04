@@ -59,15 +59,15 @@ const MyPCBViewer = () => {
 export default MyPCBViewer
 ```
 
-### Using with Soup Data
+### Using with circuitJson Data
 
 ```jsx
 import React from "react"
 import { CadViewer } from "@tscircuit/3d-viewer"
-import mySoupData from "./mySoupData.json"
+import mycircuitJsonData from "./mycircuitJsonpData.json"
 
 const MyPCBViewer = () => {
-  return <CadViewer soup={mySoupData} />
+  return <CadViewer circuitJson={mycircuitJsonData} />
 }
 
 export default MyPCBViewer
@@ -120,8 +120,8 @@ Main component for rendering the 3D PCB viewer.
 
 Props:
 
-- `soup`: (optional) An array of AnySoupElement objects representing the PCB layout.
-- `children`: (optional) React children elements describing the PCB layout (alternative to using `soup`).
+- `circuit-json`: (optional) An array of AnyCircuitElement objects representing the PCB layout.
+- `children`: (optional) React children elements describing the PCB layout (alternative to using `circuit-json`).
 
 ### `<board>`
 

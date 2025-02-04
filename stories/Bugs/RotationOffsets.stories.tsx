@@ -1,8 +1,8 @@
-import type { AnySoupElement } from "@tscircuit/soup"
+import type { AnyCircuitElement } from "circuit-json"
 import { useEffect, useState } from "react"
 import { CadViewer } from "src/CadViewer"
 
-const soup: AnySoupElement[] = [
+const circuitJson: AnyCircuitElement[] = [
   {
     type: "source_component",
     source_component_id: "simple_resistor_0",
@@ -88,6 +88,7 @@ const soup: AnySoupElement[] = [
       y: 1.8,
     },
     rotation: 0,
+    color: "black",
   },
   {
     type: "schematic_text",
@@ -100,6 +101,7 @@ const soup: AnySoupElement[] = [
       y: 2,
     },
     rotation: 0,
+    color: "black",
   },
   {
     type: "pcb_component",
@@ -245,6 +247,7 @@ const soup: AnySoupElement[] = [
       y: -0.5,
     },
     rotation: 0,
+    color: "black",
   },
   {
     type: "schematic_text",
@@ -257,6 +260,7 @@ const soup: AnySoupElement[] = [
       y: -0.3,
     },
     rotation: 0,
+    color: "black",
   },
   {
     type: "pcb_component",
@@ -326,6 +330,7 @@ const soup: AnySoupElement[] = [
     type: "schematic_trace",
     source_trace_id: "source_trace_0",
     schematic_trace_id: "schematic_trace_0",
+    junctions: [{ x: 5, y: 5 }],
     edges: [
       {
         from: {
@@ -404,17 +409,20 @@ const soup: AnySoupElement[] = [
   },
   {
     type: "pcb_board",
+    pcb_board_id: "pcb_board_0",
     center: {
       x: 0,
       y: 0,
     },
     width: 10,
     height: 10,
+    thickness: 1.6,
+    num_layers: 2,
   },
 ]
 
 export const Default = () => {
-  const [copiedSoup, setCopiedSoup] = useState(soup)
+  const [copiedSoup, setCopiedSoup] = useState(circuitJson)
   // SIMULATE: every 1000ms, copy the soup and reset it to trigger a re-render
   // useEffect(() => {
   //   const timer = setInterval(async () => {
@@ -424,7 +432,7 @@ export const Default = () => {
   //   }, 1000)
   //   return () => clearTimeout(timer)
   // }, [])
-  return <CadViewer soup={copiedSoup} />
+  return <CadViewer circuitJson={copiedSoup} />
 }
 
 export default {

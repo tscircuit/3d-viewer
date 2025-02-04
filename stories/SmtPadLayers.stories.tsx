@@ -38,7 +38,7 @@ const createCircuit = () => {
 
 export const SmtPadLayersDemo = () => {
   const circuitJson = createCircuit()
-  return <CadViewer soup={circuitJson as any} />
+  return <CadViewer circuitJson={circuitJson as any} />
 }
 
 export default {

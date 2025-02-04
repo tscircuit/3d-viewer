@@ -2,7 +2,7 @@ import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { polygon } from "@jscad/modeling/src/primitives"
 import type { Geom2, Geom3 } from "@jscad/modeling/src/geometries/types"
 import type { Vec2 } from "@jscad/modeling/src/maths/types"
-import type { Point } from "@tscircuit/soup"
+import type { Point } from "circuit-json"
 import { translate } from "@jscad/modeling/src/operations/transforms"
 
 const arePointsClockwise = (points: Vec2[]): boolean => {

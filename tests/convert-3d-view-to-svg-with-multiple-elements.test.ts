@@ -1,4 +1,4 @@
-import type { AnySoupElement } from "@tscircuit/soup"
+import type { AnyCircuitElement } from "circuit-json"
 import { expect, test } from "bun:test"
 import { convertCircuitJsonTo3dSvg } from "../src/convert-circuit-json-to-3d-svg.ts"
 import circuitJson from "./assets/capacitor-resistor-default-circuit.json"
@@ -31,7 +31,7 @@ test("convert 3d view to svg of capacitor and resistor circuit", async () => {
   }
 
   const svgString = await convertCircuitJsonTo3dSvg(
-    circuitJson as AnySoupElement[],
+    circuitJson as AnyCircuitElement[],
     options,
   )
 
