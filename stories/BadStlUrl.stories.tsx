@@ -1,4 +1,4 @@
-import type { CadComponent } from "@tscircuit/soup"
+import type { CadComponent } from "circuit-json"
 import { CadViewer } from "src/CadViewer"
 import bugsPadsAndTracesSoup from "./assets/soic-with-traces.json"
 
@@ -22,7 +22,7 @@ const cad_component: CadComponent = {
 export const BadStlUrl = () => {
   return (
     <CadViewer
-      soup={(bugsPadsAndTracesSoup as any[]).concat([cad_component])}
+      circuitJson={(bugsPadsAndTracesSoup as any[]).concat([cad_component])}
     />
   )
 }

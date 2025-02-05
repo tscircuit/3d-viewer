@@ -32,7 +32,7 @@ const createCircuit = () => {
 
 export const SilkscreenTextAlphabet = () => {
   const circuitJson = createCircuit()
-  return <CadViewer soup={circuitJson as any} />
+  return <CadViewer circuitJson={circuitJson as any} />
 }
 
 export default {

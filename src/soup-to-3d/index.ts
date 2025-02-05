@@ -1,5 +1,5 @@
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
-import type { AnySoupElement, PCBPlatedHole } from "@tscircuit/soup"
+import type { AnyCircuitElement, PCBPlatedHole } from "circuit-json"
 import { su } from "@tscircuit/soup-util"
 import { translate } from "@jscad/modeling/src/operations/transforms"
 import { cuboid, cylinder, line } from "@jscad/modeling/src/primitives"
@@ -13,17 +13,26 @@ import { createBoardWithOutline } from "src/geoms/create-board-with-outline"
 import { Vec2 } from "@jscad/modeling/src/maths/types"
 import { createSilkscreenTextGeoms } from "src/geoms/create-geoms-for-silkscreen-text"
 import { PcbSilkscreenText } from "circuit-json"
-export const createBoardGeomFromSoup = (soup: AnySoupElement[]): Geom3[] => {
-  const board = su(soup).pcb_board.list()[0]
+export const createBoardGeomFromSoup = (
+  /**
+   * @deprecated Use circuitJson instead.
+   */
+  soup: AnyCircuitElement[],
+  circuitJson?: AnyCircuitElement[],
+): Geom3[] => {
+  if (!circuitJson) {
+    throw new Error("circuitJson is required but was not provided")
+  }
+  const board = su(circuitJson).pcb_board.list()[0]
   if (!board) {
     throw new Error("No pcb_board found")
   }
-  const plated_holes = su(soup).pcb_plated_hole.list()
-  const holes = su(soup).pcb_hole.list()
-  const pads = su(soup).pcb_smtpad.list()
-  const traces = su(soup).pcb_trace.list()
-  const pcb_vias = su(soup).pcb_via.list()
-  const silkscreenTexts = su(soup).pcb_silkscreen_text.list()
+  const plated_holes = su(circuitJson).pcb_plated_hole.list()
+  const holes = su(circuitJson).pcb_hole.list()
+  const pads = su(circuitJson).pcb_smtpad.list()
+  const traces = su(circuitJson).pcb_trace.list()
+  const pcb_vias = su(circuitJson).pcb_via.list()
+  const silkscreenTexts = su(circuitJson).pcb_silkscreen_text.list()
 
   // PCB Board
   let boardGeom: Geom3
