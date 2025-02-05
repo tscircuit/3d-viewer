@@ -31,7 +31,8 @@ interface Props {
 export const CadViewer = forwardRef<
   THREE.Object3D,
   React.PropsWithChildren<Props>
->(({ circuitJson, children, autoRotateDisabled }, ref) => {
+>(({ soup, circuitJson, children, autoRotateDisabled }, ref) => {
+  circuitJson ??= soup
   const [hoveredComponent, setHoveredComponent] = useState<null | {
     cad_component_id: string
     name: string
