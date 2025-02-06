@@ -1,12 +1,11 @@
 import jscad from "@jscad/modeling"
-import type { AnyCircuitElement } from "circuit-json"
+import type { CadComponent } from "circuit-json"
 import { Footprinter3d } from "jscad-electronics"
-import { convertCSGToThreeGeom } from "jscad-fiber/three"
 import { createJSCADRenderer } from "jscad-fiber"
+import { convertCSGToThreeGeom } from "jscad-fiber/three"
 import { executeJscadOperations, jscadPlanner } from "jscad-planner"
 import * as THREE from "three"
 import { load3DModel } from "./load-model"
-import type { CadComponent } from "circuit-json"
 
 const { createJSCADRoot } = createJSCADRenderer(jscadPlanner as any)
 
@@ -23,7 +22,7 @@ export async function renderComponent(
         model.position.set(
           component.position.x ?? 0,
           component.position.y ?? 0,
-          (component.position.z ?? 0) + 0.5,
+          component.position.z ?? 0,
         )
       }
       if (component.rotation) {
@@ -46,9 +45,7 @@ export async function renderComponent(
     )
     const threeGeom = convertCSGToThreeGeom(jscadObject)
     const material = new THREE.MeshStandardMaterial({
-      color: 0x888888,
-      metalness: 0.5,
-      roughness: 0.5,
+      vertexColors: true,
       side: THREE.DoubleSide,
     })
     const mesh = new THREE.Mesh(threeGeom, material)
@@ -57,7 +54,7 @@ export async function renderComponent(
       mesh.position.set(
         component.position.x ?? 0,
         component.position.y ?? 0,
-        (component.position.z ?? 0) + 0.5,
+        component.position.z ?? 0,
       )
     }
     if (component.rotation) {
@@ -80,11 +77,11 @@ export async function renderComponent(
     // Process each operation from the footprinter
     for (const operation of jscadOperations) {
       const jscadObject = executeJscadOperations(jscad as any, operation)
+
       const threeGeom = convertCSGToThreeGeom(jscadObject)
+
       const material = new THREE.MeshStandardMaterial({
-        color: 0x444444,
-        metalness: 0.2,
-        roughness: 0.8,
+        vertexColors: true,
         side: THREE.DoubleSide,
       })
       const mesh = new THREE.Mesh(threeGeom, material)
@@ -93,7 +90,7 @@ export async function renderComponent(
         mesh.position.set(
           component.position.x ?? 0,
           component.position.y ?? 0,
-          (component.position.z ?? 0) + 0.5,
+          component.position.z ?? 0,
         )
       }
       if (component.rotation) {
@@ -110,7 +107,7 @@ export async function renderComponent(
 
   // Add fallback box for failed components
   const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5)
-  const material = new THREE.MeshStandardMaterial({
+  const material = new THREE.MeshBasicMaterial({
     color: 0xff0000,
     transparent: true,
     opacity: 0.25,
@@ -121,7 +118,7 @@ export async function renderComponent(
     mesh.position.set(
       component.position.x ?? 0,
       component.position.y ?? 0,
-      (component.position.z ?? 0) + 0.5,
+      component.position.z ?? 0,
     )
   }
   scene.add(mesh)

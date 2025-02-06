@@ -1,5 +1,5 @@
-import type { AnyCircuitElement } from "circuit-json"
 import { su } from "@tscircuit/soup-util"
+import type { AnyCircuitElement } from "circuit-json"
 import Debug from "debug"
 import * as THREE from "three"
 import { SVGRenderer } from "three/examples/jsm/renderers/SVGRenderer.js"
@@ -10,22 +10,8 @@ import { renderComponent } from "./utils/render-component"
 interface CircuitToSvgOptions {
   width?: number
   height?: number
-  viewAngle?: "top" | "isometric" | "front" | "side"
   backgroundColor?: string
   padding?: number
-  zoom?: number
-  camera?: {
-    position: {
-      x: number
-      y: number
-      z: number
-    }
-    lookAt?: {
-      x: number
-      y: number
-      z: number
-    }
-  }
 }
 
 const log = Debug("tscircuit:3d-viewer:convert-circuit-json-to-3d-svg")
@@ -36,52 +22,32 @@ export async function convertCircuitJsonTo3dSvg(
 ): Promise<string> {
   const {
     width = 800,
-    height = 600,
+    height = 800,
     backgroundColor = "#ffffff",
     padding = 20,
-    zoom = 1.5,
   } = options
 
-  // Initialize scene and renderer
+  // Initialize scene and renderer with high precision but normal size
   const scene = new THREE.Scene()
+  scene.up.set(0, 0, 1)
   const renderer = new SVGRenderer()
-  renderer.setSize(width, height)
+  renderer.setSize(width, height) // Back to normal size
   renderer.setClearColor(new THREE.Color(backgroundColor), 1)
+  renderer.setQuality("hight")
+  renderer.setPrecision(1)
 
-  // Create camera with explicit type and parameters
-  const camera = new THREE.OrthographicCamera()
-
-  // Set camera properties
+  // Create perspective camera with optimal settings
+  const fov = 45
   const aspect = width / height
-  const frustumSize = 100
-  const halfFrustumSize = frustumSize / 2 / zoom
+  const near = 0.1
+  const far = 50
+  let camera = new THREE.PerspectiveCamera(fov, aspect, near, far)
 
-  // Set camera properties
-  camera.left = -halfFrustumSize * aspect
-  camera.right = halfFrustumSize * aspect
-  camera.top = halfFrustumSize
-  camera.bottom = -halfFrustumSize
-  camera.near = -1000
-  camera.far = 1000
-
-  // Set camera position
-  const position = options.camera?.position ?? { x: 0, y: 0, z: 100 }
-  camera.position.set(position.x, position.y, position.z)
-
-  // Set camera up vector
-  camera.up.set(0, 1, 0)
-
-  // Set camera look at
-  const lookAt = options.camera?.lookAt ?? { x: 0, y: 0, z: 0 }
-  camera.lookAt(new THREE.Vector3(lookAt.x, lookAt.y, lookAt.z))
-
-  // Important: Update the camera matrix
-  camera.updateProjectionMatrix()
-
-  // Add lighting
+  // Match CadViewerContainer lighting exactly
   const ambientLight = new THREE.AmbientLight(0xffffff, Math.PI / 2)
   scene.add(ambientLight)
-  const pointLight = new THREE.PointLight(0xffffff, Math.PI / 4)
+
+  const pointLight = new THREE.PointLight(0xffffff, Math.PI / 4, 0)
   pointLight.position.set(-10, -10, 10)
   scene.add(pointLight)
 
@@ -106,32 +72,45 @@ export async function convertCircuitJsonTo3dSvg(
         roughness: 0.8,
         opacity: 0.9,
         transparent: true,
-        side: THREE.DoubleSide,
+        side: THREE.FrontSide,
       })
       const mesh = new THREE.Mesh(geometry, material)
       scene.add(mesh)
     }
   }
 
-  // Add grid
-  const gridHelper = new THREE.GridHelper(100, 100)
-  gridHelper.rotation.x = Math.PI / 2
-  scene.add(gridHelper)
+  // First get the board dimensions
+  const board = circuitJson.find((c) => c.type === "pcb_board")
+  if (board && board.width && board.height) {
+    // Use board size to set up proper view
+    const boardWidth = board.width
+    const boardHeight = board.height
 
-  // Center and scale scene
-  const box = new THREE.Box3().setFromObject(scene)
-  const center = box.getCenter(new THREE.Vector3())
-  const size = box.getSize(new THREE.Vector3())
+    // Fixed camera position requirement
+    camera.position.set(0, 0, 5)
+    camera.up.set(0, 0, 1)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
 
-  scene.position.sub(center)
+    // Position camera
+    // camera.position.set(5, 5, 5)
+    // camera.up.set(0, 0, 1)
+    // camera.lookAt(new THREE.Vector3(0, 0, 0))
 
-  const maxDim = Math.max(size.x, size.y, size.z)
-  if (maxDim > 0) {
+    // Scale scene to fit view
+    const maxDim = Math.max(boardWidth, boardHeight)
     const scale = (1.0 - padding / 100) / maxDim
-    scene.scale.multiplyScalar(scale * 100)
+    scene.scale.multiplyScalar(scale * 2.5)
+
+    camera.updateProjectionMatrix()
+  } else {
+    // Fallback if no board found
+    camera.position.set(5, 5, 5)
+    camera.up.set(0, 0, 1)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+    // Default scale if no board
+    scene.scale.multiplyScalar(0.5)
   }
-  // Before rendering, ensure camera is updated
-  camera.updateProjectionMatrix()
 
   // Render and return SVG with additional checks
   renderer.render(scene, camera)
