@@ -100,7 +100,6 @@ export async function renderComponent(
           THREE.MathUtils.degToRad(component.rotation.z ?? 0),
         )
       }
-      mesh.renderOrder = 0
       scene.add(mesh)
     }
     return

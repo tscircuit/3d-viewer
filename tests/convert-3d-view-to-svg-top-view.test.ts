@@ -1,7 +1,7 @@
 import type { AnyCircuitElement } from "circuit-json"
 import { expect, test } from "bun:test"
 import { convertCircuitJsonTo3dSvg } from "../src/convert-circuit-json-to-3d-svg.ts"
-import circuitJson from "./assets/capacitor-resistor-default-circuit.json"
+import circuitJson from "./assets/usb-c-flashlight.json"
 import { applyJsdomShim } from "../src/utils/jsdom-shim.ts"
 import { JSDOM } from "jsdom"
 

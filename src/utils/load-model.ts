@@ -1,5 +1,6 @@
 import * as THREE from "three"
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js"
+import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js"
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js"
 
 export async function load3DModel(url: string): Promise<THREE.Object3D | null> {
@@ -36,29 +37,66 @@ export async function load3DModel(url: string): Promise<THREE.Object3D | null> {
 
     return new THREE.Mesh(geometry, material)
   } else {
-    // Assume OBJ if not STL
+    // Handle OBJ file
     const text = new TextDecoder().decode(arrayBuffer)
-    const loader = new OBJLoader()
-    const object = loader.parse(text)
 
-    const material = new THREE.MeshStandardMaterial({
-      color: 0x888888,
-      metalness: 0.5,
-      roughness: 0.5,
-      side: THREE.DoubleSide,
-    })
+    // Extract material definitions and obj content
+    const mtlContent = text.match(/newmtl[\s\S]*?endmtl/g)?.join("\n")
+    const objContent = text.replace(/newmtl[\s\S]*?endmtl/g, "")
 
-    object.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        child.material = material
-        if (!child.geometry.attributes.normal) {
-          child.geometry.computeVertexNormals()
+    if (mtlContent) {
+      // Parse materials using MTLLoader
+      const mtlLoader = new MTLLoader()
+      mtlLoader.setMaterialOptions({
+        invertTrProperty: true,
+      })
+
+      // Process material content - convert colors to grayscale as in the reference
+      const processedMtlContent = mtlContent
+        .replace(/d 0\./g, "d 1.")
+        .replace(/Kd\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/g, "Kd $2 $2 $2")
+
+      const materials = mtlLoader.parse(processedMtlContent, "")
+
+      // Parse OBJ with materials
+      const loader = new OBJLoader()
+      loader.setMaterials(materials)
+      const object = loader.parse(objContent)
+
+      // Process geometries
+      object.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          if (!child.geometry.attributes.normal) {
+            child.geometry.computeVertexNormals()
+          }
+          child.geometry.center()
         }
-        child.geometry.center()
-      }
-    })
-    object.renderOrder = 1
+      })
 
-    return object
+      return object
+    } else {
+      // If no materials found, use default material
+      const loader = new OBJLoader()
+      const object = loader.parse(text)
+
+      const defaultMaterial = new THREE.MeshStandardMaterial({
+        color: 0x888888,
+        metalness: 0.5,
+        roughness: 0.5,
+        side: THREE.DoubleSide,
+      })
+
+      object.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.material = defaultMaterial
+          if (!child.geometry.attributes.normal) {
+            child.geometry.computeVertexNormals()
+          }
+          child.geometry.center()
+        }
+      })
+
+      return object
+    }
   }
 }
