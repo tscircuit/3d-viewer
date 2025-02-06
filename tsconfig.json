@@ -1,0 +1,32 @@
+{
+    "compilerOptions": {
+      // Base Options recommended for all projects
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "target": "es2022",
+      "baseUrl": ".",
+      "allowJs": true,
+      "resolveJsonModule": true,
+      "moduleDetection": "force",
+      "moduleResolution": "Bundler",
+      "isolatedModules": true,
+      "verbatimModuleSyntax": false,
+      "allowImportingTsExtensions": true,
+      // Enable strict type checking so you can catch bugs early
+      "strict": true,
+      "noUncheckedIndexedAccess": true,
+      "noImplicitOverride": true,
+      "noImplicitAny": false,
+      // We are not transpiling, so preserve our source code and do not emit files
+      "module": "ES2022",
+      "jsx": "react-jsx",
+      "noEmit": true,
+      // Include the DOM types
+      "lib": ["es2024", "dom", "dom.iterable"],
+      "types": ["bun-types"]
+    },
+    // Include the necessary files for your project
+    "include": ["**/*.ts", "**/*.tsx"],
+    "exclude": ["node_modules"]
+  }
+  

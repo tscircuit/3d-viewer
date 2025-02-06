@@ -1,0 +1,49 @@
+{
+  "name": "@tscircuit/3d-viewer",
+  "module": "./dist/index.ts",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "start": "bun run storybook",
+    "build": "tsup ./src/index.ts --platform neutral --format esm --dts",
+    "prepublish": "npm run build",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "format": "biome format . --write",
+    "format:check": "biome format .",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@tscircuit/core": "^0.0.301",
+    "@tscircuit/props": "^0.0.139",
+    "@tscircuit/soup-util": "^0.0.41",
+    "three": "^0.165.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@storybook/addon-essentials": "^8.5.2",
+    "@storybook/addon-interactions": "^8.5.2",
+    "@storybook/addon-links": "^8.5.2",
+    "@storybook/blocks": "^8.5.2",
+    "@storybook/builder-vite": "^8.5.2",
+    "@storybook/react": "^8.5.2",
+    "@storybook/react-vite": "^8.5.2",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@types/three": "^0.165.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "bun-types": "^1.0.25",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tsup": "^8.3.6",
+    "typescript": "^5.7.3",
+    "vite": "^5.4.14",
+    "vite-tsconfig-paths": "^4.3.2"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  }
+}
