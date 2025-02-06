@@ -20,6 +20,7 @@ export const createBoardGeomFromSoup = (
   soup: AnyCircuitElement[],
   circuitJson?: AnyCircuitElement[],
 ): Geom3[] => {
+  circuitJson ??= soup
   if (!circuitJson) {
     throw new Error("circuitJson is required but was not provided")
   }
@@ -238,7 +239,7 @@ export const createBoardGeomFromSoup = (
       silkscreenText as PcbSilkscreenText,
     )
 
-    for (let outline of textOutlines) {
+    for (const outline of textOutlines) {
       // Create path from outline points with alignment offset
 
       const alignedOutline = outline.map((point) => [
