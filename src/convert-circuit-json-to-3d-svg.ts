@@ -41,7 +41,7 @@ export async function convertCircuitJsonTo3dSvg(
   const aspect = width / height
   const near = 0.1
   const far = 50
-  let camera = new THREE.PerspectiveCamera(fov, aspect, near, far)
+  const camera = new THREE.PerspectiveCamera(fov, aspect, near, far)
 
   // Match CadViewerContainer lighting exactly
   const ambientLight = new THREE.AmbientLight(0xffffff, Math.PI / 2)
@@ -75,42 +75,33 @@ export async function convertCircuitJsonTo3dSvg(
         side: THREE.FrontSide,
       })
       const mesh = new THREE.Mesh(geometry, material)
+      mesh.renderOrder = -10
       scene.add(mesh)
     }
   }
 
   // First get the board dimensions
   const board = circuitJson.find((c) => c.type === "pcb_board")
-  if (board && board.width && board.height) {
-    // Use board size to set up proper view
-    const boardWidth = board.width
-    const boardHeight = board.height
+  // Use board size to set up proper view
+  const boardWidth = board?.width || 10
+  const boardHeight = board?.height || 10
 
-    // Fixed camera position requirement
-    camera.position.set(0, 0, 5)
-    camera.up.set(0, 0, 1)
-    camera.lookAt(new THREE.Vector3(0, 0, 0))
+  // Top view
+  // camera.position.set(0, 0, 5)
+  // camera.up.set(0, 0, 1)
+  // camera.lookAt(new THREE.Vector3(0, 0, 0))
 
-    // Position camera
-    // camera.position.set(5, 5, 5)
-    // camera.up.set(0, 0, 1)
-    // camera.lookAt(new THREE.Vector3(0, 0, 0))
+  // Position camera
+  camera.position.set(5, 5, 5)
+  camera.up.set(0, 0, 1)
+  camera.lookAt(new THREE.Vector3(0, 0, 0))
 
-    // Scale scene to fit view
-    const maxDim = Math.max(boardWidth, boardHeight)
-    const scale = (1.0 - padding / 100) / maxDim
-    scene.scale.multiplyScalar(scale * 2.5)
+  // Scale scene to fit view
+  const maxDim = Math.max(boardWidth, boardHeight)
+  const scale = (1.0 - padding / 100) / maxDim
+  scene.scale.multiplyScalar(scale * 5)
 
-    camera.updateProjectionMatrix()
-  } else {
-    // Fallback if no board found
-    camera.position.set(5, 5, 5)
-    camera.up.set(0, 0, 1)
-    camera.lookAt(new THREE.Vector3(0, 0, 0))
-
-    // Default scale if no board
-    scene.scale.multiplyScalar(0.5)
-  }
+  camera.updateProjectionMatrix()
 
   // Render and return SVG with additional checks
   renderer.render(scene, camera)

@@ -57,6 +57,7 @@ export async function load3DModel(url: string): Promise<THREE.Object3D | null> {
         child.geometry.center()
       }
     })
+    object.renderOrder = 1
 
     return object
   }
