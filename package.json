@@ -31,7 +31,7 @@
     "@jscad/stl-serializer": "^2.1.20",
     "@react-three/drei": "^9.121.4",
     "@react-three/fiber": "^8.17.14",
-    "@tscircuit/core": "^0.0.301",
+    "@tscircuit/core": "^0.0.302",
     "@tscircuit/props": "^0.0.141",
     "@tscircuit/react-fiber": "^1.2.0",
     "@tscircuit/soup-util": "^0.0.41",
