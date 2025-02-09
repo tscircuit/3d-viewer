@@ -40,14 +40,29 @@ export const CadViewer = forwardRef<
   }>(null)
   circuitJson ??= useConvertChildrenToSoup(children, circuitJson) as any
 
-  if (!circuitJson) return null
+  const initialCameraPosition = useMemo(() => {
+    if (!circuitJson) return [5, 5, 5] as const
+    try {
+      const board = su(circuitJson as any).pcb_board.list()[0]
+      if (!board) return [5, 5, 5] as const
+      const { width, height } = board
+      const largestDim = Math.max(width, height)
+      return [largestDim / 2, largestDim / 2, largestDim] as const
+    } catch (e) {
+      console.error(e)
+      return [5, 5, 5] as const
+    }
+  }, [circuitJson])
 
   const boardGeom = useMemo(() => {
+    if (!circuitJson) return null
     if (!circuitJson.some((e) => e.type === "pcb_board")) return null
     return createBoardGeomFromSoup(circuitJson)
   }, [circuitJson])
 
   const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
+
+  if (!circuitJson) return null
 
   const cad_components = su(circuitJson).cad_component.list()
 
@@ -56,6 +71,7 @@ export const CadViewer = forwardRef<
       ref={ref}
       hoveredComponent={hoveredComponent}
       autoRotateDisabled={autoRotateDisabled}
+      initialCameraPosition={initialCameraPosition}
     >
       {boardStls.map(({ stlUrl, color }, index) => (
         <STLModel
