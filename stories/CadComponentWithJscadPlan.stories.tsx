@@ -17,6 +17,14 @@ export const Default = () => (
   </CadViewer>
 )
 
+export const Dip8 = () => (
+  <CadViewer>
+    <board width="50mm" height="50mm">
+      <chip name="U1" footprint="dip8" />
+    </board>
+  </CadViewer>
+)
+
 export default {
   title: "CadComponentWithJscadPlan",
   component: Default,
