@@ -1,5 +1,4 @@
 import { CadViewer } from "src/CadViewer"
-import "@tscircuit/react-fiber"
 
 export const Default = () => (
   <CadViewer>
