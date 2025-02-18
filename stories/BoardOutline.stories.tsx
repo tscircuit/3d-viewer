@@ -2,7 +2,7 @@ import { CadViewer } from "src/CadViewer"
 
 function CustomBoard({ boardOutline }) {
   return (
-    <board width="10mm" height="10mm" outline={boardOutline}>
+    <board width="10mm" height="10mm" outline={boardOutline} outlineOffsetX={-10} outlineOffsetY={15}>
       <resistor
         name="R1"
         footprint={"0402"}
