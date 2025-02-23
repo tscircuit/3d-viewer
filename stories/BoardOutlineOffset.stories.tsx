@@ -6,8 +6,8 @@ function CustomBoard({ boardOutlineOffset }) {
       width="10mm"
       height="10mm"
       outline={boardOutlineOffset}
-      outlineOffsetX={-10}
-      outlineOffsetY={15}
+      outlineOffsetX={12}
+      outlineOffsetY={-5}
     >
       <resistor
         name="R1"
