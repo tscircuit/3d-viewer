@@ -34,7 +34,7 @@
     "@tscircuit/core": "^0.0.331",
     "@tscircuit/props": "^0.0.156",
     "@tscircuit/soup-util": "^0.0.41",
-    "jscad-electronics": "^0.0.25",
+    "jscad-electronics": "^0.0.27",
     "jscad-fiber": "^0.0.77",
     "jscad-planner": "^0.0.12",
     "react": "^18.3.1",
