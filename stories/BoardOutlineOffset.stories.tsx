@@ -56,27 +56,6 @@ export const AtariBoardOutlineOffset = () => {
   )
 }
 
-export const StarBoardOutlineOffset = () => {
-  return (
-    <CadViewer>
-      <CustomBoard
-        boardOutlineOffset={[
-          { x: 0, y: 25 },
-          { x: 5, y: 15 },
-          { x: 15, y: 12.5 },
-          { x: 8.5, y: 5 },
-          { x: 10, y: -7.5 },
-          { x: 0, y: -2.5 },
-          { x: -10, y: -7.5 },
-          { x: -8.5, y: 5 },
-          { x: -15, y: 12.5 },
-          { x: -5, y: 15 },
-        ]}
-      />
-    </CadViewer>
-  )
-}
-
 export default {
   title: "BoardOutlineOffset",
   component: AtariBoardOutlineOffset,
