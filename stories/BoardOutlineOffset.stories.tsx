@@ -1,38 +1,10 @@
 import { CadViewer } from "src/CadViewer"
 
-function CustomBoard({ boardOutlineOffset }) {
-  return (
-    <board
-      width="10mm"
-      height="10mm"
-      outline={boardOutlineOffset}
-      outlineOffsetX={12}
-      outlineOffsetY={-5}
-    >
-      <resistor
-        name="R1"
-        footprint={"0402"}
-        resistance={"1k"}
-        pcbX={5}
-        pcbY={2}
-      />
-      <resistor
-        name="R2"
-        footprint={"0402"}
-        resistance={"1k"}
-        pcbX={5}
-        pcbY={0}
-      />
-      <trace from={".R1 > .right"} to={".R2 > .left"} />
-    </board>
-  )
-}
-
 export const AtariBoardOutlineOffset = () => {
   return (
     <CadViewer>
-      <CustomBoard
-        boardOutlineOffset={[
+      <board
+        outline={[
           { x: -22.5, y: 24.5 },
           { x: 22.5, y: 24.5 },
           { x: 22.5, y: 16.5 },
@@ -51,7 +23,25 @@ export const AtariBoardOutlineOffset = () => {
           { x: -22.5, y: 16.5 },
           { x: -22.5, y: 24.5 },
         ]}
-      />
+        outlineOffsetX={12}
+        outlineOffsetY={-5}
+      >
+        <resistor
+          name="R1"
+          footprint={"0402"}
+          resistance={"1k"}
+          pcbX={5}
+          pcbY={2}
+        />
+        <resistor
+          name="R2"
+          footprint={"0402"}
+          resistance={"1k"}
+          pcbX={5}
+          pcbY={0}
+        />
+        <trace from={".R1 > .right"} to={".R2 > .left"} />
+      </board>
     </CadViewer>
   )
 }
