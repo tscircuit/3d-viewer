@@ -41,14 +41,14 @@ export const CadViewer = forwardRef<
   circuitJson ??= useConvertChildrenToSoup(children, circuitJson) as any
 
   const initialCameraPosition = useMemo(() => {
-    if (!circuitJson) return [10, 10, 10] as const
+    if (!circuitJson) return [5, 5, 5] as const
     try {
       const board = su(circuitJson as any).pcb_board.list()[0]
-      if (!board) return [10, 10, 10] as const
+      if (!board) return [5, 5, 5] as const
       const { width, height } = board
 
       if (!width && !height) {
-        return [10, 10, 10] as const
+        return [5, 5, 5] as const
       }
 
       const minDimension = 5
@@ -58,7 +58,7 @@ export const CadViewer = forwardRef<
       return [largestDim / 2, largestDim / 2, largestDim] as const
     } catch (e) {
       console.error(e)
-      return [10, 10, 10] as const
+      return [5, 5, 5] as const
     }
   }, [circuitJson])
 
