@@ -46,7 +46,15 @@ export const CadViewer = forwardRef<
       const board = su(circuitJson as any).pcb_board.list()[0]
       if (!board) return [5, 5, 5] as const
       const { width, height } = board
-      const largestDim = Math.max(width, height)
+
+      if (!width && !height) {
+        return [5, 5, 5] as const
+      }
+
+      const minCameraDistance = 5
+      const adjustedBoardWidth = Math.max(width, minCameraDistance)
+      const adjustedBoardHeight = Math.max(height, minCameraDistance)
+      const largestDim = Math.max(adjustedBoardWidth, adjustedBoardHeight)
       return [largestDim / 2, largestDim / 2, largestDim] as const
     } catch (e) {
       console.error(e)
