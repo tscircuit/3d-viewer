@@ -54,8 +54,8 @@ export const CadViewer = forwardRef<
       const minCameraDistance = 5
       const adjustedBoardWidth = Math.max(width, minCameraDistance)
       const adjustedBoardHeight = Math.max(height, minCameraDistance)
-      const maxBoardDimension = Math.max(adjustedBoardWidth, adjustedBoardHeight)
-      return [maxBoardDimension / 2, maxBoardDimension / 2, maxBoardDimension] as const
+      const largestDim = Math.max(adjustedBoardWidth, adjustedBoardHeight)
+      return [largestDim / 2, largestDim / 2, largestDim] as const
     } catch (e) {
       console.error(e)
       return [5, 5, 5] as const
