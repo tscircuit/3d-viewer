@@ -10,17 +10,24 @@ import { M, colors } from "../geoms/constants"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { expand } from "@jscad/modeling/src/operations/expansions"
 import { createBoardWithOutline } from "src/geoms/create-board-with-outline"
-import { Vec2 } from "@jscad/modeling/src/maths/types"
+import type { Vec2 } from "@jscad/modeling/src/maths/types"
 import { createSilkscreenTextGeoms } from "src/geoms/create-geoms-for-silkscreen-text"
-import { PcbSilkscreenText } from "circuit-json"
+import type { PcbSilkscreenText } from "circuit-json"
+
+interface BoardGeom extends Geom3 {
+  type: "board" | "via" | "plated_hole" | "trace" | "pad" | "silkscreen"
+  layer?: "top" | "bottom"
+}
+
 export const createBoardGeomFromSoup = (
   /**
    * @deprecated Use circuitJson instead.
    */
   soup: AnyCircuitElement[],
   circuitJson?: AnyCircuitElement[],
-): Geom3[] => {
+): BoardGeom[] => {
   circuitJson ??= soup
+
   if (!circuitJson) {
     throw new Error("circuitJson is required but was not provided")
   }
@@ -282,10 +289,13 @@ export const createBoardGeomFromSoup = (
   boardGeom = colorize(colors.fr4Green, boardGeom)
 
   return [
-    boardGeom,
-    ...platedHoleGeoms,
-    ...padGeoms,
-    ...traceGeoms,
-    ...silkscreenGeoms,
-  ]
+    {
+      ...boardGeom,
+      type: "board",
+    },
+    ...platedHoleGeoms.map((g) => ({ ...g, type: "plated_hole" })),
+    ...padGeoms.map((g) => ({ ...g, type: "pad" })),
+    ...traceGeoms.map((g) => ({ ...g, type: "trace" })),
+    ...silkscreenGeoms.map((g) => ({ ...g, type: "silkscreen" })),
+  ] as BoardGeom[]
 }
