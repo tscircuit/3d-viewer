@@ -4,7 +4,7 @@ import { useHelper, Grid, OrbitControls } from "@react-three/drei"
 import { Canvas, useFrame } from "@react-three/fiber"
 import packageJson from "../package.json"
 import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
-import { forwardRef, Suspense, useEffect, useRef } from "react"
+import { forwardRef, Suspense, useEffect, useRef, useState } from "react"
 
 export const RotationTracker = () => {
   useFrame(({ camera }) => {
@@ -24,6 +24,7 @@ interface Props {
   } | null
   autoRotateDisabled?: boolean
   initialCameraPosition?: readonly [number, number, number] | undefined
+  clickToInteractEnabled?: boolean
 }
 
 export const CadViewerContainer = forwardRef<
@@ -36,9 +37,14 @@ export const CadViewerContainer = forwardRef<
       hoveredComponent,
       initialCameraPosition = [5, 5, 5],
       autoRotateDisabled,
+      clickToInteractEnabled = false,
     },
     ref,
   ) => {
+    const [isInteractionEnabled, setIsInteractionEnabled] = useState(
+      !clickToInteractEnabled,
+    )
+
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
         <div
@@ -66,7 +72,12 @@ export const CadViewerContainer = forwardRef<
           camera={{ up: [0, 0, 1], position: initialCameraPosition }}
         >
           <RotationTracker />
-          <OrbitControls autoRotate={!autoRotateDisabled} autoRotateSpeed={1} />
+          {isInteractionEnabled && (
+            <OrbitControls
+              autoRotate={!autoRotateDisabled}
+              autoRotateSpeed={1}
+            />
+          )}
           <ambientLight intensity={Math.PI / 2} />
           <pointLight
             position={[-10, -10, 10]}
@@ -113,6 +124,34 @@ export const CadViewerContainer = forwardRef<
         >
           @{packageJson.version}
         </div>
+        {clickToInteractEnabled && !isInteractionEnabled && (
+          <div
+            onClick={() => setIsInteractionEnabled(true)}
+            style={{
+              position: "absolute",
+              inset: 0,
+              cursor: "pointer",
+              zIndex: 10,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: "rgba(0, 0, 0, 0.8)",
+                color: "white",
+                padding: "12px 24px",
+                borderRadius: "8px",
+                fontSize: "16px",
+                fontFamily: "sans-serif",
+                pointerEvents: "none",
+              }}
+            >
+              Click to Interact
+            </div>
+          </div>
+        )}
       </div>
     )
   },
