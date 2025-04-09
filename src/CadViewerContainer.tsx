@@ -89,6 +89,7 @@ export const CadViewerContainer = forwardRef<
             infiniteGrid={true}
             cellSize={1}
             sectionSize={10}
+            fadeDistance={Math.max(initialCameraPosition[2] * 2, 100)}
           />
           <object3D ref={ref}>{children}</object3D>
           {hoveredComponent && (
