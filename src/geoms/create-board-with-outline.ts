@@ -16,18 +16,22 @@ const arePointsClockwise = (points: Vec2[]): boolean => {
   return signedArea <= 0
 }
 
-export const createBoardWithOutline = (points: Point[], depth = 1.2): Geom3 => {
-  let outline: Vec2[] = points.map((point) => [point.x, point.y])
+export const createBoardGeomWithOutline = (
+  board: { center: { x: number; y: number }; outline: Point[] },
+  depth = 1.2,
+): Geom3 => {
+  const { center, outline } = board
+  let outlineVec2: Vec2[] = outline.map((point) => [point.x, point.y])
 
-  if (arePointsClockwise(outline)) {
-    outline = outline.reverse()
+  if (arePointsClockwise(outlineVec2)) {
+    outlineVec2 = outlineVec2.reverse()
   }
 
-  const shape: Geom2 = polygon({ points: outline })
+  const shape: Geom2 = polygon({ points: outlineVec2 })
 
-  let board: Geom3 = extrudeLinear({ height: depth }, shape)
+  let boardGeom: Geom3 = extrudeLinear({ height: depth }, shape)
 
-  board = translate([0, 0, -depth / 2], board)
+  boardGeom = translate([center.x, center.y, -depth / 2], boardGeom)
 
-  return board
+  return boardGeom
 }

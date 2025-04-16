@@ -3,13 +3,14 @@ import type * as React from "react"
 import type * as THREE from "three"
 import { useConvertChildrenToSoup } from "./hooks/use-convert-children-to-soup"
 import { su } from "@tscircuit/soup-util"
-import { useEffect, useMemo, useState, forwardRef } from "react"
-import { createBoardGeomFromSoup } from "./soup-to-3d"
+import { useMemo, forwardRef, useState, useCallback } from "react"
 import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { STLModel } from "./three-components/STLModel"
 import { CadViewerContainer } from "./CadViewerContainer"
+import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import { MixedStlModel } from "./three-components/MixedStlModel"
 import { Euler } from "three"
+import { useBoardGeomBuilder } from "./hooks/useBoardGeomBuilder"
 import { JscadModel } from "./three-components/JscadModel"
 import { Footprinter3d } from "jscad-electronics"
 import { FootprinterModel } from "./three-components/FootprinterModel"
@@ -37,18 +38,20 @@ export const CadViewer = forwardRef<
     { soup, circuitJson, children, autoRotateDisabled, clickToInteractEnabled },
     ref,
   ) => {
-    circuitJson ??= soup
-    const [hoveredComponent, setHoveredComponent] = useState<null | {
-      cad_component_id: string
-      name: string
-      mousePosition: [number, number, number]
-    }>(null)
-    circuitJson ??= useConvertChildrenToSoup(children, circuitJson) as any
+    const internalCircuitJson = useMemo(() => {
+      const cj = soup ?? circuitJson
+      return (cj ?? useConvertChildrenToSoup(children, cj)) as
+        | AnyCircuitElement[]
+        | undefined
+    }, [soup, circuitJson, children])
+
+    // Use the new hook to manage board geometry building
+    const boardGeom = useBoardGeomBuilder(internalCircuitJson)
 
     const initialCameraPosition = useMemo(() => {
-      if (!circuitJson) return [5, 5, 5] as const
+      if (!internalCircuitJson) return [5, 5, 5] as const
       try {
-        const board = su(circuitJson as any).pcb_board.list()[0]
+        const board = su(internalCircuitJson as any).pcb_board.list()[0]
         if (!board) return [5, 5, 5] as const
         const { width, height } = board
 
@@ -65,24 +68,18 @@ export const CadViewer = forwardRef<
         console.error(e)
         return [5, 5, 5] as const
       }
-    }, [circuitJson])
+    }, [internalCircuitJson])
 
-    const boardGeom = useMemo(() => {
-      if (!circuitJson) return null
-      if (!circuitJson.some((e) => e.type === "pcb_board")) return null
-      return createBoardGeomFromSoup(circuitJson)
-    }, [circuitJson])
-
+    // Use the state `boardGeom` which starts simplified and gets updated
     const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
 
-    if (!circuitJson) return null
+    if (!internalCircuitJson) return null
 
-    const cad_components = su(circuitJson).cad_component.list()
+    const cad_components = su(internalCircuitJson).cad_component.list()
 
     return (
       <CadViewerContainer
         ref={ref}
-        hoveredComponent={hoveredComponent}
         autoRotateDisabled={autoRotateDisabled}
         initialCameraPosition={initialCameraPosition}
         clickToInteractEnabled={clickToInteractEnabled}
@@ -104,29 +101,8 @@ export const CadViewer = forwardRef<
           >
             <AnyCadComponent
               key={cad_component.cad_component_id}
-              onHover={(e) => {
-                // TODO this should be done by onUnhover
-                if (!e) {
-                  setHoveredComponent(null)
-                }
-                if (!e.mousePosition) return
-
-                const componentName = su(
-                  circuitJson as any,
-                ).source_component.getUsing({
-                  source_component_id: cad_component.source_component_id,
-                })?.name
-                setHoveredComponent({
-                  cad_component_id: cad_component.cad_component_id,
-                  name: componentName ?? "<unknown>",
-                  mousePosition: e.mousePosition,
-                })
-              }}
               cad_component={cad_component}
-              isHovered={
-                hoveredComponent?.cad_component_id ===
-                cad_component.cad_component_id
-              }
+              circuitJson={internalCircuitJson}
             />
           </ThreeErrorBoundary>
         ))}

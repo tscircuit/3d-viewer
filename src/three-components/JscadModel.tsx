@@ -11,12 +11,14 @@ export const JscadModel = ({
   positionOffset,
   rotationOffset,
   onHover,
+  onUnhover,
   isHovered,
 }: {
   jscadPlan: JscadOperation
   positionOffset?: [number, number, number]
   rotationOffset?: [number, number, number]
   onHover: (e: any) => void
+  onUnhover: () => void
   isHovered: boolean
 }) => {
   const { threeGeom, material } = useMemo(() => {
@@ -47,6 +49,7 @@ export const JscadModel = ({
     <ContainerWithTooltip
       isHovered={isHovered}
       onHover={onHover}
+      onUnhover={onUnhover}
       position={positionOffset}
     >
       <mesh

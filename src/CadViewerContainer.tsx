@@ -14,14 +14,7 @@ export const RotationTracker = () => {
   return <></>
 }
 
-import { Html } from "@react-three/drei"
-
 interface Props {
-  hoveredComponent: {
-    cad_component_id: string
-    name: string
-    mousePosition: [number, number, number]
-  } | null
   autoRotateDisabled?: boolean
   initialCameraPosition?: readonly [number, number, number] | undefined
   clickToInteractEnabled?: boolean
@@ -34,7 +27,6 @@ export const CadViewerContainer = forwardRef<
   (
     {
       children,
-      hoveredComponent,
       initialCameraPosition = [5, 5, 5],
       autoRotateDisabled,
       clickToInteractEnabled = false,
@@ -91,25 +83,6 @@ export const CadViewerContainer = forwardRef<
             sectionSize={10}
           />
           <object3D ref={ref}>{children}</object3D>
-          {hoveredComponent && (
-            <Html
-              position={hoveredComponent.mousePosition}
-              style={{
-                fontFamily: "sans-serif",
-                transform: "translate3d(50%, 50%, 0)",
-                backgroundColor: "white",
-                padding: "5px",
-                borderRadius: "3px",
-                pointerEvents: "none",
-                userSelect: "none",
-                WebkitUserSelect: "none",
-                MozUserSelect: "none",
-                msUserSelect: "none",
-              }}
-            >
-              {hoveredComponent.name}
-            </Html>
-          )}
         </Canvas>
         <div
           style={{
