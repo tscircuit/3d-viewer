@@ -9,18 +9,13 @@ import { platedHole } from "../geoms/plated-hole"
 import { M, colors } from "../geoms/constants"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { expand } from "@jscad/modeling/src/operations/expansions"
-import { createBoardWithOutline } from "src/geoms/create-board-with-outline"
+import { createBoardGeomWithOutline } from "src/geoms/create-board-with-outline"
 import { Vec2 } from "@jscad/modeling/src/maths/types"
 import { createSilkscreenTextGeoms } from "src/geoms/create-geoms-for-silkscreen-text"
 import { PcbSilkscreenText } from "circuit-json"
 export const createBoardGeomFromSoup = (
-  /**
-   * @deprecated Use circuitJson instead.
-   */
-  soup: AnyCircuitElement[],
-  circuitJson?: AnyCircuitElement[],
+  circuitJson: AnyCircuitElement[],
 ): Geom3[] => {
-  circuitJson ??= soup
   if (!circuitJson) {
     throw new Error("circuitJson is required but was not provided")
   }
@@ -38,8 +33,18 @@ export const createBoardGeomFromSoup = (
   // PCB Board
   let boardGeom: Geom3
   if (board.outline && board.outline.length > 0)
-    boardGeom = createBoardWithOutline(board.outline, 1.2)
-  else boardGeom = cuboid({ size: [board.width, board.height, 1.2] })
+    boardGeom = createBoardGeomWithOutline(
+      {
+        center: board.center,
+        outline: board.outline!,
+      },
+      1.2,
+    )
+  else
+    boardGeom = cuboid({
+      size: [board.width, board.height, 1.2],
+      center: [board.center.x, board.center.y, 0],
+    })
 
   const platedHoleGeoms: Geom3[] = []
   const holeGeoms: Geom3[] = []
