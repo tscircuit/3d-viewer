@@ -35,6 +35,18 @@ type BuilderState =
   | "finalizing"
   | "done"
 
+const buildStateOrder: BuilderState[] = [
+  "initializing",
+  "processing_plated_holes",
+  "processing_holes",
+  "processing_pads",
+  "processing_traces",
+  "processing_vias",
+  "processing_silkscreen",
+  "finalizing",
+  "done",
+]
+
 export class BoardGeomBuilder {
   private circuitJson: AnyCircuitElement[]
   private board: PcbBoard
@@ -100,6 +112,13 @@ export class BoardGeomBuilder {
     this.currentIndex = 0
   }
 
+  goToNextState() {
+    const currentIndex = buildStateOrder.indexOf(this.state)
+    if (currentIndex === -1) return
+    this.state = buildStateOrder[currentIndex + 1]!
+    this.currentIndex = 0
+  }
+
   // Performs a chunk of work. Returns true if finished.
   step(iterations = 1): boolean {
     if (this.state === "done" || !this.boardGeom) return true
@@ -113,8 +132,7 @@ export class BoardGeomBuilder {
             this.processPlatedHole(this.plated_holes[this.currentIndex]!)
             this.currentIndex++
           } else {
-            this.state = "processing_holes"
-            this.currentIndex = 0
+            this.goToNextState()
           }
           break
 
@@ -123,8 +141,7 @@ export class BoardGeomBuilder {
             this.processHole(this.holes[this.currentIndex]!)
             this.currentIndex++
           } else {
-            this.state = "processing_pads"
-            this.currentIndex = 0
+            this.goToNextState()
           }
           break
 
@@ -134,10 +151,7 @@ export class BoardGeomBuilder {
             this.currentIndex++
           } else {
             // Skip traces and vias for now
-            this.state = "processing_silkscreen"
-            this.currentIndex = 0
-            // this.state = "processing_traces";
-            // this.currentIndex = 0;
+            this.goToNextState()
           }
           break
 
@@ -146,8 +160,7 @@ export class BoardGeomBuilder {
             this.processTrace(this.traces[this.currentIndex]!)
             this.currentIndex++
           } else {
-            this.state = "processing_vias"
-            this.currentIndex = 0
+            this.goToNextState()
           }
           break
 
@@ -156,8 +169,7 @@ export class BoardGeomBuilder {
             this.processVia(this.pcb_vias[this.currentIndex]!)
             this.currentIndex++
           } else {
-            this.state = "processing_silkscreen"
-            this.currentIndex = 0
+            this.goToNextState()
           }
           break
 
@@ -166,8 +178,7 @@ export class BoardGeomBuilder {
             this.processSilkscreenText(this.silkscreenTexts[this.currentIndex]!)
             this.currentIndex++
           } else {
-            this.state = "finalizing"
-            this.currentIndex = 0
+            this.goToNextState()
           }
           break
 
@@ -279,7 +290,86 @@ export class BoardGeomBuilder {
   }
 
   private processTrace(trace: PcbTrace) {
-    this.traceGeoms.push(traceGeom)
+    const { route: mixedRoute } = trace
+    if (mixedRoute.length < 2) return
+
+    // Group route points into continuous wire segments on the same layer
+    let currentSegmentPoints: Vec2[] = []
+    let currentLayer: "top" | "bottom" | null = null
+    let currentWidth = 0.1 // Default width
+
+    const finishSegment = () => {
+      if (currentSegmentPoints.length >= 2 && currentLayer) {
+        const layerSign = currentLayer === "bottom" ? -1 : 1
+        const zPos = (layerSign * this.ctx.pcbThickness) / 2 + layerSign * M
+
+        const linePath = line(currentSegmentPoints)
+        // Use the width of the starting point of the segment for consistency
+        const expandedPath = expand(
+          { delta: currentWidth / 2, corners: "round" },
+          linePath,
+        )
+        let traceGeom = translate(
+          [0, 0, zPos],
+          extrudeLinear({ height: M }, expandedPath),
+        )
+
+        // TODO: Subtract via/hole overlaps if needed for accuracy
+
+        traceGeom = colorize(colors.fr4GreenSolderWithMask, traceGeom)
+        this.traceGeoms.push(traceGeom)
+      }
+      currentSegmentPoints = []
+      currentLayer = null
+    }
+
+    for (let i = 0; i < mixedRoute.length; i++) {
+      const point = mixedRoute[i]!
+
+      if (point.route_type === "wire") {
+        if (currentLayer === null) {
+          // Start of a new segment
+          currentLayer = point.layer as any
+          currentWidth = point.width
+          currentSegmentPoints.push([point.x, point.y])
+        } else if (point.layer === currentLayer) {
+          // Continue existing segment
+          currentSegmentPoints.push([point.x, point.y])
+        } else {
+          // Layer change - finish previous segment and start new one
+          // Add the current point to finish the segment before starting new
+          currentSegmentPoints.push([point.x, point.y])
+          finishSegment()
+          currentLayer = point.layer as any
+          currentWidth = point.width
+          // Need the previous point to start the new segment correctly
+          const prevPoint = mixedRoute[i - 1]
+          if (prevPoint) {
+            // Start new segment with the via/transition point
+            currentSegmentPoints.push([point.x, point.y])
+          } else {
+            // Should not happen in a valid trace, but handle defensively
+            currentSegmentPoints.push([point.x, point.y])
+          }
+        }
+      } else if (point.route_type === "via") {
+        // Via encountered - finish the current wire segment
+        // Add the via's position as the end point of the current segment
+        currentSegmentPoints.push([point.x, point.y])
+        finishSegment()
+        // The via itself will be handled by processVia/processPlatedHole
+        // Start the next segment from the via point if followed by a wire
+        const nextPoint = mixedRoute[i + 1]
+        if (nextPoint && nextPoint.route_type === "wire") {
+          currentLayer = nextPoint.layer as any // Layer might change across via
+          currentWidth = nextPoint.width
+          currentSegmentPoints.push([point.x, point.y]) // Start next segment at via location
+        }
+      }
+    }
+
+    // Finish the last segment
+    finishSegment()
   }
 
   private processVia(via: PcbVia) {
@@ -333,7 +423,6 @@ export class BoardGeomBuilder {
 
   private finalize() {
     if (!this.boardGeom) return
-
     // Colorize the final board geometry
     this.boardGeom = colorize(colors.fr4Green, this.boardGeom)
 
