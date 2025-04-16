@@ -1,5 +1,6 @@
 import { fn } from "@storybook/test"
 import { CadViewer } from "src/CadViewer"
+import keyboard60 from "./assets/keyboard-default60.json"
 
 /**
  * A switch shaft you can use to connect a pluggable Kailh socket.
@@ -89,6 +90,8 @@ export const Default = () => (
     </board>
   </CadViewer>
 )
+
+export const Default60 = () => <CadViewer circuitJson={keyboard60} />
 
 export default {
   title: "Keyboard",
