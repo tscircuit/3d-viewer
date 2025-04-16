@@ -14,7 +14,6 @@ export const RotationTracker = () => {
   return <></>
 }
 
-
 interface Props {
   autoRotateDisabled?: boolean
   initialCameraPosition?: readonly [number, number, number] | undefined
