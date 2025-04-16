@@ -6,6 +6,8 @@ import { subtract, union } from "@jscad/modeling/src/operations/booleans"
 import { M, colors } from "./constants"
 import type { GeomContext } from "../GeomContext"
 
+const platedHoleLipHeight = 0.05
+
 export const platedHole = (
   plated_hole: PCBPlatedHole,
   ctx: GeomContext,
@@ -24,12 +26,12 @@ export const platedHole = (
           cylinder({
             center: [plated_hole.x, plated_hole.y, 1.2 / 2],
             radius: plated_hole.outer_diameter / 2,
-            height: M,
+            height: platedHoleLipHeight,
           }),
           cylinder({
             center: [plated_hole.x, plated_hole.y, -1.2 / 2],
             radius: plated_hole.outer_diameter / 2,
-            height: M,
+            height: platedHoleLipHeight,
           }),
         ),
         cylinder({
@@ -95,7 +97,7 @@ export const platedHole = (
         ? [plated_hole.x, plated_hole.y - rectLength / 2, 1.2 / 2]
         : [plated_hole.x - rectLength / 2, plated_hole.y, 1.2 / 2],
       radius: outerHeight / 2,
-      height: M,
+      height: platedHoleLipHeight,
     })
 
     const outerRightCap = cylinder({
@@ -103,7 +105,7 @@ export const platedHole = (
         ? [plated_hole.x, plated_hole.y + rectLength / 2, 1.2 / 2]
         : [plated_hole.x + rectLength / 2, plated_hole.y, 1.2 / 2],
       radius: outerHeight / 2,
-      height: M,
+      height: platedHoleLipHeight,
     })
 
     const bottomMainRect = cuboid({
@@ -120,7 +122,7 @@ export const platedHole = (
         ? [plated_hole.x, plated_hole.y - rectLength / 2, -1.2 / 2]
         : [plated_hole.x - rectLength / 2, plated_hole.y, -1.2 / 2],
       radius: outerHeight / 2,
-      height: M,
+      height: platedHoleLipHeight,
     })
 
     const bottomRightCap = cylinder({
@@ -128,7 +130,7 @@ export const platedHole = (
         ? [plated_hole.x, plated_hole.y + rectLength / 2, -1.2 / 2]
         : [plated_hole.x + rectLength / 2, plated_hole.y, -1.2 / 2],
       radius: outerHeight / 2,
-      height: M,
+      height: platedHoleLipHeight,
     })
     return colorize(
       colors.copper,
@@ -148,21 +150,21 @@ export const platedHole = (
           cuboid({
             center: [plated_hole.x, plated_hole.y, 0],
             size: shouldRotate
-              ? [holeHeight - M, rectLength, 1.5]
-              : [rectLength, holeHeight - M, 1.5],
+              ? [holeHeight - platedHoleLipHeight, rectLength, 1.5]
+              : [rectLength, holeHeight - platedHoleLipHeight, 1.5],
           }),
           cylinder({
             center: shouldRotate
               ? [plated_hole.x, plated_hole.y - rectLength / 2, 0]
               : [plated_hole.x - rectLength / 2, plated_hole.y, 0],
-            radius: holeRadius - M,
+            radius: holeRadius - platedHoleLipHeight,
             height: 1.5,
           }),
           cylinder({
             center: shouldRotate
               ? [plated_hole.x, plated_hole.y + rectLength / 2, 0]
               : [plated_hole.x + rectLength / 2, plated_hole.y, 0],
-            radius: holeRadius - M,
+            radius: holeRadius - platedHoleLipHeight,
             height: 1.5,
           }),
         ),

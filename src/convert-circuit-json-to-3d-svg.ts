@@ -3,7 +3,7 @@ import { su } from "@tscircuit/soup-util"
 import Debug from "debug"
 import * as THREE from "three"
 import { SVGRenderer } from "three/examples/jsm/renderers/SVGRenderer.js"
-import { createBoardGeomFromSoup } from "./soup-to-3d"
+import { createBoardGeomFromCircuitJson } from "./soup-to-3d"
 import { createGeometryFromPolygons } from "./utils/create-geometry-from-polygons"
 import { renderComponent } from "./utils/render-component"
 
@@ -92,7 +92,7 @@ export async function convertCircuitJsonTo3dSvg(
   }
 
   // Add board geometry after components
-  const boardGeom = createBoardGeomFromSoup(circuitJson)
+  const boardGeom = createBoardGeomFromCircuitJson(circuitJson)
   if (boardGeom) {
     for (const geom of boardGeom) {
       const geometry = createGeometryFromPolygons(geom.polygons)

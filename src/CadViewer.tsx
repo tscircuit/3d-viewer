@@ -4,7 +4,7 @@ import type * as THREE from "three"
 import { useConvertChildrenToSoup } from "./hooks/use-convert-children-to-soup"
 import { su } from "@tscircuit/soup-util"
 import { useEffect, useMemo, forwardRef } from "react"
-import { createBoardGeomFromSoup } from "./soup-to-3d"
+import { createBoardGeomFromCircuitJson } from "./soup-to-3d"
 import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { STLModel } from "./three-components/STLModel"
 import { CadViewerContainer } from "./CadViewerContainer"
@@ -65,7 +65,9 @@ export const CadViewer = forwardRef<
     const boardGeom = useMemo(() => {
       if (!circuitJson) return null
       if (!circuitJson.some((e) => e.type === "pcb_board")) return null
-      return createBoardGeomFromSoup(circuitJson)
+      return createBoardGeomFromCircuitJson(circuitJson, {
+        simplifiedBoard: true,
+      })
     }, [circuitJson])
 
     const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)

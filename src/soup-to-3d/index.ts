@@ -13,8 +13,12 @@ import { createBoardGeomWithOutline } from "src/geoms/create-board-with-outline"
 import { Vec2 } from "@jscad/modeling/src/maths/types"
 import { createSilkscreenTextGeoms } from "src/geoms/create-geoms-for-silkscreen-text"
 import { PcbSilkscreenText } from "circuit-json"
-export const createBoardGeomFromSoup = (
+
+export const createBoardGeomFromCircuitJson = (
   circuitJson: AnyCircuitElement[],
+  opts: {
+    simplifiedBoard?: boolean
+  } = {},
 ): Geom3[] => {
   if (!circuitJson) {
     throw new Error("circuitJson is required but was not provided")
@@ -46,6 +50,10 @@ export const createBoardGeomFromSoup = (
       center: [board.center.x, board.center.y, 0],
     })
 
+  if (opts?.simplifiedBoard) {
+    return [colorize(colors.fr4Green, boardGeom)]
+  }
+
   const platedHoleGeoms: Geom3[] = []
   const holeGeoms: Geom3[] = []
   const padGeoms: Geom3[] = []
@@ -54,14 +62,19 @@ export const createBoardGeomFromSoup = (
     pcbThickness: 1.2,
   }
 
-  const addPlatedHole = (plated_hole: PCBPlatedHole) => {
+  const addPlatedHole = (
+    plated_hole: PCBPlatedHole,
+    opts: { dontCutBoard?: boolean } = {},
+  ) => {
     if (plated_hole.shape === "circle") {
       const cyGeom = cylinder({
         center: [plated_hole.x, plated_hole.y, 0],
         radius: plated_hole.hole_diameter / 2 + M,
       })
 
-      boardGeom = subtract(boardGeom, cyGeom)
+      if (!opts.dontCutBoard) {
+        boardGeom = subtract(boardGeom, cyGeom)
+      }
 
       const platedHoleGeom = platedHole(plated_hole, ctx)
       platedHoleGeoms.push(platedHoleGeom)
@@ -146,97 +159,103 @@ export const createBoardGeomFromSoup = (
     }
   }
 
-  for (const { route: mixedRoute } of traces) {
-    if (mixedRoute.length < 2) continue
+  // HACK: trace rendering is too buggy at the moment, weird jscad artifacts
+  // for (const { route: mixedRoute } of traces) {
+  //   if (mixedRoute.length < 2) continue
 
-    // Group routes by continuous segments
-    const routeSegments: (typeof mixedRoute)[] = []
-    let currentSegment: typeof mixedRoute = [mixedRoute[0]!]
-    let currentLayer =
-      mixedRoute[0]!.route_type === "wire" ? mixedRoute[0]!.layer : "top"
+  //   // Group routes by continuous segments
+  //   const routeSegments: (typeof mixedRoute)[] = []
+  //   let currentSegment: typeof mixedRoute = [mixedRoute[0]!]
+  //   let currentLayer =
+  //     mixedRoute[0]!.route_type === "wire" ? mixedRoute[0]!.layer : "top"
 
-    for (let i = 1; i < mixedRoute.length; i++) {
-      const point = mixedRoute[i]!
+  //   for (let i = 1; i < mixedRoute.length; i++) {
+  //     const point = mixedRoute[i]!
 
-      if (point.route_type === "via") {
-        // Complete current segment and start a new one
-        routeSegments.push(currentSegment)
-        currentSegment = [point]
-      } else if (point.route_type === "wire" && point.layer !== currentLayer) {
-        // Complete current segment and start a new one on a different layer
-        routeSegments.push(currentSegment)
-        currentLayer = point.layer
-        currentSegment = [point]
-      } else {
-        currentSegment.push(point)
-      }
-    }
+  //     if (point.route_type === "via") {
+  //       // Complete current segment and start a new one
+  //       routeSegments.push(currentSegment)
+  //       currentSegment = [point]
+  //     } else if (point.route_type === "wire" && point.layer !== currentLayer) {
+  //       // Complete current segment and start a new one on a different layer
+  //       routeSegments.push(currentSegment)
+  //       currentLayer = point.layer
+  //       currentSegment = [point]
+  //     } else {
+  //       currentSegment.push(point)
+  //     }
+  //   }
 
-    // Add the last segment
-    routeSegments.push(currentSegment)
+  //   // Add the last segment
+  //   routeSegments.push(currentSegment)
 
-    // Render each route segment
-    for (const route of routeSegments) {
-      if (route.length < 2) continue
+  //   // Render each route segment
+  //   for (const route of routeSegments) {
+  //     if (route.length < 2) continue
 
-      const linePath = line(route.map((p) => [p.x, p.y]))
-      const layerSign =
-        route[0]!.route_type === "via"
-          ? route[0]!.to_layer === "top"
-            ? 1
-            : -1
-          : route[0]!.layer === "top"
-            ? 1
-            : -1
+  //     const linePath = line(route.map((p) => [p.x, p.y]))
+  //     const layerSign =
+  //       route[0]!.route_type === "via"
+  //         ? route[0]!.to_layer === "top"
+  //           ? 1
+  //           : -1
+  //         : route[0]!.layer === "top"
+  //           ? 1
+  //           : -1
 
-      let traceGeom = translate(
-        [0, 0, (layerSign * 1.2) / 2],
-        extrudeLinear(
-          { height: M * layerSign },
-          expand({ delta: 0.1, corners: "edge" }, linePath),
-        ),
-      )
+  //     let traceGeom = translate(
+  //       [0, 0, (layerSign * 1.2) / 2],
+  //       extrudeLinear(
+  //         { height: M * layerSign },
+  //         expand({ delta: 0.1, corners: "edge" }, linePath),
+  //       ),
+  //     )
 
-      // Modify via subtraction to preserve trace geometry
-      const viaSubtractions = pcb_vias.map((via) =>
-        cylinder({
-          center: [via.x, via.y, 0],
-          radius: via.outer_diameter / 2,
-          height: 5,
-        }),
-      )
+  //     // Modify via subtraction to preserve trace geometry
+  //     // const viaSubtractions = pcb_vias.map((via) =>
+  //     //   cylinder({
+  //     //     center: [via.x, via.y, 0],
+  //     //     radius: via.outer_diameter / 2,
+  //     //     height: 5,
+  //     //   }),
+  //     // )
 
-      const holeSubtractions = plated_holes
-        .filter((ph) => ph.shape === "circle")
-        .map((ph) =>
-          cylinder({
-            center: [ph.x, ph.y, 0],
-            radius: ph.outer_diameter / 2,
-            height: 5,
-          }),
-        )
+  //     // const holeSubtractions = plated_holes
+  //     //   .filter((ph) => ph.shape === "circle")
+  //     //   .map((ph) =>
+  //     //     cylinder({
+  //     //       center: [ph.x, ph.y, 0],
+  //     //       radius: ph.outer_diameter / 2,
+  //     //       height: 5,
+  //     //     }),
+  //     //   )
 
-      // Subtract vias and holes without removing entire trace
-      traceGeom = subtract(traceGeom, ...viaSubtractions, ...holeSubtractions)
+  //     // Subtract vias and holes without removing entire trace
+  //     // traceGeom = subtract(traceGeom, ...viaSubtractions, ...holeSubtractions)
 
-      traceGeom = colorize(colors.fr4GreenSolderWithMask, traceGeom)
+  //     traceGeom = colorize(colors.fr4GreenSolderWithMask, traceGeom)
 
-      traceGeoms.push(traceGeom)
-    }
-  }
+  //     traceGeoms.push(traceGeom)
+  //   }
+  // }
 
-  for (const via of pcb_vias) {
-    addPlatedHole({
-      x: via.x,
-      y: via.y,
-      hole_diameter: via.hole_diameter,
-      outer_diameter: via.outer_diameter,
-      shape: "circle",
-      layers: ["top", "bottom"],
-      type: "pcb_plated_hole",
-      pcb_plated_hole_id: "",
-    })
-  }
+  // for (const via of pcb_vias) {
+  //   addPlatedHole(
+  //     {
+  //       x: via.x,
+  //       y: via.y,
+  //       hole_diameter: via.hole_diameter,
+  //       outer_diameter: via.outer_diameter,
+  //       shape: "circle",
+  //       layers: ["top", "bottom"],
+  //       type: "pcb_plated_hole",
+  //       pcb_plated_hole_id: "",
+  //     },
+  //     {
+  //       dontCutBoard: true,
+  //     },
+  //   )
+  // }
   // Add silkscreen text
   const silkscreenGeoms: Geom3[] = []
   for (const silkscreenText of silkscreenTexts) {
@@ -269,7 +288,7 @@ export const createBoardGeomFromSoup = (
 
       // Extrude and position the text with smaller height
       let textGeom = translate(
-        [0, 0, 0.6], // Position above board
+        [0, 0, 0.6 + M], // Position above board
         extrudeLinear(
           { height: 0.012 }, // Thinner extrusion
           expandedPath,
