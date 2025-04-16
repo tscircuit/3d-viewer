@@ -11,12 +11,14 @@ export const FootprinterModel = ({
   footprint,
   rotationOffset,
   onHover,
+  onUnhover,
   isHovered,
 }: {
   positionOffset: any
   footprint: string
   rotationOffset?: [number, number, number]
   onHover: (e: any) => void
+  onUnhover: () => void
   isHovered: boolean
 }) => {
   const jscadOperations = useMemo(() => {
@@ -39,6 +41,7 @@ export const FootprinterModel = ({
           rotationOffset={rotationOffset}
           jscadPlan={operation}
           onHover={onHover}
+          onUnhover={onUnhover}
           isHovered={isHovered}
         />
       ))}

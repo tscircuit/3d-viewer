@@ -3,7 +3,7 @@ import type * as React from "react"
 import type * as THREE from "three"
 import { useConvertChildrenToSoup } from "./hooks/use-convert-children-to-soup"
 import { su } from "@tscircuit/soup-util"
-import { useEffect, useMemo, useState, forwardRef } from "react"
+import { useEffect, useMemo, forwardRef } from "react"
 import { createBoardGeomFromSoup } from "./soup-to-3d"
 import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { STLModel } from "./three-components/STLModel"
@@ -38,11 +38,6 @@ export const CadViewer = forwardRef<
     ref,
   ) => {
     circuitJson ??= soup
-    const [hoveredComponent, setHoveredComponent] = useState<null | {
-      cad_component_id: string
-      name: string
-      mousePosition: [number, number, number]
-    }>(null)
     circuitJson ??= useConvertChildrenToSoup(children, circuitJson) as any
 
     const initialCameraPosition = useMemo(() => {
@@ -82,7 +77,6 @@ export const CadViewer = forwardRef<
     return (
       <CadViewerContainer
         ref={ref}
-        hoveredComponent={hoveredComponent}
         autoRotateDisabled={autoRotateDisabled}
         initialCameraPosition={initialCameraPosition}
         clickToInteractEnabled={clickToInteractEnabled}
@@ -104,29 +98,8 @@ export const CadViewer = forwardRef<
           >
             <AnyCadComponent
               key={cad_component.cad_component_id}
-              onHover={(e) => {
-                // TODO this should be done by onUnhover
-                if (!e) {
-                  setHoveredComponent(null)
-                }
-                if (!e.mousePosition) return
-
-                const componentName = su(
-                  circuitJson as any,
-                ).source_component.getUsing({
-                  source_component_id: cad_component.source_component_id,
-                })?.name
-                setHoveredComponent({
-                  cad_component_id: cad_component.cad_component_id,
-                  name: componentName ?? "<unknown>",
-                  mousePosition: e.mousePosition,
-                })
-              }}
               cad_component={cad_component}
-              isHovered={
-                hoveredComponent?.cad_component_id ===
-                cad_component.cad_component_id
-              }
+              circuitJson={circuitJson}
             />
           </ThreeErrorBoundary>
         ))}

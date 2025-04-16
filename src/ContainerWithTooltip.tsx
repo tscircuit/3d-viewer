@@ -10,16 +10,18 @@ const ContainerWithTooltip = ({
   children,
   isHovered,
   onHover,
+  onUnhover,
   position,
 }: {
   children: React.ReactNode
   position?: Vector3 | [number, number, number]
   onHover: (e: any) => void
+  onUnhover: () => void
   isHovered: boolean
 }) => {
   const lastValidPointRef = useRef<THREE.Vector3 | null>(null)
 
-  const handlePointerEnter = useCallback(
+  const handlePointerHover = useCallback(
     (e: any) => {
       e.stopPropagation()
 
@@ -42,27 +44,25 @@ const ContainerWithTooltip = ({
         }
       } catch (error) {
         console.warn("Hover event error:", error)
-        onHover({})
+        onHover({}) // Keep sending empty object if error occurs during hover
       }
     },
-    [position],
+    [onHover, position],
   )
 
   const handlePointerLeave = useCallback(
     (e: any) => {
       e.stopPropagation()
       lastValidPointRef.current = null
-
-      // TODO REPLACE WITH onUnhover
-      onHover(null)
+      onUnhover()
     },
-    [onHover],
+    [onUnhover],
   )
 
   return (
     <Group
-      onPointerEnter={handlePointerEnter}
-      onPointerMove={handlePointerEnter}
+      onPointerEnter={handlePointerHover}
+      onPointerMove={handlePointerHover}
       onPointerLeave={handlePointerLeave}
     >
       {children}
