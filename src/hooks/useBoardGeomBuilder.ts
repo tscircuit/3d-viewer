@@ -8,10 +8,11 @@ export const useBoardGeomBuilder = (
   circuitJson: AnyCircuitElement[] | undefined,
 ): Geom3[] | null => {
   const [boardGeom, setBoardGeom] = useState<Geom3[] | null>(null)
-  // Use ReturnType<typeof setInterval> to correctly type the interval ID
-  const builderIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const isProcessingRef = useRef(false) // To track if processing is ongoing
 
   useEffect(() => {
+    let isCancelled = false // Flag to signal cancellation
+
     if (!circuitJson) {
       setBoardGeom(null)
       return
@@ -21,52 +22,44 @@ export const useBoardGeomBuilder = (
       return
     }
 
-    // Clear any previous interval
-    if (builderIntervalRef.current) {
-      clearInterval(builderIntervalRef.current)
-      builderIntervalRef.current = null
-    }
-
     // Set initial simplified geometry
     const simplifiedGeom = createSimplifiedBoardGeom(circuitJson)
     setBoardGeom(simplifiedGeom)
 
     // Start the detailed builder
-    const builder = new BoardGeomBuilder(circuitJson, (finalGeoms) => {
-      // Completion callback
-      setBoardGeom(finalGeoms)
-      if (builderIntervalRef.current) {
-        clearInterval(builderIntervalRef.current)
-        builderIntervalRef.current = null
-      }
-    })
+    const builder = new BoardGeomBuilder(circuitJson, (finalGeoms) => {})
 
-    // Run builder incrementally
-    builderIntervalRef.current = setInterval(() => {
-      const isDone = builder.step(1)
-      if (isDone && builderIntervalRef.current) {
-        clearInterval(builderIntervalRef.current)
-        builderIntervalRef.current = null
-        // Ensure final state is set even if callback didn't fire somehow
-        // Check if the current state is different from the final builder state
-        setBoardGeom((currentGeom) => {
-          const finalGeoms = builder.getGeoms()
-          // Avoid unnecessary state updates if the geometry is already the final one
-          // This comparison might need refinement depending on how Geom3 equality is defined
-          if (JSON.stringify(currentGeom) !== JSON.stringify(finalGeoms)) {
-            return finalGeoms
+    const runBuilderSteps = async () => {
+      if (isProcessingRef.current) return // Prevent concurrent runs
+      isProcessingRef.current = true
+
+      try {
+        let isDone = false
+        while (!isDone && !isCancelled) {
+          isDone = builder.step(1) // Process one step
+          if (!isDone) {
+            // Yield to the event loop to allow UI updates and prevent blocking
+            await new Promise((resolve) => setTimeout(resolve, 0))
           }
-          return currentGeom
-        })
+        }
+
+        if (!isCancelled) {
+          // Ensure final state is set
+          setBoardGeom(builder.getGeoms())
+        }
+      } catch (error) {
+        console.error("Error during board geometry building:", error)
+        // Optionally set an error state here
+      } finally {
+        isProcessingRef.current = false
       }
-    }, 10)
+    }
+
+    runBuilderSteps()
 
     // Cleanup function
     return () => {
-      if (builderIntervalRef.current) {
-        clearInterval(builderIntervalRef.current)
-        builderIntervalRef.current = null
-      }
+      isCancelled = true // Signal cancellation to the async loop
     }
   }, [circuitJson]) // Rerun if circuitJson changes
 
