@@ -420,12 +420,18 @@ export class BoardGeomBuilder {
         { delta: expansionDelta, corners: "round" },
         textPath,
       )
-
-      let textGeom = translate(
-        [0, 0, this.ctx.pcbThickness / 2 + M], // Position above board
-        extrudeLinear({ height: 0.012 }, expandedPath),
-      )
-
+      let textGeom: any
+      if (st.layer === "bottom") {
+        textGeom = translate(
+          [0, 0, -this.ctx.pcbThickness / 2 - M], // Position above board
+          extrudeLinear({ height: 0.012 }, expandedPath),
+        )
+      } else {
+        textGeom = translate(
+          [0, 0, this.ctx.pcbThickness / 2 + M], // Position above board
+          extrudeLinear({ height: 0.012 }, expandedPath),
+        )
+      }
       textGeom = colorize([1, 1, 1], textGeom) // White
       this.silkscreenGeoms.push(textGeom)
     }
