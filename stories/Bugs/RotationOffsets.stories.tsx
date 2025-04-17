@@ -15,7 +15,6 @@ const circuitJson: AnyCircuitElement[] = [
     type: "schematic_component",
     source_component_id: "simple_resistor_0",
     schematic_component_id: "schematic_component_simple_resistor_0",
-    rotation: 1.5707963267948966,
     size: {
       width: 1,
       height: 0.3,
@@ -174,7 +173,6 @@ const circuitJson: AnyCircuitElement[] = [
     type: "schematic_component",
     source_component_id: "simple_resistor_1",
     schematic_component_id: "schematic_component_simple_resistor_1",
-    rotation: 0,
     size: {
       width: 1,
       height: 0.3,
@@ -418,6 +416,7 @@ const circuitJson: AnyCircuitElement[] = [
     height: 10,
     thickness: 1.6,
     num_layers: 2,
+    material: "fr4",
   },
 ]
 
