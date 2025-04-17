@@ -1,13 +1,22 @@
 import { vectorText } from "@jscad/modeling/src/text"
+import {
+  compose,
+  translate,
+  rotate,
+  applyToPoint,
+  Matrix,
+} from "transformation-matrix"
 import { PcbSilkscreenText } from "circuit-json"
 
 // Generate 2D text outlines
 export function createSilkscreenTextGeoms(silkscreenText: PcbSilkscreenText) {
-  // Generate 2D text outlines
   const textOutlines = vectorText({
     height: silkscreenText.font_size,
     input: silkscreenText.text,
   })
+
+  let rotationDegrees = silkscreenText.ccw_rotation ?? 0
+
   // Split number 8 and small e into two parts to fix visual issues
   textOutlines.forEach((outline) => {
     if (outline.length === 29) {
@@ -34,6 +43,7 @@ export function createSilkscreenTextGeoms(silkscreenText: PcbSilkscreenText) {
       )
     }
   })
+
   // Calculate text bounds and center point
   const points = textOutlines.flatMap((o) => o)
   const textBounds = {
@@ -49,7 +59,6 @@ export function createSilkscreenTextGeoms(silkscreenText: PcbSilkscreenText) {
   let xOffset = -centerX
   let yOffset = -centerY
 
-  // Adjust for specific alignments
   if (silkscreenText.anchor_alignment?.includes("right")) {
     xOffset = -textBounds.maxX
   } else if (silkscreenText.anchor_alignment?.includes("left")) {
@@ -62,5 +71,46 @@ export function createSilkscreenTextGeoms(silkscreenText: PcbSilkscreenText) {
     yOffset = -textBounds.minY
   }
 
-  return { textOutlines, xOffset, yOffset }
+  // Compose transform: mirror if bottom layer, then apply rotation
+  const transforms: Matrix[] = []
+
+  // If bottom layer, mirror horizontally around center
+  if (silkscreenText.layer === "bottom") {
+    transforms.push(
+      translate(centerX, centerY),
+      { a: -1, b: 0, c: 0, d: 1, e: 0, f: 0 }, // horizontal flip matrix
+      translate(-centerX, -centerY),
+    )
+
+    // Reverse the rotation direction for bottom layer
+    rotationDegrees = -rotationDegrees
+  }
+
+  // Apply rotation if rotation degrees are specified
+  if (rotationDegrees) {
+    const rad = (rotationDegrees * Math.PI) / 180
+    transforms.push(
+      translate(centerX, centerY),
+      rotate(rad),
+      translate(-centerX, -centerY),
+    )
+  }
+
+  let transformedOutlines = textOutlines
+
+  if (transforms.length > 0) {
+    const matrix = compose(...transforms)
+    transformedOutlines = textOutlines.map((outline) =>
+      outline.map(([x, y]) => {
+        const { x: nx, y: ny } = applyToPoint(matrix, { x, y })
+        return [nx, ny]
+      }),
+    )
+  }
+
+  return {
+    textOutlines: transformedOutlines,
+    xOffset,
+    yOffset,
+  }
 }

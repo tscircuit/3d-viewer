@@ -5,12 +5,7 @@ const createCircuit = () => {
   const circuit = new Circuit()
 
   circuit.add(
-    <board
-      width="20mm"
-      height="20mm"
-      material="fr1"
-      autorouter="sequential-trace"
-    >
+    <board width="20mm" height="20mm" autorouter="sequential-trace">
       <resistor name="R1" footprint="0805" resistance="10k" pcbX={5} pcbY={5} />
       <resistor
         pcbRotation={90}
@@ -22,6 +17,7 @@ const createCircuit = () => {
       />
       <resistor
         name="R3"
+        pcbRotation={90}
         footprint="0805"
         resistance="10k"
         pcbX={5}
@@ -44,12 +40,12 @@ const createCircuit = () => {
   return circuit.getCircuitJson()
 }
 
-export const fr1BoardMaterial = () => {
+export const SilkscreenTextMultilayerSupport = () => {
   const circuitJson = createCircuit()
   return <CadViewer circuitJson={circuitJson as any} />
 }
 
 export default {
-  title: "fr1 Board Material",
-  component: fr1BoardMaterial,
+  title: "Silkscreen Text",
+  component: SilkscreenTextMultilayerSupport,
 }
