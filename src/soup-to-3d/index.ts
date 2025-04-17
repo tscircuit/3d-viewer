@@ -1,18 +1,14 @@
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
-import type { AnyCircuitElement, PCBPlatedHole } from "circuit-json"
+import type { AnyCircuitElement } from "circuit-json"
 import { su } from "@tscircuit/soup-util"
-import { translate } from "@jscad/modeling/src/operations/transforms"
-import { cuboid, cylinder, line } from "@jscad/modeling/src/primitives"
+import { cuboid } from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
-import { subtract, union } from "@jscad/modeling/src/operations/booleans"
-import { platedHole } from "../geoms/plated-hole"
-import { M, colors } from "../geoms/constants"
-import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
-import { expand } from "@jscad/modeling/src/operations/expansions"
+import {
+  colors,
+  boardMaterialColors,
+  tracesMaterialColors,
+} from "../geoms/constants"
 import { createBoardGeomWithOutline } from "../geoms/create-board-with-outline"
-import type { Vec2 } from "@jscad/modeling/src/maths/types"
-import { createSilkscreenTextGeoms } from "../geoms/create-geoms-for-silkscreen-text"
-import type { PcbSilkscreenText } from "circuit-json"
 
 /**
  * Creates a simplified board geometry (just the board shape, no components/holes).
@@ -46,7 +42,9 @@ export const createSimplifiedBoardGeom = (
   }
 
   // Colorize and return the simplified board
-  return [colorize(colors.fr4Green, boardGeom)]
+  const material = boardMaterialColors[board.material] ?? colors.fr4Green
+
+  return [colorize(material, boardGeom)]
 }
 
 /**
