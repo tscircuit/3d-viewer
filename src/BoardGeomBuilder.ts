@@ -76,6 +76,30 @@ export class BoardGeomBuilder {
   private onCompleteCallback?: (geoms: Geom3[]) => void
   private finalGeoms: Geom3[] = []
 
+  private getHoleToCut(x: number, y: number): { diameter: number } | null {
+    const epsilon = M / 10
+    for (const via of this.pcb_vias) {
+      if (
+        Math.abs(via.x - x) < epsilon &&
+        Math.abs(via.y - y) < epsilon &&
+        via.hole_diameter
+      ) {
+        return { diameter: via.hole_diameter }
+      }
+    }
+    for (const ph of this.plated_holes) {
+      if (ph.shape !== "circle") continue
+      if (
+        Math.abs(ph.x - x) < epsilon &&
+        Math.abs(ph.y - y) < epsilon &&
+        ph.hole_diameter
+      ) {
+        return { diameter: ph.hole_diameter }
+      }
+    }
+    return null
+  }
+
   constructor(
     circuitJson: AnyCircuitElement[],
     onComplete: (geoms: Geom3[]) => void,
@@ -319,7 +343,32 @@ export class BoardGeomBuilder {
           extrudeLinear({ height: M }, expandedPath),
         )
 
-        // TODO: Subtract via/hole overlaps if needed for accuracy
+        const startPointCoords = currentSegmentPoints[0]!
+        const endPointCoords =
+          currentSegmentPoints[currentSegmentPoints.length - 1]!
+
+        const startHole = this.getHoleToCut(
+          startPointCoords[0],
+          startPointCoords[1],
+        )
+        if (startHole) {
+          const cuttingCylinder = cylinder({
+            center: [startPointCoords[0], startPointCoords[1], zPos + M / 2],
+            radius: startHole.diameter / 2 + M,
+            height: M,
+          })
+          traceGeom = subtract(traceGeom, cuttingCylinder)
+        }
+
+        const endHole = this.getHoleToCut(endPointCoords[0], endPointCoords[1])
+        if (endHole) {
+          const cuttingCylinder = cylinder({
+            center: [endPointCoords[0], endPointCoords[1], zPos + M / 2],
+            radius: endHole.diameter / 2 + M,
+            height: M,
+          })
+          traceGeom = subtract(traceGeom, cuttingCylinder)
+        }
 
         const tracesMaterialColor =
           tracesMaterialColors[this.board.material] ??
