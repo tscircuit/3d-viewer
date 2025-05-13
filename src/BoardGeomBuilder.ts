@@ -343,6 +343,7 @@ export class BoardGeomBuilder {
           extrudeLinear({ height: M }, expandedPath),
         )
 
+        // TODO: Subtract via/hole overlaps if needed for accuracy
         const startPointCoords = currentSegmentPoints[0]!
         const endPointCoords =
           currentSegmentPoints[currentSegmentPoints.length - 1]!
