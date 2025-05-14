@@ -8,6 +8,7 @@ import type {
   PcbTrace,
   PcbVia,
   PcbSilkscreenText,
+  PcbSilkscreenPath,
   Point,
 } from "circuit-json"
 import { su } from "@tscircuit/soup-util"
@@ -27,6 +28,7 @@ import { expand } from "@jscad/modeling/src/operations/expansions"
 import { createBoardGeomWithOutline } from "./geoms/create-board-with-outline"
 import type { Vec2 } from "@jscad/modeling/src/maths/types"
 import { createSilkscreenTextGeoms } from "./geoms/create-geoms-for-silkscreen-text"
+import { createSilkscreenPathGeom } from "./geoms/create-geoms-for-silkscreen-path"
 import type { GeomContext } from "./GeomContext"
 
 type BuilderState =
@@ -36,7 +38,8 @@ type BuilderState =
   | "processing_pads"
   | "processing_traces"
   | "processing_vias"
-  | "processing_silkscreen"
+  | "processing_silkscreen_text"
+  | "processing_silkscreen_paths"
   | "finalizing"
   | "done"
 
@@ -47,7 +50,8 @@ const buildStateOrder: BuilderState[] = [
   "processing_pads",
   "processing_traces",
   "processing_vias",
-  "processing_silkscreen",
+  "processing_silkscreen_text",
+  "processing_silkscreen_paths",
   "finalizing",
   "done",
 ]
@@ -61,6 +65,7 @@ export class BoardGeomBuilder {
   private traces: PcbTrace[]
   private pcb_vias: PcbVia[]
   private silkscreenTexts: PcbSilkscreenText[]
+  private silkscreenPaths: PcbSilkscreenPath[]
 
   private boardGeom: Geom3 | null = null
   private platedHoleGeoms: Geom3[] = []
@@ -68,7 +73,8 @@ export class BoardGeomBuilder {
   private padGeoms: Geom3[] = []
   private traceGeoms: Geom3[] = []
   private viaGeoms: Geom3[] = [] // Combined with platedHoleGeoms
-  private silkscreenGeoms: Geom3[] = []
+  private silkscreenTextGeoms: Geom3[] = []
+  private silkscreenPathGeoms: Geom3[] = []
 
   private state: BuilderState = "initializing"
   private currentIndex = 0
@@ -115,6 +121,7 @@ export class BoardGeomBuilder {
     this.traces = su(circuitJson).pcb_trace.list()
     this.pcb_vias = su(circuitJson).pcb_via.list()
     this.silkscreenTexts = su(circuitJson).pcb_silkscreen_text.list()
+    this.silkscreenPaths = su(circuitJson).pcb_silkscreen_path.list()
 
     this.ctx = { pcbThickness: 1.2 } // TODO derive from board?
 
@@ -202,9 +209,18 @@ export class BoardGeomBuilder {
           }
           break
 
-        case "processing_silkscreen":
+        case "processing_silkscreen_text":
           if (this.currentIndex < this.silkscreenTexts.length) {
             this.processSilkscreenText(this.silkscreenTexts[this.currentIndex]!)
+            this.currentIndex++
+          } else {
+            this.goToNextState()
+          }
+          break
+
+        case "processing_silkscreen_paths":
+          if (this.currentIndex < this.silkscreenPaths.length) {
+            this.processSilkscreenPath(this.silkscreenPaths[this.currentIndex]!)
             this.currentIndex++
           } else {
             this.goToNextState()
@@ -483,7 +499,14 @@ export class BoardGeomBuilder {
         )
       }
       textGeom = colorize([1, 1, 1], textGeom) // White
-      this.silkscreenGeoms.push(textGeom)
+      this.silkscreenTextGeoms.push(textGeom)
+    }
+  }
+
+  private processSilkscreenPath(sp: PcbSilkscreenPath) {
+    const pathGeom = createSilkscreenPathGeom(sp, this.ctx)
+    if (pathGeom) {
+      this.silkscreenPathGeoms.push(pathGeom)
     }
   }
 
@@ -500,7 +523,8 @@ export class BoardGeomBuilder {
       ...this.padGeoms,
       ...this.traceGeoms,
       ...this.viaGeoms,
-      ...this.silkscreenGeoms,
+      ...this.silkscreenTextGeoms,
+      ...this.silkscreenPathGeoms,
     ]
 
     if (this.onCompleteCallback) {
