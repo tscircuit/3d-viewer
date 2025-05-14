@@ -462,7 +462,7 @@ export class BoardGeomBuilder {
         pcb_plated_hole_id: `via_${via.pcb_via_id}`, // Create a unique-ish ID
       },
       {
-        dontCutBoard: true, // Board cut should happen via trace logic or dedicated via cut
+        dontCutBoard: false,
       },
     )
   }
