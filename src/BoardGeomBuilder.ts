@@ -480,7 +480,7 @@ export class BoardGeomBuilder {
       const fontSize = st.font_size || 0.25
       const expansionDelta = Math.min(
         Math.max(0.01, fontSize * 0.1),
-        fontSize * 0.2,
+        fontSize * 0.05,
       )
       const expandedPath = expand(
         { delta: expansionDelta, corners: "round" },
