@@ -70,6 +70,7 @@ export class BoardGeomBuilder {
   private boardGeom: Geom3 | null = null
   private platedHoleGeoms: Geom3[] = []
   private holeGeoms: Geom3[] = [] // Currently only used for subtraction
+  private cuttingGeoms: Geom3[] = []
   private padGeoms: Geom3[] = []
   private traceGeoms: Geom3[] = []
   private viaGeoms: Geom3[] = [] // Combined with platedHoleGeoms
@@ -251,7 +252,7 @@ export class BoardGeomBuilder {
       })
 
       if (!opts.dontCutBoard) {
-        this.boardGeom = subtract(this.boardGeom, cyGeom)
+        this.cuttingGeoms.push(cyGeom)
       }
 
       const platedHoleGeom = platedHole(ph, this.ctx)
@@ -286,7 +287,7 @@ export class BoardGeomBuilder {
         }),
       )
       if (!opts.dontCutBoard) {
-        this.boardGeom = subtract(this.boardGeom, pillHole)
+        this.cuttingGeoms.push(pillHole)
       }
 
       const platedHoleGeom = platedHole(ph, this.ctx)
@@ -303,7 +304,7 @@ export class BoardGeomBuilder {
         radius: hole.hole_diameter / 2 + M, // Add margin for subtraction
         height: this.ctx.pcbThickness * 1.5, // Ensure it cuts through
       })
-      this.boardGeom = subtract(this.boardGeom, cyGeom)
+      this.cuttingGeoms.push(cyGeom)
     }
     // TODO: Handle other hole shapes if necessary
   }
@@ -512,6 +513,13 @@ export class BoardGeomBuilder {
 
   private finalize() {
     if (!this.boardGeom) return
+
+    // Perform a single subtraction for all cutting geometries
+    if (this.cuttingGeoms.length > 0) {
+      const combinedCuttingGeom = union(this.cuttingGeoms)
+      this.boardGeom = subtract(this.boardGeom, combinedCuttingGeom)
+    }
+
     // Colorize the final board geometry
     const boardMaterialColor =
       boardMaterialColors[this.board.material] ?? colors.fr4Green
