@@ -77,7 +77,7 @@ export class BoardGeomBuilder {
   private pcb_vias: PcbVia[]
   private silkscreenTexts: PcbSilkscreenText[]
   private silkscreenPaths: PcbSilkscreenPath[]
-  private pcb_cutouts: PcbCutout[] // Added pcb_cutouts
+  private pcb_cutouts: PcbCutout[]
 
   private boardGeom: Geom3 | null = null
   private platedHoleGeoms: Geom3[] = []
