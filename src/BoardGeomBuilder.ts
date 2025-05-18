@@ -12,7 +12,7 @@ import type {
   Point,
 } from "circuit-json"
 import { su } from "@tscircuit/soup-util"
-import { translate } from "@jscad/modeling/src/operations/transforms"
+import { translate, rotateZ } from "@jscad/modeling/src/operations/transforms"
 import { cuboid, cylinder, line } from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
 import { subtract, union } from "@jscad/modeling/src/operations/booleans"
@@ -320,6 +320,18 @@ export class BoardGeomBuilder {
           size: [pad.width, pad.height, M],
         }),
       )
+      this.padGeoms.push(padGeom)
+    } else if (pad.shape === "rotated_rect") {
+      let basePadGeom = cuboid({
+        // Create at origin for rotation, then translate
+        center: [0, 0, 0],
+        size: [pad.width, pad.height, M],
+      })
+      const rotationRadians = (pad.ccw_rotation * Math.PI) / 180
+      basePadGeom = rotateZ(rotationRadians, basePadGeom)
+      // Translate to final position
+      const positionedPadGeom = translate([pad.x, pad.y, zPos], basePadGeom)
+      const padGeom = colorize(colors.copper, positionedPadGeom)
       this.padGeoms.push(padGeom)
     } else if (pad.shape === "circle") {
       const padGeom = colorize(
