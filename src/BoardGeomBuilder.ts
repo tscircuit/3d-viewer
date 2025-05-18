@@ -10,7 +10,7 @@ import type {
   PcbSilkscreenText,
   PcbSilkscreenPath,
   Point,
-  PcbCutout, // Added PcbCutout
+  PcbCutout,
 } from "circuit-json"
 import { su } from "@tscircuit/soup-util"
 import { translate, rotateZ } from "@jscad/modeling/src/operations/transforms"
