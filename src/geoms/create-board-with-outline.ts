@@ -5,7 +5,7 @@ import type { Vec2 } from "@jscad/modeling/src/maths/types"
 import type { Point } from "circuit-json"
 import { translate } from "@jscad/modeling/src/operations/transforms"
 
-const arePointsClockwise = (points: Vec2[]): boolean => {
+export const arePointsClockwise = (points: Vec2[]): boolean => {
   let area = 0
   for (let i = 0; i < points.length; i++) {
     const j = (i + 1) % points.length
