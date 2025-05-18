@@ -88,6 +88,7 @@ const circuitJson: AnyCircuitElement[] = [
     },
     rotation: 0,
     color: "black",
+    font_size: 1,
   },
   {
     type: "schematic_text",
@@ -101,6 +102,7 @@ const circuitJson: AnyCircuitElement[] = [
     },
     rotation: 0,
     color: "black",
+    font_size: 1,
   },
   {
     type: "pcb_component",
@@ -246,6 +248,7 @@ const circuitJson: AnyCircuitElement[] = [
     },
     rotation: 0,
     color: "black",
+    font_size: 1,
   },
   {
     type: "schematic_text",
@@ -259,6 +262,7 @@ const circuitJson: AnyCircuitElement[] = [
     },
     rotation: 0,
     color: "black",
+    font_size: 1,
   },
   {
     type: "pcb_component",
