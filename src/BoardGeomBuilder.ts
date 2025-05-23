@@ -311,7 +311,7 @@ export class BoardGeomBuilder {
   ) {
     if (!this.boardGeom) return
 
-    if (ph.shape === "circle") {
+    if (ph.shape === "circle" || ph.shape === "circular_hole_with_rect_pad") {
       const cyGeom = cylinder({
         center: [ph.x, ph.y, 0],
         radius: ph.hole_diameter / 2 + M, // Add margin for subtraction
@@ -324,7 +324,7 @@ export class BoardGeomBuilder {
 
       const platedHoleGeom = platedHole(ph, this.ctx)
       this.platedHoleGeoms.push(platedHoleGeom)
-    } else if (ph.shape === "pill") {
+    } else if (ph.shape === "pill" || ph.shape === "pill_hole_with_rect_pad") {
       const shouldRotate = ph.hole_height! > ph.hole_width!
       const holeWidth = shouldRotate ? ph.hole_height! : ph.hole_width!
       const holeHeight = shouldRotate ? ph.hole_width! : ph.hole_height!
