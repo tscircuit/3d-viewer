@@ -207,7 +207,6 @@ export const platedHole = (
     )
     // biome-ignore lint/style/noUselessElse: <explanation>
   }
-  // I need you ai here to support this,,
   if (plated_hole.shape === "pill_hole_with_rect_pad") {
     const shouldRotate = plated_hole.hole_height! > plated_hole.hole_width!
     const holeWidth = shouldRotate
