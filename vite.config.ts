@@ -6,9 +6,14 @@ import tsconfigPaths from "vite-tsconfig-paths"
 export default defineConfig({
   plugins: [react(), tsconfigPaths()],
   server: {
+    headers: {
+      "Cross-Origin-Embedder-Policy": "require-corp",
+      "Cross-Origin-Opener-Policy": "same-origin",
+    },
     proxy: {
       // Use .storybook/main.ts to configure the proxy, for some reason it
       // doesn't work when configured here
     },
   },
+  assetsInclude: ["**/*.wasm"],
 })

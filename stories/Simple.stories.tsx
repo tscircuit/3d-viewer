@@ -1,9 +1,11 @@
 import { fn } from "@storybook/test"
 import { CadViewer } from "src/CadViewer"
 import bugsPadsAndTracesSoup from "./assets/soic-with-traces.json"
+import { ManifoldViewer } from "src/manifold-viewer/ManifoldViewer"
 
 export const Default = () => (
-  <CadViewer circuitJson={bugsPadsAndTracesSoup as any} />
+  <ManifoldViewer circuitJson={bugsPadsAndTracesSoup as any} />
+  // <CadViewer circuitJson={bugsPadsAndTracesSoup as any} />
 )
 
 export default {

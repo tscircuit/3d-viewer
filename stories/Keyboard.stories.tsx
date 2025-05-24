@@ -1,6 +1,8 @@
 import { fn } from "@storybook/test"
 import { CadViewer } from "src/CadViewer"
 import keyboard60 from "./assets/keyboard-default60.json"
+import nineKeyKeyboard from "./assets/nine-key-keyboard.json"
+import { ManifoldViewer } from "src"
 
 /**
  * A switch shaft you can use to connect a pluggable Kailh socket.
@@ -83,15 +85,10 @@ const Keyswitch = (props: { name: string; pcbX?: number; pcbY?: number }) => {
 }
 
 export const Default = () => (
-  <CadViewer>
-    <board width="30mm" height="30mm">
-      <KeyswitchSocket name="SK1" layer="bottom" pcbX={0} pcbY={0} />
-      <Keyswitch name="SW1" pcbX={0.55} pcbY={-3.81} />
-    </board>
-  </CadViewer>
+  <ManifoldViewer circuitJson={nineKeyKeyboard as any} />
 )
 
-export const Default60 = () => <CadViewer circuitJson={keyboard60} />
+export const Default60 = () => <ManifoldViewer circuitJson={keyboard60} />
 
 export default {
   title: "Keyboard",

@@ -1,4 +1,5 @@
 import type { StorybookConfig } from "@storybook/react-vite"
+import { mergeConfig } from "vite"
 
 const addProxyLogging = (proxy: any) => {
   proxy.on("error", (err, req, res) => {
@@ -30,33 +31,37 @@ const config: StorybookConfig = {
     options: {},
   },
   async viteFinal(config) {
-    if (config.server) {
-      config.logLevel = "info"
-      config.server.proxy = {
-        "/easyeda-models": {
-          target: "https://modules.easyeda.com/3dmodel/",
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/easyeda-models/, ""),
-          configure: (proxy, _options) => {
-            addProxyLogging(proxy)
+    const customViteConfig = {
+      server: {
+        headers: {
+          "Cross-Origin-Embedder-Policy": "require-corp",
+          "Cross-Origin-Opener-Policy": "same-origin",
+        },
+        proxy: {
+          "/easyeda-models": {
+            target: "https://modules.easyeda.com/3dmodel/",
+            changeOrigin: true,
+            rewrite: (path: string) => path.replace(/^\/easyeda-models/, ""),
+            configure: addProxyLogging,
+          },
+          "/easyeda": {
+            target: "https://modelcdn.tscircuit.com",
+            changeOrigin: true,
+            rewrite: (path: string) => {
+              const filename = path.split("/").pop()
+              return `/easyeda_models/download?pn=${filename}`
+            },
+            configure: addProxyLogging,
           },
         },
-        "/easyeda": {
-          target: "https://modelcdn.tscircuit.com",
-          changeOrigin: true,
-          rewrite: (path) => {
-            // Extract the filename from the path
-            const filename = path.split("/").pop()
-            // Construct the new path
-            return `/easyeda_models/download?pn=${filename}`
-          },
-          configure: (proxy, options) => {
-            addProxyLogging(proxy)
-          },
-        },
-      }
+        logLevel: "info",
+      },
+      assetsInclude: ["**/*.wasm"],
+      optimizeDeps: {
+        exclude: ["manifold-3d"],
+      },
     }
-    return config
+    return mergeConfig(config, customViteConfig)
   },
   logLevel: "debug",
 }

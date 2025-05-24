@@ -37,6 +37,7 @@
     "jscad-electronics": "^0.0.27",
     "jscad-fiber": "^0.0.79",
     "jscad-planner": "^0.0.13",
+    "manifold-3d": "^3.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-use-gesture": "^9.1.3"
