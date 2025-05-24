@@ -103,9 +103,7 @@ export const useManifoldBoardBuilder = (
   }, [circuitJson])
 
   // Type guard for PcbHole with hole_diameter
-  function isCircleHole(
-    hole: any,
-  ): hole is {
+  function isCircleHole(hole: any): hole is {
     x: number
     y: number
     hole_diameter: number
