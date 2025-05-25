@@ -1,8 +1,5 @@
-import {
-  CadViewer,
-  useExportGltfUrl,
-  useSaveGltfAs,
-} from "../../src/CadViewer.tsx"
+import { useExportGltfUrl, useSaveGltfAs } from "src/hooks/index.ts"
+import { CadViewer } from "../../src/CadViewer.tsx"
 
 export default { title: "GLTF exporter" }
 
