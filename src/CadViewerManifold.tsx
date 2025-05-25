@@ -2,21 +2,21 @@ import React, { useEffect, useState, useMemo } from "react"
 import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import { su } from "@tscircuit/soup-util"
 import * as THREE from "three"
-import { CadViewerContainer } from "../CadViewerContainer"
+import { CadViewerContainer } from "./CadViewerContainer"
 import ManifoldModule from "manifold-3d"
-import { useManifoldBoardBuilder } from "../hooks/useManifoldBoardBuilder"
+import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
 import type { ManifoldToplevel } from "manifold-3d/manifold.d.ts"
-import { AnyCadComponent } from "../AnyCadComponent"
-import { ThreeErrorBoundary } from "../three-components/ThreeErrorBoundary"
-import { Error3d } from "../three-components/Error3d"
+import { AnyCadComponent } from "./AnyCadComponent"
+import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
+import { Error3d } from "./three-components/Error3d"
 
-interface ManifoldViewerProps {
+interface CadViewerManifoldProps {
   circuitJson: AnyCircuitElement[]
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
 }
 
-export const ManifoldViewer: React.FC<ManifoldViewerProps> = ({
+const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   circuitJson,
   autoRotateDisabled,
   clickToInteractEnabled,
@@ -218,3 +218,5 @@ export const ManifoldViewer: React.FC<ManifoldViewerProps> = ({
     </CadViewerContainer>
   )
 }
+
+export default CadViewerManifold
