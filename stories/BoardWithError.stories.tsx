@@ -1,4 +1,4 @@
-import { CadViewer } from "../src"
+import { CadViewer } from "../src/CadViewer"
 import type { Meta, StoryObj } from "@storybook/react"
 
 const meta = {

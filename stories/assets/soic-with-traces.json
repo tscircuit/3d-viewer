@@ -3431,40 +3431,6 @@
     "source_component_id": "source_component_6"
   },
   {
-    "type": "cad_component",
-    "cad_component_id": "cad_component_7",
-    "position": {
-      "x": 0,
-      "y": 5.715,
-      "z": -0.7
-    },
-    "rotation": {
-      "x": 0,
-      "y": 180,
-      "z": 180
-    },
-    "pcb_component_id": "pcb_component_7",
-    "source_component_id": "source_component_7",
-    "footprinter_string": "solderjumper3_bridged123_p0.8_pw0.635_ph1.270"
-  },
-  {
-    "type": "cad_component",
-    "cad_component_id": "cad_component_8",
-    "position": {
-      "x": 5.551115123125783e-17,
-      "y": -4.445,
-      "z": 0.7
-    },
-    "rotation": {
-      "x": 0,
-      "y": 0,
-      "z": 90
-    },
-    "pcb_component_id": "pcb_component_8",
-    "source_component_id": "source_component_8",
-    "footprinter_string": "solderjumper3_p0.8_pw0.635_ph1.270"
-  },
-  {
     "type": "pcb_trace",
     "pcb_trace_id": "source_net_3_0",
     "connection_name": "source_net_3",

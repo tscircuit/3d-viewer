@@ -4,6 +4,7 @@ import bugsPadsAndTracesSoup from "./assets/soic-with-traces.json"
 
 export const Default = () => (
   <CadViewer circuitJson={bugsPadsAndTracesSoup as any} />
+  // <CadViewer circuitJson={bugsPadsAndTracesSoup as any} />
 )
 
 export default {
