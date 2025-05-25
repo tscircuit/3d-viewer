@@ -31,6 +31,20 @@ import type { PcbVia } from "circuit-json"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
 import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
 import { createPadManifoldOp } from "../utils/pad-geoms"
+
+const arePointsClockwise = (points: Array<[number, number]>): boolean => {
+  let area = 0
+  for (let i = 0; i < points.length; i++) {
+    const j = (i + 1) % points.length
+    if (points[i] && points[j]) {
+      area += points[i]![0] * points[j]![1]
+      area -= points[j]![0] * points[i]![1]
+    }
+  }
+  const signedArea = area / 2
+  return signedArea <= 0
+}
+
 import {
   createCircleHoleDrill,
   createPlatedHoleDrill,
@@ -143,6 +157,7 @@ export const useManifoldBoardBuilder = (
     setIsLoading(true)
     setError(null) // Clear previous errors
     const Manifold = manifoldJSModule.Manifold
+    const CrossSection = manifoldJSModule.CrossSection
 
     // Cleanup previous Manifold objects
     manifoldInstancesForCleanup.current.forEach((inst) => inst.delete())
@@ -160,10 +175,42 @@ export const useManifoldBoardBuilder = (
     try {
       const currentPcbThickness = boardData.thickness || 1.6
       setPcbThickness(currentPcbThickness)
-      let currentBoardOp = Manifold.cube(
-        [boardData.width, boardData.height, currentPcbThickness],
-        true,
-      )
+
+      let currentBoardOp: any // Manifold instance
+      if (boardData.outline && boardData.outline.length >= 3) {
+        let outlineVec2: Array<[number, number]> = boardData.outline.map(
+          (p) => [p.x, p.y],
+        )
+
+        if (arePointsClockwise(outlineVec2)) {
+          outlineVec2 = outlineVec2.reverse()
+        }
+
+        const crossSection = CrossSection.ofPolygons([outlineVec2])
+        manifoldInstancesForCleanup.current.push(crossSection)
+
+        currentBoardOp = Manifold.extrude(
+          crossSection,
+          currentPcbThickness,
+          undefined, // nDivisions
+          undefined, // twistDegrees
+          undefined, // scaleTop
+          true, // center (for Z-axis)
+        )
+      } else {
+        if (boardData.outline && boardData.outline.length > 0) {
+          // Has outline but < 3 points
+          console.warn(
+            "Board outline has fewer than 3 points, falling back to rectangular board.",
+          )
+        }
+        // Fallback to cuboid if no outline or invalid outline
+        currentBoardOp = Manifold.cube(
+          [boardData.width, boardData.height, currentPcbThickness],
+          true, // center (for all axes)
+        )
+      }
+
       manifoldInstancesForCleanup.current.push(currentBoardOp)
       currentBoardOp = currentBoardOp.translate([
         boardData.center.x,

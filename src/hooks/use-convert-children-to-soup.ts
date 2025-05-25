@@ -4,10 +4,9 @@ import type { AnyCircuitElement } from "circuit-json"
 
 export const useConvertChildrenToSoup = (
   children?: any,
-  defaultSoup?: AnyCircuitElement[],
-): AnyCircuitElement[] => {
+): AnyCircuitElement[] | undefined => {
   return useMemo(() => {
-    if (!children) return
+    if (!children) return undefined
     const circuit = new Circuit()
     circuit.add(children)
     circuit.render()
