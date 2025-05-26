@@ -11,11 +11,85 @@ export const CadViewer = (props: any) => {
   })
   const containerRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+  const interactionOriginPosRef = useRef<{ x: number; y: number } | null>(null)
 
-  const handleContextMenu = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    setMenuPos({ x: e.clientX, y: e.clientY })
-    setMenuVisible(true)
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      const eventX = typeof e.clientX === "number" ? e.clientX : 0
+      const eventY = typeof e.clientY === "number" ? e.clientY : 0
+
+      // If there's no interaction origin, it means this contextmenu event
+      // shouldn't trigger our custom menu (e.g., ref was cleared by swipe,
+      // or it wasn't a right-click mousedown that set the ref).
+      if (!interactionOriginPosRef.current) {
+        return
+      }
+
+      const { x: originX, y: originY } = interactionOriginPosRef.current
+
+      const dx = Math.abs(eventX - originX)
+      const dy = Math.abs(eventY - originY)
+      // Unified threshold for swipe detection for both mouse and touch
+      const swipeThreshold = 10
+
+      if (dx > swipeThreshold || dy > swipeThreshold) {
+        interactionOriginPosRef.current = null
+        return
+      }
+
+      setMenuPos({ x: eventX, y: eventY })
+      setMenuVisible(true)
+      // Reset after menu is shown or if swipe check passed but didn't swipe
+      interactionOriginPosRef.current = null
+    },
+    [setMenuPos, setMenuVisible],
+  )
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0]
+      if (touch) {
+        interactionOriginPosRef.current = { x: touch.clientX, y: touch.clientY }
+      } else {
+        // Should not happen if length is 1, but as a safeguard:
+        interactionOriginPosRef.current = null
+      }
+    } else {
+      // If more than one touch (e.g., pinch), or zero touches, invalidate for context menu.
+      interactionOriginPosRef.current = null
+    }
+  }, [])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!interactionOriginPosRef.current || e.touches.length !== 1) {
+      return
+    }
+    const touch = e.touches[0]
+    if (touch) {
+      const dx = Math.abs(touch.clientX - interactionOriginPosRef.current.x!)
+      const dy = Math.abs(touch.clientY - interactionOriginPosRef.current.y!)
+      const swipeThreshold = 10 // Consistent with handleContextMenu
+
+      if (dx > swipeThreshold || dy > swipeThreshold) {
+        interactionOriginPosRef.current = null
+      }
+    } else {
+      // If touch is undefined despite e.touches.length === 1, invalidate.
+      interactionOriginPosRef.current = null
+    }
+  }, [])
+
+  const handleTouchEnd = useCallback(() => {
+    // Clear the interaction origin ref shortly after touch ends.
+    // This ensures that if a contextmenu event fires due to long press,
+    // it has a chance to read the ref. If no contextmenu event fires (e.g. short tap),
+    // the ref is cleaned up for the next interaction.
+    setTimeout(() => {
+      if (interactionOriginPosRef.current) {
+        interactionOriginPosRef.current = null
+      }
+    }, 0)
   }, [])
 
   const handleMenuClick = (newEngine: "jscad" | "manifold") => {
@@ -57,7 +131,18 @@ export const CadViewer = (props: any) => {
       key={viewerKey}
       ref={containerRef}
       style={{ width: "100%", height: "100%", position: "relative" }}
+      onMouseDown={(e) => {
+        if (e.button === 2) {
+          interactionOriginPosRef.current = { x: e.clientX, y: e.clientY }
+        } else {
+          // For other mouse buttons, ensure the ref is clear.
+          interactionOriginPosRef.current = null
+        }
+      }}
       onContextMenu={handleContextMenu}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {engine === "jscad" ? (
         <CadViewerJscad {...props} />
@@ -77,11 +162,9 @@ export const CadViewer = (props: any) => {
           opacity: 0.7,
           userSelect: "none",
         }}
-        onClick={() => {
-          if ("ontouchstart" in window) {
-            setEngine(engine === "jscad" ? "manifold" : "jscad")
-          }
-        }}
+        // onClick behavior for touch devices to toggle engine is now removed.
+        // Engine switching is handled by the context menu, accessible via
+        // right-click (desktop) or long-press (touch).
       >
         Engine: <b>{engine === "jscad" ? "JSCAD" : "Manifold"}</b>
       </div>
