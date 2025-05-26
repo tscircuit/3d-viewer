@@ -9,6 +9,8 @@ import type { ManifoldToplevel } from "manifold-3d/manifold.d.ts"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { Error3d } from "./three-components/Error3d"
+import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
+import { createTextureMeshes } from "./utils/manifold/create-three-texture-meshes"
 
 interface CadViewerManifoldProps {
   circuitJson: AnyCircuitElement[]
@@ -45,18 +47,19 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   }, [])
 
   const {
-    boardThreeGeom,
-    boardColor,
-    otherComponentGeoms,
-    topTraceTexture,
-    bottomTraceTexture,
-    topSilkscreenTexture,
-    bottomSilkscreenTexture,
+    geoms,
+    textures,
     pcbThickness,
     error: builderError,
     isLoading: builderIsLoading,
     boardData,
   } = useManifoldBoardBuilder(manifoldJSModule, circuitJson)
+
+  const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
+  const textureMeshes = useMemo(
+    () => createTextureMeshes(textures, boardData, pcbThickness),
+    [textures, boardData, pcbThickness],
+  )
 
   const cadComponents = useMemo(
     () => (circuitJson ? su(circuitJson).cad_component.list() : []),
@@ -103,11 +106,8 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
       </div>
     )
   }
-  if (builderIsLoading || !boardData) {
+  if (builderIsLoading || !boardData || !geoms || !textures) {
     return <div style={{ padding: "1em" }}>Processing board geometry...</div>
-  }
-  if (!boardThreeGeom) {
-    return <div style={{ padding: "1em" }}>Preparing board display...</div>
   }
 
   return (
@@ -116,91 +116,11 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
       autoRotateDisabled={autoRotateDisabled}
       clickToInteractEnabled={clickToInteractEnabled}
     >
-      <mesh geometry={boardThreeGeom}>
-        <meshStandardMaterial
-          color={boardColor}
-          side={THREE.DoubleSide}
-          flatShading={true}
-        />
-      </mesh>
-      {topTraceTexture && boardData && pcbThickness !== null && (
-        <mesh
-          position={[
-            boardData.center.x,
-            boardData.center.y,
-            pcbThickness / 2 + 0.015,
-          ]}
-        >
-          <planeGeometry args={[boardData.width, boardData.height]} />
-          <meshBasicMaterial
-            map={topTraceTexture}
-            transparent
-            side={THREE.DoubleSide}
-            depthWrite={false}
-          />
-        </mesh>
-      )}
-      {topSilkscreenTexture && boardData && pcbThickness !== null && (
-        <mesh
-          position={[
-            boardData.center.x,
-            boardData.center.y,
-            pcbThickness / 2 + 0.017,
-          ]}
-        >
-          <planeGeometry args={[boardData.width, boardData.height]} />
-          <meshBasicMaterial
-            map={topSilkscreenTexture}
-            transparent
-            side={THREE.DoubleSide}
-            depthWrite={false}
-          />
-        </mesh>
-      )}
-      {bottomTraceTexture && boardData && pcbThickness !== null && (
-        <mesh
-          position={[
-            boardData.center.x,
-            boardData.center.y,
-            -pcbThickness / 2 - 0.015,
-          ]}
-          rotation={[Math.PI, 0, 0]}
-        >
-          <planeGeometry args={[boardData.width, boardData.height]} />
-          <meshBasicMaterial
-            map={bottomTraceTexture}
-            transparent
-            side={THREE.DoubleSide}
-            depthWrite={false}
-          />
-        </mesh>
-      )}
-      {bottomSilkscreenTexture && boardData && pcbThickness !== null && (
-        <mesh
-          position={[
-            boardData.center.x,
-            boardData.center.y,
-            -pcbThickness / 2 - 0.017,
-          ]}
-          rotation={[Math.PI, 0, 0]}
-        >
-          <planeGeometry args={[boardData.width, boardData.height]} />
-          <meshBasicMaterial
-            map={bottomSilkscreenTexture}
-            transparent
-            side={THREE.DoubleSide}
-            depthWrite={false}
-          />
-        </mesh>
-      )}
-      {otherComponentGeoms.map((comp) => (
-        <mesh key={comp.key} geometry={comp.geometry}>
-          <meshStandardMaterial
-            color={comp.color}
-            side={THREE.DoubleSide}
-            flatShading
-          />
-        </mesh>
+      {geometryMeshes.map((mesh, index) => (
+        <primitive object={mesh} key={`${mesh.name}-${index}`} />
+      ))}
+      {textureMeshes.map((mesh, index) => (
+        <primitive object={mesh} key={`${mesh.name}-${index}`} />
       ))}
       {cadComponents.map((cad_component: CadComponent) => (
         <ThreeErrorBoundary

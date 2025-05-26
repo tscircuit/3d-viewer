@@ -1,6 +1,13 @@
 // Utility for creating trace textures for PCB layers
 import * as THREE from "three"
-import type { PcbTrace, PcbBoard } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  PcbTrace,
+  PcbBoard,
+  PcbVia,
+  PcbPlatedHole,
+} from "circuit-json"
+import { su } from "@tscircuit/soup-util"
 
 export function isWireRoutePoint(
   point: any,
@@ -15,21 +22,23 @@ export function isWireRoutePoint(
 
 export function createTraceTextureForLayer({
   layer,
-  pcbTraces,
+  circuitJson,
   boardData,
   traceColor,
   traceTextureResolution,
-  allPcbVias,
-  allPcbPlatedHoles,
 }: {
   layer: "top" | "bottom"
-  pcbTraces: PcbTrace[]
+  circuitJson: AnyCircuitElement[]
   boardData: PcbBoard
   traceColor: string
   traceTextureResolution: number
-  allPcbVias: any[]
-  allPcbPlatedHoles: any[]
 }): THREE.CanvasTexture | null {
+  const pcbTraces = su(circuitJson).pcb_trace.list()
+  const allPcbVias = su(circuitJson).pcb_via.list() as PcbVia[]
+  const allPcbPlatedHoles = su(
+    circuitJson,
+  ).pcb_plated_hole.list() as PcbPlatedHole[]
+
   const tracesOnLayer = pcbTraces.filter((t) =>
     t.route.some((p) => isWireRoutePoint(p) && p.layer === layer),
   )
