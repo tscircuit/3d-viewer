@@ -2,7 +2,6 @@ import * as THREE from "three"
 import type { PcbBoard } from "circuit-json"
 import type { ManifoldTextures } from "../../hooks/useManifoldBoardBuilder"
 
-// Function for creating texture meshes
 export function createTextureMeshes(
   textures: ManifoldTextures | null,
   boardData: PcbBoard | null,

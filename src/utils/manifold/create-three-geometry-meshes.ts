@@ -1,7 +1,6 @@
 import * as THREE from "three"
 import type { ManifoldGeoms } from "../../hooks/useManifoldBoardBuilder"
 
-// Function for creating geometry meshes
 export function createGeometryMeshes(
   geoms: ManifoldGeoms | null,
 ): THREE.Mesh[] {

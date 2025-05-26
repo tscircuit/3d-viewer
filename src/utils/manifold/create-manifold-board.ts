@@ -1,7 +1,4 @@
-import type {
-  ManifoldToplevel,
-  CrossSectionToplevel,
-} from "manifold-3d/manifold.d.ts"
+import type { ManifoldToplevel } from "manifold-3d/manifold.d.ts"
 import type { PcbBoard } from "circuit-json"
 
 const arePointsClockwise = (points: Array<[number, number]>): boolean => {
@@ -19,12 +16,12 @@ const arePointsClockwise = (points: Array<[number, number]>): boolean => {
 
 export function createManifoldBoard(
   Manifold: ManifoldToplevel["Manifold"],
-  CrossSection: CrossSectionToplevel,
+  CrossSection: ManifoldToplevel["CrossSection"],
   boardData: PcbBoard,
   pcbThickness: number,
   manifoldInstancesForCleanup: any[],
 ): any {
-  let boardOp: any // Manifold instance
+  let boardOp: any
 
   if (boardData.outline && boardData.outline.length >= 3) {
     let outlineVec2: Array<[number, number]> = boardData.outline.map((p) => [
