@@ -7,22 +7,25 @@ import {
   applyToPoint,
   Matrix,
 } from "transformation-matrix"
+import type { AnyCircuitElement } from "circuit-json"
+import { su } from "@tscircuit/soup-util"
 
 export function createSilkscreenTextureForLayer({
   layer,
-  pcbSilkscreenTexts,
-  pcbSilkscreenPaths,
+  circuitJson,
   boardData,
   silkscreenColor = "rgb(255,255,255)",
   traceTextureResolution,
 }: {
   layer: "top" | "bottom"
-  pcbSilkscreenTexts: any[]
-  pcbSilkscreenPaths: any[]
+  circuitJson: AnyCircuitElement[]
   boardData: any
   silkscreenColor?: string
   traceTextureResolution: number
 }): THREE.CanvasTexture | null {
+  const pcbSilkscreenTexts = su(circuitJson).pcb_silkscreen_text.list()
+  const pcbSilkscreenPaths = su(circuitJson).pcb_silkscreen_path.list()
+
   const textsOnLayer = pcbSilkscreenTexts.filter((t) => t.layer === layer)
   const pathsOnLayer = pcbSilkscreenPaths.filter((p) => p.layer === layer)
   if (textsOnLayer.length === 0 && pathsOnLayer.length === 0) return null
