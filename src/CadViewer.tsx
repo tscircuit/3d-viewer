@@ -19,9 +19,6 @@ export const CadViewer = (props: any) => {
       const eventX = typeof e.clientX === "number" ? e.clientX : 0
       const eventY = typeof e.clientY === "number" ? e.clientY : 0
 
-      // If there's no interaction origin, it means this contextmenu event
-      // shouldn't trigger our custom menu (e.g., ref was cleared by swipe,
-      // or it wasn't a right-click mousedown that set the ref).
       if (!interactionOriginPosRef.current) {
         return
       }
@@ -30,7 +27,6 @@ export const CadViewer = (props: any) => {
 
       const dx = Math.abs(eventX - originX)
       const dy = Math.abs(eventY - originY)
-      // Unified threshold for swipe detection for both mouse and touch
       const swipeThreshold = 10
 
       if (dx > swipeThreshold || dy > swipeThreshold) {
@@ -52,7 +48,6 @@ export const CadViewer = (props: any) => {
       if (touch) {
         interactionOriginPosRef.current = { x: touch.clientX, y: touch.clientY }
       } else {
-        // Should not happen if length is 1, but as a safeguard:
         interactionOriginPosRef.current = null
       }
     } else {
@@ -69,7 +64,7 @@ export const CadViewer = (props: any) => {
     if (touch) {
       const dx = Math.abs(touch.clientX - interactionOriginPosRef.current.x!)
       const dy = Math.abs(touch.clientY - interactionOriginPosRef.current.y!)
-      const swipeThreshold = 10 // Consistent with handleContextMenu
+      const swipeThreshold = 10
 
       if (dx > swipeThreshold || dy > swipeThreshold) {
         interactionOriginPosRef.current = null
@@ -81,10 +76,6 @@ export const CadViewer = (props: any) => {
   }, [])
 
   const handleTouchEnd = useCallback(() => {
-    // Clear the interaction origin ref shortly after touch ends.
-    // This ensures that if a contextmenu event fires due to long press,
-    // it has a chance to read the ref. If no contextmenu event fires (e.g. short tap),
-    // the ref is cleaned up for the next interaction.
     setTimeout(() => {
       if (interactionOriginPosRef.current) {
         interactionOriginPosRef.current = null
