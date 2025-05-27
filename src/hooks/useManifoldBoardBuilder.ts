@@ -32,6 +32,7 @@ import { processPlatedHolesForManifold } from "../utils/manifold/process-plated-
 import { processViasForManifold } from "../utils/manifold/process-vias"
 import { processSmtPadsForManifold } from "../utils/manifold/process-smt-pads"
 import { createManifoldBoard } from "../utils/manifold/create-manifold-board"
+import { processCutoutsForManifold } from "../utils/manifold/process-cutouts"
 
 export interface ManifoldGeoms {
   board?: { geometry: THREE.BufferGeometry; color: THREE.Color }
@@ -164,9 +165,25 @@ export const useManifoldBoardBuilder = (
       if (allBoardDrills.length > 0) {
         const unionedDrills = Manifold.union(allBoardDrills)
         manifoldInstancesForCleanup.current.push(unionedDrills)
-        const nextBoard = currentBoardOp.subtract(unionedDrills)
-        manifoldInstancesForCleanup.current.push(nextBoard)
-        currentBoardOp = nextBoard
+        const nextBoardAfterDrills = currentBoardOp.subtract(unionedDrills)
+        manifoldInstancesForCleanup.current.push(nextBoardAfterDrills)
+        currentBoardOp = nextBoardAfterDrills
+      }
+
+      const { cutoutOps } = processCutoutsForManifold(
+        Manifold,
+        CrossSection,
+        circuitJson,
+        currentPcbThickness,
+        manifoldInstancesForCleanup.current,
+      )
+
+      if (cutoutOps.length > 0) {
+        const unionedCutouts = Manifold.union(cutoutOps)
+        manifoldInstancesForCleanup.current.push(unionedCutouts)
+        const nextBoardAfterCutouts = currentBoardOp.subtract(unionedCutouts)
+        manifoldInstancesForCleanup.current.push(nextBoardAfterCutouts)
+        currentBoardOp = nextBoardAfterCutouts
       }
 
       boardManifold = currentBoardOp // Final board manifold
