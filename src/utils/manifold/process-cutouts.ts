@@ -30,7 +30,7 @@ export function processCutoutsForManifold(
   const cutoutOps: any[] = []
   const pcbCutouts = su(circuitJson).pcb_cutout.list()
 
-  pcbCutouts.forEach((cutout: PcbCutout) => {
+  for (const cutout of pcbCutouts) {
     let cutoutOp: any
     const cutoutHeight = pcbThickness * 1.5
 
@@ -71,7 +71,7 @@ export function processCutoutsForManifold(
           console.warn(
             `PCB Cutout [${cutout.pcb_cutout_id}] polygon has fewer than 3 points, skipping.`,
           )
-          return // continue to next cutout
+          continue // continue to next cutout
         }
         let pointsVec2: Array<[number, number]> = cutout.points.map((p) => [
           p.x,
@@ -98,12 +98,12 @@ export function processCutoutsForManifold(
             (cutout as PcbCutout).pcb_cutout_id
           }`,
         )
-        return // continue to next cutout
+        continue // continue to next cutout
     }
     if (cutoutOp) {
       cutoutOps.push(cutoutOp)
     }
-  })
+  }
 
   return { cutoutOps }
 }
