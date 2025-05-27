@@ -153,9 +153,6 @@ export const CadViewer = (props: any) => {
           opacity: 0.7,
           userSelect: "none",
         }}
-        // onClick behavior for touch devices to toggle engine is now removed.
-        // Engine switching is handled by the context menu, accessible via
-        // right-click (desktop) or long-press (touch).
       >
         Engine: <b>{engine === "jscad" ? "JSCAD" : "Manifold"}</b>
       </div>
