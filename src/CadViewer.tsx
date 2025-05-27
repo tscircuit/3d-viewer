@@ -1,41 +1,24 @@
 import { useState, useCallback, useRef, useEffect } from "react"
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
+import { useContextMenu } from "./hooks/useContextMenu"
 
 export const CadViewer = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("jscad")
-  const [menuVisible, setMenuVisible] = useState(false)
-  const [menuPos, setMenuPos] = useState<{ x: number; y: number }>({
-    x: 0,
-    y: 0,
-  })
   const containerRef = useRef<HTMLDivElement>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
 
-  const handleContextMenu = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    setMenuPos({ x: e.clientX, y: e.clientY })
-    setMenuVisible(true)
-  }, [])
+  const {
+    menuVisible,
+    menuPos,
+    menuRef,
+    contextMenuEventHandlers,
+    setMenuVisible,
+  } = useContextMenu({ containerRef })
 
   const handleMenuClick = (newEngine: "jscad" | "manifold") => {
     setEngine(newEngine)
     setMenuVisible(false)
   }
-
-  const handleClickAway = useCallback((e: MouseEvent) => {
-    const target = e.target as Node
-    if (!menuRef.current || !menuRef.current.contains(target)) {
-      setMenuVisible(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (menuVisible) {
-      document.addEventListener("mousedown", handleClickAway)
-      return () => document.removeEventListener("mousedown", handleClickAway)
-    }
-  }, [menuVisible, handleClickAway])
 
   useEffect(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
@@ -57,7 +40,7 @@ export const CadViewer = (props: any) => {
       key={viewerKey}
       ref={containerRef}
       style={{ width: "100%", height: "100%", position: "relative" }}
-      onContextMenu={handleContextMenu}
+      {...contextMenuEventHandlers}
     >
       {engine === "jscad" ? (
         <CadViewerJscad {...props} />
@@ -76,11 +59,6 @@ export const CadViewer = (props: any) => {
           fontSize: 12,
           opacity: 0.7,
           userSelect: "none",
-        }}
-        onClick={() => {
-          if ("ontouchstart" in window) {
-            setEngine(engine === "jscad" ? "manifold" : "jscad")
-          }
         }}
       >
         Engine: <b>{engine === "jscad" ? "JSCAD" : "Manifold"}</b>

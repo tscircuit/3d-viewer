@@ -15,7 +15,7 @@ export const colors = {
 export const MANIFOLD_Z_OFFSET = 0.001 // Small offset to prevent Z-fighting
 export const SMOOTH_CIRCLE_SEGMENTS = 32 // Number of segments for smooth circles
 export const DEFAULT_SMT_PAD_THICKNESS = 0.035 // Typical 1oz copper thickness in mm
-export const TRACE_TEXTURE_RESOLUTION = 200 // pixels per mm for trace texture
+export const TRACE_TEXTURE_RESOLUTION = 50 // pixels per mm for trace texture
 export const boardMaterialColors: Record<PcbBoard["material"], RGB> = {
   fr1: colors.fr1Copper,
   fr4: colors.fr4Green,
