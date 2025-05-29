@@ -25,6 +25,7 @@ const createCircuit = () => {
   const circuit = new Circuit()
   circuit.add(
     <board width="45mm" height="45mm" outline={atariOutline}>
+      <chip name="U1" footprint="soic8" pcbX={0} pcbY={0} />
       <resistor name="R1" footprint="0402" resistance="1k" pcbX={5} pcbY={2} />
       <resistor name="R2" footprint="0402" resistance="1k" pcbX={5} pcbY={0} />
       <trace from={".R1 > .right"} to={".R2 > .left"} />
