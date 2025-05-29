@@ -11,7 +11,7 @@ import { PcbSilkscreenText } from "circuit-json"
 // Generate 2D text outlines
 export function createSilkscreenTextGeoms(silkscreenText: PcbSilkscreenText) {
   const textOutlines = vectorText({
-    height: silkscreenText.font_size * 0.57,
+    height: silkscreenText.font_size * 0.45,
     input: silkscreenText.text,
   })
 

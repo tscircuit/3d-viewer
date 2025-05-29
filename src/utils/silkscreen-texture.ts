@@ -76,7 +76,7 @@ export function createSilkscreenTextureForLayer({
     ctx.lineCap = "butt"
     ctx.lineJoin = "miter"
     const rawTextOutlines = vectorText({
-      height: fontSize * 0.57,
+      height: fontSize * 0.45,
       input: textS.text,
     })
     const processedTextOutlines: Array<Array<[number, number]>> = []
@@ -108,12 +108,26 @@ export function createSilkscreenTextureForLayer({
     }
     const textCenterX = (textBounds.minX + textBounds.maxX) / 2
     const textCenterY = (textBounds.minY + textBounds.maxY) / 2
+
     let xOff = -textCenterX
     let yOff = -textCenterY
-    if (textS.anchor_alignment?.includes("right")) xOff = -textBounds.maxX
-    else if (textS.anchor_alignment?.includes("left")) xOff = -textBounds.minX
-    if (textS.anchor_alignment?.includes("top")) yOff = -textBounds.maxY
-    else if (textS.anchor_alignment?.includes("bottom")) yOff = -textBounds.minY
+
+    const alignment = textS.anchor_alignment || "center"
+
+    // Horizontal alignment
+    if (alignment.includes("left")) {
+      xOff = -textBounds.minX
+    } else if (alignment.includes("right")) {
+      xOff = -textBounds.maxX
+    }
+
+    // Vertical alignment
+    if (alignment.includes("top")) {
+      yOff = -textBounds.maxY
+    } else if (alignment.includes("bottom")) {
+      yOff = -textBounds.minY
+    }
+
     const transformMatrices: Matrix[] = []
     let rotationDeg = textS.ccw_rotation ?? 0
     if (textS.layer === "bottom") {
