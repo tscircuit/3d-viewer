@@ -18,11 +18,16 @@ jobs:
       with:
         node-version: '22'
         
+    - name: Setup bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+
     - name: Install dependencies
-      run: npm install
-        
+      run: bun install
+
     - name: Build
-      run: npm run build
-        
+      run: bun run build
+
     - name: Test bundle loading
-      run: npm run test:node-bundle
+      run: bun run test:node-bundle
