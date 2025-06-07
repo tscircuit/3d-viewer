@@ -1,5 +1,3 @@
 **/*.stores.tsx
 **/*.json
-!package.json
-!tsconfig.json
 **/*.snap.svg
