@@ -17,7 +17,7 @@
     "start": "bun run storybook",
     "dev:old": "bunx --bun vite",
     "build": "bun build ./src/index.tsx --outdir ./dist --target browser --format esm --dts --sourcemap --external module",
-    "prepublishOnly": "bun run build",
+    "prepublishOnly": "npx --yes bun run build",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
