@@ -4,6 +4,7 @@ import { su } from "@tscircuit/soup-util"
 import * as THREE from "three"
 import { CadViewerContainer } from "./CadViewerContainer"
 import ManifoldModule from "manifold-3d"
+import manifoldWasmUrl from "../public/manifold.wasm" with { loader: "file" }
 import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
 import type { ManifoldToplevel } from "manifold-3d/manifold.d.ts"
 import { AnyCadComponent } from "./AnyCadComponent"
@@ -30,21 +31,37 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   >(null)
 
   useEffect(() => {
-    const manifoldConfig = {
-      locateFile: (path: string, scriptDirectory: string) =>
-        path === "manifold.wasm" ? "/manifold.wasm" : scriptDirectory + path,
+    if (!manifoldWasmUrl) {
+      setManifoldLoadingError(
+        "Manifold WASM URL not loaded. This is unexpected.",
+      )
+      return
     }
-    ;(ManifoldModule as any)(manifoldConfig)
-      .then((loadedModule: ManifoldToplevel) => {
-        loadedModule.setup()
-        setManifoldJSModule(loadedModule)
+
+    fetch(manifoldWasmUrl)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch WASM: ${response.status} ${response.statusText}`,
+          )
+        }
+        return response.arrayBuffer()
       })
-      .catch(() => {
-        setManifoldLoadingError(
-          "Failed to load Manifold module. Check console for details.",
+      .then((wasmBinary) => {
+        return (ManifoldModule as any)({ wasmBinary: wasmBinary }).then(
+          (loadedModule: ManifoldToplevel) => {
+            loadedModule.setup()
+            setManifoldJSModule(loadedModule)
+          },
         )
       })
-  }, [])
+      .catch((err: Error) => {
+        console.error("Failed to initialize Manifold module:", err)
+        setManifoldLoadingError(
+          `Failed to initialize Manifold module: ${err.message}. Check console for details.`,
+        )
+      })
+  }, [manifoldWasmUrl])
 
   const {
     geoms,
