@@ -146,7 +146,6 @@ export class BoardGeomBuilder {
     if (this.board.outline && this.board.outline.length > 0) {
       this.boardGeom = createBoardGeomWithOutline(
         {
-          center: this.board.center,
           outline: this.board.outline!,
         },
         this.ctx.pcbThickness,

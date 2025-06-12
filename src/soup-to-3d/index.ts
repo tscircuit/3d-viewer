@@ -29,7 +29,6 @@ export const createSimplifiedBoardGeom = (
   if (board.outline && board.outline.length > 0) {
     boardGeom = createBoardGeomWithOutline(
       {
-        center: board.center,
         outline: board.outline!,
       },
       pcbThickness,
