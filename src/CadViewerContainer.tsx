@@ -38,6 +38,7 @@ export const CadViewerContainer = forwardRef<
       initialCameraPosition = [5, 5, 5],
       autoRotateDisabled,
       clickToInteractEnabled = false,
+      boardDimensions,
     },
     ref,
   ) => {
