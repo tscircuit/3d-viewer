@@ -1,10 +1,17 @@
-import type * as React from "react"
-import type * as THREE from "three"
-import { useHelper, Grid, OrbitControls } from "@react-three/drei"
+import { Grid, OrbitControls, useHelper } from "@react-three/drei"
 import { Canvas, useFrame } from "@react-three/fiber"
+import type * as React from "react"
+import {
+  Suspense,
+  forwardRef,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
+import type * as THREE from "three"
 import packageJson from "../package.json"
 import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
-import { forwardRef, Suspense, useEffect, useRef, useState } from "react"
 
 export const RotationTracker = () => {
   useFrame(({ camera }) => {
@@ -18,6 +25,7 @@ interface Props {
   autoRotateDisabled?: boolean
   initialCameraPosition?: readonly [number, number, number] | undefined
   clickToInteractEnabled?: boolean
+  boardDimensions?: { width?: number; height?: number }
 }
 
 export const CadViewerContainer = forwardRef<
@@ -30,12 +38,22 @@ export const CadViewerContainer = forwardRef<
       initialCameraPosition = [5, 5, 5],
       autoRotateDisabled,
       clickToInteractEnabled = false,
+      boardDimensions,
     },
     ref,
   ) => {
     const [isInteractionEnabled, setIsInteractionEnabled] = useState(
       !clickToInteractEnabled,
     )
+
+    const gridSectionSize = useMemo(() => {
+      if (!boardDimensions) return 10
+      const width = boardDimensions.width ?? 0
+      const height = boardDimensions.height ?? 0
+      const largest = Math.max(width, height)
+      const desired = largest * 1.5
+      return desired > 10 ? desired : 10
+    }, [boardDimensions])
 
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -80,7 +98,8 @@ export const CadViewerContainer = forwardRef<
             rotation={[Math.PI / 2, 0, 0]}
             infiniteGrid={true}
             cellSize={1}
-            sectionSize={10}
+            sectionSize={gridSectionSize}
+            args={[gridSectionSize, gridSectionSize]}
           />
           <object3D ref={ref}>{children}</object3D>
         </Canvas>
@@ -98,8 +117,14 @@ export const CadViewerContainer = forwardRef<
           @{packageJson.version}
         </div>
         {clickToInteractEnabled && !isInteractionEnabled && (
-          <div
+          <button
+            type="button"
             onClick={() => setIsInteractionEnabled(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                setIsInteractionEnabled(true)
+              }
+            }}
             style={{
               position: "absolute",
               inset: 0,
@@ -123,7 +148,7 @@ export const CadViewerContainer = forwardRef<
             >
               Click to Interact
             </div>
-          </div>
+          </button>
         )}
       </div>
     )

@@ -1,14 +1,15 @@
-import React, { useEffect, useState, useMemo } from "react"
-import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import { su } from "@tscircuit/soup-util"
-import * as THREE from "three"
-import { CadViewerContainer } from "./CadViewerContainer"
+import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import ManifoldModule from "manifold-3d"
-import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
 import type { ManifoldToplevel } from "manifold-3d/manifold.d.ts"
+import type React from "react"
+import { useEffect, useMemo, useState } from "react"
+import * as THREE from "three"
 import { AnyCadComponent } from "./AnyCadComponent"
-import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
+import { CadViewerContainer } from "./CadViewerContainer"
+import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
 import { Error3d } from "./three-components/Error3d"
+import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
 import { createTextureMeshes } from "./utils/manifold/create-three-texture-meshes"
 
@@ -66,6 +67,12 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
     [circuitJson],
   )
 
+  const boardDimensions = useMemo(() => {
+    if (!boardData) return undefined
+    const { width = 0, height = 0 } = boardData
+    return { width, height }
+  }, [boardData])
+
   const initialCameraPosition = useMemo(() => {
     if (!boardData) return [5, 5, 5] as const
     const { width = 0, height = 0 } = boardData
@@ -115,6 +122,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
       initialCameraPosition={initialCameraPosition}
       autoRotateDisabled={autoRotateDisabled}
       clickToInteractEnabled={clickToInteractEnabled}
+      boardDimensions={boardDimensions}
     >
       {geometryMeshes.map((mesh, index) => (
         <primitive object={mesh} key={`${mesh.name}-${index}`} />

@@ -1,24 +1,24 @@
-import type { AnyCircuitElement } from "circuit-json"
-import type * as React from "react"
-import type * as THREE from "three"
-import { useConvertChildrenToSoup } from "./hooks/use-convert-children-to-soup"
-import { su } from "@tscircuit/soup-util"
-import { useMemo, forwardRef, useState, useCallback } from "react"
-import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
-import { STLModel } from "./three-components/STLModel"
-import { CadViewerContainer } from "./CadViewerContainer"
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
-import { MixedStlModel } from "./three-components/MixedStlModel"
-import { Euler } from "three"
-import { useBoardGeomBuilder } from "./hooks/useBoardGeomBuilder"
-import { JscadModel } from "./three-components/JscadModel"
-import { Footprinter3d } from "jscad-electronics"
-import { FootprinterModel } from "./three-components/FootprinterModel"
-import { tuple } from "./utils/tuple"
-import { AnyCadComponent } from "./AnyCadComponent"
 import { Text } from "@react-three/drei"
-import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
+import { su } from "@tscircuit/soup-util"
+import type { AnyCircuitElement } from "circuit-json"
+import { Footprinter3d } from "jscad-electronics"
+import type * as React from "react"
+import { forwardRef, useCallback, useMemo, useState } from "react"
+import type * as THREE from "three"
+import { Euler } from "three"
+import { AnyCadComponent } from "./AnyCadComponent"
+import { CadViewerContainer } from "./CadViewerContainer"
+import { useConvertChildrenToSoup } from "./hooks/use-convert-children-to-soup"
+import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
+import { useBoardGeomBuilder } from "./hooks/useBoardGeomBuilder"
 import { Error3d } from "./three-components/Error3d"
+import { FootprinterModel } from "./three-components/FootprinterModel"
+import { JscadModel } from "./three-components/JscadModel"
+import { MixedStlModel } from "./three-components/MixedStlModel"
+import { STLModel } from "./three-components/STLModel"
+import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
+import { tuple } from "./utils/tuple"
 
 interface Props {
   /**
@@ -69,6 +69,18 @@ export const CadViewerJscad = forwardRef<
       }
     }, [internalCircuitJson])
 
+    const boardDimensions = useMemo(() => {
+      if (!internalCircuitJson) return undefined
+      try {
+        const board = su(internalCircuitJson as any).pcb_board.list()[0]
+        if (!board) return undefined
+        return { width: board.width ?? 0, height: board.height ?? 0 }
+      } catch (e) {
+        console.error(e)
+        return undefined
+      }
+    }, [internalCircuitJson])
+
     // Use the state `boardGeom` which starts simplified and gets updated
     const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
 
@@ -82,6 +94,7 @@ export const CadViewerJscad = forwardRef<
         autoRotateDisabled={autoRotateDisabled}
         initialCameraPosition={initialCameraPosition}
         clickToInteractEnabled={clickToInteractEnabled}
+        boardDimensions={boardDimensions}
       >
         {boardStls.map(({ stlUrl, color }, index) => (
           <STLModel
