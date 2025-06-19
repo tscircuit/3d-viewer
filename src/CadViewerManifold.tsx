@@ -42,14 +42,15 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
               return wasmUrl
             }
             return scriptDirectory + path
-          }
+          },
         }
 
         // Use the imported ManifoldModule with CDN WASM
-        const loadedModule = await (ManifoldModule as any)(manifoldConfig) as ManifoldToplevel
+        const loadedModule = (await (ManifoldModule as any)(
+          manifoldConfig,
+        )) as ManifoldToplevel
         loadedModule.setup()
         setManifoldJSModule(loadedModule)
-        
       } catch (error) {
         console.error("Failed to load Manifold from CDN:", error)
         setManifoldLoadingError(
