@@ -3,6 +3,7 @@ import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import ManifoldModule from "manifold-3d"
 import type { ManifoldToplevel } from "manifold-3d/manifold.d.ts"
 import type React from "react"
+import manifoldWasmDataUrl from "./assets/manifold.wasm?base64"
 import { useEffect, useMemo, useState } from "react"
 import * as THREE from "three"
 import { AnyCadComponent } from "./AnyCadComponent"
@@ -32,8 +33,12 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
 
   useEffect(() => {
     const manifoldConfig = {
-      locateFile: (path: string, scriptDirectory: string) =>
-        path === "manifold.wasm" ? "/manifold.wasm" : scriptDirectory + path,
+      locateFile: (path: string, scriptDirectory: string) => {
+        if (path === "manifold.wasm") {
+          return manifoldWasmDataUrl
+        }
+        return scriptDirectory + path
+      },
     }
     ;(ManifoldModule as any)(manifoldConfig)
       .then((loadedModule: ManifoldToplevel) => {
