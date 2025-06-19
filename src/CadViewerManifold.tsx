@@ -4,7 +4,6 @@ import ManifoldModule from "manifold-3d"
 import type { ManifoldToplevel } from "manifold-3d/manifold.d.ts"
 import type React from "react"
 import { useEffect, useMemo, useState } from "react"
-import * as THREE from "three"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
 import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
@@ -19,6 +18,8 @@ interface CadViewerManifoldProps {
   clickToInteractEnabled?: boolean
 }
 
+const MANIFOLD_CDN_BASE_URL = "https://cdn.jsdelivr.net/npm/manifold-3d@3.1.1"
+
 const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   circuitJson,
   autoRotateDisabled,
@@ -31,20 +32,33 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   >(null)
 
   useEffect(() => {
-    const manifoldConfig = {
-      locateFile: (path: string, scriptDirectory: string) =>
-        path === "manifold.wasm" ? "/manifold.wasm" : scriptDirectory + path,
-    }
-    ;(ManifoldModule as any)(manifoldConfig)
-      .then((loadedModule: ManifoldToplevel) => {
+    const loadManifoldWasmFromCDN = async () => {
+      try {
+        const wasmUrl = `${MANIFOLD_CDN_BASE_URL}/manifold.wasm`
+
+        const manifoldConfig = {
+          locateFile: (path: string, scriptDirectory: string) => {
+            if (path === "manifold.wasm") {
+              return wasmUrl
+            }
+            return scriptDirectory + path
+          }
+        }
+
+        // Use the imported ManifoldModule with CDN WASM
+        const loadedModule = await (ManifoldModule as any)(manifoldConfig) as ManifoldToplevel
         loadedModule.setup()
         setManifoldJSModule(loadedModule)
-      })
-      .catch(() => {
+        
+      } catch (error) {
+        console.error("Failed to load Manifold from CDN:", error)
         setManifoldLoadingError(
-          "Failed to load Manifold module. Check console for details.",
+          `Failed to load Manifold module: ${error instanceof Error ? error.message : "Unknown error"}`,
         )
-      })
+      }
+    }
+
+    loadManifoldWasmFromCDN()
   }, [])
 
   const {
