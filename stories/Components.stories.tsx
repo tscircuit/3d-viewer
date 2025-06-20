@@ -1,6 +1,6 @@
 import { CadViewer } from "src/CadViewer"
 import PcbCutoutCircuitJson from "./assets/pcb-cutout.json"
-import PlatedPadsCircuitJson from "./assets/plated_pads.json"
+import PlatedPadsCircuitJson from "./assets/pill_plated_holes.json"
 
 export const PcbCutout = () => (
   <CadViewer circuitJson={PcbCutoutCircuitJson as any} />
