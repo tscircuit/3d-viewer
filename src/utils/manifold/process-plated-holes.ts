@@ -100,7 +100,7 @@ export function processPlatedHolesForManifold(
         const radius = height / 2
         const rectLength = width - height
         let pillOp
-        if (rectLength < -1e-9) {
+        if (rectLength < 1e-9) {
           // Primarily cylindrical
           pillOp = Manifold.cylinder(
             depth,

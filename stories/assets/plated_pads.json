@@ -10,15 +10,71 @@
     "thickness": 1.2
   },
   {
+    "type": "pcb_board",
+    "pcb_board_id": "pcb_board_main",
+    "center": { "x": 0, "y": 0 },
+    "width": 100,
+    "height": 80,
+    "material": "fr4",
+    "num_layers": 2,
+    "thickness": 1.6
+  },
+  {
     "type": "pcb_plated_hole",
     "shape": "pill",
     "layers": ["top", "bottom"],
-    "hole_height": 1.2,
-    "hole_width": 1.2,
-    "outer_height": 2.5,
+    "hole_width": 2.0,
+    "hole_height": 1.0,
+    "outer_width": 3.0,
+    "outer_height": 2.0,
+    "pcb_plated_hole_id": "pcb_plated_hole_horizontal",
+    "x": -20,
+    "y": 10
+  },
+  {
+    "type": "pcb_plated_hole",
+    "shape": "pill",
+    "layers": ["top", "bottom"],
+    "hole_width": 1.0,
+    "hole_height": 2.0,
     "outer_width": 2.0,
-    "pcb_plated_hole_id": "pcb_plated_hole_0",
+    "outer_height": 3.0,
+    "pcb_plated_hole_id": "pcb_plated_hole_vertical",
     "x": 0,
-    "y": 0
+    "y": 10
+  },
+  {
+    "type": "pcb_plated_hole",
+    "shape": "pill",
+    "layers": ["top", "bottom"],
+    "hole_width": 1.5,
+    "hole_height": 1.5,
+    "outer_width": 2.5,
+    "outer_height": 2.5,
+    "pcb_plated_hole_id": "pcb_plated_hole_circular_pill",
+    "x": 20,
+    "y": 10
+  },
+  {
+    "type": "pcb_plated_hole",
+    "shape": "pill",
+    "layers": ["top", "bottom"],
+    "hole_width": 1.8,
+    "hole_height": 0.8,
+    "pcb_plated_hole_id": "pcb_plated_hole_default_pad",
+    "x": -10,
+    "y": -15
+  },
+  {
+    "type": "pcb_plated_hole",
+    "shape": "pill",
+    "layers": ["top", "bottom"],
+    "hole_width": 0.8,
+    "hole_height": 0.8,
+    "outer_width": 1.2,
+    "outer_height": 1.2,
+    "pcb_plated_hole_id": "pcb_plated_hole_small",
+    "x": 10,
+    "y": -15
   }
 ]
