@@ -8,6 +8,7 @@ import {
   colors as defaultColors,
   MANIFOLD_Z_OFFSET,
   SMOOTH_CIRCLE_SEGMENTS,
+  M,
 } from "../../geoms/constants"
 
 const COPPER_COLOR = new THREE.Color(...defaultColors.copper)
@@ -38,12 +39,12 @@ export function processPlatedHolesForManifold(
 
   pcbPlatedHoles.forEach((ph: PcbPlatedHole, index: number) => {
     if (ph.shape === "circle" || ph.shape === "circular_hole_with_rect_pad") {
-      // Board cut for plated holes
+      // Board cut for plated holes using hole diameter
       const translatedDrill = createPlatedHoleDrill({
         Manifold,
         x: ph.x,
         y: ph.y,
-        outerDiameter: ph.outer_diameter,
+        outerDiameter: ph.hole_diameter,
         thickness: pcbThickness,
         zOffset: MANIFOLD_Z_OFFSET,
         segments: SMOOTH_CIRCLE_SEGMENTS,
@@ -88,8 +89,9 @@ export function processPlatedHolesForManifold(
       const padWidth = ph.rect_pad_width ?? ph.hole_diameter
       const padHeight = ph.rect_pad_height ?? ph.hole_diameter
       const copperPartThickness = pcbThickness + 2 * MANIFOLD_Z_OFFSET
+      const holeRadius = Math.max(ph.hole_diameter / 2 - M, 0.01)
 
-      let barrel = Manifold.cylinder(
+      const barrel = Manifold.cylinder(
         copperPartThickness,
         ph.hole_diameter / 2,
         -1,
@@ -123,13 +125,12 @@ export function processPlatedHolesForManifold(
       const barrelT = barrel.translate([ph.x, ph.y, 0])
       manifoldInstancesForCleanup.push(barrelT)
 
-      let copperUnion = barrelT.add(topPadT)
-      copperUnion = copperUnion.add(bottomPadT)
+      const copperUnion = barrelT.add(topPadT).add(bottomPadT)
       manifoldInstancesForCleanup.push(copperUnion)
 
       const drillForCopper = Manifold.cylinder(
         copperPartThickness * 1.05,
-        ph.hole_diameter / 2,
+        holeRadius,
         -1,
         SMOOTH_CIRCLE_SEGMENTS,
         true,
