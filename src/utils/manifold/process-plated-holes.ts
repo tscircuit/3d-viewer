@@ -90,11 +90,11 @@ export function processPlatedHolesForManifold(
 
       const defaultPadExtension = 0.4 // 0.2mm pad extension per side
       const outerW = shouldRotate
-        ? (ph.outer_height ?? holeH + defaultPadExtension)
-        : (ph.outer_width ?? holeW + defaultPadExtension)
+        ? (ph.outer_height ?? holeH + defaultPadExtension / 2)
+        : (ph.outer_width ?? holeW + defaultPadExtension / 2)
       const outerH = shouldRotate
-        ? (ph.outer_width ?? holeW + defaultPadExtension)
-        : (ph.outer_height ?? holeH + defaultPadExtension)
+        ? (ph.outer_width ?? holeW + defaultPadExtension / 2)
+        : (ph.outer_height ?? holeH + defaultPadExtension / 2)
 
       const createPill = (width: number, height: number, depth: number) => {
         const radius = height / 2
