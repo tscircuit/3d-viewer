@@ -11,6 +11,7 @@ import {
 } from "../../geoms/constants"
 
 const COPPER_COLOR = new THREE.Color(...defaultColors.copper)
+const PAD_LIP_HEIGHT = 0.05
 
 export interface ProcessPlatedHolesResult {
   platedHoleBoardDrills: any[]
@@ -36,21 +37,23 @@ export function processPlatedHolesForManifold(
   }> = []
 
   pcbPlatedHoles.forEach((ph: PcbPlatedHole, index: number) => {
-    if (ph.shape === "circle") {
+    if (ph.shape === "circle" || ph.shape === "circular_hole_with_rect_pad") {
       // Board cut for plated holes
       const translatedDrill = createPlatedHoleDrill({
         Manifold,
         x: ph.x,
         y: ph.y,
-        outerDiameter: ph.outer_diameter, // Drill for the board
+        outerDiameter: ph.outer_diameter,
         thickness: pcbThickness,
         zOffset: MANIFOLD_Z_OFFSET,
         segments: SMOOTH_CIRCLE_SEGMENTS,
       })
       manifoldInstancesForCleanup.push(translatedDrill)
       platedHoleBoardDrills.push(translatedDrill)
+    }
 
-      // Copper part of plated holes
+    if (ph.shape === "circle") {
+      // Copper part of circular plated holes
       const copperPartThickness = pcbThickness + 2 * MANIFOLD_Z_OFFSET
       let platedPart = Manifold.cylinder(
         copperPartThickness,
@@ -61,7 +64,7 @@ export function processPlatedHolesForManifold(
       )
       manifoldInstancesForCleanup.push(platedPart)
       const drillForCopper = Manifold.cylinder(
-        copperPartThickness * 1.05, // ensure it cuts through
+        copperPartThickness * 1.05,
         ph.hole_diameter / 2,
         -1,
         SMOOTH_CIRCLE_SEGMENTS,
@@ -75,6 +78,69 @@ export function processPlatedHolesForManifold(
       const threeGeom = manifoldMeshToThreeGeometry(
         translatedPlatedPart.getMesh(),
       )
+      platedHoleCopperGeoms.push({
+        key: `ph-${ph.pcb_plated_hole_id || index}`,
+        geometry: threeGeom,
+        color: COPPER_COLOR,
+      })
+    } else if (ph.shape === "circular_hole_with_rect_pad") {
+      // Copper part with rectangular pads
+      const padWidth = ph.rect_pad_width ?? ph.hole_diameter
+      const padHeight = ph.rect_pad_height ?? ph.hole_diameter
+      const copperPartThickness = pcbThickness + 2 * MANIFOLD_Z_OFFSET
+
+      let barrel = Manifold.cylinder(
+        copperPartThickness,
+        ph.hole_diameter / 2,
+        -1,
+        SMOOTH_CIRCLE_SEGMENTS,
+        true,
+      )
+      manifoldInstancesForCleanup.push(barrel)
+
+      const topPad = Manifold.cube(
+        [padWidth, padHeight, PAD_LIP_HEIGHT],
+        true,
+      )
+      const bottomPad = Manifold.cube(
+        [padWidth, padHeight, PAD_LIP_HEIGHT],
+        true,
+      )
+      manifoldInstancesForCleanup.push(topPad, bottomPad)
+
+      const topPadT = topPad.translate([
+        ph.x,
+        ph.y,
+        pcbThickness / 2 + PAD_LIP_HEIGHT / 2 + MANIFOLD_Z_OFFSET,
+      ])
+      const bottomPadT = bottomPad.translate([
+        ph.x,
+        ph.y,
+        -pcbThickness / 2 - PAD_LIP_HEIGHT / 2 - MANIFOLD_Z_OFFSET,
+      ])
+      manifoldInstancesForCleanup.push(topPadT, bottomPadT)
+
+      const barrelT = barrel.translate([ph.x, ph.y, 0])
+      manifoldInstancesForCleanup.push(barrelT)
+
+      let copperUnion = barrelT.add(topPadT)
+      copperUnion = copperUnion.add(bottomPadT)
+      manifoldInstancesForCleanup.push(copperUnion)
+
+      const drillForCopper = Manifold.cylinder(
+        copperPartThickness * 1.05,
+        ph.hole_diameter / 2,
+        -1,
+        SMOOTH_CIRCLE_SEGMENTS,
+        true,
+      )
+      manifoldInstancesForCleanup.push(drillForCopper)
+      const drillT = drillForCopper.translate([ph.x, ph.y, 0])
+      manifoldInstancesForCleanup.push(drillT)
+
+      const finalOp = copperUnion.subtract(drillT)
+      manifoldInstancesForCleanup.push(finalOp)
+      const threeGeom = manifoldMeshToThreeGeometry(finalOp.getMesh())
       platedHoleCopperGeoms.push({
         key: `ph-${ph.pcb_plated_hole_id || index}`,
         geometry: threeGeom,
