@@ -15,7 +15,7 @@
     "layers": ["top", "bottom"],
     "hole_height": 1.2,
     "hole_width": 1.2,
-    "outer_height": 2.0,
+    "outer_height": 2.5,
     "outer_width": 2.0,
     "pcb_plated_hole_id": "pcb_plated_hole_0",
     "x": 0,
