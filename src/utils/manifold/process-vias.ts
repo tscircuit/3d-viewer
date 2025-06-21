@@ -1,10 +1,12 @@
-import type { ManifoldToplevel } from "manifold-3d/manifold.d.ts"
+import type {
+  ManifoldToplevel,
+  Mesh as ManifoldMesh,
+} from "manifold-3d/manifold.d.ts"
 import type { AnyCircuitElement, PcbVia } from "circuit-json"
 import { su } from "@tscircuit/soup-util"
 import * as THREE from "three"
 import { createPlatedHoleDrill } from "../hole-geoms"
 import { createViaCopper } from "../via-geoms"
-import { manifoldMeshToThreeGeometry } from "../manifold-mesh-to-three-geometry"
 import {
   colors as defaultColors,
   MANIFOLD_Z_OFFSET,
@@ -17,7 +19,7 @@ export interface ProcessViasResult {
   viaBoardDrills: any[]
   viaCopperGeoms: Array<{
     key: string
-    geometry: THREE.BufferGeometry
+    geometry: ManifoldMesh
     color: THREE.Color
   }>
 }
@@ -32,7 +34,7 @@ export function processViasForManifold(
   const pcbVias = su(circuitJson).pcb_via.list() as PcbVia[]
   const viaCopperGeoms: Array<{
     key: string
-    geometry: THREE.BufferGeometry
+    geometry: ManifoldMesh
     color: THREE.Color
   }> = []
 
@@ -68,12 +70,9 @@ export function processViasForManifold(
         segments: SMOOTH_CIRCLE_SEGMENTS,
       })
       manifoldInstancesForCleanup.push(translatedViaCopper)
-      const threeGeom = manifoldMeshToThreeGeometry(
-        translatedViaCopper.getMesh(),
-      )
       viaCopperGeoms.push({
         key: `via-${via.pcb_via_id || index}`,
-        geometry: threeGeom,
+        geometry: translatedViaCopper.getMesh(),
         color: COPPER_COLOR,
       })
     }
