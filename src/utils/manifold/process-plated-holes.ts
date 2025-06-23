@@ -1,11 +1,9 @@
-import type {
-  ManifoldToplevel,
-  Mesh as ManifoldMesh,
-} from "manifold-3d/manifold.d.ts"
+import type { ManifoldToplevel } from "manifold-3d/manifold.d.ts"
 import type { AnyCircuitElement, PcbPlatedHole } from "circuit-json"
 import { su } from "@tscircuit/soup-util"
 import * as THREE from "three"
 import { createPlatedHoleDrill } from "../hole-geoms"
+import { manifoldMeshToThreeGeometry } from "../manifold-mesh-to-three-geometry"
 import {
   colors as defaultColors,
   MANIFOLD_Z_OFFSET,
@@ -18,7 +16,7 @@ export interface ProcessPlatedHolesResult {
   platedHoleBoardDrills: any[]
   platedHoleCopperGeoms: Array<{
     key: string
-    geometry: ManifoldMesh
+    geometry: THREE.BufferGeometry
     color: THREE.Color
   }>
 }
@@ -33,7 +31,7 @@ export function processPlatedHolesForManifold(
   const pcbPlatedHoles = su(circuitJson).pcb_plated_hole.list()
   const platedHoleCopperGeoms: Array<{
     key: string
-    geometry: ManifoldMesh
+    geometry: THREE.BufferGeometry
     color: THREE.Color
   }> = []
 
@@ -74,9 +72,12 @@ export function processPlatedHolesForManifold(
       manifoldInstancesForCleanup.push(finalPlatedPartOp)
       const translatedPlatedPart = finalPlatedPartOp.translate([ph.x, ph.y, 0])
       manifoldInstancesForCleanup.push(translatedPlatedPart)
+      const threeGeom = manifoldMeshToThreeGeometry(
+        translatedPlatedPart.getMesh(),
+      )
       platedHoleCopperGeoms.push({
         key: `ph-${ph.pcb_plated_hole_id || index}`,
-        geometry: translatedPlatedPart.getMesh(),
+        geometry: threeGeom,
         color: COPPER_COLOR,
       })
     } else if (ph.shape === "pill") {
@@ -181,9 +182,12 @@ export function processPlatedHolesForManifold(
       const translatedPlatedPart = finalPlatedPartOp.translate([ph.x, ph.y, 0])
       manifoldInstancesForCleanup.push(translatedPlatedPart)
 
+      const threeGeom = manifoldMeshToThreeGeometry(
+        translatedPlatedPart.getMesh(),
+      )
       platedHoleCopperGeoms.push({
         key: `ph-${ph.pcb_plated_hole_id || index}`,
-        geometry: translatedPlatedPart.getMesh(),
+        geometry: threeGeom,
         color: COPPER_COLOR,
       })
     }
