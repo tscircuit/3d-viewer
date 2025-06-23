@@ -1,7 +1,9 @@
 import { su } from "@tscircuit/soup-util"
 import type { AnyCircuitElement, CadComponent } from "circuit-json"
+import ManifoldModule from "manifold-3d"
+import type { ManifoldToplevel } from "manifold-3d/manifold.d.ts"
 import type React from "react"
-import { useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
 import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
@@ -16,11 +18,50 @@ interface CadViewerManifoldProps {
   clickToInteractEnabled?: boolean
 }
 
+const MANIFOLD_CDN_BASE_URL = "https://cdn.jsdelivr.net/npm/manifold-3d@3.1.1"
+
 const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   circuitJson,
   autoRotateDisabled,
   clickToInteractEnabled,
 }) => {
+  const [manifoldJSModule, setManifoldJSModule] =
+    useState<ManifoldToplevel | null>(null)
+  const [manifoldLoadingError, setManifoldLoadingError] = useState<
+    string | null
+  >(null)
+
+  useEffect(() => {
+    const loadManifoldWasmFromCDN = async () => {
+      try {
+        const wasmUrl = `${MANIFOLD_CDN_BASE_URL}/manifold.wasm`
+
+        const manifoldConfig = {
+          locateFile: (path: string, scriptDirectory: string) => {
+            if (path === "manifold.wasm") {
+              return wasmUrl
+            }
+            return scriptDirectory + path
+          },
+        }
+
+        // Use the imported ManifoldModule with CDN WASM
+        const loadedModule = (await (ManifoldModule as any)(
+          manifoldConfig,
+        )) as ManifoldToplevel
+        loadedModule.setup()
+        setManifoldJSModule(loadedModule)
+      } catch (error) {
+        console.error("Failed to load Manifold from CDN:", error)
+        setManifoldLoadingError(
+          `Failed to load Manifold module: ${error instanceof Error ? error.message : "Unknown error"}`,
+        )
+      }
+    }
+
+    loadManifoldWasmFromCDN()
+  }, [])
+
   const {
     geoms,
     textures,
@@ -28,7 +69,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
     error: builderError,
     isLoading: builderIsLoading,
     boardData,
-  } = useManifoldBoardBuilder(circuitJson)
+  } = useManifoldBoardBuilder(manifoldJSModule, circuitJson)
 
   const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
   const textureMeshes = useMemo(
@@ -56,6 +97,23 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
     return [largestDim * 0.75, largestDim * 0.75, largestDim * 0.75] as const
   }, [boardData])
 
+  if (manifoldLoadingError) {
+    return (
+      <div
+        style={{
+          color: "red",
+          padding: "1em",
+          border: "1px solid red",
+          margin: "1em",
+        }}
+      >
+        Error: {manifoldLoadingError}
+      </div>
+    )
+  }
+  if (!manifoldJSModule) {
+    return <div style={{ padding: "1em" }}>Loading Manifold module...</div>
+  }
   if (builderError) {
     return (
       <div
@@ -70,7 +128,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
       </div>
     )
   }
-  if (builderIsLoading && !geoms) {
+  if (builderIsLoading || !boardData || !geoms || !textures) {
     return <div style={{ padding: "1em" }}>Processing board geometry...</div>
   }
 
