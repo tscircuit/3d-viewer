@@ -103,6 +103,20 @@ export const useManifoldBoardBuilder = (
       return
     }
 
+    if (
+      (boardData.width === 0 || !boardData.width) &&
+      (boardData.height === 0 || !boardData.height) &&
+      (!boardData.outline || boardData.outline.length < 3)
+    ) {
+      // This is an empty board, manifold can't handle it, but we can just
+      // render nothing for the board and show the components.
+      setGeoms({ platedHoles: [], smtPads: [], vias: [] })
+      setTextures({})
+      setPcbThickness(boardData.thickness ?? 0)
+      setIsLoading(false)
+      return
+    }
+
     setIsLoading(true)
     setError(null) // Clear previous errors
     const Manifold = manifoldJSModule.Manifold
