@@ -128,7 +128,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
       </div>
     )
   }
-  if (builderIsLoading || !boardData || !geoms || !textures) {
+  if (builderIsLoading) {
     return <div style={{ padding: "1em" }}>Processing board geometry...</div>
   }
 
