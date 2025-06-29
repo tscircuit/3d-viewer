@@ -6,6 +6,7 @@ import type React from "react"
 import { useEffect, useMemo, useState } from "react"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
+import { useConvertChildrenToSoup } from "./hooks/use-convert-children-to-soup"
 import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
 import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
@@ -13,18 +14,25 @@ import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-mes
 import { createTextureMeshes } from "./utils/manifold/create-three-texture-meshes"
 
 interface CadViewerManifoldProps {
-  circuitJson: AnyCircuitElement[]
+  circuitJson?: AnyCircuitElement[]
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
+  children?: React.ReactNode
 }
 
 const MANIFOLD_CDN_BASE_URL = "https://cdn.jsdelivr.net/npm/manifold-3d@3.1.1"
 
 const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
-  circuitJson,
+  circuitJson: circuitJsonProp,
   autoRotateDisabled,
   clickToInteractEnabled,
+  children,
 }) => {
+  const childrenCircuitJson = useConvertChildrenToSoup(children)
+  const circuitJson = useMemo(() => {
+    return circuitJsonProp ?? childrenCircuitJson
+  }, [circuitJsonProp, childrenCircuitJson])
+
   const [manifoldJSModule, setManifoldJSModule] =
     useState<ManifoldToplevel | null>(null)
   const [manifoldLoadingError, setManifoldLoadingError] = useState<
@@ -154,7 +162,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
         >
           <AnyCadComponent
             cad_component={cad_component}
-            circuitJson={circuitJson}
+            circuitJson={circuitJson as any}
           />
         </ThreeErrorBoundary>
       ))}
