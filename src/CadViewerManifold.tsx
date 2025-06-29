@@ -13,12 +13,13 @@ import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
 import { createTextureMeshes } from "./utils/manifold/create-three-texture-meshes"
 
-interface CadViewerManifoldProps {
-  circuitJson?: AnyCircuitElement[]
+type CadViewerManifoldProps = {
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
-  children?: React.ReactNode
-}
+} & (
+  | { circuitJson: AnyCircuitElement[]; children?: React.ReactNode }
+  | { circuitJson?: never; children: React.ReactNode }
+)
 
 const MANIFOLD_CDN_BASE_URL = "https://cdn.jsdelivr.net/npm/manifold-3d@3.1.1"
 
@@ -140,10 +141,6 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
     return <div style={{ padding: "1em" }}>Processing board geometry...</div>
   }
 
-  if (!circuitJson) {
-    return null
-  }
-
   return (
     <CadViewerContainer
       initialCameraPosition={initialCameraPosition}
@@ -157,19 +154,20 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
       {textureMeshes.map((mesh, index) => (
         <primitive object={mesh} key={`${mesh.name}-${index}`} />
       ))}
-      {cadComponents.map((cad_component: CadComponent) => (
-        <ThreeErrorBoundary
-          key={cad_component.cad_component_id}
-          fallback={({ error }) => (
-            <Error3d cad_component={cad_component} error={error} />
-          )}
-        >
-          <AnyCadComponent
-            cad_component={cad_component}
-            circuitJson={circuitJson}
-          />
-        </ThreeErrorBoundary>
-      ))}
+      {circuitJson &&
+        cadComponents.map((cad_component: CadComponent) => (
+          <ThreeErrorBoundary
+            key={cad_component.cad_component_id}
+            fallback={({ error }) => (
+              <Error3d cad_component={cad_component} error={error} />
+            )}
+          >
+            <AnyCadComponent
+              cad_component={cad_component}
+              circuitJson={circuitJson}
+            />
+          </ThreeErrorBoundary>
+        ))}
     </CadViewerContainer>
   )
 }
