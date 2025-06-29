@@ -87,7 +87,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   )
 
   const cadComponents = useMemo(
-    () => (circuitJson ? su(circuitJson).cad_component.list() : []),
+    () => su(circuitJson).cad_component.list(),
     [circuitJson],
   )
 
@@ -154,20 +154,19 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
       {textureMeshes.map((mesh, index) => (
         <primitive object={mesh} key={`${mesh.name}-${index}`} />
       ))}
-      {circuitJson &&
-        cadComponents.map((cad_component: CadComponent) => (
-          <ThreeErrorBoundary
-            key={cad_component.cad_component_id}
-            fallback={({ error }) => (
-              <Error3d cad_component={cad_component} error={error} />
-            )}
-          >
-            <AnyCadComponent
-              cad_component={cad_component}
-              circuitJson={circuitJson}
-            />
-          </ThreeErrorBoundary>
-        ))}
+      {cadComponents.map((cad_component: CadComponent) => (
+        <ThreeErrorBoundary
+          key={cad_component.cad_component_id}
+          fallback={({ error }) => (
+            <Error3d cad_component={cad_component} error={error} />
+          )}
+        >
+          <AnyCadComponent
+            cad_component={cad_component}
+            circuitJson={circuitJson}
+          />
+        </ThreeErrorBoundary>
+      ))}
     </CadViewerContainer>
   )
 }

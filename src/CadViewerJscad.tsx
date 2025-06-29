@@ -41,7 +41,7 @@ export const CadViewerJscad = forwardRef<
     const childrenSoup = useConvertChildrenToSoup(children)
     const internalCircuitJson = useMemo(() => {
       const cj = soup ?? circuitJson
-      return (cj ?? childrenSoup) as AnyCircuitElement[] | undefined
+      return (cj ?? childrenSoup) as AnyCircuitElement[]
     }, [soup, circuitJson, childrenSoup])
 
     // Use the new hook to manage board geometry building
@@ -83,8 +83,6 @@ export const CadViewerJscad = forwardRef<
 
     // Use the state `boardGeom` which starts simplified and gets updated
     const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
-
-    if (!internalCircuitJson) return null
 
     const cad_components = su(internalCircuitJson).cad_component.list()
 
