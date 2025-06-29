@@ -8,7 +8,7 @@ import nineKeyKeyboard from "./assets/nine-key-keyboard.json"
  *
  * Datasheet: https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2211090930_Kailh-CPG151101S11-1_C5184526.pdf
  */
-export const KeyswitchSocket = (props: {
+const KeyswitchSocket = (props: {
   name: string
   pcbX?: number
   pcbY?: number
@@ -52,6 +52,14 @@ export const KeyswitchSocket = (props: {
       </footprint>
     }
   />
+)
+
+export const Socket = () => (
+  <CadViewer>
+    <board width="25mm" height="25mm">
+      <KeyswitchSocket name="U1" />
+    </board>
+  </CadViewer>
 )
 
 /**
