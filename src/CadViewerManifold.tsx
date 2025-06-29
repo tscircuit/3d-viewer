@@ -140,6 +140,10 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
     return <div style={{ padding: "1em" }}>Processing board geometry...</div>
   }
 
+  if (!circuitJson) {
+    return null
+  }
+
   return (
     <CadViewerContainer
       initialCameraPosition={initialCameraPosition}
@@ -162,7 +166,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
         >
           <AnyCadComponent
             cad_component={cad_component}
-            circuitJson={circuitJson as any}
+            circuitJson={circuitJson}
           />
         </ThreeErrorBoundary>
       ))}
