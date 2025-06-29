@@ -71,7 +71,7 @@ interface UseManifoldBoardBuilderResult {
 
 export const useManifoldBoardBuilder = (
   manifoldJSModule: ManifoldToplevel | null,
-  circuitJson: AnyCircuitElement[] | undefined,
+  circuitJson: AnyCircuitElement[],
 ): UseManifoldBoardBuilderResult => {
   const [geoms, setGeoms] = useState<ManifoldGeoms | null>(null)
   const [textures, setTextures] = useState<ManifoldTextures | null>(null)
@@ -82,7 +82,6 @@ export const useManifoldBoardBuilder = (
   const manifoldInstancesForCleanup = useRef<any[]>([])
 
   const boardData = useMemo(() => {
-    if (!circuitJson) return null
     const boards = su(circuitJson).pcb_board.list()
     if (boards.length === 0) {
       // Error will be set in effect
@@ -92,11 +91,11 @@ export const useManifoldBoardBuilder = (
   }, [circuitJson])
 
   useEffect(() => {
-    if (!manifoldJSModule || !circuitJson || !boardData) {
+    if (!manifoldJSModule || !boardData) {
       setGeoms(null)
       setTextures(null)
       setPcbThickness(null)
-      if (circuitJson && su(circuitJson).pcb_board.list().length === 0) {
+      if (su(circuitJson).pcb_board.list().length === 0) {
         setError("No pcb_board found in circuitJson.")
       }
       setIsLoading(false)
