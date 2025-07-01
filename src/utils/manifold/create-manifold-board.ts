@@ -44,6 +44,7 @@ export function createManifoldBoard(
       undefined, // scaleTop
       true, // center (for Z-axis)
     )
+    manifoldInstancesForCleanup.push(boardOp)
   } else {
     if (boardData.outline && boardData.outline.length > 0) {
       // Has outline but < 3 points
@@ -56,11 +57,10 @@ export function createManifoldBoard(
       [boardData.width, boardData.height, pcbThickness],
       true, // center (for all axes)
     )
+    manifoldInstancesForCleanup.push(boardOp)
+    boardOp = boardOp.translate([boardData.center.x, boardData.center.y, 0])
+    manifoldInstancesForCleanup.push(boardOp) // Also track the translated op
   }
-
-  manifoldInstancesForCleanup.push(boardOp)
-  boardOp = boardOp.translate([boardData.center.x, boardData.center.y, 0])
-  manifoldInstancesForCleanup.push(boardOp) // Also track the translated op
 
   return boardOp
 }
