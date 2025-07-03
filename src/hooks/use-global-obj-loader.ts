@@ -31,6 +31,11 @@ export function useGlobalObjLoader(url: string | null): Group | null | Error {
     async function loadAndParseObj() {
       try {
         const response = await fetch(url!)
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch "${url}": ${response.status} ${response.statusText}`,
+          )
+        }
         const text = await response.text()
 
         const mtlContent = text
@@ -67,7 +72,10 @@ export function useGlobalObjLoader(url: string | null): Group | null | Error {
           return Promise.resolve(cacheItem.result.clone())
         }
         // If we're still loading, return the existing promise
-        return cacheItem.promise.then((result) => result.clone())
+        return cacheItem.promise.then((result) => {
+          if (result instanceof Error) return result
+          return result.clone()
+        })
       }
       // If it's not in the cache, create a new promise and cache it
       const promise = loadAndParseObj().then((result) => {
