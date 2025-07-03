@@ -24,7 +24,7 @@
     "vercel-build": "bun run build-storybook",
     "format": "biome format . --write",
     "format:check": "biome format .",
-    "test:bun-bundle": "bun ./scripts/load-bundle-in-bun.js"
+    "test:node-bundle": "node ./scripts/load-bundle-in-node.js"
   },
   "dependencies": {
     "@jscad/regl-renderer": "^2.6.12",
