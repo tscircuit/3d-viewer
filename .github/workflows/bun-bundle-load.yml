@@ -1,4 +1,4 @@
-name: Test Node Bundle Load
+name: Test Bun Bundle Load
 
 on:
   push:
@@ -13,16 +13,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
+    - name: Setup bun
+      uses: oven-sh/setup-bun@v1
       with:
-        node-version: '22'
+        bun-version: latest
         
     - name: Install dependencies
-      run: npm install
+      run: bun install
         
     - name: Build
-      run: npm run build
+      run: bun run build
         
     - name: Test bundle loading
-      run: npm run test:node-bundle
+      run: bun run test:bun-bundle
