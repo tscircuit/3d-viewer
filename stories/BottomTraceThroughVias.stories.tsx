@@ -49,11 +49,11 @@ export const BottomTraceThroughVias = () => {
   const [circuitJson, setCircuitJson] = useState<any>(null)
 
   useEffect(() => {
-    const fetchCircuit = async () => {
+    const renderCircuit = async () => {
       const json = await createCircuit()
       setCircuitJson(json)
     }
-    fetchCircuit()
+    renderCircuit()
   }, [])
 
   if (!circuitJson) {
