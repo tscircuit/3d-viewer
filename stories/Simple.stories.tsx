@@ -1,6 +1,7 @@
 import { fn } from "@storybook/test"
 import { CadViewer } from "src/CadViewer"
 import bugsPadsAndTracesSoup from "./assets/soic-with-traces.json"
+import LedFlashlightCircuitJson from "./assets/left-flashlight-board.json"
 
 export const Default = () => (
   <CadViewer circuitJson={bugsPadsAndTracesSoup as any} />
@@ -25,4 +26,8 @@ export const RotatedCapacitor = () => {
       </board>
     </CadViewer>
   )
+}
+
+export const LedFlashlightBoard = () => {
+  return <CadViewer circuitJson={LedFlashlightCircuitJson as any} />
 }

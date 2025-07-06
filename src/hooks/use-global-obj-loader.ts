@@ -25,15 +25,17 @@ export function useGlobalObjLoader(url: string | null): Group | null | Error {
   useEffect(() => {
     if (!url) return
 
+    const cleanUrl = url.replace(/&cachebust_origin=$/, "")
+
     const cache = window.TSCIRCUIT_OBJ_LOADER_CACHE
     let hasUrlChanged = false
 
     async function loadAndParseObj() {
       try {
-        const response = await fetch(url!)
+        const response = await fetch(cleanUrl)
         if (!response.ok) {
           throw new Error(
-            `Failed to fetch "${url}": ${response.status} ${response.statusText}`,
+            `Failed to fetch "${cleanUrl}": ${response.status} ${response.statusText}`,
           )
         }
         const text = await response.text()
@@ -65,8 +67,8 @@ export function useGlobalObjLoader(url: string | null): Group | null | Error {
     }
 
     function loadUrl() {
-      if (cache.has(url!)) {
-        const cacheItem = cache.get(url!)!
+      if (cache.has(cleanUrl)) {
+        const cacheItem = cache.get(cleanUrl)!
         if (cacheItem.result) {
           // If we have a result, clone it
           return Promise.resolve(cacheItem.result.clone())
@@ -83,10 +85,10 @@ export function useGlobalObjLoader(url: string | null): Group | null | Error {
           // If the result is an Error, return it
           return result
         }
-        cache.set(url!, { ...cache.get(url!)!, result })
+        cache.set(cleanUrl, { ...cache.get(cleanUrl)!, result })
         return result
       })
-      cache.set(url!, { promise, result: null })
+      cache.set(cleanUrl, { promise, result: null })
       return promise
     }
 
