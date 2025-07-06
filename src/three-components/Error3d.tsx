@@ -83,7 +83,7 @@ export const Error3d = ({
           position={hoverPosition}
           style={{
             fontFamily: "sans-serif",
-            transform: "translate3d(50%, 50%, 0)",
+            transform: "translate3d(1rem, 1rem, 0)",
             backgroundColor: "white",
             padding: "6px",
             borderRadius: "4px",
