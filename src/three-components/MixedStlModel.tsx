@@ -33,22 +33,9 @@ export function MixedStlModel({
       </ContainerWithTooltip>
     )
   }
-
   // Check if obj is valid before rendering
   if (obj instanceof Error) {
-    return (
-      <ContainerWithTooltip
-        isHovered={isHovered}
-        onHover={onHover}
-        onUnhover={onUnhover}
-      >
-        <mesh position={position}>
-          <boxGeometry args={[0.5, 0.5, 0.5]} />
-          <meshStandardMaterial transparent color="red" opacity={0.5} />
-          <meshBasicMaterial color="red" />
-        </mesh>
-      </ContainerWithTooltip>
-    )
+    throw obj
   }
   return (
     <ContainerWithTooltip

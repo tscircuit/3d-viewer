@@ -1,4 +1,4 @@
-import { CadViewer } from "../src"
+import { CadViewer } from "../src/CadViewer"
 import type { Meta, StoryObj } from "@storybook/react"
 
 const meta = {
@@ -23,6 +23,7 @@ export const MultiplePillHoles: Story = {
         center: { x: 0, y: 0 },
         width: 10,
         height: 10,
+        material: "fr4",
       },
       {
         type: "pcb_plated_hole",

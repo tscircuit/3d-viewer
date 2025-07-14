@@ -1,13 +1,14 @@
 import { fn } from "@storybook/test"
 import { CadViewer } from "src/CadViewer"
 import keyboard60 from "./assets/keyboard-default60.json"
+import nineKeyKeyboard from "./assets/nine-key-keyboard.json"
 
 /**
  * A switch shaft you can use to connect a pluggable Kailh socket.
  *
  * Datasheet: https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/lcsc/2211090930_Kailh-CPG151101S11-1_C5184526.pdf
  */
-export const KeyswitchSocket = (props: {
+const KeyswitchSocket = (props: {
   name: string
   pcbX?: number
   pcbY?: number
@@ -53,6 +54,14 @@ export const KeyswitchSocket = (props: {
   />
 )
 
+export const Socket = () => (
+  <CadViewer>
+    <board width="25mm" height="25mm">
+      <KeyswitchSocket name="U1" />
+    </board>
+  </CadViewer>
+)
+
 /**
  * Keyswitch (Brown)
  *
@@ -82,14 +91,7 @@ const Keyswitch = (props: { name: string; pcbX?: number; pcbY?: number }) => {
   )
 }
 
-export const Default = () => (
-  <CadViewer>
-    <board width="30mm" height="30mm">
-      <KeyswitchSocket name="SK1" layer="bottom" pcbX={0} pcbY={0} />
-      <Keyswitch name="SW1" pcbX={0.55} pcbY={-3.81} />
-    </board>
-  </CadViewer>
-)
+export const Default = () => <CadViewer circuitJson={nineKeyKeyboard as any} />
 
 export const Default60 = () => <CadViewer circuitJson={keyboard60} />
 

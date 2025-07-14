@@ -118,7 +118,7 @@ export const AnyCadComponent = ({
           position={hoverPosition}
           style={{
             fontFamily: "sans-serif",
-            transform: "translate3d(50%, 50%, 0)",
+            transform: "translate3d(1rem, 1rem, 0)",
             backgroundColor: "white",
             padding: "5px",
             borderRadius: "3px",

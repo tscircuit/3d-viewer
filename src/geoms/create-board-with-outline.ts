@@ -5,7 +5,7 @@ import type { Vec2 } from "@jscad/modeling/src/maths/types"
 import type { Point } from "circuit-json"
 import { translate } from "@jscad/modeling/src/operations/transforms"
 
-const arePointsClockwise = (points: Vec2[]): boolean => {
+export const arePointsClockwise = (points: Vec2[]): boolean => {
   let area = 0
   for (let i = 0; i < points.length; i++) {
     const j = (i + 1) % points.length
@@ -17,10 +17,10 @@ const arePointsClockwise = (points: Vec2[]): boolean => {
 }
 
 export const createBoardGeomWithOutline = (
-  board: { center: { x: number; y: number }; outline: Point[] },
+  board: { center?: { x: number; y: number }; outline: Point[] },
   depth = 1.2,
 ): Geom3 => {
-  const { center, outline } = board
+  const { outline } = board
   let outlineVec2: Vec2[] = outline.map((point) => [point.x, point.y])
 
   if (arePointsClockwise(outlineVec2)) {
@@ -31,7 +31,7 @@ export const createBoardGeomWithOutline = (
 
   let boardGeom: Geom3 = extrudeLinear({ height: depth }, shape)
 
-  boardGeom = translate([center.x, center.y, -depth / 2], boardGeom)
+  boardGeom = translate([0, 0, -depth / 2], boardGeom)
 
   return boardGeom
 }

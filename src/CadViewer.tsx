@@ -1,112 +1,122 @@
-import type { AnyCircuitElement } from "circuit-json"
-import type * as React from "react"
-import type * as THREE from "three"
-import { useConvertChildrenToSoup } from "./hooks/use-convert-children-to-soup"
-import { su } from "@tscircuit/soup-util"
-import { useMemo, forwardRef, useState, useCallback } from "react"
-import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
-import { STLModel } from "./three-components/STLModel"
-import { CadViewerContainer } from "./CadViewerContainer"
-import type { Geom3 } from "@jscad/modeling/src/geometries/types"
-import { MixedStlModel } from "./three-components/MixedStlModel"
-import { Euler } from "three"
-import { useBoardGeomBuilder } from "./hooks/useBoardGeomBuilder"
-import { JscadModel } from "./three-components/JscadModel"
-import { Footprinter3d } from "jscad-electronics"
-import { FootprinterModel } from "./three-components/FootprinterModel"
-import { tuple } from "./utils/tuple"
-import { AnyCadComponent } from "./AnyCadComponent"
-import { Text } from "@react-three/drei"
-import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
-import { Error3d } from "./three-components/Error3d"
+import { useState, useCallback, useRef, useEffect } from "react"
+import { CadViewerJscad } from "./CadViewerJscad"
+import CadViewerManifold from "./CadViewerManifold"
+import { useContextMenu } from "./hooks/useContextMenu"
 
-interface Props {
-  /**
-   * @deprecated Use circuitJson instead.
-   */
-  soup?: AnyCircuitElement[]
-  circuitJson?: AnyCircuitElement[]
-  autoRotateDisabled?: boolean
-  clickToInteractEnabled?: boolean
-}
+export const CadViewer = (props: any) => {
+  const [engine, setEngine] = useState<"jscad" | "manifold">("jscad")
+  const containerRef = useRef<HTMLDivElement>(null)
 
-export const CadViewer = forwardRef<
-  THREE.Object3D,
-  React.PropsWithChildren<Props>
->(
-  (
-    { soup, circuitJson, children, autoRotateDisabled, clickToInteractEnabled },
-    ref,
-  ) => {
-    const internalCircuitJson = useMemo(() => {
-      const cj = soup ?? circuitJson
-      return (cj ?? useConvertChildrenToSoup(children, cj)) as
-        | AnyCircuitElement[]
-        | undefined
-    }, [soup, circuitJson, children])
+  const {
+    menuVisible,
+    menuPos,
+    menuRef,
+    contextMenuEventHandlers,
+    setMenuVisible,
+  } = useContextMenu({ containerRef })
 
-    // Use the new hook to manage board geometry building
-    const boardGeom = useBoardGeomBuilder(internalCircuitJson)
+  const handleMenuClick = (newEngine: "jscad" | "manifold") => {
+    setEngine(newEngine)
+    setMenuVisible(false)
+  }
 
-    const initialCameraPosition = useMemo(() => {
-      if (!internalCircuitJson) return [5, 5, 5] as const
-      try {
-        const board = su(internalCircuitJson as any).pcb_board.list()[0]
-        if (!board) return [5, 5, 5] as const
-        const { width, height } = board
+  useEffect(() => {
+    const stored = window.localStorage.getItem("cadViewerEngine")
+    if (stored === "jscad" || stored === "manifold") {
+      setEngine(stored)
+    }
+  }, [])
 
-        if (!width && !height) {
-          return [5, 5, 5] as const
-        }
+  useEffect(() => {
+    window.localStorage.setItem("cadViewerEngine", engine)
+  }, [engine])
 
-        const minCameraDistance = 5
-        const adjustedBoardWidth = Math.max(width, minCameraDistance)
-        const adjustedBoardHeight = Math.max(height, minCameraDistance)
-        const largestDim = Math.max(adjustedBoardWidth, adjustedBoardHeight)
-        return [largestDim / 2, largestDim / 2, largestDim] as const
-      } catch (e) {
-        console.error(e)
-        return [5, 5, 5] as const
-      }
-    }, [internalCircuitJson])
+  const viewerKey = props.circuitJson
+    ? JSON.stringify(props.circuitJson)
+    : undefined
 
-    // Use the state `boardGeom` which starts simplified and gets updated
-    const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
-
-    if (!internalCircuitJson) return null
-
-    const cad_components = su(internalCircuitJson).cad_component.list()
-
-    return (
-      <CadViewerContainer
-        ref={ref}
-        autoRotateDisabled={autoRotateDisabled}
-        initialCameraPosition={initialCameraPosition}
-        clickToInteractEnabled={clickToInteractEnabled}
+  return (
+    <div
+      key={viewerKey}
+      ref={containerRef}
+      style={{ width: "100%", height: "100%", position: "relative" }}
+      {...contextMenuEventHandlers}
+    >
+      {engine === "jscad" ? (
+        <CadViewerJscad {...props} />
+      ) : (
+        <CadViewerManifold {...props} />
+      )}
+      <div
+        style={{
+          position: "absolute",
+          right: 8,
+          top: 8,
+          background: "#222",
+          color: "#fff",
+          padding: "2px 8px",
+          borderRadius: 4,
+          fontSize: 12,
+          opacity: 0.7,
+          userSelect: "none",
+        }}
       >
-        {boardStls.map(({ stlUrl, color }, index) => (
-          <STLModel
-            key={stlUrl}
-            stlUrl={stlUrl}
-            color={color}
-            opacity={index === 0 ? 0.95 : 1}
-          />
-        ))}
-        {cad_components.map((cad_component) => (
-          <ThreeErrorBoundary
-            key={cad_component.cad_component_id}
-            fallback={({ error }) => (
-              <Error3d cad_component={cad_component} error={error} />
-            )}
+        Engine: <b>{engine === "jscad" ? "JSCAD" : "Manifold"}</b>
+      </div>
+      {menuVisible && (
+        <div
+          ref={menuRef}
+          style={{
+            position: "fixed",
+            top: menuPos.y,
+            left: menuPos.x,
+            background: "#23272f",
+            color: "#f5f6fa",
+            borderRadius: 6,
+            boxShadow: "0 6px 24px 0 rgba(0,0,0,0.18)",
+            zIndex: 1000,
+            minWidth: 200,
+            border: "1px solid #353945",
+            padding: 0,
+            fontSize: 15,
+            fontWeight: 500,
+            transition: "opacity 0.1s",
+          }}
+        >
+          <div
+            style={{
+              padding: "12px 18px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              color: "#f5f6fa",
+              fontWeight: 500,
+              borderRadius: 6,
+              transition: "background 0.1s",
+            }}
+            onClick={() =>
+              handleMenuClick(engine === "jscad" ? "manifold" : "jscad")
+            }
+            onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
+            onMouseOut={(e) =>
+              (e.currentTarget.style.background = "transparent")
+            }
           >
-            <AnyCadComponent
-              key={cad_component.cad_component_id}
-              cad_component={cad_component}
-              circuitJson={internalCircuitJson}
-            />
-          </ThreeErrorBoundary>
-        ))}
-      </CadViewerContainer>
-    )
-  },
-)
+            Switch to {engine === "jscad" ? "Manifold" : "JSCAD"} Engine
+            <span
+              style={{
+                fontSize: 12,
+                marginLeft: "auto",
+                opacity: 0.5,
+                fontWeight: 400,
+              }}
+            >
+              {engine === "jscad" ? "experimental" : "default"}
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

@@ -8,20 +8,36 @@ import type {
   PcbTrace,
   PcbVia,
   PcbSilkscreenText,
+  PcbSilkscreenPath,
   Point,
+  PcbCutout,
 } from "circuit-json"
 import { su } from "@tscircuit/soup-util"
-import { translate } from "@jscad/modeling/src/operations/transforms"
-import { cuboid, cylinder, line } from "@jscad/modeling/src/primitives"
+import { translate, rotateZ } from "@jscad/modeling/src/operations/transforms"
+import {
+  cuboid,
+  cylinder,
+  line,
+  polygon as jscadPolygon,
+} from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
 import { subtract, union } from "@jscad/modeling/src/operations/booleans"
 import { platedHole } from "./geoms/plated-hole"
-import { M, colors } from "./geoms/constants"
+import {
+  M,
+  colors,
+  boardMaterialColors,
+  tracesMaterialColors,
+} from "./geoms/constants"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { expand } from "@jscad/modeling/src/operations/expansions"
-import { createBoardGeomWithOutline } from "./geoms/create-board-with-outline"
+import {
+  createBoardGeomWithOutline,
+  arePointsClockwise,
+} from "./geoms/create-board-with-outline"
 import type { Vec2 } from "@jscad/modeling/src/maths/types"
 import { createSilkscreenTextGeoms } from "./geoms/create-geoms-for-silkscreen-text"
+import { createSilkscreenPathGeom } from "./geoms/create-geoms-for-silkscreen-path"
 import type { GeomContext } from "./GeomContext"
 
 type BuilderState =
@@ -31,7 +47,9 @@ type BuilderState =
   | "processing_pads"
   | "processing_traces"
   | "processing_vias"
-  | "processing_silkscreen"
+  | "processing_silkscreen_text"
+  | "processing_silkscreen_paths"
+  | "processing_cutouts"
   | "finalizing"
   | "done"
 
@@ -39,10 +57,12 @@ const buildStateOrder: BuilderState[] = [
   "initializing",
   "processing_plated_holes",
   "processing_holes",
+  "processing_cutouts",
   "processing_pads",
   "processing_traces",
   "processing_vias",
-  "processing_silkscreen",
+  "processing_silkscreen_text",
+  "processing_silkscreen_paths",
   "finalizing",
   "done",
 ]
@@ -56,6 +76,8 @@ export class BoardGeomBuilder {
   private traces: PcbTrace[]
   private pcb_vias: PcbVia[]
   private silkscreenTexts: PcbSilkscreenText[]
+  private silkscreenPaths: PcbSilkscreenPath[]
+  private pcb_cutouts: PcbCutout[]
 
   private boardGeom: Geom3 | null = null
   private platedHoleGeoms: Geom3[] = []
@@ -63,13 +85,38 @@ export class BoardGeomBuilder {
   private padGeoms: Geom3[] = []
   private traceGeoms: Geom3[] = []
   private viaGeoms: Geom3[] = [] // Combined with platedHoleGeoms
-  private silkscreenGeoms: Geom3[] = []
+  private silkscreenTextGeoms: Geom3[] = []
+  private silkscreenPathGeoms: Geom3[] = []
 
   private state: BuilderState = "initializing"
   private currentIndex = 0
   private ctx: GeomContext
   private onCompleteCallback?: (geoms: Geom3[]) => void
   private finalGeoms: Geom3[] = []
+
+  private getHoleToCut(x: number, y: number): { diameter: number } | null {
+    const epsilon = M / 10
+    for (const via of this.pcb_vias) {
+      if (
+        Math.abs(via.x - x) < epsilon &&
+        Math.abs(via.y - y) < epsilon &&
+        via.hole_diameter
+      ) {
+        return { diameter: via.hole_diameter }
+      }
+    }
+    for (const ph of this.plated_holes) {
+      if (ph.shape !== "circle") continue
+      if (
+        Math.abs(ph.x - x) < epsilon &&
+        Math.abs(ph.y - y) < epsilon &&
+        ph.hole_diameter
+      ) {
+        return { diameter: ph.hole_diameter }
+      }
+    }
+    return null
+  }
 
   constructor(
     circuitJson: AnyCircuitElement[],
@@ -86,6 +133,8 @@ export class BoardGeomBuilder {
     this.traces = su(circuitJson).pcb_trace.list()
     this.pcb_vias = su(circuitJson).pcb_via.list()
     this.silkscreenTexts = su(circuitJson).pcb_silkscreen_text.list()
+    this.silkscreenPaths = su(circuitJson).pcb_silkscreen_path.list()
+    this.pcb_cutouts = su(circuitJson).pcb_cutout.list()
 
     this.ctx = { pcbThickness: 1.2 } // TODO derive from board?
 
@@ -97,7 +146,6 @@ export class BoardGeomBuilder {
     if (this.board.outline && this.board.outline.length > 0) {
       this.boardGeom = createBoardGeomWithOutline(
         {
-          center: this.board.center,
           outline: this.board.outline!,
         },
         this.ctx.pcbThickness,
@@ -173,9 +221,27 @@ export class BoardGeomBuilder {
           }
           break
 
-        case "processing_silkscreen":
+        case "processing_silkscreen_text":
           if (this.currentIndex < this.silkscreenTexts.length) {
             this.processSilkscreenText(this.silkscreenTexts[this.currentIndex]!)
+            this.currentIndex++
+          } else {
+            this.goToNextState()
+          }
+          break
+
+        case "processing_silkscreen_paths":
+          if (this.currentIndex < this.silkscreenPaths.length) {
+            this.processSilkscreenPath(this.silkscreenPaths[this.currentIndex]!)
+            this.currentIndex++
+          } else {
+            this.goToNextState()
+          }
+          break
+
+        case "processing_cutouts":
+          if (this.currentIndex < this.pcb_cutouts.length) {
+            this.processCutout(this.pcb_cutouts[this.currentIndex]!)
             this.currentIndex++
           } else {
             this.goToNextState()
@@ -192,13 +258,59 @@ export class BoardGeomBuilder {
     return this.state === "done"
   }
 
+  private processCutout(cutout: PcbCutout) {
+    if (!this.boardGeom) return
+
+    let cutoutGeom: Geom3 | null = null
+    const cutoutHeight = this.ctx.pcbThickness * 1.5
+
+    switch (cutout.shape) {
+      case "rect":
+        cutoutGeom = cuboid({
+          center: [cutout.center.x, cutout.center.y, 0],
+          size: [cutout.width, cutout.height, cutoutHeight],
+        })
+        if (cutout.rotation) {
+          const rotationRadians = (cutout.rotation * Math.PI) / 180
+          cutoutGeom = rotateZ(rotationRadians, cutoutGeom)
+        }
+        break
+      case "circle":
+        cutoutGeom = cylinder({
+          center: [cutout.center.x, cutout.center.y, 0],
+          radius: cutout.radius,
+          height: cutoutHeight,
+        })
+        break
+      case "polygon":
+        let pointsVec2: Vec2[] = cutout.points.map((p) => [p.x, p.y])
+        if (pointsVec2.length < 3) {
+          console.warn(
+            `PCB Cutout [${cutout.pcb_cutout_id}] polygon has fewer than 3 points, skipping.`,
+          )
+          break
+        }
+        if (arePointsClockwise(pointsVec2)) {
+          pointsVec2 = pointsVec2.reverse()
+        }
+        const polygon2d = jscadPolygon({ points: pointsVec2 })
+        cutoutGeom = extrudeLinear({ height: cutoutHeight }, polygon2d)
+        cutoutGeom = translate([0, 0, -cutoutHeight / 2], cutoutGeom)
+        break
+    }
+
+    if (cutoutGeom) {
+      this.boardGeom = subtract(this.boardGeom, cutoutGeom)
+    }
+  }
+
   private processPlatedHole(
     ph: PCBPlatedHole,
     opts: { dontCutBoard?: boolean } = {},
   ) {
     if (!this.boardGeom) return
 
-    if (ph.shape === "circle") {
+    if (ph.shape === "circle" || ph.shape === "circular_hole_with_rect_pad") {
       const cyGeom = cylinder({
         center: [ph.x, ph.y, 0],
         radius: ph.hole_diameter / 2 + M, // Add margin for subtraction
@@ -211,7 +323,7 @@ export class BoardGeomBuilder {
 
       const platedHoleGeom = platedHole(ph, this.ctx)
       this.platedHoleGeoms.push(platedHoleGeom)
-    } else if (ph.shape === "pill") {
+    } else if (ph.shape === "pill" || ph.shape === "pill_hole_with_rect_pad") {
       const shouldRotate = ph.hole_height! > ph.hole_width!
       const holeWidth = shouldRotate ? ph.hole_height! : ph.hole_width!
       const holeHeight = shouldRotate ? ph.hole_width! : ph.hole_height!
@@ -276,6 +388,18 @@ export class BoardGeomBuilder {
         }),
       )
       this.padGeoms.push(padGeom)
+    } else if (pad.shape === "rotated_rect") {
+      let basePadGeom = cuboid({
+        // Create at origin for rotation, then translate
+        center: [0, 0, 0],
+        size: [pad.width, pad.height, M],
+      })
+      const rotationRadians = (pad.ccw_rotation * Math.PI) / 180
+      basePadGeom = rotateZ(rotationRadians, basePadGeom)
+      // Translate to final position
+      const positionedPadGeom = translate([pad.x, pad.y, zPos], basePadGeom)
+      const padGeom = colorize(colors.copper, positionedPadGeom)
+      this.padGeoms.push(padGeom)
     } else if (pad.shape === "circle") {
       const padGeom = colorize(
         colors.copper,
@@ -315,8 +439,39 @@ export class BoardGeomBuilder {
         )
 
         // TODO: Subtract via/hole overlaps if needed for accuracy
+        const startPointCoords = currentSegmentPoints[0]!
+        const endPointCoords =
+          currentSegmentPoints[currentSegmentPoints.length - 1]!
 
-        traceGeom = colorize(colors.fr4GreenSolderWithMask, traceGeom)
+        const startHole = this.getHoleToCut(
+          startPointCoords[0],
+          startPointCoords[1],
+        )
+        if (startHole) {
+          const cuttingCylinder = cylinder({
+            center: [startPointCoords[0], startPointCoords[1], zPos + M / 2],
+            radius: startHole.diameter / 2 + M,
+            height: M,
+          })
+          traceGeom = subtract(traceGeom, cuttingCylinder)
+        }
+
+        const endHole = this.getHoleToCut(endPointCoords[0], endPointCoords[1])
+        if (endHole) {
+          const cuttingCylinder = cylinder({
+            center: [endPointCoords[0], endPointCoords[1], zPos + M / 2],
+            radius: endHole.diameter / 2 + M,
+            height: M,
+          })
+          traceGeom = subtract(traceGeom, cuttingCylinder)
+        }
+
+        const tracesMaterialColor =
+          tracesMaterialColors[this.board.material] ??
+          colors.fr4GreenSolderWithMask
+
+        traceGeom = colorize(tracesMaterialColor, traceGeom)
+
         this.traceGeoms.push(traceGeom)
       }
       currentSegmentPoints = []
@@ -404,27 +559,42 @@ export class BoardGeomBuilder {
       const fontSize = st.font_size || 0.25
       const expansionDelta = Math.min(
         Math.max(0.01, fontSize * 0.1),
-        fontSize * 0.2,
+        fontSize * 0.05,
       )
       const expandedPath = expand(
         { delta: expansionDelta, corners: "round" },
         textPath,
       )
-
-      let textGeom = translate(
-        [0, 0, this.ctx.pcbThickness / 2 + M], // Position above board
-        extrudeLinear({ height: 0.012 }, expandedPath),
-      )
-
+      let textGeom: any
+      if (st.layer === "bottom") {
+        textGeom = translate(
+          [0, 0, -this.ctx.pcbThickness / 2 - M], // Position above board
+          extrudeLinear({ height: 0.012 }, expandedPath),
+        )
+      } else {
+        textGeom = translate(
+          [0, 0, this.ctx.pcbThickness / 2 + M], // Position above board
+          extrudeLinear({ height: 0.012 }, expandedPath),
+        )
+      }
       textGeom = colorize([1, 1, 1], textGeom) // White
-      this.silkscreenGeoms.push(textGeom)
+      this.silkscreenTextGeoms.push(textGeom)
+    }
+  }
+
+  private processSilkscreenPath(sp: PcbSilkscreenPath) {
+    const pathGeom = createSilkscreenPathGeom(sp, this.ctx)
+    if (pathGeom) {
+      this.silkscreenPathGeoms.push(pathGeom)
     }
   }
 
   private finalize() {
     if (!this.boardGeom) return
     // Colorize the final board geometry
-    this.boardGeom = colorize(colors.fr4Green, this.boardGeom)
+    const boardMaterialColor =
+      boardMaterialColors[this.board.material] ?? colors.fr4Green
+    this.boardGeom = colorize(boardMaterialColor, this.boardGeom)
 
     this.finalGeoms = [
       this.boardGeom,
@@ -432,7 +602,8 @@ export class BoardGeomBuilder {
       ...this.padGeoms,
       ...this.traceGeoms,
       ...this.viaGeoms,
-      ...this.silkscreenGeoms,
+      ...this.silkscreenTextGeoms,
+      ...this.silkscreenPathGeoms,
     ]
 
     if (this.onCompleteCallback) {

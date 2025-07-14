@@ -1,5 +1,6 @@
 import { CadViewer } from "src/CadViewer"
 import { Circuit } from "@tscircuit/core"
+import complexCircuitJson from "./assets/complex-board.json"
 
 const createCircuit = () => {
   const circuit = new Circuit()
@@ -41,7 +42,11 @@ export const SmtPadLayersDemo = () => {
   return <CadViewer circuitJson={circuitJson as any} />
 }
 
+export const ComplexCircuit = () => {
+  return <CadViewer circuitJson={complexCircuitJson as any} />
+}
+
 export default {
-  title: "SMT Pad Layers",
+  title: "Circuits",
   component: SmtPadLayersDemo,
 }

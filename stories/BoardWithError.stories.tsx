@@ -1,4 +1,4 @@
-import { CadViewer } from "../src"
+import { CadViewer } from "../src/CadViewer"
 import type { Meta, StoryObj } from "@storybook/react"
 
 const meta = {
@@ -23,6 +23,7 @@ export const BoardWithError: Story = {
         center: { x: 0, y: 0 },
         width: 10,
         height: 10,
+        material: "fr4",
       },
       {
         type: "pcb_plated_hole",
@@ -60,6 +61,38 @@ export const BoardWithError: Story = {
         outer_width: 3,
         outer_height: 3,
       },
+      {
+        type: "pcb_plated_hole",
+        pcb_plated_hole_id: "some-id-2",
+        x: -3,
+        y: -3,
+        shape: "pill_hole_with_rect_pad",
+        hole_width: 1,
+        hole_height: 3,
+        layers: ["top", "bottom"],
+        hole_shape: "pill",
+        pad_shape: "rect",
+        rect_pad_width: 2,
+        rect_pad_height: 4,
+        pcb_component_id: "pcb_component_1001",
+      },
+      {
+        x: 3,
+        y: 3,
+        type: "pcb_plated_hole",
+        shape: "circular_hole_with_rect_pad",
+        layers: ["top", "bottom"],
+        port_hints: ["1"],
+        hole_shape: "circle",
+        pad_shape: "rect",
+        pcb_port_id: "pcb_port_100",
+        hole_diameter: 1,
+        rect_pad_width: 2,
+        rect_pad_height: 2,
+        pcb_component_id: "pcb_component_100",
+        pcb_plated_hole_id: "pcb_plated_hole_100",
+      },
+
       {
         type: "cad_component",
         cad_component_id: "some-id-3",
