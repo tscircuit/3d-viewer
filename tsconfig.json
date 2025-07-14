@@ -5,6 +5,9 @@
     "skipLibCheck": true,
     "target": "es2022",
     "baseUrl": ".",
+    "paths": {
+      "src/*": ["./src/*"]
+    },
     "allowJs": true,
     "resolveJsonModule": true,
     "moduleDetection": "force",
