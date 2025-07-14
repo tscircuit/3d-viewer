@@ -16,7 +16,7 @@
   "scripts": {
     "start": "bun run storybook",
     "dev:old": "bunx --bun vite",
-    "build": "tsup ./src/index.tsx --platform neutral --format esm --dts",
+    "build": "tsup ./src/index.tsx --platform neutral --format esm --dts --external react,react-dom,tscircuit",
     "prepublish": "npm run build",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
@@ -31,14 +31,16 @@
     "@jscad/stl-serializer": "^2.1.20",
     "@react-three/drei": "^9.121.4",
     "@react-three/fiber": "^8.17.14",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "react-use-gesture": "^9.1.3"
   },
   "peerDependencies": {
-    "three": "*"
+    "three": "*",
+    "react": "*",
+    "react-dom": "*"
   },
   "devDependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "@biomejs/biome": "^1.9.4",
     "@chromatic-com/storybook": "^1.9.0",
     "@jscad/modeling": "^2.12.5",
@@ -67,7 +69,7 @@
     "storybook": "^8.5.2",
     "strip-ansi": "^7.1.0",
     "tscircuit": "^0.0.539",
-    "tsup": "^8.3.6",
+    "tsup": "^8.5.0",
     "typescript": "^5.7.3",
     "vite": "^5.4.14",
     "vite-tsconfig-paths": "^4.3.2"
