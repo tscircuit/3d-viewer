@@ -1,10 +1,8 @@
-import { Html } from "@react-three/drei"
-import { GroupProps, useThree } from "@react-three/fiber"
 import { useRef, useCallback } from "react"
 import type { Vector3 } from "three"
 import * as THREE from "three"
 
-const Group = (props: GroupProps) => <group {...props} />
+const Group = (props: any) => <group {...props} />
 
 const ContainerWithTooltip = ({
   children,

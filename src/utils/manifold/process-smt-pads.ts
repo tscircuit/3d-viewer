@@ -31,7 +31,7 @@ export function processSmtPadsForManifold(
     geometry: THREE.BufferGeometry
     color: THREE.Color
   }> = []
-  const smtPads = su(circuitJson).pcb_smtpad.list()
+  const smtPads = su(circuitJson).pcb_smtpad.list() as PcbSmtPad[]
 
   smtPads.forEach((pad: PcbSmtPad, index: number) => {
     const padBaseThickness = DEFAULT_SMT_PAD_THICKNESS
@@ -40,7 +40,7 @@ export function processSmtPadsForManifold(
         ? -pcbThickness / 2 - padBaseThickness / 2 - MANIFOLD_Z_OFFSET
         : pcbThickness / 2 + padBaseThickness / 2 + MANIFOLD_Z_OFFSET
 
-    let padManifoldOp = createPadManifoldOp({
+    const padManifoldOp = createPadManifoldOp({
       Manifold,
       pad,
       padBaseThickness,
@@ -48,7 +48,11 @@ export function processSmtPadsForManifold(
 
     if (padManifoldOp) {
       manifoldInstancesForCleanup.push(padManifoldOp)
-      const translatedPad = padManifoldOp.translate([pad.x, pad.y, zPos])
+      const translatedPad = padManifoldOp.translate([
+        (pad as any).x ?? 0,
+        (pad as any).y ?? 0,
+        zPos,
+      ])
       manifoldInstancesForCleanup.push(translatedPad)
       const threeGeom = manifoldMeshToThreeGeometry(translatedPad.getMesh())
 

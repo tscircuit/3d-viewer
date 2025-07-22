@@ -1,15 +1,8 @@
-import { Grid, OrbitControls, useHelper } from "@react-three/drei"
+import { Grid, OrbitControls } from "@react-three/drei"
 import { Canvas, useFrame } from "@react-three/fiber"
 import type * as React from "react"
-import {
-  Suspense,
-  forwardRef,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react"
-import type * as THREE from "three"
+import { forwardRef, useMemo, useState } from "react"
+import * as THREE from "three"
 import packageJson from "../package.json"
 import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
 
@@ -78,8 +71,11 @@ export const CadViewerContainer = forwardRef<
           </Canvas>
         </div>
         <Canvas
-          scene={{ up: [0, 0, 1] }}
-          camera={{ up: [0, 0, 1], position: initialCameraPosition }}
+          scene={{ up: new THREE.Vector3(0, 0, 1) }}
+          camera={{
+            up: new THREE.Vector3(0, 0, 1),
+            position: initialCameraPosition,
+          }}
         >
           <RotationTracker />
           {isInteractionEnabled && (
