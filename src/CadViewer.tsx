@@ -4,7 +4,7 @@ import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
 
 export const CadViewer = (props: any) => {
-  const [engine, setEngine] = useState<"jscad" | "manifold">("jscad")
+  const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
   const containerRef = useRef<HTMLDivElement>(null)
 
   const {
