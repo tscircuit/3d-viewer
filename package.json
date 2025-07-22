@@ -43,7 +43,8 @@
     "react-use-gesture": "^9.1.3"
   },
   "peerDependencies": {
-    "three": "*"
+    "three": "*",
+    "zod": "3"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
