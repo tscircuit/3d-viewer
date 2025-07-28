@@ -6,6 +6,8 @@ import { useContextMenu } from "./hooks/useContextMenu"
 export const CadViewer = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
   const containerRef = useRef<HTMLDivElement>(null)
+  const [autoRotate, setAutoRotate] = useState(true)
+  const [autoRotateUserToggled, setAutoRotateUserToggled] = useState(false)
 
   const {
     menuVisible,
@@ -14,6 +16,17 @@ export const CadViewer = (props: any) => {
     contextMenuEventHandlers,
     setMenuVisible,
   } = useContextMenu({ containerRef })
+
+  const handleUserInteraction = useCallback(() => {
+    if (!autoRotateUserToggled) {
+      setAutoRotate(false)
+    }
+  }, [autoRotateUserToggled])
+
+  const toggleAutoRotate = useCallback(() => {
+    setAutoRotate((prev) => !prev)
+    setAutoRotateUserToggled(true)
+  }, [])
 
   const handleMenuClick = (newEngine: "jscad" | "manifold") => {
     setEngine(newEngine)
@@ -43,9 +56,17 @@ export const CadViewer = (props: any) => {
       {...contextMenuEventHandlers}
     >
       {engine === "jscad" ? (
-        <CadViewerJscad {...props} />
+        <CadViewerJscad
+          {...props}
+          autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+          onUserInteraction={handleUserInteraction}
+        />
       ) : (
-        <CadViewerManifold {...props} />
+        <CadViewerManifold
+          {...props}
+          autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+          onUserInteraction={handleUserInteraction}
+        />
       )}
       <div
         style={{
@@ -114,6 +135,30 @@ export const CadViewer = (props: any) => {
             >
               {engine === "jscad" ? "experimental" : "default"}
             </span>
+          </div>
+          <div
+            style={{
+              padding: "12px 18px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              color: "#f5f6fa",
+              fontWeight: 500,
+              borderRadius: 6,
+              transition: "background 0.1s",
+            }}
+            onClick={() => {
+              toggleAutoRotate()
+              setMenuVisible(false)
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
+            onMouseOut={(e) =>
+              (e.currentTarget.style.background = "transparent")
+            }
+          >
+            <span style={{ marginRight: 8 }}>{autoRotate ? "✔" : ""}</span>
+            Auto rotate
           </div>
         </div>
       )}

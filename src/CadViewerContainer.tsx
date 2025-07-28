@@ -26,6 +26,7 @@ interface Props {
   initialCameraPosition?: readonly [number, number, number] | undefined
   clickToInteractEnabled?: boolean
   boardDimensions?: { width?: number; height?: number }
+  onUserInteraction?: () => void
 }
 
 export const CadViewerContainer = forwardRef<
@@ -39,6 +40,7 @@ export const CadViewerContainer = forwardRef<
       autoRotateDisabled,
       clickToInteractEnabled = false,
       boardDimensions,
+      onUserInteraction,
     },
     ref,
   ) => {
@@ -86,6 +88,7 @@ export const CadViewerContainer = forwardRef<
             <OrbitControls
               autoRotate={!autoRotateDisabled}
               autoRotateSpeed={1}
+              onStart={onUserInteraction}
             />
           )}
           <ambientLight intensity={Math.PI / 2} />
