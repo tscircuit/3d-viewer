@@ -16,6 +16,7 @@ import { createTextureMeshes } from "./utils/manifold/create-three-texture-meshe
 type CadViewerManifoldProps = {
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
+  onUserInteraction?: () => void
 } & (
   | { circuitJson: AnyCircuitElement[]; children?: React.ReactNode }
   | { circuitJson?: never; children: React.ReactNode }
@@ -27,6 +28,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   circuitJson: circuitJsonProp,
   autoRotateDisabled,
   clickToInteractEnabled,
+  onUserInteraction,
   children,
 }) => {
   const childrenCircuitJson = useConvertChildrenToSoup(children)
@@ -147,6 +149,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
       autoRotateDisabled={autoRotateDisabled}
       clickToInteractEnabled={clickToInteractEnabled}
       boardDimensions={boardDimensions}
+      onUserInteraction={onUserInteraction}
     >
       {geometryMeshes.map((mesh, index) => (
         <primitive object={mesh} key={`${mesh.name}-${index}`} />

@@ -28,6 +28,7 @@ interface Props {
   circuitJson?: AnyCircuitElement[]
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
+  onUserInteraction?: () => void
 }
 
 export const CadViewerJscad = forwardRef<
@@ -35,7 +36,14 @@ export const CadViewerJscad = forwardRef<
   React.PropsWithChildren<Props>
 >(
   (
-    { soup, circuitJson, children, autoRotateDisabled, clickToInteractEnabled },
+    {
+      soup,
+      circuitJson,
+      children,
+      autoRotateDisabled,
+      clickToInteractEnabled,
+      onUserInteraction,
+    },
     ref,
   ) => {
     const childrenSoup = useConvertChildrenToSoup(children)
@@ -93,6 +101,7 @@ export const CadViewerJscad = forwardRef<
         initialCameraPosition={initialCameraPosition}
         clickToInteractEnabled={clickToInteractEnabled}
         boardDimensions={boardDimensions}
+        onUserInteraction={onUserInteraction}
       >
         {boardStls.map(({ stlUrl, color }, index) => (
           <STLModel
