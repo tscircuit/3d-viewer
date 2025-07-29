@@ -1,6 +1,6 @@
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import type { AnyCircuitElement } from "circuit-json"
-import { su } from "@tscircuit/soup-util"
+import { su } from "@tscircuit/circuit-json-util"
 import { cuboid } from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
 import {

@@ -1,6 +1,6 @@
 import type { ManifoldToplevel } from "manifold-3d/manifold.d.ts"
 import type { AnyCircuitElement, PcbHole } from "circuit-json"
-import { su } from "@tscircuit/soup-util"
+import { su } from "@tscircuit/circuit-json-util"
 import { createCircleHoleDrill } from "../hole-geoms"
 import { SMOOTH_CIRCLE_SEGMENTS } from "../../geoms/constants"
 

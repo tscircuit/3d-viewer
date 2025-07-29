@@ -1,5 +1,5 @@
 import type { AnyCircuitElement, CadComponent } from "circuit-json"
-import { su } from "@tscircuit/soup-util"
+import { su } from "@tscircuit/circuit-json-util"
 import { useMemo, useState, useCallback } from "react"
 import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { CadViewerContainer } from "./CadViewerContainer"

@@ -1,6 +1,6 @@
 import type { ManifoldToplevel, CrossSection } from "manifold-3d/manifold.d.ts"
 import type { AnyCircuitElement, PcbCutout } from "circuit-json"
-import { su } from "@tscircuit/soup-util"
+import { su } from "@tscircuit/circuit-json-util"
 import { SMOOTH_CIRCLE_SEGMENTS } from "../../geoms/constants"
 
 const arePointsClockwise = (points: Array<[number, number]>): boolean => {

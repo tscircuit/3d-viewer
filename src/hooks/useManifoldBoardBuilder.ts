@@ -11,7 +11,7 @@ import type {
   Point as CircuitPoint,
   PcbVia,
 } from "circuit-json"
-import { su } from "@tscircuit/soup-util"
+import { su } from "@tscircuit/circuit-json-util"
 import * as THREE from "three"
 import {
   boardMaterialColors,
@@ -95,9 +95,6 @@ export const useManifoldBoardBuilder = (
       setGeoms(null)
       setTextures(null)
       setPcbThickness(null)
-      if (su(circuitJson).pcb_board.list().length === 0) {
-        setError("No pcb_board found in circuitJson.")
-      }
       setIsLoading(false)
       return
     }
