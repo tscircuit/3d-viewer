@@ -7,7 +7,7 @@ import type {
   PcbVia,
   PcbPlatedHole,
 } from "circuit-json"
-import { su } from "@tscircuit/soup-util"
+import { su } from "@tscircuit/circuit-json-util"
 
 export function isWireRoutePoint(
   point: any,

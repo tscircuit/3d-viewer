@@ -12,7 +12,7 @@ import type {
   Point,
   PcbCutout,
 } from "circuit-json"
-import { su } from "@tscircuit/soup-util"
+import { su } from "@tscircuit/circuit-json-util"
 import { translate, rotateZ } from "@jscad/modeling/src/operations/transforms"
 import {
   cuboid,

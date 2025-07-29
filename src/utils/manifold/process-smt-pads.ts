@@ -1,6 +1,6 @@
 import type { ManifoldToplevel } from "manifold-3d/manifold.d.ts"
 import type { AnyCircuitElement, PcbSmtPad } from "circuit-json"
-import { su } from "@tscircuit/soup-util"
+import { su } from "@tscircuit/circuit-json-util"
 import * as THREE from "three"
 import { createPadManifoldOp } from "../pad-geoms"
 import { manifoldMeshToThreeGeometry } from "../manifold-mesh-to-three-geometry"
