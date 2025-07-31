@@ -2,12 +2,18 @@ import { useState, useCallback, useRef, useEffect } from "react"
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
+import { ComponentSearch } from "./components/ComponentSearch"
+import { ComponentInfoPanel } from "./components/ComponentInfoPanel"
 
 export const CadViewer = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
   const containerRef = useRef<HTMLDivElement>(null)
   const [autoRotate, setAutoRotate] = useState(true)
   const [autoRotateUserToggled, setAutoRotateUserToggled] = useState(false)
+  const [highlightedComponentId, setHighlightedComponentId] = useState<
+    string | null
+  >(null)
+  const [showInfoPanel, setShowInfoPanel] = useState(false)
 
   const {
     menuVisible,
@@ -60,12 +66,14 @@ export const CadViewer = (props: any) => {
           {...props}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
+          highlightedComponentId={highlightedComponentId}
         />
       ) : (
         <CadViewerManifold
           {...props}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
+          highlightedComponentId={highlightedComponentId}
         />
       )}
       <div
@@ -73,16 +81,32 @@ export const CadViewer = (props: any) => {
           position: "absolute",
           right: 8,
           top: 8,
-          background: "#222",
-          color: "#fff",
-          padding: "2px 8px",
-          borderRadius: 4,
-          fontSize: 12,
-          opacity: 0.7,
-          userSelect: "none",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
         }}
       >
-        Engine: <b>{engine === "jscad" ? "JSCAD" : "Manifold"}</b>
+        <ComponentSearch
+          circuitJson={props.circuitJson}
+          onComponentSelect={(componentId) => {
+            setHighlightedComponentId(componentId)
+            setShowInfoPanel(!!componentId)
+          }}
+          selectedComponentId={highlightedComponentId}
+        />
+        <div
+          style={{
+            background: "#222",
+            color: "#fff",
+            padding: "2px 8px",
+            borderRadius: 4,
+            fontSize: 12,
+            opacity: 0.7,
+            userSelect: "none",
+          }}
+        >
+          Engine: <b>{engine === "jscad" ? "JSCAD" : "Manifold"}</b>
+        </div>
       </div>
       {menuVisible && (
         <div
@@ -161,6 +185,18 @@ export const CadViewer = (props: any) => {
             Auto rotate
           </div>
         </div>
+      )}
+
+      {/* Component Info Panel */}
+      {showInfoPanel && highlightedComponentId && (
+        <ComponentInfoPanel
+          circuitJson={props.circuitJson}
+          componentId={highlightedComponentId}
+          onClose={() => {
+            setShowInfoPanel(false)
+            setHighlightedComponentId(null)
+          }}
+        />
       )}
     </div>
   )

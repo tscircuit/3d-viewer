@@ -14,9 +14,11 @@ import { Html } from "@react-three/drei"
 export const AnyCadComponent = ({
   cad_component,
   circuitJson,
+  isHighlighted = false,
 }: {
   cad_component: CadComponent
   circuitJson: AnyCircuitElement[]
+  isHighlighted?: boolean
 }) => {
   const [isHovered, setIsHovered] = useState(false)
   const [hoverPosition, setHoverPosition] = useState<
@@ -75,6 +77,7 @@ export const AnyCadComponent = ({
         onHover={handleHover}
         onUnhover={handleUnhover}
         isHovered={isHovered}
+        isHighlighted={isHighlighted}
       />
     )
   } else if (cad_component.model_jscad) {
@@ -86,6 +89,7 @@ export const AnyCadComponent = ({
         onHover={handleHover}
         onUnhover={handleUnhover}
         isHovered={isHovered}
+        isHighlighted={isHighlighted}
       />
     )
   } else if (cad_component.footprinter_string) {
@@ -105,6 +109,7 @@ export const AnyCadComponent = ({
         onHover={handleHover}
         onUnhover={handleUnhover}
         isHovered={isHovered}
+        isHighlighted={isHighlighted}
       />
     )
   }

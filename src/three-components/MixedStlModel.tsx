@@ -9,6 +9,7 @@ export function MixedStlModel({
   onHover,
   onUnhover,
   isHovered,
+  isHighlighted = false,
 }: {
   url: string
   position?: Vector3 | [number, number, number]
@@ -16,6 +17,7 @@ export function MixedStlModel({
   onHover: (e: any) => void
   onUnhover: () => void
   isHovered: boolean
+  isHighlighted?: boolean
 }) {
   const obj = useGlobalObjLoader(url)
 
@@ -23,6 +25,7 @@ export function MixedStlModel({
     return (
       <ContainerWithTooltip
         isHovered={isHovered}
+        isHighlighted={isHighlighted}
         onHover={onHover}
         onUnhover={onUnhover}
       >
@@ -40,6 +43,7 @@ export function MixedStlModel({
   return (
     <ContainerWithTooltip
       isHovered={isHovered}
+      isHighlighted={isHighlighted}
       onHover={onHover}
       onUnhover={onUnhover}
     >

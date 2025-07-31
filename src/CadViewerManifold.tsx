@@ -17,6 +17,7 @@ type CadViewerManifoldProps = {
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
   onUserInteraction?: () => void
+  highlightedComponentId?: string | null
 } & (
   | { circuitJson: AnyCircuitElement[]; children?: React.ReactNode }
   | { circuitJson?: never; children: React.ReactNode }
@@ -29,6 +30,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   autoRotateDisabled,
   clickToInteractEnabled,
   onUserInteraction,
+  highlightedComponentId,
   children,
 }) => {
   const childrenCircuitJson = useConvertChildrenToSoup(children)
@@ -167,6 +169,9 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
           <AnyCadComponent
             cad_component={cad_component}
             circuitJson={circuitJson}
+            isHighlighted={
+              highlightedComponentId === cad_component.cad_component_id
+            }
           />
         </ThreeErrorBoundary>
       ))}

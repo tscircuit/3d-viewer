@@ -29,6 +29,7 @@ interface Props {
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
   onUserInteraction?: () => void
+  highlightedComponentId?: string | null
 }
 
 export const CadViewerJscad = forwardRef<
@@ -43,6 +44,7 @@ export const CadViewerJscad = forwardRef<
       autoRotateDisabled,
       clickToInteractEnabled,
       onUserInteraction,
+      highlightedComponentId,
     },
     ref,
   ) => {
@@ -122,6 +124,9 @@ export const CadViewerJscad = forwardRef<
               key={cad_component.cad_component_id}
               cad_component={cad_component}
               circuitJson={internalCircuitJson}
+              isHighlighted={
+                highlightedComponentId === cad_component.cad_component_id
+              }
             />
           </ThreeErrorBoundary>
         ))}

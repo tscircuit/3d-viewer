@@ -13,6 +13,7 @@ export const FootprinterModel = ({
   onHover,
   onUnhover,
   isHovered,
+  isHighlighted = false,
 }: {
   positionOffset: any
   footprint: string
@@ -20,6 +21,7 @@ export const FootprinterModel = ({
   onHover: (e: any) => void
   onUnhover: () => void
   isHovered: boolean
+  isHighlighted?: boolean
 }) => {
   const jscadOperations = useMemo(() => {
     if (!footprint) return null
@@ -43,6 +45,7 @@ export const FootprinterModel = ({
           onHover={onHover}
           onUnhover={onUnhover}
           isHovered={isHovered}
+          isHighlighted={isHighlighted}
         />
       ))}
     </>

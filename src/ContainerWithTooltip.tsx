@@ -9,6 +9,7 @@ const Group = (props: GroupProps) => <group {...props} />
 const ContainerWithTooltip = ({
   children,
   isHovered,
+  isHighlighted = false,
   onHover,
   onUnhover,
   position,
@@ -18,6 +19,7 @@ const ContainerWithTooltip = ({
   onHover: (e: any) => void
   onUnhover: () => void
   isHovered: boolean
+  isHighlighted?: boolean
 }) => {
   const lastValidPointRef = useRef<THREE.Vector3 | null>(null)
 
@@ -66,6 +68,20 @@ const ContainerWithTooltip = ({
       onPointerLeave={handlePointerLeave}
     >
       {children}
+      {isHighlighted && (
+        <>
+          {/* Small sphere covering - more subtle and focused */}
+          <mesh position={position}>
+            <sphereGeometry args={[1.2, 16, 16]} />
+            <meshBasicMaterial
+              color="cyan"
+              transparent
+              opacity={0.25}
+              wireframe
+            />
+          </mesh>
+        </>
+      )}
     </Group>
   )
 }
