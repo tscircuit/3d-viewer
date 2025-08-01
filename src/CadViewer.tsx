@@ -178,7 +178,7 @@ export const CadViewer = (props: any) => {
                 color: "#c0c0c0",
               }}
             >
-              v{packageJson.version}
+              @tscircuit/3d-viewer@{packageJson.version}
             </span>
           </div>
         </div>
