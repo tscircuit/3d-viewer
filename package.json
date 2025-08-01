@@ -35,7 +35,7 @@
     "@tscircuit/core": "^0.0.580",
     "@tscircuit/props": "^0.0.273",
     "jscad-electronics": "^0.0.29",
-    "jscad-fiber": "^0.0.79",
+    "jscad-fiber": "^0.0.82",
     "jscad-planner": "^0.0.13",
     "manifold-3d": "3.1.0",
     "react": "^18.3.1",
