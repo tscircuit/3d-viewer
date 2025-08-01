@@ -33,7 +33,7 @@
     "@react-three/fiber": "^8.17.14",
     "@tscircuit/circuit-json-util": "^0.0.62",
     "@tscircuit/core": "^0.0.580",
-    "@tscircuit/props": "^0.0.273",
+    "@tscircuit/props": "^0.0.279",
     "jscad-electronics": "^0.0.29",
     "jscad-fiber": "^0.0.79",
     "jscad-planner": "^0.0.13",
