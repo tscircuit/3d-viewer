@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react"
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
+import packageJson from "../package.json"
 
 export const CadViewer = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
@@ -159,6 +160,26 @@ export const CadViewer = (props: any) => {
           >
             <span style={{ marginRight: 8 }}>{autoRotate ? "✔" : ""}</span>
             Auto rotate
+          </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              padding: "8px 0",
+              borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+              marginTop: "8px",
+            }}
+          >
+            <span
+              style={{
+                fontSize: 10,
+                opacity: 0.6,
+                fontWeight: 300,
+                color: "#c0c0c0",
+              }}
+            >
+              @tscircuit/3d-viewer@{packageJson.version}
+            </span>
           </div>
         </div>
       )}
