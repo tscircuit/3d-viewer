@@ -29,7 +29,7 @@
   "dependencies": {
     "@jscad/regl-renderer": "^2.6.12",
     "@jscad/stl-serializer": "^2.1.20",
-    "@react-three/drei": "^9.121.4",
+    "@react-three/drei": "^10.6.1",
     "@react-three/fiber": "^9.3.0",
     "manifold-3d": "3.1.0"
   },
