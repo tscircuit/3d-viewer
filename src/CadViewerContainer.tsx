@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react"
-import type * as THREE from "three"
+import * as THREE from "three"
 import packageJson from "../package.json"
 import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
 
@@ -80,7 +80,7 @@ export const CadViewerContainer = forwardRef<
           </Canvas>
         </div>
         <Canvas
-          scene={{ up: [0, 0, 1] }}
+          scene={{ up: new THREE.Vector3(0, 0, 1) }}
           camera={{ up: [0, 0, 1], position: initialCameraPosition }}
         >
           <RotationTracker />
