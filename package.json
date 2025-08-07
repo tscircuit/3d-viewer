@@ -32,7 +32,6 @@
     "@react-three/drei": "^9.121.4",
     "@react-three/fiber": "^8.17.14",
     "@tscircuit/circuit-json-util": "^0.0.62",
-    "@tscircuit/core": "^0.0.580",
     "@tscircuit/props": "^0.0.273",
     "jscad-electronics": "^0.0.29",
     "jscad-fiber": "^0.0.79",
@@ -47,6 +46,7 @@
     "zod": "3"
   },
   "devDependencies": {
+    "@tscircuit/core": "^0.0.580",
     "@biomejs/biome": "^1.9.4",
     "@chromatic-com/storybook": "^1.9.0",
     "@jscad/modeling": "^2.12.5",
