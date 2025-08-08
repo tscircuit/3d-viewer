@@ -1,5 +1,4 @@
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
-import { Text } from "@react-three/drei"
 import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement } from "circuit-json"
 import { Footprinter3d } from "jscad-electronics"
