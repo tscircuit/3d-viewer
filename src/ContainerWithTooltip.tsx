@@ -1,73 +1,37 @@
-import { Html } from "@react-three/drei"
-import { useThree } from "@react-three/fiber"
-import { useRef, useCallback } from "react"
-import type { Vector3 } from "three"
+import React, { useEffect } from "react"
+import { useHover } from "./react-three-replacement/HoverContext"
 import * as THREE from "three"
-
-const Group = (props: any) => <group {...props} />
 
 const ContainerWithTooltip = ({
   children,
-  isHovered,
+  object,
   onHover,
   onUnhover,
-  position,
 }: {
   children: React.ReactNode
-  position?: Vector3 | [number, number, number]
+  object?: THREE.Object3D | null
   onHover: (e: any) => void
   onUnhover: () => void
   isHovered: boolean
 }) => {
-  const lastValidPointRef = useRef<THREE.Vector3 | null>(null)
+  const { addHoverable, removeHoverable } = useHover()
 
-  const handlePointerHover = useCallback(
-    (e: any) => {
-      e.stopPropagation()
+  useEffect(() => {
+    if (!object) return
 
-      try {
-        // Fallback to event position if raycaster fails
-        const point =
-          e.point ||
-          (e.intersections && e.intersections.length > 0
-            ? e.intersections[0].point
-            : null) ||
-          (position
-            ? new THREE.Vector3(...(position as [number, number, number]))
-            : null)
+    const hoverable = {
+      object,
+      onHover,
+      onUnhover,
+    }
 
-        if (point) {
-          lastValidPointRef.current = point
-          onHover({ mousePosition: [point.x, point.y, point.z] })
-        } else {
-          onHover({})
-        }
-      } catch (error) {
-        console.warn("Hover event error:", error)
-        onHover({}) // Keep sending empty object if error occurs during hover
-      }
-    },
-    [onHover, position],
-  )
+    addHoverable(hoverable)
+    return () => {
+      removeHoverable(object)
+    }
+  }, [object, onHover, onUnhover, addHoverable, removeHoverable])
 
-  const handlePointerLeave = useCallback(
-    (e: any) => {
-      e.stopPropagation()
-      lastValidPointRef.current = null
-      onUnhover()
-    },
-    [onUnhover],
-  )
-
-  return (
-    <Group
-      onPointerEnter={handlePointerHover}
-      onPointerMove={handlePointerHover}
-      onPointerLeave={handlePointerLeave}
-    >
-      {children}
-    </Group>
-  )
+  return <>{children}</>
 }
 
 export default ContainerWithTooltip

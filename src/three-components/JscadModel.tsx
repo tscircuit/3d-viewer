@@ -3,8 +3,9 @@ import { executeJscadOperations } from "jscad-planner"
 import jscad from "@jscad/modeling"
 import { convertCSGToThreeGeom } from "jscad-fiber/three"
 import * as THREE from "three"
-import { useMemo } from "react"
+import { useMemo, useEffect } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
+import { useThree } from "src/react-three-replacement/ThreeContext"
 
 export const JscadModel = ({
   jscadPlan,
@@ -21,6 +22,7 @@ export const JscadModel = ({
   onUnhover: () => void
   isHovered: boolean
 }) => {
+  const { rootObject } = useThree()
   const { threeGeom, material } = useMemo(() => {
     const jscadObject = executeJscadOperations(jscad as any, jscadPlan)
 
@@ -33,7 +35,25 @@ export const JscadModel = ({
     return { threeGeom, material }
   }, [jscadPlan])
 
+  const mesh = useMemo(() => {
+    if (!threeGeom) return null
+    return new THREE.Mesh(threeGeom, material)
+  }, [threeGeom, material])
+
+  useEffect(() => {
+    if (!mesh || !rootObject) return
+
+    if (positionOffset) mesh.position.fromArray(positionOffset)
+    if (rotationOffset) mesh.rotation.fromArray(rotationOffset)
+
+    rootObject.add(mesh)
+    return () => {
+      rootObject.remove(mesh)
+    }
+  }, [rootObject, mesh, positionOffset, rotationOffset])
+
   useMemo(() => {
+    if (!material) return
     if (isHovered) {
       const color = new THREE.Color(material.color.getHex())
       material.emissive.copy(color)
@@ -50,14 +70,9 @@ export const JscadModel = ({
       isHovered={isHovered}
       onHover={onHover}
       onUnhover={onUnhover}
-      position={positionOffset}
+      object={mesh}
     >
-      <mesh
-        geometry={threeGeom}
-        material={material}
-        position={positionOffset}
-        rotation={rotationOffset}
-      />
+      {/* mesh is now added imperatively */}
     </ContainerWithTooltip>
   )
 }

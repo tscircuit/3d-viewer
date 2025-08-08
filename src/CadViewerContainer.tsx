@@ -1,5 +1,3 @@
-import { Grid, OrbitControls, useHelper } from "@react-three/drei"
-import { Canvas, useFrame } from "@react-three/fiber"
 import type * as React from "react"
 import {
   Suspense,
@@ -12,13 +10,21 @@ import {
 import * as THREE from "three"
 import packageJson from "../package.json"
 import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
+import { Canvas } from "./react-three-replacement/Canvas"
+import { OrbitControls } from "./react-three-replacement/OrbitControls"
+import { Grid } from "./react-three-replacement/Grid"
+import { useFrame, useThree } from "./react-three-replacement/ThreeContext"
+import { Lights } from "./react-three-replacement/Lights"
 
 export const RotationTracker = () => {
-  useFrame(({ camera }) => {
-    window.TSCI_MAIN_CAMERA_ROTATION = camera.rotation
+  const { camera } = useThree()
+  useFrame(() => {
+    if (camera) {
+      window.TSCI_MAIN_CAMERA_ROTATION = camera.rotation
+    }
   })
 
-  return <></>
+  return null
 }
 
 interface Props {
@@ -75,11 +81,11 @@ export const CadViewerContainer = forwardRef<
             }}
             style={{ zIndex: 10 }}
           >
-            <ambientLight intensity={Math.PI / 2} />
             <CubeWithLabeledSides />
           </Canvas>
         </div>
         <Canvas
+          ref={ref}
           scene={{ up: new THREE.Vector3(0, 0, 1) }}
           camera={{ up: [0, 0, 1], position: initialCameraPosition }}
         >
@@ -91,20 +97,15 @@ export const CadViewerContainer = forwardRef<
               onStart={onUserInteraction}
             />
           )}
-          <ambientLight intensity={Math.PI / 2} />
-          <pointLight
-            position={[-10, -10, 10]}
-            decay={0}
-            intensity={Math.PI / 4}
-          />
+          <Lights />
           <Grid
             rotation={[Math.PI / 2, 0, 0]}
             infiniteGrid={true}
-            cellSize={1}
+            cellSize={3}
             sectionSize={gridSectionSize}
             args={[gridSectionSize, gridSectionSize]}
           />
-          <object3D ref={ref}>{children}</object3D>
+          {children}
         </Canvas>
         <div
           style={{

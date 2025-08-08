@@ -1,7 +1,7 @@
-import { useLoader } from "@react-three/fiber"
-import { useRef } from "react"
+import { useState, useEffect, useMemo } from "react"
 import * as THREE from "three"
-import { MTLLoader, OBJLoader, STLLoader } from "three-stdlib"
+import { STLLoader } from "three-stdlib"
+import { useThree } from "src/react-three-replacement/ThreeContext"
 
 export function STLModel({
   stlUrl,
@@ -14,20 +14,41 @@ export function STLModel({
   mtlUrl?: string
   opacity?: number
 }) {
-  const geom = useLoader(STLLoader, stlUrl)
-  const mesh = useRef<THREE.Mesh>()
+  const { rootObject } = useThree()
+  const [geom, setGeom] = useState<THREE.BufferGeometry | null>(null)
 
-  // TODO handle mtl url
+  useEffect(() => {
+    const loader = new STLLoader()
+    loader.load(stlUrl, (geometry) => {
+      setGeom(geometry)
+    })
+  }, [stlUrl])
 
-  return (
-    <mesh ref={mesh as any}>
-      <primitive object={geom} attach="geometry" />
-      <meshStandardMaterial
-        color={color}
-        transparent={opacity !== 1}
-        opacity={opacity}
-      />
-      {/* <Outlines thickness={0.05} color="black" opacity={0.25} /> */}
-    </mesh>
-  )
+  const mesh = useMemo(() => {
+    if (!geom) return null
+    const material = new THREE.MeshStandardMaterial({
+      color: Array.isArray(color)
+        ? new THREE.Color(color[0], color[1], color[2])
+        : color,
+      transparent: opacity !== 1,
+      opacity: opacity,
+    })
+    return new THREE.Mesh(geom, material)
+  }, [geom, color, opacity])
+
+  useEffect(() => {
+    if (!rootObject || !mesh) return
+    rootObject.add(mesh)
+    return () => {
+      rootObject.remove(mesh)
+      mesh.geometry.dispose()
+      if (Array.isArray(mesh.material)) {
+        mesh.material.forEach((m) => m.dispose())
+      } else {
+        mesh.material.dispose()
+      }
+    }
+  }, [rootObject, mesh])
+
+  return null
 }

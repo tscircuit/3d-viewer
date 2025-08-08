@@ -1,0 +1,131 @@
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+} from "react"
+import * as THREE from "three"
+import { useThree } from "./ThreeContext"
+
+export interface HoverableObject {
+  object: THREE.Object3D
+  onHover: (event: { mousePosition: [number, number, number] }) => void
+  onUnhover: () => void
+}
+
+export interface HoverContextState {
+  addHoverable: (hoverable: HoverableObject) => void
+  removeHoverable: (object: THREE.Object3D) => void
+}
+
+export const HoverContext = createContext<HoverContextState | null>(null)
+
+export const useHover = () => {
+  const context = useContext(HoverContext)
+  if (!context) {
+    throw new Error("useHover must be used within a HoverProvider")
+  }
+  return context
+}
+
+export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
+  const { camera, renderer } = useThree()
+  const [hoverables, setHoverables] = useState<HoverableObject[]>([])
+  const [hoveredObject, setHoveredObject] = useState<HoverableObject | null>(
+    null,
+  )
+  const raycaster = useMemo(() => new THREE.Raycaster(), [])
+  const mouse = useMemo(() => new THREE.Vector2(), [])
+
+  const addHoverable = useCallback((hoverable: HoverableObject) => {
+    setHoverables((prev) => [...prev, hoverable])
+  }, [])
+
+  const removeHoverable = useCallback((object: THREE.Object3D) => {
+    setHoverables((prev) => prev.filter((h) => h.object !== object))
+  }, [])
+
+  const findHoverable = (
+    object: THREE.Object3D,
+  ): HoverableObject | undefined => {
+    let current: THREE.Object3D | null = object
+    while (current) {
+      const found = hoverables.find((h) => h.object === current)
+      if (found) return found
+      current = current.parent
+    }
+    return undefined
+  }
+
+  const onMouseMove = useCallback(
+    (event: MouseEvent) => {
+      if (!renderer.domElement) return
+      const rect = renderer.domElement.getBoundingClientRect()
+      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+
+      raycaster.setFromCamera(mouse, camera)
+      const objectsToIntersect = hoverables.map((h) => h.object)
+      if (objectsToIntersect.length === 0) return
+
+      const intersects = raycaster.intersectObjects(objectsToIntersect, true)
+
+      if (intersects.length > 0) {
+        const firstIntersect = intersects[0]!
+        const newHovered = findHoverable(firstIntersect.object)
+
+        if (newHovered) {
+          const eventPayload = {
+            mousePosition: [
+              firstIntersect.point.x,
+              firstIntersect.point.y,
+              firstIntersect.point.z,
+            ] as [number, number, number],
+          }
+          if (hoveredObject !== newHovered) {
+            hoveredObject?.onUnhover()
+            newHovered.onHover(eventPayload)
+            setHoveredObject(newHovered)
+          } else {
+            newHovered.onHover(eventPayload)
+          }
+        } else {
+          if (hoveredObject) {
+            hoveredObject.onUnhover()
+            setHoveredObject(null)
+          }
+        }
+      } else {
+        if (hoveredObject) {
+          hoveredObject.onUnhover()
+          setHoveredObject(null)
+        }
+      }
+    },
+    [camera, renderer, raycaster, mouse, hoverables, hoveredObject],
+  )
+
+  useEffect(() => {
+    const domElement = renderer.domElement
+    domElement.addEventListener("mousemove", onMouseMove)
+    return () => {
+      domElement.removeEventListener("mousemove", onMouseMove)
+    }
+  }, [renderer, onMouseMove])
+
+  const contextValue = useMemo(
+    () => ({
+      addHoverable,
+      removeHoverable,
+    }),
+    [addHoverable, removeHoverable],
+  )
+
+  return (
+    <HoverContext.Provider value={contextValue}>
+      {children}
+    </HoverContext.Provider>
+  )
+}
