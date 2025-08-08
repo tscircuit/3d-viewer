@@ -7,8 +7,9 @@ const ContainerWithTooltip = ({
   object,
   onHover,
   onUnhover,
+  isHovered,
 }: {
-  children: React.ReactNode
+  children?: React.ReactNode
   object?: THREE.Object3D | null
   onHover: (e: any) => void
   onUnhover: () => void

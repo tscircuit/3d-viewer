@@ -73,7 +73,7 @@ export const Error3d = ({
           anchorY="middle"
           depthOffset={-99999}
         >
-          {error.toString().slice(0, 50)}...
+          {`${error.toString().slice(0, 50)}...`}
         </Text>
       </ContainerWithTooltip>
       {isHovered && hoverPosition ? (
