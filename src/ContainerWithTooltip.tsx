@@ -1,5 +1,5 @@
 import React, { useEffect } from "react"
-import { useHover } from "./react-three-replacement/HoverContext"
+import { useHover } from "./react-three/HoverContext"
 import * as THREE from "three"
 
 const ContainerWithTooltip = ({

@@ -5,7 +5,7 @@ import { convertCSGToThreeGeom } from "jscad-fiber/three"
 import * as THREE from "three"
 import { useMemo, useEffect } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
-import { useThree } from "src/react-three-replacement/ThreeContext"
+import { useThree } from "src/react-three/ThreeContext"
 
 export const JscadModel = ({
   jscadPlan,

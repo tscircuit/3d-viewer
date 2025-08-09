@@ -1,7 +1,7 @@
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { useGlobalObjLoader } from "src/hooks/use-global-obj-loader"
 import type { Euler, Vector3 } from "three"
-import { useThree } from "src/react-three-replacement/ThreeContext"
+import { useThree } from "src/react-three/ThreeContext"
 import { useEffect, useMemo } from "react"
 import * as THREE from "three"
 

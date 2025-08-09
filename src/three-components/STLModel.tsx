@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react"
 import * as THREE from "three"
 import { STLLoader } from "three-stdlib"
-import { useThree } from "src/react-three-replacement/ThreeContext"
+import { useThree } from "src/react-three/ThreeContext"
 
 export function STLModel({
   stlUrl,

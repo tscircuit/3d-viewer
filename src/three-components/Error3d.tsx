@@ -1,9 +1,9 @@
 import type { CadComponent } from "circuit-json"
 import { useState, useCallback, useEffect, useMemo } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
-import { Html } from "src/react-three-replacement/Html"
-import { Text } from "src/react-three-replacement/Text"
-import { useThree } from "src/react-three-replacement/ThreeContext"
+import { Html } from "src/react-three/Html"
+import { Text } from "src/react-three/Text"
+import { useThree } from "src/react-three/ThreeContext"
 import * as THREE from "three"
 
 export const Error3d = ({

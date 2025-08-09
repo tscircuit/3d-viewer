@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react"
 import * as THREE from "three"
-import { Text } from "src/react-three-replacement/Text"
-import { useFrame, useThree } from "src/react-three-replacement/ThreeContext"
+import { Text } from "src/react-three/Text"
+import { useFrame, useThree } from "src/react-three/ThreeContext"
 
 declare global {
   interface Window {

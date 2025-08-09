@@ -10,11 +10,11 @@ import {
 import * as THREE from "three"
 import packageJson from "../package.json"
 import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
-import { Canvas } from "./react-three-replacement/Canvas"
-import { OrbitControls } from "./react-three-replacement/OrbitControls"
-import { Grid } from "./react-three-replacement/Grid"
-import { useFrame, useThree } from "./react-three-replacement/ThreeContext"
-import { Lights } from "./react-three-replacement/Lights"
+import { Canvas } from "./react-three/Canvas"
+import { OrbitControls } from "./react-three/OrbitControls"
+import { Grid } from "./react-three/Grid"
+import { useFrame, useThree } from "./react-three/ThreeContext"
+import { Lights } from "./react-three/Lights"
 
 export const RotationTracker = () => {
   const { camera } = useThree()
