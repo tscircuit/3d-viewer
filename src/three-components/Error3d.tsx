@@ -31,20 +31,22 @@ export const Error3d = ({
     setHoverPosition(null)
   }, [])
 
-  let position = [0, 0, 0]
-  if (cad_component?.position) {
-    position = [
-      cad_component.position.x,
-      cad_component.position.y,
-      cad_component.position.z,
-    ]
-    // make sure the position doesn't have any NaN values
-    position = position.map((p) => (Number.isNaN(p) ? 0 : p))
-  }
+  const position = useMemo(() => {
+    if (cad_component?.position) {
+      const p = [
+        cad_component.position.x,
+        cad_component.position.y,
+        cad_component.position.z,
+      ]
+      // make sure the position doesn't have any NaN values
+      return p.map((val) => (Number.isNaN(val) ? 0 : val))
+    }
+    return [0, 0, 0]
+  }, [cad_component])
 
   const group = useMemo(() => {
     const g = new THREE.Group()
-    g.position.fromArray(position)
+    g.position.fromArray(position as [number, number, number])
     return g
   }, [position])
 
@@ -81,7 +83,7 @@ export const Error3d = ({
           position={hoverPosition}
           style={{
             fontFamily: "sans-serif",
-            transform: "translate3d(1rem, 1rem, 0)",
+            transform: "translate3d(-1rem, 0rem, 0)",
             backgroundColor: "white",
             padding: "6px",
             borderRadius: "4px",
