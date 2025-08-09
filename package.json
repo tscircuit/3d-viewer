@@ -43,7 +43,7 @@
     "react-reconciler": "*"
   },
   "devDependencies": {
-    "@tscircuit/circuit-json-util": "^0.0.62",
+    "@tscircuit/circuit-json-util": "^0.0.64",
     "@tscircuit/props": "^0.0.281",
     "jscad-electronics": "^0.0.29",
     "jscad-fiber": "^0.0.82",
