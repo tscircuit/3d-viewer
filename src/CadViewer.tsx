@@ -18,11 +18,14 @@ export const CadViewer = (props: any) => {
     setMenuVisible,
   } = useContextMenu({ containerRef })
 
+  const autoRotateUserToggledRef = useRef(autoRotateUserToggled)
+  autoRotateUserToggledRef.current = autoRotateUserToggled
+
   const handleUserInteraction = useCallback(() => {
-    if (!autoRotateUserToggled) {
+    if (!autoRotateUserToggledRef.current) {
       setAutoRotate(false)
     }
-  }, [autoRotateUserToggled])
+  }, [])
 
   const toggleAutoRotate = useCallback(() => {
     setAutoRotate((prev) => !prev)

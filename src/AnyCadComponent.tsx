@@ -9,7 +9,7 @@ import { JscadModel } from "./three-components/JscadModel"
 import { Footprinter3d } from "jscad-electronics"
 import { FootprinterModel } from "./three-components/FootprinterModel"
 import { tuple } from "./utils/tuple"
-import { Html } from "@react-three/drei"
+import { Html } from "./react-three/Html"
 
 export const AnyCadComponent = ({
   cad_component,

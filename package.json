@@ -29,12 +29,12 @@
   "dependencies": {
     "@jscad/regl-renderer": "^2.6.12",
     "@jscad/stl-serializer": "^2.1.20",
-    "@react-three/drei": "^10.6.1",
-    "@react-three/fiber": "^9.3.0",
-    "manifold-3d": "3.1.0"
+    "manifold-3d": "3.1.0",
+    "three": "^0.165.0",
+    "three-stdlib": "^2.36.0",
+    "troika-three-text": "^0.52.4"
   },
   "peerDependencies": {
-    "three": "*",
     "zod": "3",
     "react": "*",
     "react-dom": "*",

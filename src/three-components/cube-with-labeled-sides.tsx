@@ -1,7 +1,7 @@
-import { Text } from "@react-three/drei"
-import { useFrame } from "@react-three/fiber"
-import { useRef } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import * as THREE from "three"
+import { Text } from "src/react-three/Text"
+import { useFrame, useThree } from "src/react-three/ThreeContext"
 
 declare global {
   interface Window {
@@ -31,27 +31,65 @@ function computePointInFront(rotationVector, distance) {
 }
 
 export const CubeWithLabeledSides = ({}: any) => {
-  const ref = useRef<THREE.Mesh>()
-  const rotationTrackingRef = useRef({ lastRotation: new THREE.Euler() })
-  useFrame((state, delta) => {
-    if (!ref.current) return
+  const { camera, scene } = useThree()
+
+  useEffect(() => {
+    if (!scene) return
+    const ambientLight = new THREE.AmbientLight(0xffffff, Math.PI / 2)
+    scene.add(ambientLight)
+    return () => {
+      scene.remove(ambientLight)
+    }
+  }, [scene])
+
+  useFrame(() => {
+    if (!camera) return
 
     const mainRot = window.TSCI_MAIN_CAMERA_ROTATION
-
-    // Use window.TSCI_CAMERA_ROTATION to compute the position of the camera
     const cameraPosition = computePointInFront(mainRot, 2)
 
-    state.camera.position.copy(cameraPosition)
-    state.camera.lookAt(0, 0, 0)
+    camera.position.copy(cameraPosition)
+    camera.lookAt(0, 0, 0)
   })
+
+  const group = useMemo(() => {
+    const g = new THREE.Group()
+    g.rotation.fromArray([Math.PI / 2, 0, 0])
+
+    const box = new THREE.Mesh(
+      new THREE.BoxGeometry(1, 1, 1),
+      new THREE.MeshStandardMaterial({ color: "white" }),
+    )
+    g.add(box)
+
+    const edges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)),
+      new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 }),
+    )
+    g.add(edges)
+    return g
+  }, [])
+
+  useEffect(() => {
+    if (!scene) return
+    scene.add(group)
+    return () => {
+      scene.remove(group)
+    }
+  }, [scene, group])
+
   return (
-    <mesh ref={ref as any} rotation={[Math.PI / 2, 0, 0]}>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color="white" />
-      <Text position={[0, 0, 0.51]} fontSize={0.25} color="black">
+    <>
+      <Text
+        parent={group}
+        position={[0, 0, 0.51]}
+        fontSize={0.25}
+        color="black"
+      >
         Front
       </Text>
       <Text
+        parent={group}
         position={[0, 0, -0.51]}
         fontSize={0.25}
         color="black"
@@ -60,6 +98,7 @@ export const CubeWithLabeledSides = ({}: any) => {
         Back
       </Text>
       <Text
+        parent={group}
         position={[0.51, 0, 0]}
         fontSize={0.25}
         color="black"
@@ -68,6 +107,7 @@ export const CubeWithLabeledSides = ({}: any) => {
         Right
       </Text>
       <Text
+        parent={group}
         position={[-0.51, 0, 0]}
         fontSize={0.25}
         color="black"
@@ -76,6 +116,7 @@ export const CubeWithLabeledSides = ({}: any) => {
         Left
       </Text>
       <Text
+        parent={group}
         position={[0, 0.51, 0]}
         fontSize={0.25}
         color="black"
@@ -84,6 +125,7 @@ export const CubeWithLabeledSides = ({}: any) => {
         Top
       </Text>
       <Text
+        parent={group}
         position={[0, -0.51, 0]}
         fontSize={0.25}
         color="black"
@@ -91,15 +133,6 @@ export const CubeWithLabeledSides = ({}: any) => {
       >
         Bottom
       </Text>
-      <lineSegments
-        args={[new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1))]}
-        material={
-          new THREE.LineBasicMaterial({
-            color: 0x000000,
-            linewidth: 2,
-          })
-        }
-      />
-    </mesh>
+    </>
   )
 }

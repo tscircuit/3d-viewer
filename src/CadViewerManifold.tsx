@@ -4,6 +4,8 @@ import ManifoldModule from "manifold-3d"
 import type { ManifoldToplevel } from "manifold-3d/manifold.d.ts"
 import type React from "react"
 import { useEffect, useMemo, useState } from "react"
+import type * as THREE from "three"
+import { useThree } from "./react-three/ThreeContext"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
 import { useConvertChildrenToSoup } from "./hooks/use-convert-children-to-soup"
@@ -12,6 +14,29 @@ import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
 import { createTextureMeshes } from "./utils/manifold/create-three-texture-meshes"
+
+const BoardMeshes = ({
+  geometryMeshes,
+  textureMeshes,
+}: {
+  geometryMeshes: THREE.Mesh[]
+  textureMeshes: THREE.Mesh[]
+}) => {
+  const { rootObject } = useThree()
+
+  useEffect(() => {
+    if (!rootObject) return
+    geometryMeshes.forEach((mesh) => rootObject.add(mesh))
+    textureMeshes.forEach((mesh) => rootObject.add(mesh))
+
+    return () => {
+      geometryMeshes.forEach((mesh) => rootObject.remove(mesh))
+      textureMeshes.forEach((mesh) => rootObject.remove(mesh))
+    }
+  }, [rootObject, geometryMeshes, textureMeshes])
+
+  return null
+}
 
 type CadViewerManifoldProps = {
   autoRotateDisabled?: boolean
@@ -151,12 +176,10 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
       boardDimensions={boardDimensions}
       onUserInteraction={onUserInteraction}
     >
-      {geometryMeshes.map((mesh, index) => (
-        <primitive object={mesh} key={`${mesh.name}-${index}`} />
-      ))}
-      {textureMeshes.map((mesh, index) => (
-        <primitive object={mesh} key={`${mesh.name}-${index}`} />
-      ))}
+      <BoardMeshes
+        geometryMeshes={geometryMeshes}
+        textureMeshes={textureMeshes}
+      />
       {cadComponents.map((cad_component: CadComponent) => (
         <ThreeErrorBoundary
           key={cad_component.cad_component_id}
