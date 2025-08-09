@@ -95,6 +95,11 @@ export const CadViewerContainer = forwardRef<
               autoRotate={!autoRotateDisabled}
               autoRotateSpeed={1}
               onStart={onUserInteraction}
+              rotateSpeed={0.5}
+              panSpeed={0.75}
+              zoomSpeed={0.5}
+              enableDamping={true}
+              dampingFactor={0.1}
             />
           )}
           <Lights />

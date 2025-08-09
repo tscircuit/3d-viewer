@@ -6,12 +6,22 @@ interface OrbitControlsProps {
   autoRotate?: boolean
   autoRotateSpeed?: number
   onStart?: () => void
+  panSpeed?: number
+  rotateSpeed?: number
+  zoomSpeed?: number
+  enableDamping?: boolean
+  dampingFactor?: number
 }
 
 export const OrbitControls: React.FC<OrbitControlsProps> = ({
   autoRotate,
   autoRotateSpeed,
   onStart,
+  panSpeed,
+  rotateSpeed,
+  zoomSpeed,
+  enableDamping,
+  dampingFactor,
 }) => {
   const { camera, renderer } = useThree()
 
@@ -25,7 +35,21 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
 
     controls.autoRotate = autoRotate || false
     controls.autoRotateSpeed = autoRotateSpeed || 1.0
-  }, [controls, autoRotate, autoRotateSpeed])
+    if (panSpeed !== undefined) controls.panSpeed = panSpeed
+    if (rotateSpeed !== undefined) controls.rotateSpeed = rotateSpeed
+    if (zoomSpeed !== undefined) controls.zoomSpeed = zoomSpeed
+    if (enableDamping !== undefined) controls.enableDamping = enableDamping
+    if (dampingFactor !== undefined) controls.dampingFactor = dampingFactor
+  }, [
+    controls,
+    autoRotate,
+    autoRotateSpeed,
+    panSpeed,
+    rotateSpeed,
+    zoomSpeed,
+    enableDamping,
+    dampingFactor,
+  ])
 
   useEffect(() => {
     if (!controls || !onStart) return
