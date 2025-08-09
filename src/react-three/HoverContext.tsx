@@ -60,7 +60,7 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (isAncestor) {
         // The object being removed contains the hovered object.
-        // Don't call onUnhover, just clear the ref.
+        hoveredObjectRef.current.onUnhover()
         hoveredObjectRef.current = null
       }
     }
