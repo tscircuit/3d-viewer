@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "@tscircuit/circuit-json-util": "^0.0.64",
-    "@tscircuit/props": "^0.0.281",
+    "@tscircuit/props": "^0.0.282",
     "jscad-electronics": "^0.0.29",
     "jscad-fiber": "^0.0.83",
     "jscad-planner": "^0.0.13",
