@@ -39,6 +39,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "@tscircuit/core": "*",
+    "jscad-fiber": "^0.0.84",
     "@tscircuit/circuit-json-util": "*"
   },
   "devDependencies": {
@@ -61,7 +62,6 @@
     "circuit-to-svg": "^0.0.176",
     "debug": "^4.4.0",
     "jscad-electronics": "^0.0.33",
-    "jscad-fiber": "^0.0.84",
     "jscad-planner": "^0.0.13",
     "jsdom": "^26.0.0",
     "react-use-gesture": "^9.1.3",
