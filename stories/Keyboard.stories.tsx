@@ -1,4 +1,3 @@
-import { fn } from "@storybook/test"
 import { CadViewer } from "src/CadViewer"
 import keyboard60 from "./assets/keyboard-default60.json"
 import nineKeyKeyboard from "./assets/nine-key-keyboard.json"

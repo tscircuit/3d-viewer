@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react"
 
 interface ContextMenuProps {
-  containerRef: React.RefObject<HTMLDivElement>
+  containerRef: React.RefObject<HTMLDivElement | null>
 }
 
 export const useContextMenu = ({ containerRef }: ContextMenuProps) => {

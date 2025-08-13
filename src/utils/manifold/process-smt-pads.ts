@@ -48,6 +48,7 @@ export function processSmtPadsForManifold(
 
     if (padManifoldOp) {
       manifoldInstancesForCleanup.push(padManifoldOp)
+      // @ts-ignore
       const translatedPad = padManifoldOp.translate([pad.x, pad.y, zPos])
       manifoldInstancesForCleanup.push(translatedPad)
       const threeGeom = manifoldMeshToThreeGeometry(translatedPad.getMesh())

@@ -37,7 +37,7 @@ const useAnimationFrame = (
   callback: (time: number, delta: number) => void,
   deps: React.DependencyList,
 ): void => {
-  const frame = useRef<number>()
+  const frame = useRef<number>(0)
   const last = useRef(performance.now())
   const init = useRef(performance.now())
 

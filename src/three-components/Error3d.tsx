@@ -9,7 +9,10 @@ import * as THREE from "three"
 export const Error3d = ({
   error,
   cad_component,
-}: { error: any; cad_component?: CadComponent }) => {
+}: {
+  error: any
+  cad_component?: CadComponent
+}) => {
   const { rootObject } = useThree()
   const [isHovered, setIsHovered] = useState(false)
   const [hoverPosition, setHoverPosition] = useState<

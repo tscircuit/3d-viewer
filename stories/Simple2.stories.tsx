@@ -1,4 +1,3 @@
-import { fn } from "@storybook/test"
 import { CadViewer } from "src/CadViewer"
 
 export const Default = () => (
