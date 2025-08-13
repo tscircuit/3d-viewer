@@ -1,4 +1,3 @@
-import { fn } from "@storybook/test"
 import { CadViewer } from "src/CadViewer"
 import bugsPadsAndTracesSoup from "./assets/soic-with-traces.json"
 import type { CadComponent } from "circuit-json"
