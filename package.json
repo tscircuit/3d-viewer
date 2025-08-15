@@ -39,7 +39,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "@tscircuit/core": "*",
-    "jscad-fiber": "^0.0.84",
+    "jscad-fiber": "^0.0.84 || ^0.0.85",
     "@tscircuit/circuit-json-util": "*"
   },
   "devDependencies": {
