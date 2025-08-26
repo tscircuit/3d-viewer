@@ -15,5 +15,4 @@ export default defineConfig({
       // doesn't work when configured here
     },
   },
-  assetsInclude: ["**/*.wasm"],
 })

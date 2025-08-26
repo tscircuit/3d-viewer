@@ -1,7 +1,6 @@
 import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, CadComponent } from "circuit-json"
-import ManifoldModule from "manifold-3d"
-import type { ManifoldToplevel } from "manifold-3d/manifold.d.ts"
+import { ManifoldToplevel } from "manifold-3d"
 import type React from "react"
 import { useEffect, useMemo, useState } from "react"
 import type * as THREE from "three"
@@ -61,32 +60,28 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
     return circuitJsonProp ?? childrenCircuitJson
   }, [circuitJsonProp, childrenCircuitJson])
 
-  const [manifoldJSModule, setManifoldJSModule] =
-    useState<ManifoldToplevel | null>(null)
+  const [manifoldJSModule, setManifoldJSModule] = useState<any | null>(null)
   const [manifoldLoadingError, setManifoldLoadingError] = useState<
     string | null
   >(null)
 
   useEffect(() => {
-    const loadManifoldWasmFromCDN = async () => {
+    const loadManifoldFromCDN = async () => {
       try {
-        const wasmUrl = `${MANIFOLD_CDN_BASE_URL}/manifold.wasm`
+        const manifoldURL = `${MANIFOLD_CDN_BASE_URL}/manifold.js`
+        const { default: ManifoldModule } = await import(manifoldURL)
 
-        const manifoldConfig = {
-          locateFile: (path: string, scriptDirectory: string) => {
-            if (path === "manifold.wasm") {
-              return wasmUrl
-            }
-            return scriptDirectory + path
-          },
+        if (ManifoldModule) {
+          const loadedModule: ManifoldToplevel = await ManifoldModule({
+            locateFile: () => `${MANIFOLD_CDN_BASE_URL}/manifold.wasm`,
+          })
+          loadedModule.setup()
+          setManifoldJSModule(loadedModule)
+        } else {
+          throw new Error(
+            "ManifoldModule not found in dynamically imported module",
+          )
         }
-
-        // Use the imported ManifoldModule with CDN WASM
-        const loadedModule = (await (ManifoldModule as any)(
-          manifoldConfig,
-        )) as ManifoldToplevel
-        loadedModule.setup()
-        setManifoldJSModule(loadedModule)
       } catch (error) {
         console.error("Failed to load Manifold from CDN:", error)
         setManifoldLoadingError(
@@ -95,7 +90,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
       }
     }
 
-    loadManifoldWasmFromCDN()
+    loadManifoldFromCDN()
   }, [])
 
   const {
