@@ -69,7 +69,9 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
     const loadManifoldFromCDN = async () => {
       try {
         const manifoldURL = `${MANIFOLD_CDN_BASE_URL}/manifold.js`
-        const { default: ManifoldModule } = await import(manifoldURL)
+        const { default: ManifoldModule } = await import(
+          /* @vite-ignore */ manifoldURL
+        )
 
         if (ManifoldModule) {
           const loadedModule: ManifoldToplevel = await ManifoldModule({
