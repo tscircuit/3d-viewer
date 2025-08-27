@@ -23,8 +23,7 @@ import {
   TRACE_TEXTURE_RESOLUTION,
 } from "../geoms/constants"
 import { manifoldMeshToThreeGeometry } from "../utils/manifold-mesh-to-three-geometry"
-import type { ManifoldToplevel, Vec3 } from "manifold-3d/manifold.d.ts"
-import { Mesh } from "manifold-3d/manifold-encapsulated-types"
+import type { ManifoldToplevel } from "manifold-3d/manifold.d.ts"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
 import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
 import { processNonPlatedHolesForManifold } from "../utils/manifold/process-non-plated-holes"

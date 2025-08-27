@@ -29,7 +29,6 @@
   "dependencies": {
     "@jscad/regl-renderer": "^2.6.12",
     "@jscad/stl-serializer": "^2.1.20",
-    "manifold-3d": "3.1.0",
     "three": "^0.165.0",
     "three-stdlib": "^2.36.0",
     "troika-three-text": "^0.52.4"
@@ -64,6 +63,7 @@
     "jscad-electronics": "^0.0.33",
     "jscad-planner": "^0.0.13",
     "jsdom": "^26.0.0",
+    "manifold-3d": "^3.2.1",
     "react-use-gesture": "^9.1.3",
     "semver": "^7.7.0",
     "strip-ansi": "^7.1.0",
