@@ -26,6 +26,10 @@ export const JscadModel = ({
   const { threeGeom, material } = useMemo(() => {
     const jscadObject = executeJscadOperations(jscad as any, jscadPlan)
 
+    if (!jscadObject || (!jscadObject.polygons && !jscadObject.sides)) {
+      return { threeGeom: null, material: null }
+    }
+
     const threeGeom = convertCSGToThreeGeom(jscadObject)
 
     const material = new THREE.MeshStandardMaterial({

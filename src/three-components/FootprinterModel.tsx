@@ -29,8 +29,16 @@ export const FootprinterModel = ({
 
     const group = new THREE.Group()
 
-    for (const geom of geometries) {
-      const threeGeom = convertCSGToThreeGeom(geom)
+    for (const geomInfo of geometries.flat(Infinity) as any[]) {
+      const geom = geomInfo.geom
+      if (!geom || (!geom.polygons && !geom.sides)) {
+        continue
+      }
+      const color = new THREE.Color(geomInfo.color)
+      color.convertLinearToSRGB()
+      const geomWithColor = { ...geom, color: [color.r, color.g, color.b] }
+
+      const threeGeom = convertCSGToThreeGeom(geomWithColor)
       const material = new THREE.MeshStandardMaterial({
         vertexColors: true,
         side: THREE.DoubleSide,
