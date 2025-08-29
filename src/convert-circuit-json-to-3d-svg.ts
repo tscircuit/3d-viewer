@@ -95,12 +95,14 @@ export async function convertCircuitJsonTo3dSvg(
   const boardGeom = createBoardGeomFromCircuitJson(circuitJson)
   if (boardGeom) {
     for (const geom of boardGeom) {
-      const geometry = createGeometryFromPolygons(geom.polygons)
+      const g = geom as any
+      if (!g.polygons || g.polygons.length === 0) continue
+      const geometry = createGeometryFromPolygons(g.polygons)
       const material = new THREE.MeshStandardMaterial({
         color: new THREE.Color(
-          geom.color?.[0] ?? 0,
-          geom.color?.[1] ?? 0,
-          geom.color?.[2] ?? 0,
+          g.color?.[0] ?? 0,
+          g.color?.[1] ?? 0,
+          g.color?.[2] ?? 0,
         ),
         metalness: 0.1,
         roughness: 0.8,

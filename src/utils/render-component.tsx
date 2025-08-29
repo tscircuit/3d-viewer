@@ -43,30 +43,32 @@ export async function renderComponent(
       jscad as any,
       component.model_jscad,
     )
-    const threeGeom = convertCSGToThreeGeom(jscadObject)
-    const material = new THREE.MeshStandardMaterial({
-      color: 0x888888,
-      metalness: 0.5,
-      roughness: 0.5,
-      side: THREE.DoubleSide,
-    })
-    const mesh = new THREE.Mesh(threeGeom, material)
+    if (jscadObject && (jscadObject.polygons || jscadObject.sides)) {
+      const threeGeom = convertCSGToThreeGeom(jscadObject)
+      const material = new THREE.MeshStandardMaterial({
+        color: 0x888888,
+        metalness: 0.5,
+        roughness: 0.5,
+        side: THREE.DoubleSide,
+      })
+      const mesh = new THREE.Mesh(threeGeom, material)
 
-    if (component.position) {
-      mesh.position.set(
-        component.position.x ?? 0,
-        component.position.y ?? 0,
-        (component.position.z ?? 0) + 0.5,
-      )
+      if (component.position) {
+        mesh.position.set(
+          component.position.x ?? 0,
+          component.position.y ?? 0,
+          (component.position.z ?? 0) + 0.5,
+        )
+      }
+      if (component.rotation) {
+        mesh.rotation.set(
+          THREE.MathUtils.degToRad(component.rotation.x ?? 0),
+          THREE.MathUtils.degToRad(component.rotation.y ?? 0),
+          THREE.MathUtils.degToRad(component.rotation.z ?? 0),
+        )
+      }
+      scene.add(mesh)
     }
-    if (component.rotation) {
-      mesh.rotation.set(
-        THREE.MathUtils.degToRad(component.rotation.x ?? 0),
-        THREE.MathUtils.degToRad(component.rotation.y ?? 0),
-        THREE.MathUtils.degToRad(component.rotation.z ?? 0),
-      )
-    }
-    scene.add(mesh)
     return
   }
 
@@ -77,10 +79,19 @@ export async function renderComponent(
     )
 
     // Process each operation from the footprinter
-    for (const geom of geometries) {
-      const threeGeom = convertCSGToThreeGeom(geom)
+    for (const geomInfo of geometries.flat(Infinity) as any[]) {
+      const geom = geomInfo.geom
+      if (!geom || (!geom.polygons && !geom.sides)) {
+        continue
+      }
+
+      const color = new THREE.Color(geomInfo.color)
+      color.convertLinearToSRGB()
+      const geomWithColor = { ...geom, color: [color.r, color.g, color.b] }
+
+      const threeGeom = convertCSGToThreeGeom(geomWithColor)
       const material = new THREE.MeshStandardMaterial({
-        color: 0x444444,
+        vertexColors: true,
         metalness: 0.2,
         roughness: 0.8,
         side: THREE.DoubleSide,
