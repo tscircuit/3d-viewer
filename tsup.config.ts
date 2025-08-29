@@ -5,7 +5,7 @@ export default defineConfig({
   platform: "neutral",
   format: "esm",
   dts: true,
-  external: ["react", "react-dom", "jscad-fiber"],
+  external: ["react", "react-dom"],
   bundle: true,
   splitting: true,
   clean: true,

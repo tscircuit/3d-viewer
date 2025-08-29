@@ -1,14 +1,13 @@
 import jscad from "@jscad/modeling"
 import type { AnyCircuitElement } from "circuit-json"
-import { Footprinter3d } from "jscad-electronics"
-import { convertCSGToThreeGeom } from "jscad-fiber/three"
-import { createJSCADRenderer } from "jscad-fiber"
-import { executeJscadOperations, jscadPlanner } from "jscad-planner"
+import {
+  convertCSGToThreeGeom,
+  getJscadModelForFootprint,
+} from "jscad-electronics/vanilla"
+import { executeJscadOperations } from "jscad-planner"
 import * as THREE from "three"
 import { load3DModel } from "./load-model"
 import type { CadComponent } from "circuit-json"
-
-const { createJSCADRoot } = createJSCADRenderer(jscadPlanner as any)
 
 export async function renderComponent(
   component: CadComponent,
@@ -73,14 +72,13 @@ export async function renderComponent(
 
   // Handle footprints
   if (component.footprinter_string) {
-    const jscadOperations: any[] = []
-    const root = createJSCADRoot(jscadOperations)
-    root.render(<Footprinter3d footprint={component.footprinter_string} />)
+    const { geometries } = getJscadModelForFootprint(
+      component.footprinter_string,
+    )
 
     // Process each operation from the footprinter
-    for (const operation of jscadOperations) {
-      const jscadObject = executeJscadOperations(jscad as any, operation)
-      const threeGeom = convertCSGToThreeGeom(jscadObject)
+    for (const geom of geometries) {
+      const threeGeom = convertCSGToThreeGeom(geom)
       const material = new THREE.MeshStandardMaterial({
         color: 0x444444,
         metalness: 0.2,
