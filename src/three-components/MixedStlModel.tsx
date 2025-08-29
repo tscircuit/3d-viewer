@@ -41,6 +41,14 @@ export function MixedStlModel({
   useEffect(() => {
     if (!rootObject || !model) return
 
+    rootObject.add(model)
+    return () => {
+      rootObject.remove(model)
+    }
+  }, [rootObject, model])
+
+  useEffect(() => {
+    if (!model) return
     if (position) {
       if (Array.isArray(position)) {
         model.position.fromArray(position)
@@ -55,12 +63,15 @@ export function MixedStlModel({
         model.rotation.copy(rotation as THREE.Euler)
       }
     }
-
-    rootObject.add(model)
-    return () => {
-      rootObject.remove(model)
-    }
-  }, [rootObject, model, position, rotation])
+  }, [
+    model,
+    Array.isArray(position) ? position[0] : (position as THREE.Vector3)?.x,
+    Array.isArray(position) ? position[1] : (position as THREE.Vector3)?.y,
+    Array.isArray(position) ? position[2] : (position as THREE.Vector3)?.z,
+    Array.isArray(rotation) ? rotation[0] : (rotation as THREE.Euler)?.x,
+    Array.isArray(rotation) ? rotation[1] : (rotation as THREE.Euler)?.y,
+    Array.isArray(rotation) ? rotation[2] : (rotation as THREE.Euler)?.z,
+  ])
 
   if (obj instanceof Error) {
     throw obj

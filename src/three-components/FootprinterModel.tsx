@@ -44,15 +44,25 @@ export const FootprinterModel = ({
 
   useEffect(() => {
     if (!group || !rootObject) return
-
-    if (positionOffset) group.position.fromArray(positionOffset)
-    if (rotationOffset) group.rotation.fromArray(rotationOffset)
-
     rootObject.add(group)
     return () => {
       rootObject.remove(group)
     }
-  }, [rootObject, group, positionOffset, rotationOffset])
+  }, [rootObject, group])
+
+  useEffect(() => {
+    if (!group) return
+    if (positionOffset) group.position.fromArray(positionOffset)
+    if (rotationOffset) group.rotation.fromArray(rotationOffset)
+  }, [
+    group,
+    positionOffset?.[0],
+    positionOffset?.[1],
+    positionOffset?.[2],
+    rotationOffset?.[0],
+    rotationOffset?.[1],
+    rotationOffset?.[2],
+  ])
 
   useEffect(() => {
     if (!group) return

@@ -42,15 +42,25 @@ export const JscadModel = ({
 
   useEffect(() => {
     if (!mesh || !rootObject) return
-
-    if (positionOffset) mesh.position.fromArray(positionOffset)
-    if (rotationOffset) mesh.rotation.fromArray(rotationOffset)
-
     rootObject.add(mesh)
     return () => {
       rootObject.remove(mesh)
     }
-  }, [rootObject, mesh, positionOffset, rotationOffset])
+  }, [rootObject, mesh])
+
+  useEffect(() => {
+    if (!mesh) return
+    if (positionOffset) mesh.position.fromArray(positionOffset)
+    if (rotationOffset) mesh.rotation.fromArray(rotationOffset)
+  }, [
+    mesh,
+    positionOffset?.[0],
+    positionOffset?.[1],
+    positionOffset?.[2],
+    rotationOffset?.[0],
+    rotationOffset?.[1],
+    rotationOffset?.[2],
+  ])
 
   useMemo(() => {
     if (!material) return
