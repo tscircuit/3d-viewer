@@ -1,7 +1,6 @@
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement } from "circuit-json"
-import { Footprinter3d } from "jscad-electronics"
 import type * as React from "react"
 import { forwardRef, useCallback, useMemo, useState } from "react"
 import type * as THREE from "three"

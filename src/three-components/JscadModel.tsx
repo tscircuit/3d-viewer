@@ -1,7 +1,7 @@
 import type { JscadOperation } from "jscad-planner"
 import { executeJscadOperations } from "jscad-planner"
 import jscad from "@jscad/modeling"
-import { convertCSGToThreeGeom } from "jscad-fiber/three"
+import { convertCSGToThreeGeom } from "jscad-electronics/vanilla"
 import * as THREE from "three"
 import { useMemo, useEffect } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"

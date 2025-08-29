@@ -6,8 +6,7 @@
       "packagePatterns": ["*"],
       "excludePackagePatterns": [
         "@tscircuit/*",
-        "jscad-planner",
-        "jscad-fiber"
+        "jscad-planner"
       ],
       "enabled": false
     },

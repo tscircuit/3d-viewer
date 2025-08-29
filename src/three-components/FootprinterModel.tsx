@@ -1,10 +1,11 @@
-import { Footprinter3d } from "jscad-electronics"
-import { createJSCADRenderer } from "jscad-fiber"
-import { jscadPlanner } from "jscad-planner"
-import { useMemo } from "react"
-import { JscadModel } from "./JscadModel"
-
-const { createJSCADRoot } = createJSCADRenderer(jscadPlanner as any)
+import {
+  convertCSGToThreeGeom,
+  getJscadModelForFootprint,
+} from "jscad-electronics/vanilla"
+import { useMemo, useEffect } from "react"
+import * as THREE from "three"
+import { useThree } from "src/react-three/ThreeContext"
+import ContainerWithTooltip from "src/ContainerWithTooltip"
 
 export const FootprinterModel = ({
   positionOffset,
@@ -21,30 +22,65 @@ export const FootprinterModel = ({
   onUnhover: () => void
   isHovered: boolean
 }) => {
-  const jscadOperations = useMemo(() => {
+  const { rootObject } = useThree()
+  const group = useMemo(() => {
     if (!footprint) return null
-    const jscadOperations: any[] = []
-    const root = createJSCADRoot(jscadOperations)
-    root.render(<Footprinter3d footprint={footprint} />)
-    return jscadOperations
+    const { geometries } = getJscadModelForFootprint(footprint)
+
+    const group = new THREE.Group()
+
+    for (const geom of geometries) {
+      const threeGeom = convertCSGToThreeGeom(geom)
+      const material = new THREE.MeshStandardMaterial({
+        vertexColors: true,
+        side: THREE.DoubleSide,
+      })
+      const mesh = new THREE.Mesh(threeGeom, material)
+      group.add(mesh)
+    }
+
+    return group
   }, [footprint])
 
-  if (!jscadOperations) return null
+  useEffect(() => {
+    if (!group || !rootObject) return
+
+    if (positionOffset) group.position.fromArray(positionOffset)
+    if (rotationOffset) group.rotation.fromArray(rotationOffset)
+
+    rootObject.add(group)
+    return () => {
+      rootObject.remove(group)
+    }
+  }, [rootObject, group, positionOffset, rotationOffset])
+
+  useEffect(() => {
+    if (!group) return
+    group.traverse((child) => {
+      if (
+        child instanceof THREE.Mesh &&
+        child.material instanceof THREE.MeshStandardMaterial
+      ) {
+        if (isHovered) {
+          child.material.emissive.setHex(0x0000ff)
+          child.material.emissiveIntensity = 0.2
+        } else {
+          child.material.emissiveIntensity = 0
+        }
+      }
+    })
+  }, [isHovered, group])
+
+  if (!group) return null
 
   return (
-    <>
-      {jscadOperations.map((operation, index) => (
-        <JscadModel
-          // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-          key={index}
-          positionOffset={positionOffset}
-          rotationOffset={rotationOffset}
-          jscadPlan={operation}
-          onHover={onHover}
-          onUnhover={onUnhover}
-          isHovered={isHovered}
-        />
-      ))}
-    </>
+    <ContainerWithTooltip
+      isHovered={isHovered}
+      onHover={onHover}
+      onUnhover={onUnhover}
+      object={group}
+    >
+      {/* group is now added imperatively */}
+    </ContainerWithTooltip>
   )
 }
