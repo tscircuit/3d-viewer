@@ -10,6 +10,7 @@ import React, {
 import * as THREE from "three"
 import { ThreeContext, ThreeContextState } from "./ThreeContext"
 import { HoverProvider } from "./HoverContext"
+import { removeExistingCanvases } from "./remove-existing-canvases"
 
 interface CanvasProps {
   children: React.ReactNode
@@ -54,6 +55,8 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
 
     useEffect(() => {
       if (!mountRef.current) return
+
+      removeExistingCanvases(mountRef.current)
 
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
       renderer.setSize(
