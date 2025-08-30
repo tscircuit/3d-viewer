@@ -14,6 +14,12 @@ import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
 import { createTextureMeshes } from "./utils/manifold/create-three-texture-meshes"
 
+declare global {
+  interface Window {
+    ManifoldModule: any
+  }
+}
+
 const BoardMeshes = ({
   geometryMeshes,
   textureMeshes,
@@ -46,7 +52,7 @@ type CadViewerManifoldProps = {
   | { circuitJson?: never; children: React.ReactNode }
 )
 
-const MANIFOLD_CDN_BASE_URL = "https://cdn.jsdelivr.net/npm/manifold-3d@3.1.1"
+const MANIFOLD_CDN_BASE_URL = "https://cdn.jsdelivr.net/npm/manifold-3d@3.2.1"
 
 const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   circuitJson: circuitJsonProp,
@@ -66,33 +72,64 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   >(null)
 
   useEffect(() => {
-    const loadManifoldFromCDN = async () => {
+    const initManifold = async (ManifoldModule: any) => {
       try {
-        const manifoldURL = `${MANIFOLD_CDN_BASE_URL}/manifold.js`
-        const { default: ManifoldModule } = await import(
-          /* @vite-ignore */ manifoldURL
-        )
-
-        if (ManifoldModule) {
-          const loadedModule: ManifoldToplevel = await ManifoldModule({
-            locateFile: () => `${MANIFOLD_CDN_BASE_URL}/manifold.wasm`,
-          })
-          loadedModule.setup()
-          setManifoldJSModule(loadedModule)
-        } else {
-          throw new Error(
-            "ManifoldModule not found in dynamically imported module",
-          )
-        }
+        const loadedModule: ManifoldToplevel = await ManifoldModule()
+        loadedModule.setup()
+        setManifoldJSModule(loadedModule)
       } catch (error) {
-        console.error("Failed to load Manifold from CDN:", error)
+        console.error("Failed to initialize Manifold:", error)
         setManifoldLoadingError(
-          `Failed to load Manifold module: ${error instanceof Error ? error.message : "Unknown error"}`,
+          `Failed to initialize Manifold: ${error instanceof Error ? error.message : "Unknown error"}`,
         )
       }
     }
 
-    loadManifoldFromCDN()
+    if (window.ManifoldModule) {
+      initManifold(window.ManifoldModule)
+      return
+    }
+
+    const eventName = "manifoldLoaded"
+    const handleLoad = () => {
+      if (window.ManifoldModule) {
+        initManifold(window.ManifoldModule)
+      } else {
+        const errText = "ManifoldModule not found on window after script load."
+        console.error(errText)
+        setManifoldLoadingError(errText)
+      }
+    }
+
+    window.addEventListener(eventName, handleLoad, { once: true })
+
+    const script = document.createElement("script")
+    script.type = "module"
+    script.innerHTML = `
+try {
+  const { default: ManifoldModule } = await import('${MANIFOLD_CDN_BASE_URL}/manifold.js');
+  window.ManifoldModule = ManifoldModule;
+} catch (e) {
+  console.error('Error importing manifold in dynamic script:', e);
+} finally {
+  window.dispatchEvent(new CustomEvent('${eventName}'));
+}
+    `.trim()
+
+    const scriptError = (err: any) => {
+      const errText = "Failed to load Manifold loader script."
+      console.error(errText, err)
+      setManifoldLoadingError(errText)
+      window.removeEventListener(eventName, handleLoad)
+    }
+
+    script.addEventListener("error", scriptError)
+    document.body.appendChild(script)
+
+    return () => {
+      window.removeEventListener(eventName, handleLoad)
+      script.removeEventListener("error", scriptError)
+    }
   }, [])
 
   const {
