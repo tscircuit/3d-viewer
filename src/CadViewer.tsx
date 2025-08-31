@@ -1,10 +1,12 @@
-import { useState, useCallback, useRef, useEffect } from "react"
+import { useState, useCallback, useRef, useEffect, forwardRef } from "react"
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
+import { useSaveGltfAs } from "./hooks/exporter/gltf"
 import packageJson from "../package.json"
+import type * as THREE from "three"
 
-export const CadViewer = (props: any) => {
+export const CadViewer = forwardRef<THREE.Object3D, any>((props, ref) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [autoRotate, setAutoRotate] = useState(true)
@@ -18,10 +20,18 @@ export const CadViewer = (props: any) => {
     setMenuVisible,
   } = useContextMenu({ containerRef })
 
+  // GLTF export functionality
+  const [sceneRef, saveGltfAs] = useSaveGltfAs()
+
+  // Forward the ref to the child component
+  const forwardRef = ref || sceneRef
+
   const autoRotateUserToggledRef = useRef(autoRotateUserToggled)
   autoRotateUserToggledRef.current = autoRotateUserToggled
 
   const handleUserInteraction = useCallback(() => {
+    // Only stop auto-rotation if it wasn't user-toggled and it's not a right-click
+    // Right-clicks are handled by the context menu and shouldn't stop auto-rotation
     if (!autoRotateUserToggledRef.current) {
       setAutoRotate(false)
     }
@@ -36,6 +46,11 @@ export const CadViewer = (props: any) => {
     setEngine(newEngine)
     setMenuVisible(false)
   }
+
+  const handleDownloadGltf = useCallback(() => {
+    saveGltfAs("pcb.glb")
+    setMenuVisible(false)
+  }, [saveGltfAs, setMenuVisible])
 
   useEffect(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
@@ -62,15 +77,21 @@ export const CadViewer = (props: any) => {
       {engine === "jscad" ? (
         <CadViewerJscad
           {...props}
+          ref={forwardRef}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
-        />
+        >
+          {props.children}
+        </CadViewerJscad>
       ) : (
         <CadViewerManifold
           {...props}
+          ref={forwardRef}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
-        />
+        >
+          {props.children}
+        </CadViewerManifold>
       )}
       <div
         style={{
@@ -166,6 +187,26 @@ export const CadViewer = (props: any) => {
           </div>
           <div
             style={{
+              padding: "12px 18px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              color: "#f5f6fa",
+              fontWeight: 500,
+              borderRadius: 6,
+              transition: "background 0.1s",
+            }}
+            onClick={handleDownloadGltf}
+            onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
+            onMouseOut={(e) =>
+              (e.currentTarget.style.background = "transparent")
+            }
+          >
+            Download GLTF
+          </div>
+          <div
+            style={{
               display: "flex",
               justifyContent: "center",
               padding: "8px 0",
@@ -188,4 +229,4 @@ export const CadViewer = (props: any) => {
       )}
     </div>
   )
-}
+})

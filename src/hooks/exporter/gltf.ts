@@ -1,7 +1,7 @@
 import type * as React from "react"
 import type * as THREE from "three"
 import { GLTFExporter, type GLTFExporterOptions } from "three-stdlib"
-import { useEffect, useState, useMemo, useCallback } from "react"
+import { useEffect, useState, useMemo, useCallback, useRef } from "react"
 
 type Options = Omit<
   GLTFExporterOptions,
@@ -16,27 +16,38 @@ export function useSaveGltfAs(
 ] {
   const parse = useParser(options)
   const link = useMemo(() => document.createElement("a"), [])
+  const instanceRef = useRef<THREE.Object3D | null>(null)
+
   const saveAs = async (filename?: string) => {
     const name = filename ?? options.filename ?? ""
     if (options.binary == null) options.binary = name.endsWith(".glb")
-    const url = await parse(instance!)
-    link.download = name
-    link.href = url
-    link.dispatchEvent(new MouseEvent("click"))
-    URL.revokeObjectURL(url)
+
+    if (!instanceRef.current) {
+      console.error("No 3D object available for export")
+      return
+    }
+
+    try {
+      const url = await parse(instanceRef.current)
+      link.download = name
+      link.href = url
+      link.dispatchEvent(new MouseEvent("click"))
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error("Failed to export GLTF:", error)
+    }
   }
 
   useEffect(
     () => () => {
       link.remove()
-      instance = null
+      instanceRef.current = null
     },
     [],
   )
 
-  let instance: THREE.Object3D | null
   const ref = useCallback((obj3D: THREE.Object3D | null) => {
-    instance = obj3D!
+    instanceRef.current = obj3D
   }, [])
 
   return [ref, saveAs]
@@ -52,10 +63,16 @@ export function useExportGltfUrl(
   const parse = useParser(options)
   const [url, setUrl] = useState<string>()
   const [error, setError] = useState<ErrorEvent>()
+  const instanceRef = useRef<THREE.Object3D | null>(null)
+
   const ref = useCallback(
-    (instance: THREE.Object3D | null) =>
-      parse(instance!).then(setUrl).catch(setError),
-    [],
+    (instance: THREE.Object3D | null) => {
+      instanceRef.current = instance
+      if (instance) {
+        parse(instance).then(setUrl).catch(setError)
+      }
+    },
+    [parse],
   )
   useEffect(() => () => URL.revokeObjectURL(url!), [url])
   return [ref, url, error]

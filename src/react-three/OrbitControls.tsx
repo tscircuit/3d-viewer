@@ -53,9 +53,17 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
 
   useEffect(() => {
     if (!controls || !onStart) return
-    controls.addEventListener("start", onStart)
+
+    const handleStart = (event: any) => {
+      // Don't trigger onStart for right-clicks (button 2)
+      if (event.button !== 2) {
+        onStart()
+      }
+    }
+
+    controls.addEventListener("start", handleStart)
     return () => {
-      controls.removeEventListener("start", onStart)
+      controls.removeEventListener("start", handleStart)
     }
   }, [controls, onStart])
 

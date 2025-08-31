@@ -48,3 +48,29 @@ export const SaveButton = () => {
     </>
   )
 }
+
+export const RightClickMenu = () => {
+  return (
+    <div style={{ width: "100vw", height: "100vh" }}>
+      <CadViewer>
+        <board width="10mm" height="8mm">
+          <capacitor
+            capacitance="1000pF"
+            footprint="0402"
+            name="C1"
+            pcbX="2mm"
+            pcbY="2mm"
+          />
+          <resistor
+            resistance="10kOhm"
+            footprint="0402"
+            name="R1"
+            pcbX="6mm"
+            pcbY="4mm"
+          />
+          <chip name="U1" footprint="soic8" pcbX="4mm" pcbY="6mm" />
+        </board>
+      </CadViewer>
+    </div>
+  )
+}
