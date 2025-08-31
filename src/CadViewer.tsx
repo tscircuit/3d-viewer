@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react"
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
+import { useGlobalDownloadGltf } from "./hooks/useGlobalDownloadGltf"
 import packageJson from "../package.json"
 
 export const CadViewer = (props: any) => {
@@ -31,6 +32,8 @@ export const CadViewer = (props: any) => {
     setAutoRotate((prev) => !prev)
     setAutoRotateUserToggled(true)
   }, [])
+
+  const downloadGltf = useGlobalDownloadGltf()
 
   const handleMenuClick = (newEngine: "jscad" | "manifold") => {
     setEngine(newEngine)
@@ -163,6 +166,29 @@ export const CadViewer = (props: any) => {
           >
             <span style={{ marginRight: 8 }}>{autoRotate ? "✔" : ""}</span>
             Auto rotate
+          </div>
+          <div
+            style={{
+              padding: "12px 18px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              color: "#f5f6fa",
+              fontWeight: 500,
+              borderRadius: 6,
+              transition: "background 0.1s",
+            }}
+            onClick={() => {
+              downloadGltf()
+              setMenuVisible(false)
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
+            onMouseOut={(e) =>
+              (e.currentTarget.style.background = "transparent")
+            }
+          >
+            Download GLTF
           </div>
           <div
             style={{

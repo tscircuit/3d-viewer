@@ -12,6 +12,12 @@ import { ThreeContext, ThreeContextState } from "./ThreeContext"
 import { HoverProvider } from "./HoverContext"
 import { removeExistingCanvases } from "./remove-existing-canvases"
 
+declare global {
+  interface Window {
+    __TSCIRCUIT_THREE_OBJECT?: THREE.Object3D
+  }
+}
+
 interface CanvasProps {
   children: React.ReactNode
   scene?: Record<string, any>
@@ -85,6 +91,7 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
       camera.lookAt(0, 0, 0)
 
       scene.add(rootObject.current)
+      window.__TSCIRCUIT_THREE_OBJECT = rootObject.current
 
       setContextState({
         scene,
@@ -128,6 +135,9 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
         }
         renderer.dispose()
         scene.remove(rootObject.current)
+        if (window.__TSCIRCUIT_THREE_OBJECT === rootObject.current) {
+          window.__TSCIRCUIT_THREE_OBJECT = undefined
+        }
       }
     }, [scene, addFrameListener, removeFrameListener])
 
