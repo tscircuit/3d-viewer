@@ -20,9 +20,17 @@ export const Error3d = ({
   >(null)
 
   const handleHover = useCallback((e: any) => {
-    if (e?.mousePosition) {
+    const pos = Array.isArray(e?.mousePosition)
+      ? e.mousePosition
+      : Array.isArray(e)
+        ? e
+        : e?.point
+          ? [e.point.x, e.point.y, e.point.z]
+          : null
+
+    if (pos) {
       setIsHovered(true)
-      setHoverPosition(e.mousePosition)
+      setHoverPosition(pos as [number, number, number])
     } else {
       setIsHovered(false)
       setHoverPosition(null)

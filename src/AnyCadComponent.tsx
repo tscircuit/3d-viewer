@@ -23,9 +23,18 @@ export const AnyCadComponent = ({
   >(null)
 
   const handleHover = useCallback((e: any) => {
-    if (e?.mousePosition) {
+    // Support different event payload shapes to keep the tooltip working
+    const pos = Array.isArray(e?.mousePosition)
+      ? e.mousePosition
+      : Array.isArray(e)
+        ? e
+        : e?.point
+          ? [e.point.x, e.point.y, e.point.z]
+          : null
+
+    if (pos) {
       setIsHovered(true)
-      setHoverPosition(e.mousePosition)
+      setHoverPosition(pos as [number, number, number])
     } else {
       // If event doesn't have mousePosition, maybe keep previous hover state or clear it
       // For now, let's clear it if the event structure is unexpected
