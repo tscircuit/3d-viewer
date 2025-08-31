@@ -24,7 +24,7 @@ export const CadViewer = forwardRef<THREE.Object3D, any>((props, ref) => {
   const [sceneRef, saveGltfAs] = useSaveGltfAs()
 
   // Forward the ref to the child component
-  const forwardRef = ref || sceneRef
+  const effectiveRef = ref || sceneRef
 
   const autoRotateUserToggledRef = useRef(autoRotateUserToggled)
   autoRotateUserToggledRef.current = autoRotateUserToggled
@@ -77,7 +77,7 @@ export const CadViewer = forwardRef<THREE.Object3D, any>((props, ref) => {
       {engine === "jscad" ? (
         <CadViewerJscad
           {...props}
-          ref={forwardRef}
+          ref={effectiveRef}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
         >
@@ -86,7 +86,7 @@ export const CadViewer = forwardRef<THREE.Object3D, any>((props, ref) => {
       ) : (
         <CadViewerManifold
           {...props}
-          ref={forwardRef}
+          ref={effectiveRef}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
         >
