@@ -2,7 +2,7 @@ import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import { ManifoldToplevel } from "manifold-3d"
 import type React from "react"
-import { forwardRef, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import type * as THREE from "three"
 import { useThree } from "./react-three/ThreeContext"
 import { AnyCadComponent } from "./AnyCadComponent"
@@ -54,66 +54,58 @@ type CadViewerManifoldProps = {
 
 const MANIFOLD_CDN_BASE_URL = "https://cdn.jsdelivr.net/npm/manifold-3d@3.2.1"
 
-const CadViewerManifold = forwardRef<
-  THREE.Object3D,
-  React.PropsWithChildren<CadViewerManifoldProps>
->(
-  (
-    {
-      circuitJson: circuitJsonProp,
-      autoRotateDisabled,
-      clickToInteractEnabled,
-      onUserInteraction,
-      children,
-    },
-    ref,
-  ) => {
-    const childrenCircuitJson = useConvertChildrenToSoup(children)
-    const circuitJson = useMemo(() => {
-      return circuitJsonProp ?? childrenCircuitJson
-    }, [circuitJsonProp, childrenCircuitJson])
+const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
+  circuitJson: circuitJsonProp,
+  autoRotateDisabled,
+  clickToInteractEnabled,
+  onUserInteraction,
+  children,
+}) => {
+  const childrenCircuitJson = useConvertChildrenToSoup(children)
+  const circuitJson = useMemo(() => {
+    return circuitJsonProp ?? childrenCircuitJson
+  }, [circuitJsonProp, childrenCircuitJson])
 
-    const [manifoldJSModule, setManifoldJSModule] = useState<any | null>(null)
-    const [manifoldLoadingError, setManifoldLoadingError] = useState<
-      string | null
-    >(null)
+  const [manifoldJSModule, setManifoldJSModule] = useState<any | null>(null)
+  const [manifoldLoadingError, setManifoldLoadingError] = useState<
+    string | null
+  >(null)
 
-    useEffect(() => {
-      const initManifold = async (ManifoldModule: any) => {
-        try {
-          const loadedModule: ManifoldToplevel = await ManifoldModule()
-          loadedModule.setup()
-          setManifoldJSModule(loadedModule)
-        } catch (error) {
-          console.error("Failed to initialize Manifold:", error)
-          setManifoldLoadingError(
-            `Failed to initialize Manifold: ${error instanceof Error ? error.message : "Unknown error"}`,
-          )
-        }
+  useEffect(() => {
+    const initManifold = async (ManifoldModule: any) => {
+      try {
+        const loadedModule: ManifoldToplevel = await ManifoldModule()
+        loadedModule.setup()
+        setManifoldJSModule(loadedModule)
+      } catch (error) {
+        console.error("Failed to initialize Manifold:", error)
+        setManifoldLoadingError(
+          `Failed to initialize Manifold: ${error instanceof Error ? error.message : "Unknown error"}`,
+        )
       }
+    }
 
+    if (window.ManifoldModule) {
+      initManifold(window.ManifoldModule)
+      return
+    }
+
+    const eventName = "manifoldLoaded"
+    const handleLoad = () => {
       if (window.ManifoldModule) {
         initManifold(window.ManifoldModule)
-        return
+      } else {
+        const errText = "ManifoldModule not found on window after script load."
+        console.error(errText)
+        setManifoldLoadingError(errText)
       }
+    }
 
-      const eventName = "manifoldLoaded"
-      const handleLoad = () => {
-        if (window.ManifoldModule) {
-          initManifold(window.ManifoldModule)
-        } else {
-          const errText =
-            "ManifoldModule not found on window after script load."
-          console.error(errText)
-          setManifoldLoadingError(errText)
-        }
-      }
+    window.addEventListener(eventName, handleLoad, { once: true })
 
-      window.addEventListener(eventName, handleLoad, { once: true })
-
-      const script = document.createElement("script")
-      script.type = "module"
-      script.innerHTML = `
+    const script = document.createElement("script")
+    script.type = "module"
+    script.innerHTML = `
 try {
   const { default: ManifoldModule } = await import('${MANIFOLD_CDN_BASE_URL}/manifold.js');
   window.ManifoldModule = ManifoldModule;
@@ -124,121 +116,119 @@ try {
 }
     `.trim()
 
-      const scriptError = (err: any) => {
-        const errText = "Failed to load Manifold loader script."
-        console.error(errText, err)
-        setManifoldLoadingError(errText)
-        window.removeEventListener(eventName, handleLoad)
-      }
-
-      script.addEventListener("error", scriptError)
-      document.body.appendChild(script)
-
-      return () => {
-        window.removeEventListener(eventName, handleLoad)
-        script.removeEventListener("error", scriptError)
-      }
-    }, [])
-
-    const {
-      geoms,
-      textures,
-      pcbThickness,
-      error: builderError,
-      isLoading: builderIsLoading,
-      boardData,
-    } = useManifoldBoardBuilder(manifoldJSModule, circuitJson)
-
-    const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
-    const textureMeshes = useMemo(
-      () => createTextureMeshes(textures, boardData, pcbThickness),
-      [textures, boardData, pcbThickness],
-    )
-
-    const cadComponents = useMemo(
-      () => su(circuitJson).cad_component.list(),
-      [circuitJson],
-    )
-
-    const boardDimensions = useMemo(() => {
-      if (!boardData) return undefined
-      const { width = 0, height = 0 } = boardData
-      return { width, height }
-    }, [boardData])
-
-    const initialCameraPosition = useMemo(() => {
-      if (!boardData) return [5, 5, 5] as const
-      const { width = 0, height = 0 } = boardData
-      const safeWidth = Math.max(width, 1)
-      const safeHeight = Math.max(height, 1)
-      const largestDim = Math.max(safeWidth, safeHeight, 5)
-      return [largestDim * 0.75, largestDim * 0.75, largestDim * 0.75] as const
-    }, [boardData])
-
-    if (manifoldLoadingError) {
-      return (
-        <div
-          style={{
-            color: "red",
-            padding: "1em",
-            border: "1px solid red",
-            margin: "1em",
-          }}
-        >
-          Error: {manifoldLoadingError}
-        </div>
-      )
-    }
-    if (!manifoldJSModule) {
-      return <div style={{ padding: "1em" }}>Loading Manifold module...</div>
-    }
-    if (builderError) {
-      return (
-        <div
-          style={{
-            color: "red",
-            padding: "1em",
-            border: "1px solid red",
-            margin: "1em",
-          }}
-        >
-          Error: {builderError}
-        </div>
-      )
-    }
-    if (builderIsLoading) {
-      return <div style={{ padding: "1em" }}>Processing board geometry...</div>
+    const scriptError = (err: any) => {
+      const errText = "Failed to load Manifold loader script."
+      console.error(errText, err)
+      setManifoldLoadingError(errText)
+      window.removeEventListener(eventName, handleLoad)
     }
 
+    script.addEventListener("error", scriptError)
+    document.body.appendChild(script)
+
+    return () => {
+      window.removeEventListener(eventName, handleLoad)
+      script.removeEventListener("error", scriptError)
+    }
+  }, [])
+
+  const {
+    geoms,
+    textures,
+    pcbThickness,
+    error: builderError,
+    isLoading: builderIsLoading,
+    boardData,
+  } = useManifoldBoardBuilder(manifoldJSModule, circuitJson)
+
+  const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
+  const textureMeshes = useMemo(
+    () => createTextureMeshes(textures, boardData, pcbThickness),
+    [textures, boardData, pcbThickness],
+  )
+
+  const cadComponents = useMemo(
+    () => su(circuitJson).cad_component.list(),
+    [circuitJson],
+  )
+
+  const boardDimensions = useMemo(() => {
+    if (!boardData) return undefined
+    const { width = 0, height = 0 } = boardData
+    return { width, height }
+  }, [boardData])
+
+  const initialCameraPosition = useMemo(() => {
+    if (!boardData) return [5, 5, 5] as const
+    const { width = 0, height = 0 } = boardData
+    const safeWidth = Math.max(width, 1)
+    const safeHeight = Math.max(height, 1)
+    const largestDim = Math.max(safeWidth, safeHeight, 5)
+    return [largestDim * 0.75, largestDim * 0.75, largestDim * 0.75] as const
+  }, [boardData])
+
+  if (manifoldLoadingError) {
     return (
-      <CadViewerContainer
-        ref={ref}
-        initialCameraPosition={initialCameraPosition}
-        autoRotateDisabled={autoRotateDisabled}
-        clickToInteractEnabled={clickToInteractEnabled}
-        boardDimensions={boardDimensions}
-        onUserInteraction={onUserInteraction}
+      <div
+        style={{
+          color: "red",
+          padding: "1em",
+          border: "1px solid red",
+          margin: "1em",
+        }}
       >
-        <BoardMeshes
-          geometryMeshes={geometryMeshes}
-          textureMeshes={textureMeshes}
-        />
-        {cadComponents.map((cad_component: CadComponent) => (
-          <ThreeErrorBoundary
-            key={cad_component.cad_component_id}
-            fallback={({ error }) => (
-              <Error3d cad_component={cad_component} error={error} />
-            )}
-          >
-            <AnyCadComponent
-              cad_component={cad_component}
-              circuitJson={circuitJson}
-            />
-          </ThreeErrorBoundary>
-        ))}
-      </CadViewerContainer>
+        Error: {manifoldLoadingError}
+      </div>
     )
-  },
-)
+  }
+  if (!manifoldJSModule) {
+    return <div style={{ padding: "1em" }}>Loading Manifold module...</div>
+  }
+  if (builderError) {
+    return (
+      <div
+        style={{
+          color: "red",
+          padding: "1em",
+          border: "1px solid red",
+          margin: "1em",
+        }}
+      >
+        Error: {builderError}
+      </div>
+    )
+  }
+  if (builderIsLoading) {
+    return <div style={{ padding: "1em" }}>Processing board geometry...</div>
+  }
+
+  return (
+    <CadViewerContainer
+      initialCameraPosition={initialCameraPosition}
+      autoRotateDisabled={autoRotateDisabled}
+      clickToInteractEnabled={clickToInteractEnabled}
+      boardDimensions={boardDimensions}
+      onUserInteraction={onUserInteraction}
+    >
+      <BoardMeshes
+        geometryMeshes={geometryMeshes}
+        textureMeshes={textureMeshes}
+      />
+      {cadComponents.map((cad_component: CadComponent) => (
+        <ThreeErrorBoundary
+          key={cad_component.cad_component_id}
+          fallback={({ error }) => (
+            <Error3d cad_component={cad_component} error={error} />
+          )}
+        >
+          <AnyCadComponent
+            cad_component={cad_component}
+            circuitJson={circuitJson}
+          />
+        </ThreeErrorBoundary>
+      ))}
+    </CadViewerContainer>
+  )
+}
 
 export default CadViewerManifold

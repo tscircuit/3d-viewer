@@ -1,12 +1,10 @@
-import { useState, useCallback, useRef, useEffect, forwardRef } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
-import { useSaveGltfAs } from "./hooks/exporter/gltf"
 import packageJson from "../package.json"
-import type * as THREE from "three"
 
-export const CadViewer = forwardRef<THREE.Object3D, any>((props, ref) => {
+export const CadViewer = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [autoRotate, setAutoRotate] = useState(true)
@@ -20,31 +18,10 @@ export const CadViewer = forwardRef<THREE.Object3D, any>((props, ref) => {
     setMenuVisible,
   } = useContextMenu({ containerRef })
 
-  // GLTF export functionality
-  const [sceneRef, saveGltfAs] = useSaveGltfAs()
-
-  function useCombinedRefs<T>(...refs: (React.Ref<T> | undefined)[]) {
-    return useCallback(
-      (value: T) => {
-        refs.forEach((ref) => {
-          if (!ref) return
-          if (typeof ref === "function") ref(value)
-          else (ref as React.MutableRefObject<T | null>).current = value
-        })
-      },
-      [refs],
-    )
-  }
-
-  // Forward the ref to the child component
-  const mergedRef = useCombinedRefs(ref, sceneRef)
-
   const autoRotateUserToggledRef = useRef(autoRotateUserToggled)
   autoRotateUserToggledRef.current = autoRotateUserToggled
 
   const handleUserInteraction = useCallback(() => {
-    // Only stop auto-rotation if it wasn't user-toggled and it's not a right-click
-    // Right-clicks are handled by the context menu and shouldn't stop auto-rotation
     if (!autoRotateUserToggledRef.current) {
       setAutoRotate(false)
     }
@@ -59,11 +36,6 @@ export const CadViewer = forwardRef<THREE.Object3D, any>((props, ref) => {
     setEngine(newEngine)
     setMenuVisible(false)
   }
-
-  const handleDownloadGltf = useCallback(() => {
-    saveGltfAs("pcb.glb")
-    setMenuVisible(false)
-  }, [saveGltfAs, setMenuVisible])
 
   useEffect(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
@@ -90,21 +62,15 @@ export const CadViewer = forwardRef<THREE.Object3D, any>((props, ref) => {
       {engine === "jscad" ? (
         <CadViewerJscad
           {...props}
-          ref={mergedRef}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
-        >
-          {props.children}
-        </CadViewerJscad>
+        />
       ) : (
         <CadViewerManifold
           {...props}
-          ref={mergedRef}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
-        >
-          {props.children}
-        </CadViewerManifold>
+        />
       )}
       <div
         style={{
@@ -200,26 +166,6 @@ export const CadViewer = forwardRef<THREE.Object3D, any>((props, ref) => {
           </div>
           <div
             style={{
-              padding: "12px 18px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              color: "#f5f6fa",
-              fontWeight: 500,
-              borderRadius: 6,
-              transition: "background 0.1s",
-            }}
-            onClick={handleDownloadGltf}
-            onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
-            onMouseOut={(e) =>
-              (e.currentTarget.style.background = "transparent")
-            }
-          >
-            Download GLTF
-          </div>
-          <div
-            style={{
               display: "flex",
               justifyContent: "center",
               padding: "8px 0",
@@ -242,4 +188,4 @@ export const CadViewer = forwardRef<THREE.Object3D, any>((props, ref) => {
       )}
     </div>
   )
-})
+}
