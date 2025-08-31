@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react"
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
+import { useSaveGltfAs } from "./hooks"
 import packageJson from "../package.json"
 
 export const CadViewer = (props: any) => {
@@ -9,6 +10,7 @@ export const CadViewer = (props: any) => {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [autoRotate, setAutoRotate] = useState(true)
   const [autoRotateUserToggled, setAutoRotateUserToggled] = useState(false)
+  const [exportRef, saveGltfAs] = useSaveGltfAs()
 
   const {
     menuVisible,
@@ -61,12 +63,14 @@ export const CadViewer = (props: any) => {
     >
       {engine === "jscad" ? (
         <CadViewerJscad
+          ref={exportRef}
           {...props}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
         />
       ) : (
         <CadViewerManifold
+          ref={exportRef}
           {...props}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
@@ -139,6 +143,29 @@ export const CadViewer = (props: any) => {
             >
               {engine === "jscad" ? "experimental" : "default"}
             </span>
+          </div>
+          <div
+            style={{
+              padding: "12px 18px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              color: "#f5f6fa",
+              fontWeight: 500,
+              borderRadius: 6,
+              transition: "background 0.1s",
+            }}
+            onClick={() => {
+              saveGltfAs("model.gltf")
+              setMenuVisible(false)
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
+            onMouseOut={(e) =>
+              (e.currentTarget.style.background = "transparent")
+            }
+          >
+            Download GLTF
           </div>
           <div
             style={{
