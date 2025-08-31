@@ -34,12 +34,16 @@ export const Html: React.FC<HtmlProps> = ({ children, position, style }) => {
     const vector = new THREE.Vector3(...position)
     vector.project(camera)
 
-    const x = Math.round(((vector.x + 1) * renderer!.domElement.width) / 2)
-    const y = Math.round(((-vector.y + 1) * renderer!.domElement.height) / 2)
+    // Get canvas position and size
+    const rect = renderer.domElement.getBoundingClientRect()
+    // NDC [-1,1] to pixel coordinates within canvas
+    const x = Math.round(((vector.x + 1) / 2) * rect.width)
+    const y = Math.round(((-vector.y + 1) / 2) * rect.height)
 
+    // Position relative to the page, then offset by canvas position
     el.current.style.position = "absolute"
-    el.current.style.left = `${x}px`
-    el.current.style.top = `${y}px`
+    el.current.style.left = `${rect.left + x}px`
+    el.current.style.top = `${rect.top + y}px`
     el.current.style.pointerEvents = "none"
 
     if (style) {
