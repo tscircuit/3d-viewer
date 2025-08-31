@@ -84,7 +84,16 @@ export const CadViewer = forwardRef<THREE.Object3D, any>((props, ref) => {
     <div
       key={viewerKey}
       ref={containerRef}
-      style={{ width: "100%", height: "100%", position: "relative" }}
+      style={{
+        width: "100%",
+        height: "100%",
+        position: "relative",
+        userSelect: "none",
+        MozUserSelect: "none",
+        msUserSelect: "none",
+        WebkitUserSelect: "none",
+        WebkitTouchCallout: "none",
+      }}
       {...contextMenuEventHandlers}
     >
       {engine === "jscad" ? (
