@@ -74,3 +74,45 @@ export const RightClickMenu = () => {
     </div>
   )
 }
+
+import { useRef } from "react"
+export const RefForwarding = () => {
+  const ref = useRef<any>(null)
+
+  return (
+    <>
+      <button
+        onClick={() => {
+          if (ref.current) {
+            // eslint-disable-next-line no-console
+            console.log("CadViewer ref.current:", ref.current)
+          } else {
+            // eslint-disable-next-line no-console
+            console.log("CadViewer ref is null")
+          }
+        }}
+      >
+        Log CadViewer ref
+      </button>
+      <CadViewer ref={ref}>
+        <board width="10mm" height="8mm">
+          <capacitor
+            capacitance="1000pF"
+            footprint="0402"
+            name="C1"
+            pcbX="2mm"
+            pcbY="2mm"
+          />
+          <resistor
+            resistance="10kOhm"
+            footprint="0402"
+            name="R1"
+            pcbX="6mm"
+            pcbY="4mm"
+          />
+          <chip name="U1" footprint="soic8" pcbX="4mm" pcbY="6mm" />
+        </board>
+      </CadViewer>
+    </>
+  )
+}

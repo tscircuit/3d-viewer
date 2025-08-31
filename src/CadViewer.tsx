@@ -23,8 +23,21 @@ export const CadViewer = forwardRef<THREE.Object3D, any>((props, ref) => {
   // GLTF export functionality
   const [sceneRef, saveGltfAs] = useSaveGltfAs()
 
+  function useCombinedRefs<T>(...refs: (React.Ref<T> | undefined)[]) {
+    return useCallback(
+      (value: T) => {
+        refs.forEach((ref) => {
+          if (!ref) return
+          if (typeof ref === "function") ref(value)
+          else (ref as React.MutableRefObject<T | null>).current = value
+        })
+      },
+      [refs],
+    )
+  }
+
   // Forward the ref to the child component
-  const effectiveRef = ref || sceneRef
+  const mergedRef = useCombinedRefs(ref, sceneRef)
 
   const autoRotateUserToggledRef = useRef(autoRotateUserToggled)
   autoRotateUserToggledRef.current = autoRotateUserToggled
@@ -77,7 +90,7 @@ export const CadViewer = forwardRef<THREE.Object3D, any>((props, ref) => {
       {engine === "jscad" ? (
         <CadViewerJscad
           {...props}
-          ref={effectiveRef}
+          ref={mergedRef}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
         >
@@ -86,7 +99,7 @@ export const CadViewer = forwardRef<THREE.Object3D, any>((props, ref) => {
       ) : (
         <CadViewerManifold
           {...props}
-          ref={effectiveRef}
+          ref={mergedRef}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
         >
