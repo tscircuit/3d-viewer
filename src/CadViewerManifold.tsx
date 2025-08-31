@@ -17,6 +17,8 @@ import { createTextureMeshes } from "./utils/manifold/create-three-texture-meshe
 declare global {
   interface Window {
     ManifoldModule: any
+    MANIFOLD?: any
+    MANIFOLD_MODULE?: any
   }
 }
 
@@ -85,14 +87,20 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
       }
     }
 
-    if (window.ManifoldModule) {
+    const existingManifold =
+      window.ManifoldModule ?? window.MANIFOLD ?? window.MANIFOLD_MODULE
+    if (existingManifold) {
+      window.ManifoldModule = existingManifold
       initManifold(window.ManifoldModule)
       return
     }
 
     const eventName = "manifoldLoaded"
     const handleLoad = () => {
-      if (window.ManifoldModule) {
+      const loadedManifold =
+        window.ManifoldModule ?? window.MANIFOLD ?? window.MANIFOLD_MODULE
+      if (loadedManifold) {
+        window.ManifoldModule = loadedManifold
         initManifold(window.ManifoldModule)
       } else {
         const errText = "ManifoldModule not found on window after script load."
