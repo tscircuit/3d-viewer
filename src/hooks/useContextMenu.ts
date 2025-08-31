@@ -12,12 +12,26 @@ export const useContextMenu = ({ containerRef }: ContextMenuProps) => {
   })
   const menuRef = useRef<HTMLDivElement>(null)
   const interactionOriginPosRef = useRef<{ x: number; y: number } | null>(null)
+  const longPressTimeoutRef = useRef<number | null>(null)
+  const ignoreNextContextMenuRef = useRef(false)
+
+  const clearLongPressTimeout = () => {
+    if (longPressTimeoutRef.current !== null) {
+      clearTimeout(longPressTimeoutRef.current)
+      longPressTimeoutRef.current = null
+    }
+  }
 
   const handleContextMenu = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault()
       const eventX = typeof e.clientX === "number" ? e.clientX : 0
       const eventY = typeof e.clientY === "number" ? e.clientY : 0
+
+      if (ignoreNextContextMenuRef.current) {
+        ignoreNextContextMenuRef.current = false
+        return
+      }
 
       if (!interactionOriginPosRef.current) {
         return
@@ -42,19 +56,40 @@ export const useContextMenu = ({ containerRef }: ContextMenuProps) => {
     [setMenuPos, setMenuVisible],
   )
 
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length === 1) {
-      const touch = e.touches[0]
-      if (touch) {
-        interactionOriginPosRef.current = { x: touch.clientX, y: touch.clientY }
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (e.touches.length === 1) {
+        const touch = e.touches[0]
+        if (touch) {
+          interactionOriginPosRef.current = {
+            x: touch.clientX,
+            y: touch.clientY,
+          }
+          clearLongPressTimeout()
+          longPressTimeoutRef.current = window.setTimeout(() => {
+            if (!interactionOriginPosRef.current) return
+            if (containerRef.current) {
+              const rect = containerRef.current.getBoundingClientRect()
+              setMenuPos({
+                x: rect.left + rect.width / 2,
+                y: rect.top + rect.height / 2,
+              })
+              setMenuVisible(true)
+              ignoreNextContextMenuRef.current = true
+            }
+            interactionOriginPosRef.current = null
+          }, 600)
+        } else {
+          interactionOriginPosRef.current = null
+        }
       } else {
+        // If more than one touch (e.g., pinch), or zero touches, invalidate for context menu.
         interactionOriginPosRef.current = null
+        clearLongPressTimeout()
       }
-    } else {
-      // If more than one touch (e.g., pinch), or zero touches, invalidate for context menu.
-      interactionOriginPosRef.current = null
-    }
-  }, [])
+    },
+    [containerRef],
+  )
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!interactionOriginPosRef.current || e.touches.length !== 1) {
@@ -68,14 +103,17 @@ export const useContextMenu = ({ containerRef }: ContextMenuProps) => {
 
       if (dx > swipeThreshold || dy > swipeThreshold) {
         interactionOriginPosRef.current = null
+        clearLongPressTimeout()
       }
     } else {
       // If touch is undefined despite e.touches.length === 1, invalidate.
       interactionOriginPosRef.current = null
+      clearLongPressTimeout()
     }
   }, [])
 
   const handleTouchEnd = useCallback(() => {
+    clearLongPressTimeout()
     // Use a timeout to ensure that this runs after any potential click or context menu event
     // that might be triggered by the touch release.
     setTimeout(() => {
@@ -85,7 +123,7 @@ export const useContextMenu = ({ containerRef }: ContextMenuProps) => {
     }, 0)
   }, [])
 
-  const handleClickAway = useCallback((e: MouseEvent) => {
+  const handleClickAway = useCallback((e: MouseEvent | TouchEvent) => {
     const target = e.target as Node
     // If the menu is visible and the click is outside the menu, hide it.
     if (menuRef.current && !menuRef.current.contains(target)) {
@@ -96,7 +134,11 @@ export const useContextMenu = ({ containerRef }: ContextMenuProps) => {
   useEffect(() => {
     if (menuVisible) {
       document.addEventListener("mousedown", handleClickAway)
-      return () => document.removeEventListener("mousedown", handleClickAway)
+      document.addEventListener("touchstart", handleClickAway)
+      return () => {
+        document.removeEventListener("mousedown", handleClickAway)
+        document.removeEventListener("touchstart", handleClickAway)
+      }
     }
   }, [menuVisible, handleClickAway])
 
