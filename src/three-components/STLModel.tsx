@@ -5,11 +5,13 @@ import { useThree } from "src/react-three/ThreeContext"
 
 export function STLModel({
   stlUrl,
+  stlData,
   mtlUrl,
   color,
   opacity = 1,
 }: {
-  stlUrl: string
+  stlUrl?: string
+  stlData?: ArrayBuffer
   color?: any
   mtlUrl?: string
   opacity?: number
@@ -19,10 +21,22 @@ export function STLModel({
 
   useEffect(() => {
     const loader = new STLLoader()
-    loader.load(stlUrl, (geometry) => {
-      setGeom(geometry)
-    })
-  }, [stlUrl])
+    if (stlData) {
+      try {
+        const geometry = loader.parse(stlData)
+        setGeom(geometry)
+      } catch (e) {
+        console.error("Failed to parse STL data", e)
+        setGeom(null)
+      }
+      return
+    }
+    if (stlUrl) {
+      loader.load(stlUrl, (geometry) => {
+        setGeom(geometry)
+      })
+    }
+  }, [stlUrl, stlData])
 
   const mesh = useMemo(() => {
     if (!geom) return null
