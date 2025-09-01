@@ -46,7 +46,7 @@
     "@jscad/modeling": "^2.12.5",
     "@storybook/blocks": "9.0.0-alpha.17",
     "@storybook/react-vite": "^9.1.2",
-    "@tscircuit/circuit-json-util": "^0.0.66",
+    "@tscircuit/circuit-json-util": "^0.0.67",
     "@tscircuit/core": "^0.0.673",
     "@tscircuit/props": "^0.0.290",
     "@types/jsdom": "^21.1.7",
