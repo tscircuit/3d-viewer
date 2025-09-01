@@ -101,10 +101,10 @@ export const CadViewerJscad = forwardRef<
         boardDimensions={boardDimensions}
         onUserInteraction={onUserInteraction}
       >
-        {boardStls.map(({ stlUrl, color }, index) => (
+        {boardStls.map(({ stlData, color }, index) => (
           <STLModel
-            key={stlUrl}
-            stlUrl={stlUrl}
+            key={`board-${index - boardStls.length}`}
+            stlData={stlData}
             color={color}
             opacity={index === 0 ? 0.95 : 1}
           />

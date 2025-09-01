@@ -2,18 +2,7 @@ import { useState, useEffect } from "react"
 import stlSerializer from "@jscad/stl-serializer"
 import { Geom3 } from "@jscad/modeling/src/geometries/types"
 
-function blobToBase64Url(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      resolve(reader.result as string)
-    }
-    reader.onerror = reject
-    reader.readAsDataURL(blob)
-  })
-}
-
-type StlObj = { stlUrl: string; color: number[] }
+type StlObj = { stlData: ArrayBuffer; color: number[] }
 
 export const useStlsFromGeom = (
   geom: Geom3[] | Geom3 | null,
@@ -31,10 +20,11 @@ export const useStlsFromGeom = (
       const geometries = Array.isArray(geom) ? geom : [geom]
 
       const stlPromises = geometries.map(async (g) => {
-        const rawData = stlSerializer.serialize({ binary: true }, [g])
-        const blobData = new Blob(rawData)
-        const stlUrl = await blobToBase64Url(blobData)
-        return { stlUrl, color: g.color! }
+        const rawParts = stlSerializer.serialize({ binary: true }, [g])
+        // Serialize to a Blob then get a single ArrayBuffer for direct parsing
+        const blob = new Blob(rawParts)
+        const stlData = await blob.arrayBuffer()
+        return { stlData, color: g.color! }
       })
 
       try {
