@@ -25,6 +25,7 @@ export function processSmtPadsForManifold(
   circuitJson: AnyCircuitElement[],
   pcbThickness: number,
   manifoldInstancesForCleanup: any[],
+  holeUnion?: any,
 ): ProcessSmtPadsResult {
   const smtPadGeoms: Array<{
     key: string
@@ -51,8 +52,12 @@ export function processSmtPadsForManifold(
       // @ts-ignore
       const translatedPad = padManifoldOp.translate([pad.x, pad.y, zPos])
       manifoldInstancesForCleanup.push(translatedPad)
-      const threeGeom = manifoldMeshToThreeGeometry(translatedPad.getMesh())
-
+      let finalPadOp = translatedPad
+      if (holeUnion) {
+        finalPadOp = translatedPad.subtract(holeUnion)
+        manifoldInstancesForCleanup.push(finalPadOp)
+      }
+      const threeGeom = manifoldMeshToThreeGeometry(finalPadOp.getMesh())
       smtPadGeoms.push({
         key: `pad-${pad.pcb_smtpad_id || index}`,
         geometry: threeGeom,
