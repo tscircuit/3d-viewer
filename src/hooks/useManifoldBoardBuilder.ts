@@ -139,6 +139,7 @@ export const useManifoldBoardBuilder = (
 
       // --- Batch Process All Holes (non-plated, plated, vias) ---
       const allBoardDrills: any[] = []
+      let holeUnion: any | null = null
 
       // Process non-plated holes
       const { nonPlatedHoleBoardDrills } = processNonPlatedHolesForManifold(
@@ -172,9 +173,9 @@ export const useManifoldBoardBuilder = (
 
       // Batch subtract all hole drills from the board
       if (allBoardDrills.length > 0) {
-        const unionedDrills = Manifold.union(allBoardDrills)
-        manifoldInstancesForCleanup.current.push(unionedDrills)
-        const nextBoardAfterDrills = currentBoardOp.subtract(unionedDrills)
+        holeUnion = Manifold.union(allBoardDrills)
+        manifoldInstancesForCleanup.current.push(holeUnion)
+        const nextBoardAfterDrills = currentBoardOp.subtract(holeUnion)
         manifoldInstancesForCleanup.current.push(nextBoardAfterDrills)
         currentBoardOp = nextBoardAfterDrills
       }
@@ -218,6 +219,7 @@ export const useManifoldBoardBuilder = (
         circuitJson,
         currentPcbThickness,
         manifoldInstancesForCleanup.current,
+        holeUnion,
       )
       currentGeoms.smtPads = smtPadGeoms
 

@@ -55,10 +55,12 @@ type BuilderState =
 
 const buildStateOrder: BuilderState[] = [
   "initializing",
+  "processing_pads",
+
   "processing_plated_holes",
   "processing_holes",
   "processing_cutouts",
-  "processing_pads",
+
   "processing_traces",
   "processing_vias",
   "processing_silkscreen_text",
@@ -156,7 +158,7 @@ export class BoardGeomBuilder {
         center: [this.board.center.x, this.board.center.y, 0],
       })
     }
-    this.state = "processing_plated_holes"
+    this.state = "processing_pads"
     this.currentIndex = 0
   }
 
@@ -320,6 +322,9 @@ export class BoardGeomBuilder {
       if (!opts.dontCutBoard) {
         this.boardGeom = subtract(this.boardGeom, cyGeom)
       }
+      this.padGeoms = this.padGeoms.map((pg) =>
+        colorize(colors.copper, subtract(pg, cyGeom)),
+      )
 
       const platedHoleGeom = platedHole(ph, this.ctx)
       this.platedHoleGeoms.push(platedHoleGeom)
@@ -355,6 +360,11 @@ export class BoardGeomBuilder {
       if (!opts.dontCutBoard) {
         this.boardGeom = subtract(this.boardGeom, pillHole)
       }
+      // Drill through pads
+
+      this.padGeoms = this.padGeoms.map((pg) =>
+        colorize(colors.copper, subtract(pg, pillHole)),
+      )
 
       const platedHoleGeom = platedHole(ph, this.ctx)
       this.platedHoleGeoms.push(platedHoleGeom)
@@ -371,6 +381,10 @@ export class BoardGeomBuilder {
         height: this.ctx.pcbThickness * 1.5, // Ensure it cuts through
       })
       this.boardGeom = subtract(this.boardGeom, cyGeom)
+      // Remove hole material from any pads it intersects
+      this.padGeoms = this.padGeoms.map((pg) =>
+        colorize(colors.copper, subtract(pg, cyGeom)),
+      )
     }
     // TODO: Handle other hole shapes if necessary
   }
