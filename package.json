@@ -1,6 +1,6 @@
 {
   "name": "@tscircuit/3d-viewer",
-  "version": "0.0.359",
+  "version": "0.0.361",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "type": "module",
@@ -47,8 +47,8 @@
     "@storybook/blocks": "9.0.0-alpha.17",
     "@storybook/react-vite": "^9.1.2",
     "@tscircuit/circuit-json-util": "^0.0.67",
-    "@tscircuit/core": "^0.0.678",
-    "@tscircuit/props": "^0.0.291",
+    "@tscircuit/core": "^0.0.681",
+    "@tscircuit/props": "^0.0.292",
     "@types/jsdom": "^21.1.7",
     "@types/react": "19",
     "@types/react-dom": "19",
