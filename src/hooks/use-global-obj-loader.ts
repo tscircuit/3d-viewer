@@ -40,27 +40,32 @@ export function useGlobalObjLoader(url: string | null): Group | null | Error {
         }
         const text = await response.text()
 
-        const mtlContent = text
-          .match(/newmtl[\s\S]*?endmtl/g)
-          ?.join("\n")!
-          .replace(/d 0\./g, "d 1.")!
-        const objContent = text.replace(/newmtl[\s\S]*?endmtl/g, "")
-
-        const mtlLoader = new MTLLoader()
-        mtlLoader.setMaterialOptions({
-          invertTrProperty: true,
-        })
-        const materials = mtlLoader.parse(
-          mtlContent.replace(
-            /Kd\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/g,
-            "Kd $2 $2 $2",
-          ),
-          "test.mtl",
-        )
+        const mtlContentArr = text.match(/newmtl[\s\S]*?endmtl/g)
 
         const objLoader = new OBJLoader()
-        objLoader.setMaterials(materials)
-        return objLoader.parse(objContent)
+
+        if (mtlContentArr?.length) {
+          const mtlContent = mtlContentArr.join("\n").replace(/d 0\./g, "d 1.")
+          const objContent = text
+            .replace(/newmtl[\s\S]*?endmtl/g, "")
+            .replace(/^mtllib.*/gm, "")
+
+          const mtlLoader = new MTLLoader()
+          mtlLoader.setMaterialOptions({
+            invertTrProperty: true,
+          })
+          const materials = mtlLoader.parse(
+            mtlContent.replace(
+              /Kd\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/g,
+              "Kd $2 $2 $2",
+            ),
+            "",
+          )
+          objLoader.setMaterials(materials)
+          return objLoader.parse(objContent)
+        }
+
+        return objLoader.parse(text.replace(/^mtllib.*/gm, ""))
       } catch (error) {
         return error as Error
       }
