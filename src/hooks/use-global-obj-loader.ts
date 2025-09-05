@@ -59,7 +59,7 @@ export function useGlobalObjLoader(url: string | null): Group | null | Error {
               /Kd\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/g,
               "Kd $2 $2 $2",
             ),
-            "",
+            "embedded.mtl",
           )
           objLoader.setMaterials(materials)
           return objLoader.parse(objContent)
