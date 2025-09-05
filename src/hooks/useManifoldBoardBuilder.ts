@@ -31,6 +31,7 @@ import { processPlatedHolesForManifold } from "../utils/manifold/process-plated-
 import { processViasForManifold } from "../utils/manifold/process-vias"
 import { processSmtPadsForManifold } from "../utils/manifold/process-smt-pads"
 import { createManifoldBoard } from "../utils/manifold/create-manifold-board"
+import { processCopperPoursForManifold } from "../utils/manifold/process-copper-pours"
 import { processCutoutsForManifold } from "../utils/manifold/process-cutouts"
 
 export interface ManifoldGeoms {
@@ -46,6 +47,11 @@ export interface ManifoldGeoms {
     color: THREE.Color
   }>
   vias?: Array<{
+    key: string
+    geometry: THREE.BufferGeometry
+    color: THREE.Color
+  }>
+  copperPours?: Array<{
     key: string
     geometry: THREE.BufferGeometry
     color: THREE.Color
@@ -222,6 +228,17 @@ export const useManifoldBoardBuilder = (
         holeUnion,
       )
       currentGeoms.smtPads = smtPadGeoms
+
+      // Process copper pours
+      const { copperPourGeoms } = processCopperPoursForManifold(
+        Manifold,
+        CrossSection,
+        circuitJson,
+        currentPcbThickness,
+        manifoldInstancesForCleanup.current,
+        holeUnion,
+      )
+      currentGeoms.copperPours = copperPourGeoms
 
       setGeoms(currentGeoms)
 
