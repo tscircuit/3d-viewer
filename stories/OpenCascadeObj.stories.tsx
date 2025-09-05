@@ -1,5 +1,6 @@
 import { CadViewer } from "src/CadViewer"
 import { Circuit } from "@tscircuit/core"
+import myObjUrl from "./assets/myObj.obj?url"
 
 const createCircuit = () => {
   const circuit = new Circuit()
@@ -11,7 +12,7 @@ const createCircuit = () => {
         pcbX={0}
         pcbY={0}
         cadModel={{
-          objUrl: "/stories/assets/myObj.obj",
+          objUrl: myObjUrl,
           rotationOffset: { x: 90, y: 0, z: 0 },
           positionOffset: { x: 0, y: 0, z: 0.6 },
         }}
