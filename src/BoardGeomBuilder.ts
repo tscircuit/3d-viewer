@@ -11,6 +11,7 @@ import type {
   PcbSilkscreenPath,
   Point,
   PcbCutout,
+  PcbCopperPour,
 } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import { translate, rotateZ } from "@jscad/modeling/src/operations/transforms"
@@ -50,12 +51,14 @@ type BuilderState =
   | "processing_silkscreen_text"
   | "processing_silkscreen_paths"
   | "processing_cutouts"
+  | "processing_copper_pours"
   | "finalizing"
   | "done"
 
 const buildStateOrder: BuilderState[] = [
   "initializing",
   "processing_pads",
+  "processing_copper_pours",
 
   "processing_plated_holes",
   "processing_holes",
@@ -80,6 +83,7 @@ export class BoardGeomBuilder {
   private silkscreenTexts: PcbSilkscreenText[]
   private silkscreenPaths: PcbSilkscreenPath[]
   private pcb_cutouts: PcbCutout[]
+  private pcb_copper_pours: PcbCopperPour[]
 
   private boardGeom: Geom3 | null = null
   private platedHoleGeoms: Geom3[] = []
@@ -89,6 +93,7 @@ export class BoardGeomBuilder {
   private viaGeoms: Geom3[] = [] // Combined with platedHoleGeoms
   private silkscreenTextGeoms: Geom3[] = []
   private silkscreenPathGeoms: Geom3[] = []
+  private copperPourGeoms: Geom3[] = []
 
   private state: BuilderState = "initializing"
   private currentIndex = 0
@@ -137,6 +142,9 @@ export class BoardGeomBuilder {
     this.silkscreenTexts = su(circuitJson).pcb_silkscreen_text.list()
     this.silkscreenPaths = su(circuitJson).pcb_silkscreen_path.list()
     this.pcb_cutouts = su(circuitJson).pcb_cutout.list()
+    this.pcb_copper_pours = circuitJson.filter(
+      (e) => e.type === "pcb_copper_pour",
+    ) as any
 
     this.ctx = { pcbThickness: 1.2 } // TODO derive from board?
 
@@ -250,6 +258,15 @@ export class BoardGeomBuilder {
           }
           break
 
+        case "processing_copper_pours":
+          if (this.currentIndex < this.pcb_copper_pours.length) {
+            this.processCopperPour(this.pcb_copper_pours[this.currentIndex]!)
+            this.currentIndex++
+          } else {
+            this.goToNextState()
+          }
+          break
+
         case "finalizing":
           this.finalize()
           this.state = "done"
@@ -303,6 +320,47 @@ export class BoardGeomBuilder {
 
     if (cutoutGeom) {
       this.boardGeom = subtract(this.boardGeom, cutoutGeom)
+    }
+  }
+
+  private processCopperPour(pour: PcbCopperPour) {
+    const layerSign = pour.layer === "bottom" ? -1 : 1
+    const zPos = (layerSign * this.ctx.pcbThickness) / 2 + layerSign * M
+
+    let pourGeom: Geom3 | null = null
+
+    if (pour.shape === "rect") {
+      let baseGeom = cuboid({
+        center: [0, 0, 0], // Create at origin for rotation
+        size: [pour.width, pour.height, M],
+      })
+
+      if ("rotation" in pour && pour.rotation) {
+        const rotationRadians = (pour.rotation * Math.PI) / 180
+        baseGeom = rotateZ(rotationRadians, baseGeom)
+      }
+
+      pourGeom = translate([pour.center.x, pour.center.y, zPos], baseGeom)
+    } else if (pour.shape === "polygon") {
+      let pointsVec2: Vec2[] = pour.points.map((p) => [p.x, p.y])
+      if (pointsVec2.length < 3) {
+        console.warn(
+          `PCB Copper Pour [${pour.pcb_copper_pour_id}] polygon has fewer than 3 points, skipping.`,
+        )
+        return
+      }
+      if (arePointsClockwise(pointsVec2)) {
+        pointsVec2 = pointsVec2.reverse()
+      }
+      const polygon2d = jscadPolygon({ points: pointsVec2 })
+      pourGeom = extrudeLinear({ height: M }, polygon2d)
+      pourGeom = translate([0, 0, zPos], pourGeom)
+    }
+
+    if (pourGeom) {
+      // TODO subtract vias/holes etc.
+      const coloredPourGeom = colorize(colors.copper, pourGeom)
+      this.copperPourGeoms.push(coloredPourGeom)
     }
   }
 
@@ -616,6 +674,7 @@ export class BoardGeomBuilder {
       ...this.padGeoms,
       ...this.traceGeoms,
       ...this.viaGeoms,
+      ...this.copperPourGeoms,
       ...this.silkscreenTextGeoms,
       ...this.silkscreenPathGeoms,
     ]
