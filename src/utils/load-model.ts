@@ -1,4 +1,5 @@
 import * as THREE from "three"
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js"
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js"
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js"
 
@@ -17,6 +18,12 @@ export async function load3DModel(url: string): Promise<THREE.Object3D | null> {
   if (url.endsWith(".obj")) {
     const loader = new OBJLoader()
     return await loader.loadAsync(url)
+  }
+
+  if (url.endsWith(".gltf") || url.endsWith(".glb")) {
+    const loader = new GLTFLoader()
+    const gltf = await loader.loadAsync(url)
+    return gltf.scene
   }
 
   console.error("Unsupported file format or failed to load 3D model.")

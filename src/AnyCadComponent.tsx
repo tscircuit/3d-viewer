@@ -5,6 +5,7 @@ import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { CadViewerContainer } from "./CadViewerContainer"
 import { MixedStlModel } from "./three-components/MixedStlModel"
 import { Euler } from "three"
+import { GltfModel } from "./three-components/GltfModel"
 import { JscadModel } from "./three-components/JscadModel"
 import { FootprinterModel } from "./three-components/FootprinterModel"
 import { tuple } from "./utils/tuple"
@@ -46,6 +47,7 @@ export const AnyCadComponent = ({
   }, [circuitJson, cad_component.source_component_id])
 
   const url = cad_component.model_obj_url ?? cad_component.model_stl_url
+  const gltfUrl = cad_component.model_gltf_url
   const rotationOffset = cad_component.rotation
     ? tuple(
         (cad_component.rotation.x * Math.PI) / 180,
@@ -61,6 +63,26 @@ export const AnyCadComponent = ({
       <MixedStlModel
         key={cad_component.cad_component_id}
         url={url}
+        position={
+          cad_component.position
+            ? [
+                cad_component.position.x,
+                cad_component.position.y,
+                cad_component.position.z,
+              ]
+            : undefined
+        }
+        rotation={rotationOffset}
+        onHover={handleHover}
+        onUnhover={handleUnhover}
+        isHovered={isHovered}
+      />
+    )
+  } else if (gltfUrl) {
+    modelComponent = (
+      <GltfModel
+        key={cad_component.cad_component_id}
+        gltfUrl={gltfUrl}
         position={
           cad_component.position
             ? [
