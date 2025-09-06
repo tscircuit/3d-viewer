@@ -25,16 +25,21 @@ export function GltfModel({
   useEffect(() => {
     if (!gltfUrl) return
     const loader = new GLTFLoader()
+    let isMounted = true
     loader.load(
       gltfUrl,
       (gltf) => {
-        setModel(gltf.scene)
+        if (isMounted) setModel(gltf.scene)
       },
       undefined,
       (error) => {
-        console.error(`An error happened loading ${gltfUrl}`, error)
+        if (isMounted)
+          console.error(`An error happened loading ${gltfUrl}`, error)
       },
     )
+    return () => {
+      isMounted = false
+    }
   }, [gltfUrl])
 
   useEffect(() => {
