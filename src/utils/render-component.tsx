@@ -14,7 +14,10 @@ export async function renderComponent(
   scene: THREE.Scene,
 ) {
   // Handle STL/OBJ models first
-  const url = component.model_obj_url ?? component.model_stl_url
+  const url =
+    component.model_obj_url ??
+    component.model_stl_url ??
+    component.model_gltf_url
   if (url) {
     const model = await load3DModel(url)
     if (model) {
