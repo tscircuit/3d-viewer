@@ -8,17 +8,14 @@ import { executeJscadOperations } from "jscad-planner"
 import * as THREE from "three"
 import { load3DModel } from "./load-model"
 import type { CadComponent } from "circuit-json"
+import { getModelUrl } from "./get-model-url"
 
 export async function renderComponent(
   component: CadComponent,
   scene: THREE.Scene,
 ) {
-  // Handle STL/OBJ models first
-  const url =
-    component.model_obj_url ??
-    component.model_wrl_url ??
-    component.model_stl_url ??
-    component.model_gltf_url
+  // Handle STL/OBJ/WRL/GLTF models first
+  const url = getModelUrl(component) ?? component.model_gltf_url
   if (url) {
     const model = await load3DModel(url)
     if (model) {
