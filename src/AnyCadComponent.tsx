@@ -46,7 +46,10 @@ export const AnyCadComponent = ({
     })?.name
   }, [circuitJson, cad_component.source_component_id])
 
-  const url = cad_component.model_obj_url ?? cad_component.model_stl_url
+  const url =
+    cad_component.model_obj_url ??
+    cad_component.model_wrl_url ??
+    cad_component.model_stl_url
   const gltfUrl = cad_component.model_gltf_url
   const rotationOffset = cad_component.rotation
     ? tuple(

@@ -2,6 +2,7 @@ import * as THREE from "three"
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js"
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js"
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js"
+import { VRMLLoader } from "three/examples/jsm/loaders/VRMLLoader.js"
 
 export async function load3DModel(url: string): Promise<THREE.Object3D | null> {
   if (url.endsWith(".stl")) {
@@ -17,6 +18,11 @@ export async function load3DModel(url: string): Promise<THREE.Object3D | null> {
 
   if (url.endsWith(".obj")) {
     const loader = new OBJLoader()
+    return await loader.loadAsync(url)
+  }
+
+  if (url.endsWith(".wrl")) {
+    const loader = new VRMLLoader()
     return await loader.loadAsync(url)
   }
 

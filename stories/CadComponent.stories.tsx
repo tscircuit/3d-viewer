@@ -12,6 +12,17 @@ const cad_component: CadComponent = {
   source_component_id: "todo",
 }
 
+const wrlComponent: CadComponent = {
+  type: "cad_component",
+  cad_component_id: "wrl_component",
+  model_wrl_url:
+    "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/vrml/house.wrl",
+  position: { x: 0, y: 0, z: 0.7 },
+  rotation: { x: 0, y: 0, z: 0 },
+  pcb_component_id: "todo",
+  source_component_id: "todo",
+}
+
 export const Default = () => (
   <CadViewer
     circuitJson={(bugsPadsAndTracesSoup as any[]).concat([cad_component])}
@@ -65,6 +76,13 @@ export const SSOPRotated = () => (
     ])}
   />
 )
+
+export const VRMLModel = () => (
+  <CadViewer
+    circuitJson={(bugsPadsAndTracesSoup as any[]).concat([wrlComponent])}
+  />
+)
+VRMLModel.storyName = "VRML Model"
 
 export default {
   title: "CadComponent",
