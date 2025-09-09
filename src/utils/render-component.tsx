@@ -16,6 +16,7 @@ export async function renderComponent(
   // Handle STL/OBJ models first
   const url =
     component.model_obj_url ??
+    component.model_wrl_url ??
     component.model_stl_url ??
     component.model_gltf_url
   if (url) {

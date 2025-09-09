@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import type { Group } from "three"
-import { MTLLoader, OBJLoader } from "three-stdlib"
+import { MTLLoader, OBJLoader, VRMLLoader } from "three-stdlib"
 
 // Define the type for our cache
 interface CacheItem {
@@ -32,6 +32,11 @@ export function useGlobalObjLoader(url: string | null): Group | null | Error {
 
     async function loadAndParseObj() {
       try {
+        if (cleanUrl.endsWith(".wrl")) {
+          const loader = new VRMLLoader()
+          return await loader.loadAsync(cleanUrl)
+        }
+
         const response = await fetch(cleanUrl)
         if (!response.ok) {
           throw new Error(
