@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react"
-import type { Group } from "three"
+import type { Object3D } from "three"
 import { MTLLoader, OBJLoader, VRMLLoader } from "three-stdlib"
 
 // Define the type for our cache
 interface CacheItem {
   promise: Promise<any>
-  result: Group | null
+  result: Object3D | null
 }
 
 declare global {
@@ -19,8 +19,10 @@ if (typeof window !== "undefined" && !window.TSCIRCUIT_OBJ_LOADER_CACHE) {
   window.TSCIRCUIT_OBJ_LOADER_CACHE = new Map<string, CacheItem>()
 }
 
-export function useGlobalObjLoader(url: string | null): Group | null | Error {
-  const [obj, setObj] = useState<Group | null | Error>(null)
+export function useGlobalObjLoader(
+  url: string | null,
+): Object3D | null | Error {
+  const [obj, setObj] = useState<Object3D | null | Error>(null)
 
   useEffect(() => {
     if (!url) return
