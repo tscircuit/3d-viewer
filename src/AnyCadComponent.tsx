@@ -9,6 +9,7 @@ import { GltfModel } from "./three-components/GltfModel"
 import { JscadModel } from "./three-components/JscadModel"
 import { FootprinterModel } from "./three-components/FootprinterModel"
 import { tuple } from "./utils/tuple"
+import { getModelUrl } from "./utils/get-model-url"
 import { Html } from "./react-three/Html"
 
 export const AnyCadComponent = ({
@@ -46,10 +47,7 @@ export const AnyCadComponent = ({
     })?.name
   }, [circuitJson, cad_component.source_component_id])
 
-  const url =
-    cad_component.model_obj_url ??
-    cad_component.model_wrl_url ??
-    cad_component.model_stl_url
+  const url = getModelUrl(cad_component)
   const gltfUrl = cad_component.model_gltf_url
   const rotationOffset = cad_component.rotation
     ? tuple(
