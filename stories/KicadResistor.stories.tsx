@@ -26,7 +26,7 @@ export const KicadResistor = () => {
     const renderCircuit = async () => {
       const json = await createCircuit()
       const cadComp = json.find((e) => e.type === "cad_component")!
-      cadComp.model_unit_to_mm_scale_factor = 2.54
+      // cadComp.model_unit_to_mm_scale_factor = 2.54
       setCircuitJson(json)
     }
     renderCircuit()
