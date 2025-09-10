@@ -1,5 +1,4 @@
 import type { StorybookConfig } from "@storybook/react-vite"
-import { mergeConfig } from "vite"
 import path from "path"
 const addProxyLogging = (proxy: any) => {
   proxy.on("error", (err, req, res) => {
@@ -24,6 +23,7 @@ const config: StorybookConfig = {
     options: {},
   },
   async viteFinal(config) {
+    const { mergeConfig } = await import("vite")
     const customViteConfig = {
       resolve: {
         alias: {
