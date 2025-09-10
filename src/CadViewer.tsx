@@ -96,6 +96,7 @@ export const CadViewer = (props: any) => {
           fontSize: 12,
           opacity: 0.7,
           userSelect: "none",
+          pointerEvents: "none",
         }}
       >
         Engine: <b>{engine === "jscad" ? "JSCAD" : "Manifold"}</b>
