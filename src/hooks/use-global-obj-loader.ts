@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import type { Object3D } from "three"
-import { MTLLoader, OBJLoader, VRMLLoader } from "three-stdlib"
+import { MTLLoader, OBJLoader } from "three-stdlib"
+import { loadVrml } from "src/utils/vrml"
 
 // Define the type for our cache
 interface CacheItem {
@@ -35,8 +36,7 @@ export function useGlobalObjLoader(
     async function loadAndParseObj() {
       try {
         if (cleanUrl.endsWith(".wrl")) {
-          const loader = new VRMLLoader()
-          return await loader.loadAsync(cleanUrl)
+          return await loadVrml(cleanUrl)
         }
 
         const response = await fetch(cleanUrl)
