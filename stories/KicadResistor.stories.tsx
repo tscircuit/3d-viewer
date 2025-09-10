@@ -1,9 +1,12 @@
 import { CadViewer } from "src/CadViewer";
 import { Circuit } from "@tscircuit/core";
 import { useEffect, useState } from "react";
+import { getPlatformConfig } from "@tscircuit/eval";
 
 const createCircuit = async () => {
-	const circuit = new Circuit();
+	const circuit = new Circuit({
+		platform: getPlatformConfig(),
+	});
 	circuit.add(
 		<board width="5mm" height="5mm">
 			<resistor
@@ -30,7 +33,18 @@ export const KicadResistor = () => {
 	if (!circuitJson) {
 		return null;
 	}
-	return <CadViewer circuitJson={circuitJson as any} />;
+	return (
+		<>
+			<CadViewer circuitJson={circuitJson as any} />
+			<pre>
+				{JSON.stringify(
+					circuitJson.filter((item) => item.type === "cad_component"),
+					null,
+					2,
+				)}
+			</pre>
+		</>
+	);
 };
 
 export default {
