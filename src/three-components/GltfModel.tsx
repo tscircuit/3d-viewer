@@ -11,6 +11,7 @@ export function GltfModel({
   onHover,
   onUnhover,
   isHovered,
+  scale,
 }: {
   gltfUrl: string
   position?: [number, number, number]
@@ -18,6 +19,7 @@ export function GltfModel({
   onHover: (e: any) => void
   onUnhover: () => void
   isHovered: boolean
+  scale?: number
 }) {
   const { rootObject } = useThree()
   const [model, setModel] = useState<THREE.Group | null>(null)
@@ -46,6 +48,7 @@ export function GltfModel({
     if (!model) return
     if (position) model.position.fromArray(position)
     if (rotation) model.rotation.fromArray(rotation)
+    if (scale !== undefined) model.scale.setScalar(scale)
   }, [
     model,
     position?.[0],
@@ -54,6 +57,7 @@ export function GltfModel({
     rotation?.[0],
     rotation?.[1],
     rotation?.[2],
+    scale,
   ])
 
   useEffect(() => {

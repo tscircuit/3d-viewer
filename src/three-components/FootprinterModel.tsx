@@ -14,6 +14,7 @@ export const FootprinterModel = ({
   onHover,
   onUnhover,
   isHovered,
+  scale,
 }: {
   positionOffset: any
   footprint: string
@@ -21,6 +22,7 @@ export const FootprinterModel = ({
   onHover: (e: any) => void
   onUnhover: () => void
   isHovered: boolean
+  scale?: number
 }) => {
   const { rootObject } = useThree()
   const group = useMemo(() => {
@@ -62,6 +64,7 @@ export const FootprinterModel = ({
     if (!group) return
     if (positionOffset) group.position.fromArray(positionOffset)
     if (rotationOffset) group.rotation.fromArray(rotationOffset)
+    if (scale !== undefined) group.scale.setScalar(scale)
   }, [
     group,
     positionOffset?.[0],
@@ -70,6 +73,7 @@ export const FootprinterModel = ({
     rotationOffset?.[0],
     rotationOffset?.[1],
     rotationOffset?.[2],
+    scale,
   ])
 
   useEffect(() => {

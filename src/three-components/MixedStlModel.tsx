@@ -12,6 +12,7 @@ export function MixedStlModel({
   onHover,
   onUnhover,
   isHovered,
+  scale,
 }: {
   url: string
   position?: Vector3 | [number, number, number]
@@ -19,6 +20,7 @@ export function MixedStlModel({
   onHover: (e: any) => void
   onUnhover: () => void
   isHovered: boolean
+  scale?: number
 }) {
   const obj = useGlobalObjLoader(url)
   const { rootObject } = useThree()
@@ -63,6 +65,9 @@ export function MixedStlModel({
         model.rotation.copy(rotation as THREE.Euler)
       }
     }
+    if (scale !== undefined) {
+      model.scale.setScalar(scale)
+    }
   }, [
     model,
     Array.isArray(position) ? position[0] : (position as THREE.Vector3)?.x,
@@ -71,6 +76,7 @@ export function MixedStlModel({
     Array.isArray(rotation) ? rotation[0] : (rotation as THREE.Euler)?.x,
     Array.isArray(rotation) ? rotation[1] : (rotation as THREE.Euler)?.y,
     Array.isArray(rotation) ? rotation[2] : (rotation as THREE.Euler)?.z,
+    scale,
   ])
 
   if (obj instanceof Error) {
