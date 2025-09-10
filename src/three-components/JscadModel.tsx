@@ -14,6 +14,7 @@ export const JscadModel = ({
   onHover,
   onUnhover,
   isHovered,
+  scale,
 }: {
   jscadPlan: JscadOperation
   positionOffset?: [number, number, number]
@@ -21,6 +22,7 @@ export const JscadModel = ({
   onHover: (e: any) => void
   onUnhover: () => void
   isHovered: boolean
+  scale?: number
 }) => {
   const { rootObject } = useThree()
   const { threeGeom, material } = useMemo(() => {
@@ -56,6 +58,7 @@ export const JscadModel = ({
     if (!mesh) return
     if (positionOffset) mesh.position.fromArray(positionOffset)
     if (rotationOffset) mesh.rotation.fromArray(rotationOffset)
+    if (scale !== undefined) mesh.scale.setScalar(scale)
   }, [
     mesh,
     positionOffset?.[0],
@@ -64,6 +67,7 @@ export const JscadModel = ({
     rotationOffset?.[0],
     rotationOffset?.[1],
     rotationOffset?.[2],
+    scale,
   ])
 
   useMemo(() => {

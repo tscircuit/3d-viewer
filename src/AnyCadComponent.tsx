@@ -76,6 +76,7 @@ export const AnyCadComponent = ({
             : undefined
         }
         rotation={rotationOffset}
+        scale={cad_component.model_unit_to_mm_scale_factor}
         onHover={handleHover}
         onUnhover={handleUnhover}
         isHovered={isHovered}
@@ -96,6 +97,7 @@ export const AnyCadComponent = ({
             : undefined
         }
         rotation={rotationOffset}
+        scale={cad_component.model_unit_to_mm_scale_factor}
         onHover={handleHover}
         onUnhover={handleUnhover}
         isHovered={isHovered}
@@ -107,6 +109,7 @@ export const AnyCadComponent = ({
         key={cad_component.cad_component_id}
         jscadPlan={cad_component.model_jscad as any}
         rotationOffset={rotationOffset}
+        scale={cad_component.model_unit_to_mm_scale_factor}
         onHover={handleHover}
         onUnhover={handleUnhover}
         isHovered={isHovered}
@@ -126,6 +129,7 @@ export const AnyCadComponent = ({
         }
         rotationOffset={rotationOffset}
         footprint={cad_component.footprinter_string}
+        scale={cad_component.model_unit_to_mm_scale_factor}
         onHover={handleHover}
         onUnhover={handleUnhover}
         isHovered={isHovered}
