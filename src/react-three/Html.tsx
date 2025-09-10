@@ -18,6 +18,14 @@ export const Html: React.FC<HtmlProps> = ({ children, position, style }) => {
     const rendererNode = renderer?.domElement.parentNode as HTMLElement
     if (!rendererNode) return
 
+    // Ensure the parent node has relative positioning for proper tooltip positioning
+    if (
+      rendererNode.style.position !== "relative" &&
+      rendererNode.style.position !== "absolute"
+    ) {
+      rendererNode.style.position = "relative"
+    }
+
     rendererNode.appendChild(el.current)
     setPortal(ReactDOM.createPortal(children, el.current))
 
@@ -40,11 +48,12 @@ export const Html: React.FC<HtmlProps> = ({ children, position, style }) => {
     const x = Math.round(((vector.x + 1) / 2) * rect.width)
     const y = Math.round(((-vector.y + 1) / 2) * rect.height)
 
-    // Position relative to the page, then offset by canvas position
+    // Position relative to the canvas container, not the page
     el.current.style.position = "absolute"
-    el.current.style.left = `${rect.left + x}px`
-    el.current.style.top = `${rect.top + y}px`
+    el.current.style.left = `${x}px`
+    el.current.style.top = `${y}px`
     el.current.style.pointerEvents = "none"
+    el.current.style.zIndex = "1000"
 
     if (style) {
       Object.assign(el.current.style, style)
