@@ -1,5 +1,5 @@
-import type { Object3D } from "three"
-import { VRMLLoader } from "three-stdlib"
+import type { Object3D } from "three";
+import { VRMLLoader } from "three-stdlib";
 
 /**
  * Replace hyphens in VRML DEF/USE identifiers with underscores.
@@ -7,9 +7,9 @@ import { VRMLLoader } from "three-stdlib"
  * from three-stdlib which does not allow hyphens in identifiers.
  */
 export function sanitizeVrmlIdentifiers(text: string): string {
-  return text.replace(/(DEF|USE)\s+([^\s]+)/g, (match, type, name) => {
-    return `${type} ${name.replace(/-/g, "_")}`
-  })
+	return text.replace(/(DEF|USE)\s+([^\s]+)/g, (match, type, name) => {
+		return `${type} ${name.replace(/-/g, "_")}`;
+	});
 }
 
 /**
@@ -17,13 +17,13 @@ export function sanitizeVrmlIdentifiers(text: string): string {
  * sanitization so that files with hyphenated DEF/USE names can be loaded.
  */
 export async function loadVrml(url: string): Promise<Object3D> {
-  const response = await fetch(url)
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch "${url}": ${response.status} ${response.statusText}`,
-    )
-  }
-  const text = await response.text()
-  const loader = new VRMLLoader()
-  return loader.parse(sanitizeVrmlIdentifiers(text))
+	const response = await fetch(url);
+	if (!response.ok) {
+		throw new Error(
+			`Failed to fetch "${url}": ${response.status} ${response.statusText}`,
+		);
+	}
+	const text = await response.text();
+	const loader = new VRMLLoader();
+	return loader.parse(sanitizeVrmlIdentifiers(text), url);
 }
