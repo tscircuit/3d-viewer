@@ -166,6 +166,13 @@ try {
     return { width, height }
   }, [boardData])
 
+  const boardCenter = useMemo(() => {
+    if (!boardData) return undefined
+    const { center } = boardData
+    if (!center) return undefined
+    return { x: center.x, y: center.y }
+  }, [boardData])
+
   const initialCameraPosition = useMemo(() => {
     if (!boardData) return [5, 5, 5] as const
     const { width = 0, height = 0 } = boardData
@@ -216,6 +223,7 @@ try {
       autoRotateDisabled={autoRotateDisabled}
       clickToInteractEnabled={clickToInteractEnabled}
       boardDimensions={boardDimensions}
+      boardCenter={boardCenter}
       onUserInteraction={onUserInteraction}
     >
       <BoardMeshes

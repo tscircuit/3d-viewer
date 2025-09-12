@@ -87,6 +87,18 @@ export const CadViewerJscad = forwardRef<
       }
     }, [internalCircuitJson])
 
+    const boardCenter = useMemo(() => {
+      if (!internalCircuitJson) return undefined
+      try {
+        const board = su(internalCircuitJson as any).pcb_board.list()[0]
+        if (!board || !board.center) return undefined
+        return { x: board.center.x, y: board.center.y }
+      } catch (e) {
+        console.error(e)
+        return undefined
+      }
+    }, [internalCircuitJson])
+
     // Use the state `boardGeom` which starts simplified and gets updated
     const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
 
@@ -99,6 +111,7 @@ export const CadViewerJscad = forwardRef<
         initialCameraPosition={initialCameraPosition}
         clickToInteractEnabled={clickToInteractEnabled}
         boardDimensions={boardDimensions}
+        boardCenter={boardCenter}
         onUserInteraction={onUserInteraction}
       >
         {boardStls.map(({ stlData, color }, index) => (
