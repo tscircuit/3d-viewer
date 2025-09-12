@@ -69,6 +69,23 @@ export const StarBoardOutline = () => {
   return <CadViewer circuitJson={circuitJson as any} />
 }
 
+const createOffCenterBoardCircuit = () => {
+  return [
+    {
+      type: "pcb_board",
+      width: 20,
+      height: 20,
+      center: { x: 10, y: 10 },
+      thickness: 1.6,
+    },
+  ]
+}
+
+export const OffCenterBoardOrbitTest = () => {
+  const circuitJson = createOffCenterBoardCircuit()
+  return <CadViewer circuitJson={circuitJson as any} />
+}
+
 export default {
   title: "BoardOutline",
   component: AtariBoardOutline,
