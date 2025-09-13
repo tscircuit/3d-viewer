@@ -32,6 +32,7 @@ interface Props {
   initialCameraPosition?: readonly [number, number, number] | undefined
   clickToInteractEnabled?: boolean
   boardDimensions?: { width?: number; height?: number }
+  boardCenter?: { x: number; y: number }
   onUserInteraction?: () => void
 }
 
@@ -46,6 +47,7 @@ export const CadViewerContainer = forwardRef<
       autoRotateDisabled,
       clickToInteractEnabled = false,
       boardDimensions,
+      boardCenter,
       onUserInteraction,
     },
     ref,
@@ -62,6 +64,11 @@ export const CadViewerContainer = forwardRef<
       const desired = largest * 1.5
       return desired > 10 ? desired : 10
     }, [boardDimensions])
+
+    const orbitTarget = useMemo(() => {
+      if (!boardCenter) return undefined
+      return [boardCenter.x, boardCenter.y, 0] as [number, number, number]
+    }, [boardCenter])
 
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -100,6 +107,7 @@ export const CadViewerContainer = forwardRef<
               zoomSpeed={0.5}
               enableDamping={true}
               dampingFactor={0.1}
+              target={orbitTarget}
             />
           )}
           <Lights />
