@@ -148,6 +148,13 @@ export function processPlatedHolesForManifold(
         manifoldInstancesForCleanup.push(rotatedOp)
         boardPillDrillOp = rotatedOp
       }
+
+      if (ph.ccw_rotation) {
+        const rotatedOp = boardPillDrillOp.rotate([0, 0, ph.ccw_rotation])
+        manifoldInstancesForCleanup.push(rotatedOp)
+        boardPillDrillOp = rotatedOp
+      }
+
       const translatedBoardPillDrill = boardPillDrillOp.translate([
         ph.x,
         ph.y,
@@ -177,6 +184,12 @@ export function processPlatedHolesForManifold(
 
       if (shouldRotate) {
         const rotatedOp = finalPlatedPartOp.rotate([0, 0, 90])
+        manifoldInstancesForCleanup.push(rotatedOp)
+        finalPlatedPartOp = rotatedOp
+      }
+
+      if (ph.ccw_rotation) {
+        const rotatedOp = finalPlatedPartOp.rotate([0, 0, ph.ccw_rotation])
         manifoldInstancesForCleanup.push(rotatedOp)
         finalPlatedPartOp = rotatedOp
       }
