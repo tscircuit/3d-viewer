@@ -7,7 +7,7 @@ import type * as THREE from "three"
 import { Euler } from "three"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
-import { useConvertChildrenToSoup } from "./hooks/use-convert-children-to-soup"
+import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
 import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { useBoardGeomBuilder } from "./hooks/useBoardGeomBuilder"
 import { Error3d } from "./three-components/Error3d"
@@ -44,7 +44,7 @@ export const CadViewerJscad = forwardRef<
     },
     ref,
   ) => {
-    const childrenSoup = useConvertChildrenToSoup(children)
+    const childrenSoup = useConvertChildrenToCircuitJson(children)
     const internalCircuitJson = useMemo(() => {
       const cj = soup ?? circuitJson
       return (cj ?? childrenSoup) as AnyCircuitElement[]

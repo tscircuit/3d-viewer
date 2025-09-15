@@ -2,7 +2,7 @@ import { Circuit } from "@tscircuit/core"
 import { useMemo } from "react"
 import type { AnyCircuitElement } from "circuit-json"
 
-export const useConvertChildrenToSoup = (
+export const useConvertChildrenToCircuitJson = (
   children?: any,
 ): AnyCircuitElement[] => {
   return useMemo(() => {
