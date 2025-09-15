@@ -39,6 +39,7 @@ import {
 import type { Vec2 } from "@jscad/modeling/src/maths/types"
 import { createSilkscreenTextGeoms } from "./geoms/create-geoms-for-silkscreen-text"
 import { createSilkscreenPathGeom } from "./geoms/create-geoms-for-silkscreen-path"
+import { createGeom2FromBRep } from "./geoms/brep-converter"
 import type { GeomContext } from "./GeomContext"
 
 type BuilderState =
@@ -341,6 +342,14 @@ export class BoardGeomBuilder {
       }
 
       pourGeom = translate([pour.center.x, pour.center.y, zPos], baseGeom)
+    } else if (pour.shape === "brep") {
+      // @ts-ignore
+      const brepShape = pour.brep_shape
+      if (brepShape) {
+        const pourGeom2 = createGeom2FromBRep(brepShape)
+        pourGeom = extrudeLinear({ height: M }, pourGeom2)
+        pourGeom = translate([0, 0, zPos], pourGeom)
+      }
     } else if (pour.shape === "polygon") {
       let pointsVec2: Vec2[] = pour.points.map((p) => [p.x, p.y])
       if (pointsVec2.length < 3) {
