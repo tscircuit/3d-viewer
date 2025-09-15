@@ -343,9 +343,8 @@ export class BoardGeomBuilder {
 
       pourGeom = translate([pour.center.x, pour.center.y, zPos], baseGeom)
     } else if (pour.shape === "brep") {
-      // @ts-ignore
       const brepShape = pour.brep_shape
-      if (brepShape) {
+      if (brepShape && brepShape.outer_ring) {
         const pourGeom2 = createGeom2FromBRep(brepShape)
         pourGeom = extrudeLinear({ height: M }, pourGeom2)
         pourGeom = translate([0, 0, zPos], pourGeom)
