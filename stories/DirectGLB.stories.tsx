@@ -33,7 +33,10 @@ export const DirectGLB = () => {
 
     // Add a reference cube to help with scale
     const cubeGeometry = new THREE.BoxGeometry(1, 1, 1)
-    const cubeMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true })
+    const cubeMaterial = new THREE.MeshBasicMaterial({
+      color: 0xff0000,
+      wireframe: true,
+    })
     const cube = new THREE.Mesh(cubeGeometry, cubeMaterial)
     scene.add(cube)
 
@@ -44,20 +47,20 @@ export const DirectGLB = () => {
       (gltf) => {
         console.log("GLB loaded successfully:", gltf)
         const model = gltf.scene
-        
+
         const box = new THREE.Box3().setFromObject(model)
         const size = box.getSize(new THREE.Vector3())
         const center = box.getCenter(new THREE.Vector3())
-        
+
         console.log("Model size:", size)
         console.log("Model center:", center)
         console.log("Model position:", model.position)
-        
+
         // Try different scales
         model.scale.set(100, 100, 100) // Make it 100x larger
-        
+
         scene.add(model)
-        
+
         // Position camera to see the model
         const maxDim = Math.max(size.x, size.y, size.z) * 100 // Account for scale
         camera.position.set(maxDim * 2, maxDim * 2, maxDim * 2)
@@ -70,7 +73,7 @@ export const DirectGLB = () => {
       },
       (error) => {
         console.error("Error loading GLB:", error)
-      }
+      },
     )
 
     // Animation loop
