@@ -7,7 +7,7 @@ import type * as THREE from "three"
 import { useThree } from "./react-three/ThreeContext"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
-import { useConvertChildrenToSoup } from "./hooks/use-convert-children-to-soup"
+import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
 import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
 import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
@@ -63,7 +63,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   onUserInteraction,
   children,
 }) => {
-  const childrenCircuitJson = useConvertChildrenToSoup(children)
+  const childrenCircuitJson = useConvertChildrenToCircuitJson(children)
   const circuitJson = useMemo(() => {
     return circuitJsonProp ?? childrenCircuitJson
   }, [circuitJsonProp, childrenCircuitJson])

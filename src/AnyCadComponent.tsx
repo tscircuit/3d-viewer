@@ -18,6 +18,7 @@ export const AnyCadComponent = ({
   cad_component: CadComponent
   circuitJson: AnyCircuitElement[]
 }) => {
+  console.log("cad_component", cad_component)
   const [isHovered, setIsHovered] = useState(false)
   const [hoverPosition, setHoverPosition] = useState<
     [number, number, number] | null
