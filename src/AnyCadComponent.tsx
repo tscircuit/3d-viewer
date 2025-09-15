@@ -18,7 +18,6 @@ export const AnyCadComponent = ({
   cad_component: CadComponent
   circuitJson: AnyCircuitElement[]
 }) => {
-  console.log("cad_component", cad_component)
   const [isHovered, setIsHovered] = useState(false)
   const [hoverPosition, setHoverPosition] = useState<
     [number, number, number] | null
@@ -51,7 +50,7 @@ export const AnyCadComponent = ({
     cad_component.model_obj_url ??
     cad_component.model_wrl_url ??
     cad_component.model_stl_url
-  const gltfUrl = cad_component.model_gltf_url
+  const gltfUrl = cad_component.model_glb_url ?? cad_component.model_gltf_url
   const rotationOffset = cad_component.rotation
     ? tuple(
         (cad_component.rotation.x * Math.PI) / 180,
