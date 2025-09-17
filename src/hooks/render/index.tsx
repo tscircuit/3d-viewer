@@ -9,9 +9,11 @@ import {
 import { cameraState } from "@jscad/regl-renderer/types/cameras/perspectiveCamera"
 import { controlsState } from "@jscad/regl-renderer/types/controls/orbitControls"
 import * as renderingDefaults from "@jscad/regl-renderer/types/rendering/renderDefaults"
+import mat4 from "gl-mat4"
 import * as React from "react"
 import { useDrag, usePinch, useWheel } from "react-use-gesture"
 import { InitializationOptions } from "regl"
+import unproject from "camera-unproject"
 
 import { useAnimationFrame, useKeyPress } from "./hooks"
 
@@ -56,6 +58,7 @@ interface RendererState {
   render?: (content: any) => void
   rotateDelta: number[]
   zoomDelta: number
+  zoomPointer: [number, number] | null
 }
 
 const initialProps = ({
@@ -122,7 +125,130 @@ const initialState = (options: RendererProps["options"]): RendererState => {
     panDelta: [0, 0],
     rotateDelta: [0, 0],
     zoomDelta: 0,
+    zoomPointer: null,
   }
+}
+
+type Vec2 = [number, number]
+type Vec3 = [number, number, number]
+
+const clampValue = (value: number, min: number, max: number) =>
+  Math.min(Math.max(value, min), max)
+
+const toViewport = (
+  viewport?: ArrayLike<number>,
+): [number, number, number, number] | null => {
+  if (!viewport || viewport.length < 4) return null
+  return [viewport[0], viewport[1], viewport[2], viewport[3]]
+}
+
+const clampPointerToViewport = (
+  pointer: Vec2,
+  viewport?: ArrayLike<number>,
+): Vec2 => {
+  const view = toViewport(viewport)
+  if (!view) return pointer
+  const [, , width, height] = view
+  return [clampValue(pointer[0], 0, width), clampValue(pointer[1], 0, height)]
+}
+
+const toVec3 = (value?: ArrayLike<number>): Vec3 | null => {
+  if (!value || value.length < 3) return null
+  return [value[0], value[1], value[2]]
+}
+
+const subtractVec3 = (a: ArrayLike<number>, b: ArrayLike<number>): Vec3 => [
+  a[0] - b[0],
+  a[1] - b[1],
+  a[2] - b[2],
+]
+
+const addVec3 = (a: ArrayLike<number>, b: ArrayLike<number>): Vec3 => [
+  a[0] + b[0],
+  a[1] + b[1],
+  a[2] + b[2],
+]
+
+const scaleVec3 = (value: ArrayLike<number>, scale: number): Vec3 => [
+  value[0] * scale,
+  value[1] * scale,
+  value[2] * scale,
+]
+
+const dotVec3 = (a: ArrayLike<number>, b: ArrayLike<number>) =>
+  a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+
+const lengthVec3 = (value: ArrayLike<number>) =>
+  Math.hypot(value[0], value[1], value[2])
+
+const normalizeVec3 = (value: ArrayLike<number>): Vec3 | null => {
+  const length = lengthVec3(value)
+  if (!Number.isFinite(length) || length === 0) return null
+  return [value[0] / length, value[1] / length, value[2] / length]
+}
+
+const getDefaultPointer = (
+  camera: NonNullable<RendererState["camera"]>,
+): Vec2 | null => {
+  const view = toViewport(camera.viewport)
+  if (!view) return null
+  const [, , width, height] = view
+  return [width / 2, height / 2]
+}
+
+const getPointerIntersectionOnTargetPlane = (
+  pointer: Vec2,
+  camera: NonNullable<RendererState["camera"]>,
+): Vec3 | null => {
+  const projection = camera.projection
+  const view = camera.view
+  const viewport = toViewport(camera.viewport)
+  const position = toVec3(camera.position)
+  const target = toVec3(camera.target)
+  if (!projection || !view || !viewport || !position || !target) return null
+
+  const combinedProjView = mat4.multiply([], projection, view)
+  const invProjView = mat4.invert([], combinedProjView)
+  if (!invProjView) return null
+
+  const nearPoint = unproject(
+    [0, 0, 0],
+    [pointer[0], pointer[1], 0],
+    viewport,
+    invProjView,
+  ) as Vec3
+  const farPoint = unproject(
+    [0, 0, 0],
+    [pointer[0], pointer[1], 1],
+    viewport,
+    invProjView,
+  ) as Vec3
+
+  const direction = normalizeVec3(subtractVec3(farPoint, nearPoint))
+  if (!direction) return null
+
+  const planeNormal = normalizeVec3(subtractVec3(target, position))
+  if (!planeNormal) return null
+
+  const denominator = dotVec3(direction, planeNormal)
+  if (!Number.isFinite(denominator) || Math.abs(denominator) < 1e-6) return null
+
+  const numerator = dotVec3(subtractVec3(target, nearPoint), planeNormal)
+  const distanceAlongRay = numerator / denominator
+  if (!Number.isFinite(distanceAlongRay)) return null
+
+  return addVec3(nearPoint, scaleVec3(direction, distanceAlongRay))
+}
+
+const getPointerFromClientCoordinates = (
+  clientX: number | undefined,
+  clientY: number | undefined,
+  element: HTMLDivElement | null,
+): Vec2 | null => {
+  if (clientX === undefined || clientY === undefined) return null
+  if (!element) return null
+  const rect = element.getBoundingClientRect()
+  return [clientX - rect.left, clientY - rect.top]
 }
 
 type RendererAction =
@@ -134,6 +260,7 @@ type RendererAction =
   | { type: "SET_RENDER"; payload: RendererState["render"] }
   | { type: "SET_ROTATE_DELTA"; payload: RendererState["rotateDelta"] }
   | { type: "SET_ZOOM_DELTA"; payload: RendererState["zoomDelta"] }
+  | { type: "SET_ZOOM_POINTER"; payload: RendererState["zoomPointer"] }
 
 function reducer(state: RendererState, action: RendererAction): RendererState {
   switch (action.type) {
@@ -172,6 +299,8 @@ function reducer(state: RendererState, action: RendererAction): RendererState {
       return { ...state, rotateDelta: action.payload }
     case "SET_ZOOM_DELTA":
       return { ...state, zoomDelta: action.payload }
+    case "SET_ZOOM_POINTER":
+      return { ...state, zoomPointer: action.payload }
   }
 }
 
@@ -257,14 +386,27 @@ const Renderer = React.forwardRef<HTMLDivElement, RendererProps>(
 
     usePinch(
       (event) => {
-        if (event.touches === 2)
+        if (event.touches === 2) {
+          const pointer = getPointerFromClientCoordinates(
+            event.origin?.[0],
+            event.origin?.[1],
+            state.element,
+          )
+          dispatch({ type: "SET_ZOOM_POINTER", payload: pointer })
           dispatch({ type: "SET_ZOOM_DELTA", payload: -event.delta[0] })
+        }
       },
       { domTarget: ref || forwardRef },
     )
 
     useWheel(
       (event) => {
+        const pointer = getPointerFromClientCoordinates(
+          event.event?.clientX,
+          event.event?.clientY,
+          state.element,
+        )
+        dispatch({ type: "SET_ZOOM_POINTER", payload: pointer })
         dispatch({ type: "SET_ZOOM_DELTA", payload: event.delta[1] })
       },
       { domTarget: ref || forwardRef },
@@ -397,7 +539,18 @@ const Renderer = React.forwardRef<HTMLDivElement, RendererProps>(
       if (!state.zoomDelta || !Number.isFinite(state.zoomDelta)) return
       if (!state.camera) return
       if (!state.controls) return
-      const updated = controls.orbit.zoom(
+
+      const pointerCandidate =
+        state.zoomPointer ?? getDefaultPointer(state.camera)
+      const pointer = pointerCandidate
+        ? clampPointerToViewport(pointerCandidate, state.camera.viewport)
+        : null
+
+      const pointerBefore = pointer
+        ? getPointerIntersectionOnTargetPlane(pointer, state.camera)
+        : null
+
+      const zoomResult = controls.orbit.zoom(
         {
           controls: state.controls,
           camera: state.camera,
@@ -405,16 +558,59 @@ const Renderer = React.forwardRef<HTMLDivElement, RendererProps>(
         },
         state.zoomDelta,
       )
-      dispatch({
-        type: "SET_CONTROLS",
-        payload: { ...state.controls, ...updated.controls },
+
+      const controlsPayload = {
+        ...state.controls,
+        ...zoomResult.controls,
+      }
+
+      const cameraForZoom = {
+        ...state.camera,
+        ...zoomResult.camera,
+      }
+
+      const orbitUpdate = controls.orbit.update({
+        controls: controlsPayload,
+        camera: cameraForZoom,
       })
+
+      let cameraAfterZoom = {
+        ...cameraForZoom,
+        ...orbitUpdate.camera,
+      }
+
+      if (pointer && pointerBefore) {
+        const pointerAfter = getPointerIntersectionOnTargetPlane(
+          pointer,
+          cameraAfterZoom,
+        )
+        if (pointerAfter) {
+          const translation = subtractVec3(pointerBefore, pointerAfter)
+          cameraAfterZoom = {
+            ...cameraAfterZoom,
+            position: cameraAfterZoom.position
+              ? addVec3(cameraAfterZoom.position, translation)
+              : cameraAfterZoom.position,
+            target: cameraAfterZoom.target
+              ? addVec3(cameraAfterZoom.target, translation)
+              : cameraAfterZoom.target,
+            eye: cameraAfterZoom.eye
+              ? addVec3(cameraAfterZoom.eye, translation)
+              : cameraAfterZoom.eye,
+          }
+        }
+      }
+
+      dispatch({ type: "SET_CONTROLS", payload: controlsPayload })
+      dispatch({ type: "SET_CAMERA", payload: cameraAfterZoom })
+      dispatch({ type: "SET_ZOOM_POINTER", payload: null })
       dispatch({ type: "SET_ZOOM_DELTA", payload: 0 })
     }, [
       state.camera,
       state.controls,
       options?.viewerOptions?.zoomSpeed,
       state.zoomDelta,
+      state.zoomPointer,
     ])
 
     const render = React.useCallback(() => {
