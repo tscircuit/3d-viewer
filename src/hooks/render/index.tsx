@@ -546,9 +546,19 @@ const Renderer = React.forwardRef<HTMLDivElement, RendererProps>(
         ? clampPointerToViewport(pointerCandidate, state.camera.viewport)
         : null
 
+      const centerPointer = getDefaultPointer(state.camera)
+
       const pointerBefore = pointer
         ? getPointerIntersectionOnTargetPlane(pointer, state.camera)
         : null
+      const centerBefore = centerPointer
+        ? getPointerIntersectionOnTargetPlane(centerPointer, state.camera)
+        : null
+
+      const distanceBefore =
+        state.camera.position && state.camera.target
+          ? lengthVec3(subtractVec3(state.camera.position, state.camera.target))
+          : null
 
       const zoomResult = controls.orbit.zoom(
         {
@@ -559,7 +569,7 @@ const Renderer = React.forwardRef<HTMLDivElement, RendererProps>(
         state.zoomDelta,
       )
 
-      const controlsPayload = {
+      const controlsForZoom = {
         ...state.controls,
         ...zoomResult.controls,
       }
@@ -570,39 +580,63 @@ const Renderer = React.forwardRef<HTMLDivElement, RendererProps>(
       }
 
       const orbitUpdate = controls.orbit.update({
-        controls: controlsPayload,
+        controls: controlsForZoom,
         camera: cameraForZoom,
       })
+
+      const controlsAfterZoom = {
+        ...controlsForZoom,
+        ...orbitUpdate.controls,
+      }
 
       let cameraAfterZoom = {
         ...cameraForZoom,
         ...orbitUpdate.camera,
       }
 
-      if (pointer && pointerBefore) {
-        const pointerAfter = getPointerIntersectionOnTargetPlane(
-          pointer,
-          cameraAfterZoom,
+      const distanceAfter =
+        cameraAfterZoom.position && cameraAfterZoom.target
+          ? lengthVec3(
+              subtractVec3(cameraAfterZoom.position, cameraAfterZoom.target),
+            )
+          : null
+
+      if (
+        pointerBefore &&
+        centerBefore &&
+        pointer &&
+        distanceBefore &&
+        distanceAfter &&
+        Number.isFinite(distanceBefore) &&
+        distanceBefore !== 0 &&
+        Number.isFinite(distanceAfter)
+      ) {
+        const ratio = distanceAfter / distanceBefore
+        const translation = scaleVec3(
+          subtractVec3(pointerBefore, centerBefore),
+          1 - ratio,
         )
-        if (pointerAfter) {
-          const translation = subtractVec3(pointerBefore, pointerAfter)
-          cameraAfterZoom = {
-            ...cameraAfterZoom,
-            position: cameraAfterZoom.position
-              ? addVec3(cameraAfterZoom.position, translation)
-              : cameraAfterZoom.position,
-            target: cameraAfterZoom.target
-              ? addVec3(cameraAfterZoom.target, translation)
-              : cameraAfterZoom.target,
-            eye: cameraAfterZoom.eye
-              ? addVec3(cameraAfterZoom.eye, translation)
-              : cameraAfterZoom.eye,
-          }
+        cameraAfterZoom = {
+          ...cameraAfterZoom,
+          position: cameraAfterZoom.position
+            ? addVec3(cameraAfterZoom.position, translation)
+            : cameraAfterZoom.position,
+          target: cameraAfterZoom.target
+            ? addVec3(cameraAfterZoom.target, translation)
+            : cameraAfterZoom.target,
+          eye: cameraAfterZoom.eye
+            ? addVec3(cameraAfterZoom.eye, translation)
+            : cameraAfterZoom.eye,
         }
       }
 
-      dispatch({ type: "SET_CONTROLS", payload: controlsPayload })
-      dispatch({ type: "SET_CAMERA", payload: cameraAfterZoom })
+      const cameraAfterZoomWithView = {
+        ...cameraAfterZoom,
+        ...cameras.perspective.update({}, cameraAfterZoom),
+      }
+
+      dispatch({ type: "SET_CONTROLS", payload: controlsAfterZoom })
+      dispatch({ type: "SET_CAMERA", payload: cameraAfterZoomWithView })
       dispatch({ type: "SET_ZOOM_POINTER", payload: null })
       dispatch({ type: "SET_ZOOM_DELTA", payload: 0 })
     }, [
