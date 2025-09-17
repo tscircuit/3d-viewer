@@ -108,6 +108,7 @@ export const CadViewerContainer = forwardRef<
               enableDamping={true}
               dampingFactor={0.1}
               target={orbitTarget}
+              zoomToCursor={true}
             />
           )}
           <Lights />

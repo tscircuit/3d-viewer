@@ -12,6 +12,7 @@ interface OrbitControlsProps {
   enableDamping?: boolean
   dampingFactor?: number
   target?: [number, number, number]
+  zoomToCursor?: boolean
 }
 
 export const OrbitControls: React.FC<OrbitControlsProps> = ({
@@ -24,6 +25,7 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
   enableDamping,
   dampingFactor,
   target,
+  zoomToCursor,
 }) => {
   const { camera, renderer } = useThree()
 
@@ -42,6 +44,7 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
     if (zoomSpeed !== undefined) controls.zoomSpeed = zoomSpeed
     if (enableDamping !== undefined) controls.enableDamping = enableDamping
     if (dampingFactor !== undefined) controls.dampingFactor = dampingFactor
+    if (zoomToCursor !== undefined) controls.zoomToCursor = zoomToCursor
     if (target) {
       controls.target.set(target[0], target[1], target[2])
       controls.update()
@@ -56,6 +59,7 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
     enableDamping,
     dampingFactor,
     target,
+    zoomToCursor,
   ])
 
   useEffect(() => {
