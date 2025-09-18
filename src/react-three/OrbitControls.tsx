@@ -42,6 +42,9 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
     if (zoomSpeed !== undefined) controls.zoomSpeed = zoomSpeed
     if (enableDamping !== undefined) controls.enableDamping = enableDamping
     if (dampingFactor !== undefined) controls.dampingFactor = dampingFactor
+
+    controls.zoomToCursor = true
+
     if (target) {
       controls.target.set(target[0], target[1], target[2])
       controls.update()
