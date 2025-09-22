@@ -90,11 +90,33 @@ export function useGlobalManifoldLoader(): {
   error: string | null
   isLoading: boolean
 } {
+  const getInitialState = () => {
+    if (typeof window === "undefined") {
+      return { manifoldModule: null, error: null, isLoading: true }
+    }
+
+    const cache = window.TSCIRCUIT_MANIFOLD_LOADER_CACHE
+    if (cache?.result) {
+      if (cache.result instanceof Error) {
+        return {
+          manifoldModule: null,
+          error: cache.result.message,
+          isLoading: false,
+        }
+      } else {
+        return { manifoldModule: cache.result, error: null, isLoading: false }
+      }
+    }
+
+    return { manifoldModule: null, error: null, isLoading: true }
+  }
+
+  const initialState = getInitialState()
   const [manifoldModule, setManifoldModule] = useState<ManifoldToplevel | null>(
-    null,
+    initialState.manifoldModule,
   )
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(initialState.error)
+  const [isLoading, setIsLoading] = useState<boolean>(initialState.isLoading)
 
   useEffect(() => {
     let hasUnmounted = false
