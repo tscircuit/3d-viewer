@@ -2,8 +2,8 @@ import { useState, useEffect } from "react"
 import { ManifoldToplevel } from "manifold-3d"
 
 interface ManifoldCacheItem {
-  promise: Promise<ManifoldToplevel | Error>
-  result: ManifoldToplevel | Error | null
+  loadingPromise: Promise<ManifoldToplevel | Error>
+  manifoldInstance: ManifoldToplevel | Error | null
 }
 
 declare global {
@@ -23,28 +23,28 @@ const MANIFOLD_CDN_BASE_URL = "https://cdn.jsdelivr.net/npm/manifold-3d@3.2.1"
 
 async function loadManifoldModule(): Promise<ManifoldToplevel | Error> {
   try {
-    const existingManifold =
+    const existingManifoldFactory =
       window.ManifoldModule ?? window.MANIFOLD ?? window.MANIFOLD_MODULE
 
-    if (existingManifold) {
-      window.ManifoldModule = existingManifold
-      const loadedModule: ManifoldToplevel = await existingManifold()
-      loadedModule.setup()
-      return loadedModule
+    if (existingManifoldFactory) {
+      window.ManifoldModule = existingManifoldFactory
+      const manifoldInstance: ManifoldToplevel = await existingManifoldFactory()
+      manifoldInstance.setup()
+      return manifoldInstance
     }
 
     return new Promise((resolve, reject) => {
-      const eventName = "manifoldLoaded"
+      const manifoldLoadedEventName = "manifoldLoaded"
 
-      const handleLoad = async () => {
+      const handleManifoldScriptLoad = async () => {
         try {
-          const loadedManifold =
+          const loadedManifoldFactory =
             window.ManifoldModule ?? window.MANIFOLD ?? window.MANIFOLD_MODULE
-          if (loadedManifold) {
-            window.ManifoldModule = loadedManifold
-            const loadedModule: ManifoldToplevel = await loadedManifold()
-            loadedModule.setup()
-            resolve(loadedModule)
+          if (loadedManifoldFactory) {
+            window.ManifoldModule = loadedManifoldFactory
+            const manifoldInstance: ManifoldToplevel = await loadedManifoldFactory()
+            manifoldInstance.setup()
+            resolve(manifoldInstance)
           } else {
             reject(
               new Error(
@@ -57,7 +57,7 @@ async function loadManifoldModule(): Promise<ManifoldToplevel | Error> {
         }
       }
 
-      window.addEventListener(eventName, handleLoad, { once: true })
+      window.addEventListener(manifoldLoadedEventName, handleManifoldScriptLoad, { once: true })
 
       const script = document.createElement("script")
       script.type = "module"
@@ -68,16 +68,16 @@ try {
 } catch (e) {
   console.error('Error importing manifold in dynamic script:', e);
 } finally {
-  window.dispatchEvent(new CustomEvent('${eventName}'));
+  window.dispatchEvent(new CustomEvent('${manifoldLoadedEventName}'));
 }
       `.trim()
 
-      const scriptError = (err: any) => {
-        window.removeEventListener(eventName, handleLoad)
+      const onScriptError = (err: any) => {
+        window.removeEventListener(manifoldLoadedEventName, handleManifoldScriptLoad)
         reject(new Error("Failed to load Manifold loader script."))
       }
 
-      script.addEventListener("error", scriptError)
+      script.addEventListener("error", onScriptError)
       document.body.appendChild(script)
     })
   } catch (error) {
@@ -95,16 +95,16 @@ export function useGlobalManifoldLoader(): {
       return { manifoldModule: null, error: null, isLoading: true }
     }
 
-    const cache = window.TSCIRCUIT_MANIFOLD_LOADER_CACHE
-    if (cache?.result) {
-      if (cache.result instanceof Error) {
+    const manifoldCache = window.TSCIRCUIT_MANIFOLD_LOADER_CACHE
+    if (manifoldCache?.manifoldInstance) {
+      if (manifoldCache.manifoldInstance instanceof Error) {
         return {
           manifoldModule: null,
-          error: cache.result.message,
+          error: manifoldCache.manifoldInstance.message,
           isLoading: false,
         }
       } else {
-        return { manifoldModule: cache.result, error: null, isLoading: false }
+        return { manifoldModule: manifoldCache.manifoldInstance, error: null, isLoading: false }
       }
     }
 
@@ -122,15 +122,15 @@ export function useGlobalManifoldLoader(): {
     let hasUnmounted = false
 
     async function loadModule() {
-      const cache = window.TSCIRCUIT_MANIFOLD_LOADER_CACHE
+      const manifoldCache = window.TSCIRCUIT_MANIFOLD_LOADER_CACHE
 
-      if (cache) {
-        if (cache.result) {
-          if (cache.result instanceof Error) {
-            setError(cache.result.message)
+      if (manifoldCache) {
+        if (manifoldCache.manifoldInstance) {
+          if (manifoldCache.manifoldInstance instanceof Error) {
+            setError(manifoldCache.manifoldInstance.message)
             setManifoldModule(null)
           } else {
-            setManifoldModule(cache.result)
+            setManifoldModule(manifoldCache.manifoldInstance)
             setError(null)
           }
           setIsLoading(false)
@@ -138,14 +138,14 @@ export function useGlobalManifoldLoader(): {
         }
 
         try {
-          const result = await cache.promise
+          const manifoldInstance = await manifoldCache.loadingPromise
           if (hasUnmounted) return
 
-          if (result instanceof Error) {
-            setError(result.message)
+          if (manifoldInstance instanceof Error) {
+            setError(manifoldInstance.message)
             setManifoldModule(null)
           } else {
-            setManifoldModule(result)
+            setManifoldModule(manifoldInstance)
             setError(null)
           }
           setIsLoading(false)
@@ -158,24 +158,24 @@ export function useGlobalManifoldLoader(): {
         return
       }
 
-      const promise = loadManifoldModule().then((result) => {
+      const loadingPromise = loadManifoldModule().then((manifoldInstance) => {
         if (window.TSCIRCUIT_MANIFOLD_LOADER_CACHE) {
-          window.TSCIRCUIT_MANIFOLD_LOADER_CACHE.result = result
+          window.TSCIRCUIT_MANIFOLD_LOADER_CACHE.manifoldInstance = manifoldInstance
         }
-        return result
+        return manifoldInstance
       })
 
-      window.TSCIRCUIT_MANIFOLD_LOADER_CACHE = { promise, result: null }
+      window.TSCIRCUIT_MANIFOLD_LOADER_CACHE = { loadingPromise, manifoldInstance: null }
 
       try {
-        const result = await promise
+        const manifoldInstance = await loadingPromise
         if (hasUnmounted) return
 
-        if (result instanceof Error) {
-          setError(result.message)
+        if (manifoldInstance instanceof Error) {
+          setError(manifoldInstance.message)
           setManifoldModule(null)
         } else {
-          setManifoldModule(result)
+          setManifoldModule(manifoldInstance)
           setError(null)
         }
         setIsLoading(false)
