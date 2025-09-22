@@ -59,7 +59,7 @@ async function loadManifoldModule(): Promise<ManifoldToplevel | Error> {
 
       window.addEventListener(manifoldLoadedEventName, handleManifoldScriptLoad, { once: true })
 
-      const script = document.createElement("script")
+      const manifoldCdnScript = document.createElement("script")
       script.type = "module"
       script.innerHTML = `
 try {
