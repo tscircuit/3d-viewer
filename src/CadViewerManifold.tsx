@@ -1,26 +1,18 @@
 import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, CadComponent } from "circuit-json"
-import { ManifoldToplevel } from "manifold-3d"
 import type React from "react"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo } from "react"
 import type * as THREE from "three"
 import { useThree } from "./react-three/ThreeContext"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
 import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
+import { useGlobalManifoldLoader } from "./hooks/use-global-manifold-loader"
 import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
 import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
 import { createTextureMeshes } from "./utils/manifold/create-three-texture-meshes"
-
-declare global {
-  interface Window {
-    ManifoldModule: any
-    MANIFOLD?: any
-    MANIFOLD_MODULE?: any
-  }
-}
 
 const BoardMeshes = ({
   geometryMeshes,
@@ -54,8 +46,6 @@ type CadViewerManifoldProps = {
   | { circuitJson?: never; children: React.ReactNode }
 )
 
-const MANIFOLD_CDN_BASE_URL = "https://cdn.jsdelivr.net/npm/manifold-3d@3.2.1"
-
 const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   circuitJson: circuitJsonProp,
   autoRotateDisabled,
@@ -68,77 +58,11 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
     return circuitJsonProp ?? childrenCircuitJson
   }, [circuitJsonProp, childrenCircuitJson])
 
-  const [manifoldJSModule, setManifoldJSModule] = useState<any | null>(null)
-  const [manifoldLoadingError, setManifoldLoadingError] = useState<
-    string | null
-  >(null)
-
-  useEffect(() => {
-    const initManifold = async (ManifoldModule: any) => {
-      try {
-        const loadedModule: ManifoldToplevel = await ManifoldModule()
-        loadedModule.setup()
-        setManifoldJSModule(loadedModule)
-      } catch (error) {
-        console.error("Failed to initialize Manifold:", error)
-        setManifoldLoadingError(
-          `Failed to initialize Manifold: ${error instanceof Error ? error.message : "Unknown error"}`,
-        )
-      }
-    }
-
-    const existingManifold =
-      window.ManifoldModule ?? window.MANIFOLD ?? window.MANIFOLD_MODULE
-    if (existingManifold) {
-      window.ManifoldModule = existingManifold
-      initManifold(window.ManifoldModule)
-      return
-    }
-
-    const eventName = "manifoldLoaded"
-    const handleLoad = () => {
-      const loadedManifold =
-        window.ManifoldModule ?? window.MANIFOLD ?? window.MANIFOLD_MODULE
-      if (loadedManifold) {
-        window.ManifoldModule = loadedManifold
-        initManifold(window.ManifoldModule)
-      } else {
-        const errText = "ManifoldModule not found on window after script load."
-        console.error(errText)
-        setManifoldLoadingError(errText)
-      }
-    }
-
-    window.addEventListener(eventName, handleLoad, { once: true })
-
-    const script = document.createElement("script")
-    script.type = "module"
-    script.innerHTML = `
-try {
-  const { default: ManifoldModule } = await import('${MANIFOLD_CDN_BASE_URL}/manifold.js');
-  window.ManifoldModule = ManifoldModule;
-} catch (e) {
-  console.error('Error importing manifold in dynamic script:', e);
-} finally {
-  window.dispatchEvent(new CustomEvent('${eventName}'));
-}
-    `.trim()
-
-    const scriptError = (err: any) => {
-      const errText = "Failed to load Manifold loader script."
-      console.error(errText, err)
-      setManifoldLoadingError(errText)
-      window.removeEventListener(eventName, handleLoad)
-    }
-
-    script.addEventListener("error", scriptError)
-    document.body.appendChild(script)
-
-    return () => {
-      window.removeEventListener(eventName, handleLoad)
-      script.removeEventListener("error", scriptError)
-    }
-  }, [])
+  const {
+    manifoldModule,
+    error: manifoldLoadingError,
+    isLoading: manifoldIsLoading,
+  } = useGlobalManifoldLoader()
 
   const {
     geoms,
@@ -147,7 +71,7 @@ try {
     error: builderError,
     isLoading: builderIsLoading,
     boardData,
-  } = useManifoldBoardBuilder(manifoldJSModule, circuitJson)
+  } = useManifoldBoardBuilder(manifoldModule, circuitJson)
 
   const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
   const textureMeshes = useMemo(
@@ -196,8 +120,11 @@ try {
       </div>
     )
   }
-  if (!manifoldJSModule) {
+  if (manifoldIsLoading) {
     return <div style={{ padding: "1em" }}>Loading Manifold module...</div>
+  }
+  if (!manifoldModule) {
+    return <div style={{ padding: "1em" }}>Manifold module failed to load</div>
   }
   if (builderError) {
     return (
