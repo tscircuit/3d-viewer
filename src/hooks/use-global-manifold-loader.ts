@@ -25,7 +25,7 @@ async function loadManifoldModule(): Promise<ManifoldToplevel | Error> {
   try {
     const existingManifold =
       window.ManifoldModule ?? window.MANIFOLD ?? window.MANIFOLD_MODULE
-    
+
     if (existingManifold) {
       window.ManifoldModule = existingManifold
       const loadedModule: ManifoldToplevel = await existingManifold()
@@ -35,7 +35,7 @@ async function loadManifoldModule(): Promise<ManifoldToplevel | Error> {
 
     return new Promise((resolve, reject) => {
       const eventName = "manifoldLoaded"
-      
+
       const handleLoad = async () => {
         try {
           const loadedManifold =
@@ -46,7 +46,11 @@ async function loadManifoldModule(): Promise<ManifoldToplevel | Error> {
             loadedModule.setup()
             resolve(loadedModule)
           } else {
-            reject(new Error("ManifoldModule not found on window after script load."))
+            reject(
+              new Error(
+                "ManifoldModule not found on window after script load.",
+              ),
+            )
           }
         } catch (error) {
           reject(error)
@@ -86,7 +90,9 @@ export function useGlobalManifoldLoader(): {
   error: string | null
   isLoading: boolean
 } {
-  const [manifoldModule, setManifoldModule] = useState<ManifoldToplevel | null>(null)
+  const [manifoldModule, setManifoldModule] = useState<ManifoldToplevel | null>(
+    null,
+  )
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
@@ -108,11 +114,11 @@ export function useGlobalManifoldLoader(): {
           setIsLoading(false)
           return
         }
-        
+
         try {
           const result = await cache.promise
           if (hasUnmounted) return
-          
+
           if (result instanceof Error) {
             setError(result.message)
             setManifoldModule(null)
