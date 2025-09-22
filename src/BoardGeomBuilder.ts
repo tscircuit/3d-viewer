@@ -20,6 +20,7 @@ import {
   cylinder,
   line,
   polygon as jscadPolygon,
+  roundedRectangle,
 } from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
 import { subtract, union } from "@jscad/modeling/src/operations/booleans"
@@ -41,6 +42,33 @@ import { createSilkscreenTextGeoms } from "./geoms/create-geoms-for-silkscreen-t
 import { createSilkscreenPathGeom } from "./geoms/create-geoms-for-silkscreen-path"
 import { createGeom2FromBRep } from "./geoms/brep-converter"
 import type { GeomContext } from "./GeomContext"
+import {
+  clampRectBorderRadius,
+  extractRectBorderRadius,
+} from "./utils/rect-border-radius"
+
+const PAD_ROUNDED_SEGMENTS = 64
+
+const createCenteredRectPadGeom = (
+  width: number,
+  height: number,
+  thickness: number,
+  rectBorderRadius?: number | null,
+) => {
+  const clampedRadius = clampRectBorderRadius(width, height, rectBorderRadius)
+
+  if (clampedRadius <= 0) {
+    return cuboid({ center: [0, 0, 0], size: [width, height, thickness] })
+  }
+
+  const rect2d = roundedRectangle({
+    size: [width, height],
+    roundRadius: clampedRadius,
+    segments: PAD_ROUNDED_SEGMENTS,
+  })
+  const extruded = extrudeLinear({ height: thickness }, rect2d)
+  return translate([0, 0, -thickness / 2], extruded)
+}
 
 type BuilderState =
   | "initializing"
@@ -459,21 +487,25 @@ export class BoardGeomBuilder {
     const layerSign = pad.layer === "bottom" ? -1 : 1
     const zPos = (layerSign * this.ctx.pcbThickness) / 2 + layerSign * M * 2 // Slightly offset from board surface
 
+    const rectBorderRadius = extractRectBorderRadius(pad)
+
     if (pad.shape === "rect") {
-      const padGeom = colorize(
-        colors.copper,
-        cuboid({
-          center: [pad.x, pad.y, zPos],
-          size: [pad.width, pad.height, M],
-        }),
+      const basePadGeom = createCenteredRectPadGeom(
+        pad.width,
+        pad.height,
+        M,
+        rectBorderRadius,
       )
+      const positionedPadGeom = translate([pad.x, pad.y, zPos], basePadGeom)
+      const padGeom = colorize(colors.copper, positionedPadGeom)
       this.padGeoms.push(padGeom)
     } else if (pad.shape === "rotated_rect") {
-      let basePadGeom = cuboid({
-        // Create at origin for rotation, then translate
-        center: [0, 0, 0],
-        size: [pad.width, pad.height, M],
-      })
+      let basePadGeom = createCenteredRectPadGeom(
+        pad.width,
+        pad.height,
+        M,
+        rectBorderRadius,
+      )
       const rotationRadians = (pad.ccw_rotation * Math.PI) / 180
       basePadGeom = rotateZ(rotationRadians, basePadGeom)
       // Translate to final position
