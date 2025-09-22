@@ -163,6 +163,11 @@ export function useGlobalManifoldLoader(): {
           window.TSCIRCUIT_MANIFOLD_LOADER_CACHE.manifoldInstance = manifoldInstance
         }
         return manifoldInstance
+      }).catch((error) => {
+        if (window.TSCIRCUIT_MANIFOLD_LOADER_CACHE) {
+          window.TSCIRCUIT_MANIFOLD_LOADER_CACHE.manifoldInstance = error
+        }
+        throw error
       })
 
       window.TSCIRCUIT_MANIFOLD_LOADER_CACHE = { loadingPromise, manifoldInstance: null }
