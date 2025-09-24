@@ -19,7 +19,6 @@ declare global {
     ManifoldModule: any
     MANIFOLD?: any
     MANIFOLD_MODULE?: any
-    _CACHED_MANIFOLD_MODULE?: any
   }
 }
 
@@ -69,16 +68,18 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
     return circuitJsonProp ?? childrenCircuitJson
   }, [circuitJsonProp, childrenCircuitJson])
 
-  const [manifoldJSModule, setManifoldJSModule] = useState<any | null>(
-    window._CACHED_MANIFOLD_MODULE || null
-  )
+  const [manifoldJSModule, setManifoldJSModule] = useState<any | null>(null)
   const [manifoldLoadingError, setManifoldLoadingError] = useState<
     string | null
   >(null)
 
   useEffect(() => {
-    if (window._CACHED_MANIFOLD_MODULE) {
-      setManifoldJSModule(window._CACHED_MANIFOLD_MODULE)
+    if (
+      window.ManifoldModule &&
+      typeof window.ManifoldModule === "object" &&
+      window.ManifoldModule.setup
+    ) {
+      setManifoldJSModule(window.ManifoldModule)
       return
     }
 
@@ -86,7 +87,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
       try {
         const loadedModule: ManifoldToplevel = await ManifoldModule()
         loadedModule.setup()
-        window._CACHED_MANIFOLD_MODULE = loadedModule
+        window.ManifoldModule = loadedModule
         setManifoldJSModule(loadedModule)
       } catch (error) {
         console.error("Failed to initialize Manifold:", error)
