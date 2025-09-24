@@ -74,10 +74,20 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   >(null)
 
   useEffect(() => {
+    if (
+      window.ManifoldModule &&
+      typeof window.ManifoldModule === "object" &&
+      window.ManifoldModule.setup
+    ) {
+      setManifoldJSModule(window.ManifoldModule)
+      return
+    }
+
     const initManifold = async (ManifoldModule: any) => {
       try {
         const loadedModule: ManifoldToplevel = await ManifoldModule()
         loadedModule.setup()
+        window.ManifoldModule = loadedModule
         setManifoldJSModule(loadedModule)
       } catch (error) {
         console.error("Failed to initialize Manifold:", error)
