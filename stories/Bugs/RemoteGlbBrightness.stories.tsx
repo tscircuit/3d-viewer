@@ -41,7 +41,7 @@ const remoteGlbCircuit: AnyCircuitElement[] = [
 ]
 
 export const RemoteSoic6Glb = () => (
-  <div style={{ width: 400, height: 400 }}>
+  <div style={{ width: 640, height: 480 }}>
     <CadViewer circuitJson={remoteGlbCircuit} />
   </div>
 )

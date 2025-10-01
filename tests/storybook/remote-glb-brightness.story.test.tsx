@@ -242,7 +242,7 @@ test("remote GLB story configures the renderer for bright output", async () => {
     const renderer = rendererStore[0]!
     expect(renderer.outputColorSpace).toBe(THREE.SRGBColorSpace)
     expect(renderer.toneMapping).toBe(THREE.ACESFilmicToneMapping)
-    expect(renderer.toneMappingExposure).toBe(1)
+    expect(renderer.toneMappingExposure).toBe(1.6)
 
     await act(async () => {
       root.unmount()
