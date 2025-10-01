@@ -11,6 +11,7 @@ import * as THREE from "three"
 import { ThreeContext, ThreeContextState } from "./ThreeContext"
 import { HoverProvider } from "./HoverContext"
 import { removeExistingCanvases } from "./remove-existing-canvases"
+import { configureRenderer } from "./configure-renderer"
 
 declare global {
   interface Window {
@@ -65,6 +66,7 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
       removeExistingCanvases(mountRef.current)
 
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+      configureRenderer(renderer)
       renderer.setSize(
         mountRef.current.clientWidth,
         mountRef.current.clientHeight,
