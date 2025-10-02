@@ -3,6 +3,7 @@ import { JSDOM } from "jsdom"
 import { createRoot } from "react-dom/client"
 import { act } from "react-dom/test-utils"
 import type { ComponentType } from "react"
+import type { Mesh, MeshStandardMaterial } from "three"
 
 interface StubRenderer {
   domElement: HTMLCanvasElement
@@ -17,6 +18,7 @@ interface StubRenderer {
 
 const rendererStore: StubRenderer[] = []
 ;(globalThis as any).__REMOTE_GLB_RENDERERS__ = rendererStore
+const loadedMeshes: Mesh[] = []
 
 mock.module("troika-three-text", () => {
   class MockTroikaText {
@@ -125,8 +127,9 @@ const waitFor = async (predicate: () => boolean, timeout = 500, step = 10) => {
   throw new Error("Timed out waiting for condition")
 }
 
-test("remote GLB story configures the renderer for bright output", async () => {
+test("remote GLB story configures renderer and brightens GLB materials", async () => {
   rendererStore.length = 0
+  loadedMeshes.length = 0
 
   const dom = new JSDOM(
     "<!DOCTYPE html><html><body><div id='root'></div></body></html>",
@@ -172,6 +175,7 @@ test("remote GLB story configures the renderer for bright output", async () => {
       new THREE.MeshStandardMaterial(),
     )
     group.add(mesh)
+    loadedMeshes.push(mesh)
     setTimeout(() => {
       onLoad?.({ scene: group } as any)
     }, 0)
@@ -248,23 +252,39 @@ test("remote GLB story configures the renderer for bright output", async () => {
 
     expect(rendererStore.length).toBeGreaterThan(0)
     await waitFor(() =>
-      rendererStore.some((renderer) => renderer.toneMappingExposure === 1.6),
+      rendererStore.some((renderer) => renderer.toneMappingExposure === 1),
     )
     const renderer = rendererStore.find(
-      (entry) => entry.toneMappingExposure === 1.6,
+      (entry) => entry.toneMappingExposure === 1,
     )!
     expect(renderer.outputColorSpace).toBe(THREE.SRGBColorSpace)
     expect(renderer.toneMapping).toBe(THREE.ACESFilmicToneMapping)
-    // exposure is increased while the GLB-backed component is mounted
-    expect(renderer.toneMappingExposure).toBe(1.6)
-
-    await act(async () => {
-      root.unmount()
-    })
-
-    // and returns to the shared default after unmounting
-    await waitFor(() => renderer.toneMappingExposure === 1)
     expect(renderer.toneMappingExposure).toBe(1)
+
+    await waitFor(() =>
+      loadedMeshes.some((mesh) => {
+        const material = mesh.material
+        if (Array.isArray(material)) return false
+        if (!(material instanceof THREE.MeshStandardMaterial)) return false
+        return !!material.envMap && material.envMapIntensity >= 1.25
+      }),
+    )
+
+    const meshMaterial = loadedMeshes
+      .map((mesh) => mesh.material)
+      .find(
+        (material): material is MeshStandardMaterial =>
+          !Array.isArray(material) &&
+          material instanceof THREE.MeshStandardMaterial,
+      )!
+
+    expect(meshMaterial.envMap).toBeTruthy()
+    expect(meshMaterial.envMapIntensity).toBeGreaterThanOrEqual(1.25)
+    expect([
+      THREE.EquirectangularReflectionMapping,
+      THREE.CubeUVReflectionMapping,
+      THREE.CubeReflectionMapping,
+    ]).toContain(meshMaterial.envMap?.mapping)
   } finally {
     cleanup()
   }

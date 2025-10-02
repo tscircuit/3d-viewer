@@ -103,12 +103,6 @@ export const CadViewerJscad = forwardRef<
     const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
 
     const cad_components = su(internalCircuitJson).cad_component.list()
-    const rendererExposure = useMemo(() => {
-      const hasGlbModel = cad_components.some(
-        (component) => component.model_glb_url || component.model_gltf_url,
-      )
-      return hasGlbModel ? 1.6 : null
-    }, [cad_components])
 
     return (
       <CadViewerContainer
@@ -119,7 +113,6 @@ export const CadViewerJscad = forwardRef<
         boardDimensions={boardDimensions}
         boardCenter={boardCenter}
         onUserInteraction={onUserInteraction}
-        rendererExposure={rendererExposure}
       >
         {boardStls.map(({ stlData, color }, index) => (
           <STLModel

@@ -1,40 +1,30 @@
-import { useEffect, useMemo, type FC } from "react"
+import React, { useEffect, useMemo } from "react"
 import * as THREE from "three"
 import { useThree } from "./ThreeContext"
 
-export const Lights: FC = () => {
+export const Lights: React.FC = () => {
   const { scene } = useThree()
 
-  const ambientLight = useMemo(() => new THREE.AmbientLight(0xffffff, 1), [])
-  const hemisphereLight = useMemo(() => {
-    const light = new THREE.HemisphereLight(0xf0f6ff, 0x1f1a14, 1.35)
-    light.position.set(0, 0, 1)
-    return light
-  }, [])
-  const keyLight = useMemo(() => {
-    const light = new THREE.DirectionalLight(0xffffff, 2.25)
-    light.position.set(6, 5, 9)
-    return light
-  }, [])
-  const fillLight = useMemo(() => {
-    const light = new THREE.DirectionalLight(0xf2f2ff, 1.75)
-    light.position.set(-6, -4, 6)
+  const ambientLight = useMemo(
+    () => new THREE.AmbientLight(0xffffff, Math.PI / 2),
+    [],
+  )
+  const pointLight = useMemo(() => {
+    const light = new THREE.PointLight(0xffffff, Math.PI / 4)
+    light.position.set(-10, -10, 10)
+    light.decay = 0
     return light
   }, [])
 
   useEffect(() => {
     if (!scene) return
     scene.add(ambientLight)
-    scene.add(hemisphereLight)
-    scene.add(keyLight)
-    scene.add(fillLight)
+    scene.add(pointLight)
     return () => {
       scene.remove(ambientLight)
-      scene.remove(hemisphereLight)
-      scene.remove(keyLight)
-      scene.remove(fillLight)
+      scene.remove(pointLight)
     }
-  }, [scene, ambientLight, hemisphereLight, keyLight, fillLight])
+  }, [scene, ambientLight, pointLight])
 
   return null
 }
