@@ -116,6 +116,14 @@ mock.module("../../src/react-three/Canvas.tsx", async () => {
 })
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+const waitFor = async (predicate: () => boolean, timeout = 500, step = 10) => {
+  const start = Date.now()
+  while (Date.now() - start < timeout) {
+    if (predicate()) return
+    await wait(step)
+  }
+  throw new Error("Timed out waiting for condition")
+}
 
 test("remote GLB story configures the renderer for bright output", async () => {
   rendererStore.length = 0
@@ -239,14 +247,24 @@ test("remote GLB story configures the renderer for bright output", async () => {
     })
 
     expect(rendererStore.length).toBeGreaterThan(0)
-    const renderer = rendererStore[0]!
+    await waitFor(() =>
+      rendererStore.some((renderer) => renderer.toneMappingExposure === 1.6),
+    )
+    const renderer = rendererStore.find(
+      (entry) => entry.toneMappingExposure === 1.6,
+    )!
     expect(renderer.outputColorSpace).toBe(THREE.SRGBColorSpace)
     expect(renderer.toneMapping).toBe(THREE.ACESFilmicToneMapping)
+    // exposure is increased while the GLB-backed component is mounted
     expect(renderer.toneMappingExposure).toBe(1.6)
 
     await act(async () => {
       root.unmount()
     })
+
+    // and returns to the shared default after unmounting
+    await waitFor(() => renderer.toneMappingExposure === 1)
+    expect(renderer.toneMappingExposure).toBe(1)
   } finally {
     cleanup()
   }

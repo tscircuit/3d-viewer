@@ -15,6 +15,7 @@ import { OrbitControls } from "./react-three/OrbitControls"
 import { Grid } from "./react-three/Grid"
 import { useFrame, useThree } from "./react-three/ThreeContext"
 import { Lights } from "./react-three/Lights"
+import { RendererExposure } from "./react-three/RendererExposure"
 
 export const RotationTracker = () => {
   const { camera } = useThree()
@@ -34,6 +35,7 @@ interface Props {
   boardDimensions?: { width?: number; height?: number }
   boardCenter?: { x: number; y: number }
   onUserInteraction?: () => void
+  rendererExposure?: number | null
 }
 
 export const CadViewerContainer = forwardRef<
@@ -49,6 +51,7 @@ export const CadViewerContainer = forwardRef<
       boardDimensions,
       boardCenter,
       onUserInteraction,
+      rendererExposure,
     },
     ref,
   ) => {
@@ -96,6 +99,9 @@ export const CadViewerContainer = forwardRef<
           scene={{ up: new THREE.Vector3(0, 0, 1) }}
           camera={{ up: [0, 0, 1], position: initialCameraPosition }}
         >
+          {rendererExposure != null && (
+            <RendererExposure value={rendererExposure} />
+          )}
           <RotationTracker />
           {isInteractionEnabled && (
             <OrbitControls

@@ -170,6 +170,13 @@ try {
     [circuitJson],
   )
 
+  const rendererExposure = useMemo(() => {
+    const hasGlbModel = cadComponents.some(
+      (component) => component.model_glb_url || component.model_gltf_url,
+    )
+    return hasGlbModel ? 1.6 : null
+  }, [cadComponents])
+
   const boardDimensions = useMemo(() => {
     if (!boardData) return undefined
     const { width = 0, height = 0 } = boardData
@@ -235,6 +242,7 @@ try {
       boardDimensions={boardDimensions}
       boardCenter={boardCenter}
       onUserInteraction={onUserInteraction}
+      rendererExposure={rendererExposure}
     >
       <BoardMeshes
         geometryMeshes={geometryMeshes}
