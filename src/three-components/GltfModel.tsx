@@ -3,6 +3,9 @@ import * as THREE from "three"
 import { GLTFLoader } from "three-stdlib"
 import { useThree } from "src/react-three/ThreeContext"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
+import { getDefaultEnvironmentMap } from "src/react-three/getDefaultEnvironmentMap"
+
+const DEFAULT_ENV_MAP_INTENSITY = 1.25
 
 export function GltfModel({
   gltfUrl,
@@ -21,7 +24,7 @@ export function GltfModel({
   isHovered: boolean
   scale?: number
 }) {
-  const { rootObject } = useThree()
+  const { renderer, rootObject } = useThree()
   const [model, setModel] = useState<THREE.Group | null>(null)
 
   useEffect(() => {
@@ -67,6 +70,61 @@ export function GltfModel({
       rootObject.remove(model)
     }
   }, [rootObject, model])
+
+  useEffect(() => {
+    if (!model || !renderer) return
+
+    const environmentMap = getDefaultEnvironmentMap(renderer)
+    if (!environmentMap) return
+
+    const previousMaterialState: Array<{
+      material: THREE.MeshStandardMaterial
+      envMap: THREE.Texture | null
+      envMapIntensity: number
+    }> = []
+
+    const applyEnvironmentToMaterial = (material: THREE.Material) => {
+      if (!(material instanceof THREE.MeshStandardMaterial)) return
+
+      previousMaterialState.push({
+        material,
+        envMap: material.envMap ?? null,
+        envMapIntensity: material.envMapIntensity ?? 1,
+      })
+
+      if (!material.envMap) {
+        material.envMap = environmentMap
+      }
+
+      if (
+        typeof material.envMapIntensity !== "number" ||
+        material.envMapIntensity < DEFAULT_ENV_MAP_INTENSITY
+      ) {
+        material.envMapIntensity = DEFAULT_ENV_MAP_INTENSITY
+      }
+
+      material.needsUpdate = true
+    }
+
+    model.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return
+
+      const material = child.material
+      if (Array.isArray(material)) {
+        material.forEach(applyEnvironmentToMaterial)
+      } else if (material) {
+        applyEnvironmentToMaterial(material)
+      }
+    })
+
+    return () => {
+      previousMaterialState.forEach(({ material, envMap, envMapIntensity }) => {
+        material.envMap = envMap
+        material.envMapIntensity = envMapIntensity
+        material.needsUpdate = true
+      })
+    }
+  }, [model, renderer])
 
   useEffect(() => {
     if (!model) return
