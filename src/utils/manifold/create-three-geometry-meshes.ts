@@ -8,12 +8,21 @@ export function createGeometryMeshes(
   if (!geoms) return meshes
 
   if (geoms.board && geoms.board.geometry) {
+    const { materialProps } = geoms.board
     const mesh = new THREE.Mesh(
       geoms.board.geometry,
-      new THREE.MeshStandardMaterial({
+      new THREE.MeshPhysicalMaterial({
         color: geoms.board.color,
         side: THREE.DoubleSide,
         flatShading: true,
+        metalness: materialProps?.metalness ?? 0,
+        roughness: materialProps?.roughness ?? 1,
+        ior: materialProps?.ior ?? 1.5,
+        sheen: materialProps?.sheen ?? 0,
+        clearcoat: materialProps?.clearcoat ?? 0,
+        specularIntensity: materialProps?.specularIntensity ?? 1,
+        opacity: materialProps?.alpha ?? 1,
+        transparent: (materialProps?.alpha ?? 1) < 1,
       }),
     )
     mesh.name = "board-geom"

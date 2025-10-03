@@ -13,8 +13,10 @@ import type {
 } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import * as THREE from "three"
+import type { BoardMaterialPhysicalProperties } from "../geoms/constants"
 import {
   boardMaterialColors,
+  boardMaterialPhysicalProperties,
   colors as defaultColors,
   tracesMaterialColors,
   MANIFOLD_Z_OFFSET,
@@ -35,7 +37,11 @@ import { processCopperPoursForManifold } from "../utils/manifold/process-copper-
 import { processCutoutsForManifold } from "../utils/manifold/process-cutouts"
 
 export interface ManifoldGeoms {
-  board?: { geometry: THREE.BufferGeometry; color: THREE.Color }
+  board?: {
+    geometry: THREE.BufferGeometry
+    color: THREE.Color
+    materialProps: BoardMaterialPhysicalProperties
+  }
   platedHoles?: Array<{
     key: string
     geometry: THREE.BufferGeometry
@@ -207,8 +213,13 @@ export const useManifoldBoardBuilder = (
       if (boardManifold) {
         const boardThreeMesh = boardManifold.getMesh()
         const finalBoardGeom = manifoldMeshToThreeGeometry(boardThreeMesh)
+        const materialKey = (boardData.material ??
+          "fr4") as PcbBoard["material"]
+        const materialProps =
+          boardMaterialPhysicalProperties[materialKey] ??
+          boardMaterialPhysicalProperties.fr4
         const matColorArray =
-          boardMaterialColors[boardData.material] ?? defaultColors.fr4Green
+          boardMaterialColors[materialKey] ?? materialProps.baseColor
         currentGeoms.board = {
           geometry: finalBoardGeom,
           color: new THREE.Color(
@@ -216,6 +227,7 @@ export const useManifoldBoardBuilder = (
             matColorArray[1],
             matColorArray[2],
           ),
+          materialProps,
         }
       }
 
