@@ -1,5 +1,6 @@
 import * as THREE from "three"
 import type { ManifoldGeoms } from "../../hooks/useManifoldBoardBuilder"
+import { createBoardMaterial } from "../create-board-material"
 
 export function createGeometryMeshes(
   geoms: ManifoldGeoms | null,
@@ -10,10 +11,10 @@ export function createGeometryMeshes(
   if (geoms.board && geoms.board.geometry) {
     const mesh = new THREE.Mesh(
       geoms.board.geometry,
-      new THREE.MeshStandardMaterial({
+      createBoardMaterial({
+        material: geoms.board.material,
         color: geoms.board.color,
         side: THREE.DoubleSide,
-        flatShading: true,
       }),
     )
     mesh.name = "board-geom"

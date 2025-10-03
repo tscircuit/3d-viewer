@@ -35,7 +35,11 @@ import { processCopperPoursForManifold } from "../utils/manifold/process-copper-
 import { processCutoutsForManifold } from "../utils/manifold/process-cutouts"
 
 export interface ManifoldGeoms {
-  board?: { geometry: THREE.BufferGeometry; color: THREE.Color }
+  board?: {
+    geometry: THREE.BufferGeometry
+    color: THREE.Color
+    material: PcbBoard["material"]
+  }
   platedHoles?: Array<{
     key: string
     geometry: THREE.BufferGeometry
@@ -216,6 +220,7 @@ export const useManifoldBoardBuilder = (
             matColorArray[1],
             matColorArray[2],
           ),
+          material: boardData.material,
         }
       }
 
