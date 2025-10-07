@@ -4,6 +4,7 @@ import Debug from "debug"
 import * as THREE from "three"
 import { SVGRenderer } from "three/examples/jsm/renderers/SVGRenderer.js"
 import { createBoardGeomFromCircuitJson } from "./soup-to-3d"
+import { createBoardMaterial } from "./utils/create-board-material"
 import { createGeometryFromPolygons } from "./utils/create-geometry-from-polygons"
 import { renderComponent } from "./utils/render-component"
 
@@ -91,6 +92,8 @@ export async function convertCircuitJsonTo3dSvg(
     await renderComponent(component, scene)
   }
 
+  const boardData = su(circuitJson).pcb_board.list()[0]
+
   // Add board geometry after components
   const boardGeom = createBoardGeomFromCircuitJson(circuitJson)
   if (boardGeom) {
@@ -98,16 +101,15 @@ export async function convertCircuitJsonTo3dSvg(
       const g = geom as any
       if (!g.polygons || g.polygons.length === 0) continue
       const geometry = createGeometryFromPolygons(g.polygons)
-      const material = new THREE.MeshStandardMaterial({
-        color: new THREE.Color(
-          g.color?.[0] ?? 0,
-          g.color?.[1] ?? 0,
-          g.color?.[2] ?? 0,
-        ),
-        metalness: 0.1,
-        roughness: 0.8,
-        opacity: 0.9,
-        transparent: true,
+      const baseColor = new THREE.Color(
+        g.color?.[0] ?? 0,
+        g.color?.[1] ?? 0,
+        g.color?.[2] ?? 0,
+      )
+
+      const material = createBoardMaterial({
+        material: boardData?.material,
+        color: baseColor,
         side: THREE.DoubleSide,
       })
       const mesh = new THREE.Mesh(geometry, material)
