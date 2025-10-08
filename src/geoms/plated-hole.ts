@@ -114,7 +114,11 @@ export const platedHole = (
           width: padWidth,
           height: padHeight,
           thickness: platedHoleLipHeight,
-          center: [plated_hole.x, plated_hole.y, 1.2 / 2],
+          center: [
+            plated_hole.x,
+            plated_hole.y,
+            ctx.pcbThickness / 2 + platedHoleLipHeight / 2 + M,
+          ],
           borderRadius: rectBorderRadius,
         }),
         // Bottom rectangular pad
@@ -122,14 +126,18 @@ export const platedHole = (
           width: padWidth,
           height: padHeight,
           thickness: platedHoleLipHeight,
-          center: [plated_hole.x, plated_hole.y, -1.2 / 2],
+          center: [
+            plated_hole.x,
+            plated_hole.y,
+            -ctx.pcbThickness / 2 - platedHoleLipHeight / 2 - M,
+          ],
           borderRadius: rectBorderRadius,
         }),
         // Plated barrel around hole
         cylinder({
           center: [plated_hole.x, plated_hole.y, 0],
           radius: plated_hole.hole_diameter / 2,
-          height: 1.2,
+          height: ctx.pcbThickness,
         }),
       ),
       clipGeom,
@@ -286,8 +294,8 @@ export const platedHole = (
     const mainRect = cuboid({
       center: [plated_hole.x, plated_hole.y, 0],
       size: shouldRotate
-        ? [holeHeight, rectLength, 1.2]
-        : [rectLength, holeHeight, 1.2],
+        ? [holeHeight, rectLength, ctx.pcbThickness]
+        : [rectLength, holeHeight, ctx.pcbThickness],
     })
 
     const leftCap = cylinder({
@@ -295,7 +303,7 @@ export const platedHole = (
         ? [plated_hole.x, plated_hole.y - rectLength / 2, 0]
         : [plated_hole.x - rectLength / 2, plated_hole.y, 0],
       radius: holeRadius,
-      height: 1.2,
+      height: ctx.pcbThickness,
     })
 
     const rightCap = cylinder({
@@ -303,14 +311,18 @@ export const platedHole = (
         ? [plated_hole.x, plated_hole.y + rectLength / 2, 0]
         : [plated_hole.x + rectLength / 2, plated_hole.y, 0],
       radius: holeRadius,
-      height: 1.2,
+      height: ctx.pcbThickness,
     })
 
     const topPad = createRectPadGeom({
       width: padWidth,
       height: padHeight,
       thickness: platedHoleLipHeight,
-      center: [plated_hole.x, plated_hole.y, 1.2 / 2],
+      center: [
+        plated_hole.x,
+        plated_hole.y,
+        ctx.pcbThickness / 2 + platedHoleLipHeight / 2 + M,
+      ],
       borderRadius: rectBorderRadius,
     })
 
@@ -318,7 +330,11 @@ export const platedHole = (
       width: padWidth,
       height: padHeight,
       thickness: platedHoleLipHeight,
-      center: [plated_hole.x, plated_hole.y, -1.2 / 2],
+      center: [
+        plated_hole.x,
+        plated_hole.y,
+        -ctx.pcbThickness / 2 - platedHoleLipHeight / 2 - M,
+      ],
       borderRadius: rectBorderRadius,
     })
 
