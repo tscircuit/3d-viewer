@@ -53,6 +53,7 @@ import {
 
 const PAD_ROUNDED_SEGMENTS = 64
 const BOARD_CLIP_Z_MARGIN = 1
+const BOARD_CLIP_XY_OUTSET = 0.01
 
 const createCenteredRectPadGeom = (
   width: number,
@@ -202,6 +203,7 @@ export class BoardGeomBuilder {
           outline: this.board.outline!,
         },
         clipDepth,
+        { xyOutset: BOARD_CLIP_XY_OUTSET },
       )
     } else {
       this.boardGeom = cuboid({
@@ -209,7 +211,11 @@ export class BoardGeomBuilder {
         center: [this.board.center.x, this.board.center.y, 0],
       })
       this.boardClipGeom = cuboid({
-        size: [this.board.width, this.board.height, clipDepth],
+        size: [
+          this.board.width + 2 * BOARD_CLIP_XY_OUTSET,
+          this.board.height + 2 * BOARD_CLIP_XY_OUTSET,
+          clipDepth,
+        ],
         center: [this.board.center.x, this.board.center.y, 0],
       })
     }
