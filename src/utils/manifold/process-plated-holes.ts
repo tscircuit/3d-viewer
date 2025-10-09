@@ -102,20 +102,12 @@ export function processPlatedHolesForManifold(
         color: COPPER_COLOR,
       })
     } else if (ph.shape === "pill") {
-      const holeWidthRaw = ph.hole_width!
-      const holeHeightRaw = ph.hole_height!
-      const shouldRotate = holeHeightRaw > holeWidthRaw
-
-      const holeW = shouldRotate ? holeHeightRaw : holeWidthRaw
-      const holeH = shouldRotate ? holeWidthRaw : holeHeightRaw
+      const holeW = ph.hole_width!
+      const holeH = ph.hole_height!
 
       const defaultPadExtension = 0.4 // 0.2mm pad extension per side
-      const outerW = shouldRotate
-        ? (ph.outer_height ?? holeH + defaultPadExtension / 2)
-        : (ph.outer_width ?? holeW + defaultPadExtension / 2)
-      const outerH = shouldRotate
-        ? (ph.outer_width ?? holeW + defaultPadExtension / 2)
-        : (ph.outer_height ?? holeH + defaultPadExtension / 2)
+      const outerW = ph.outer_width ?? holeW + defaultPadExtension
+      const outerH = ph.outer_height ?? holeH + defaultPadExtension
 
       // Board Drill
       const drillW = holeW + 2 * MANIFOLD_Z_OFFSET
@@ -123,11 +115,6 @@ export function processPlatedHolesForManifold(
       const drillDepth = pcbThickness * 1.2 // Ensure cut-through
 
       let boardPillDrillOp = createPillOp(drillW, drillH, drillDepth)
-      if (shouldRotate) {
-        const rotatedOp = boardPillDrillOp.rotate([0, 0, 90]) // Rotate 90 deg around Z
-        manifoldInstancesForCleanup.push(rotatedOp)
-        boardPillDrillOp = rotatedOp
-      }
 
       if (ph.ccw_rotation) {
         const rotatedOp = boardPillDrillOp.rotate([0, 0, ph.ccw_rotation])
@@ -162,12 +149,6 @@ export function processPlatedHolesForManifold(
       )
       manifoldInstancesForCleanup.push(finalPlatedPartOp)
 
-      if (shouldRotate) {
-        const rotatedOp = finalPlatedPartOp.rotate([0, 0, 90])
-        manifoldInstancesForCleanup.push(rotatedOp)
-        finalPlatedPartOp = rotatedOp
-      }
-
       if (ph.ccw_rotation) {
         const rotatedOp = finalPlatedPartOp.rotate([0, 0, ph.ccw_rotation])
         manifoldInstancesForCleanup.push(rotatedOp)
@@ -189,12 +170,8 @@ export function processPlatedHolesForManifold(
       ph.shape === "pill_hole_with_rect_pad" ||
       ph.shape === "rotated_pill_hole_with_rect_pad"
     ) {
-      const holeWidthRaw = ph.hole_width!
-      const holeHeightRaw = ph.hole_height!
-      const shouldRotate = holeHeightRaw > holeWidthRaw
-
-      const holeW = shouldRotate ? holeHeightRaw : holeWidthRaw
-      const holeH = shouldRotate ? holeWidthRaw : holeHeightRaw
+      const holeW = ph.hole_width!
+      const holeH = ph.hole_height!
 
       const holeRotation =
         ("hole_ccw_rotation" in ph &&
