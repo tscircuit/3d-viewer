@@ -214,7 +214,7 @@ export function processPlatedHolesForManifold(
       })
     } else if (
       ph.shape === "pill_hole_with_rect_pad" ||
-      ph.shape === "rotated_pill_with_rect_pad"
+      ph.shape === "rotated_pill_hole_with_rect_pad"
     ) {
       const holeWidthRaw = ph.hole_width!
       const holeHeightRaw = ph.hole_height!
@@ -222,6 +222,45 @@ export function processPlatedHolesForManifold(
 
       const holeW = shouldRotate ? holeHeightRaw : holeWidthRaw
       const holeH = shouldRotate ? holeWidthRaw : holeHeightRaw
+
+      const holeRotation =
+        ("hole_ccw_rotation" in ph &&
+          typeof (ph as any).hole_ccw_rotation === "number"
+          ? (ph as any).hole_ccw_rotation
+          : undefined) ?? (ph as any).ccw_rotation ?? 0
+      const padRotation =
+        ("rect_ccw_rotation" in ph &&
+          typeof (ph as any).rect_ccw_rotation === "number"
+          ? (ph as any).rect_ccw_rotation
+          : undefined) ?? (ph as any).ccw_rotation ?? holeRotation
+      const rawHoleOffsetX =
+        ("hole_offset_x" in ph && typeof ph.hole_offset_x === "number"
+          ? ph.hole_offset_x
+          : undefined) ??
+        ("holeOffsetX" in ph && typeof (ph as any).holeOffsetX === "number"
+          ? (ph as any).holeOffsetX
+          : undefined) ??
+        ("hole_offset" in ph &&
+          (ph as any).hole_offset &&
+          typeof ((ph as any).hole_offset as any).x === "number"
+          ? ((ph as any).hole_offset as any).x
+          : undefined) ??
+        0
+      const rawHoleOffsetY =
+        ("hole_offset_y" in ph && typeof ph.hole_offset_y === "number"
+          ? ph.hole_offset_y
+          : undefined) ??
+        ("holeOffsetY" in ph && typeof (ph as any).holeOffsetY === "number"
+          ? (ph as any).holeOffsetY
+          : undefined) ??
+        ("hole_offset" in ph &&
+          (ph as any).hole_offset &&
+          typeof ((ph as any).hole_offset as any).y === "number"
+          ? ((ph as any).hole_offset as any).y
+          : undefined) ??
+        0
+      const holeOffsetX = rawHoleOffsetX ?? 0
+      const holeOffsetY = rawHoleOffsetY ?? 0
 
       const padWidth = ph.rect_pad_width ?? holeW + 0.2
       const padHeight = ph.rect_pad_height ?? holeH + 0.2
@@ -240,10 +279,20 @@ export function processPlatedHolesForManifold(
         boardPillDrillOp = rotatedOp
       }
 
-      if (ph.ccw_rotation) {
-        const rotatedOp = boardPillDrillOp.rotate([0, 0, ph.ccw_rotation])
+      if (holeRotation) {
+        const rotatedOp = boardPillDrillOp.rotate([0, 0, holeRotation])
         manifoldInstancesForCleanup.push(rotatedOp)
         boardPillDrillOp = rotatedOp
+      }
+
+      if (holeOffsetX || holeOffsetY) {
+        const translatedOp = boardPillDrillOp.translate([
+          holeOffsetX,
+          holeOffsetY,
+          0,
+        ])
+        manifoldInstancesForCleanup.push(translatedOp)
+        boardPillDrillOp = translatedOp
       }
 
       const translatedBoardPillDrill = boardPillDrillOp.translate([ph.x, ph.y, 0])
@@ -263,10 +312,20 @@ export function processPlatedHolesForManifold(
         copperBarrelOp = rotatedOp
       }
 
-      if (ph.ccw_rotation) {
-        const rotatedOp = copperBarrelOp.rotate([0, 0, ph.ccw_rotation])
+      if (holeRotation) {
+        const rotatedOp = copperBarrelOp.rotate([0, 0, holeRotation])
         manifoldInstancesForCleanup.push(rotatedOp)
         copperBarrelOp = rotatedOp
+      }
+
+      if (holeOffsetX || holeOffsetY) {
+        const translatedOp = copperBarrelOp.translate([
+          holeOffsetX,
+          holeOffsetY,
+          0,
+        ])
+        manifoldInstancesForCleanup.push(translatedOp)
+        copperBarrelOp = translatedOp
       }
 
       let topPadOp = createRoundedRectPrism({
@@ -296,12 +355,12 @@ export function processPlatedHolesForManifold(
         bottomPadOp = rotatedBottom
       }
 
-      if (ph.ccw_rotation) {
-        const rotatedTop = topPadOp.rotate([0, 0, ph.ccw_rotation])
+      if (padRotation) {
+        const rotatedTop = topPadOp.rotate([0, 0, padRotation])
         manifoldInstancesForCleanup.push(rotatedTop)
         topPadOp = rotatedTop
 
-        const rotatedBottom = bottomPadOp.rotate([0, 0, ph.ccw_rotation])
+        const rotatedBottom = bottomPadOp.rotate([0, 0, padRotation])
         manifoldInstancesForCleanup.push(rotatedBottom)
         bottomPadOp = rotatedBottom
       }
@@ -341,10 +400,20 @@ export function processPlatedHolesForManifold(
         holeCutOp = rotatedOp
       }
 
-      if (ph.ccw_rotation) {
-        const rotatedOp = holeCutOp.rotate([0, 0, ph.ccw_rotation])
+      if (holeRotation) {
+        const rotatedOp = holeCutOp.rotate([0, 0, holeRotation])
         manifoldInstancesForCleanup.push(rotatedOp)
         holeCutOp = rotatedOp
+      }
+
+      if (holeOffsetX || holeOffsetY) {
+        const translatedOp = holeCutOp.translate([
+          holeOffsetX,
+          holeOffsetY,
+          0,
+        ])
+        manifoldInstancesForCleanup.push(translatedOp)
+        holeCutOp = translatedOp
       }
 
       const finalPlatedPartOp = copperUnionBeforeCut.subtract(holeCutOp)
