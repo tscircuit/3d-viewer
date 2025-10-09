@@ -45,40 +45,13 @@ export function processPlatedHolesForManifold(
     height: number,
     depth: number,
   ) => {
-    const radius = height / 2
-    const rectLength = width - height
-    let pillOp: any
-    if (rectLength < 1e-9) {
-      pillOp = Manifold.cylinder(
-        depth,
-        radius,
-        radius,
-        SMOOTH_CIRCLE_SEGMENTS,
-        true,
-      )
-    } else {
-      const rect = Manifold.cube([
-        Math.max(0, rectLength),
-        height,
-        depth,
-      ], true)
-      const cap1 = Manifold.cylinder(
-        depth,
-        radius,
-        radius,
-        SMOOTH_CIRCLE_SEGMENTS,
-        true,
-      ).translate([-rectLength / 2, 0, 0])
-      const cap2 = Manifold.cylinder(
-        depth,
-        radius,
-        radius,
-        SMOOTH_CIRCLE_SEGMENTS,
-        true,
-      ).translate([rectLength / 2, 0, 0])
-      pillOp = Manifold.union([rect, cap1, cap2])
-      manifoldInstancesForCleanup.push(rect, cap1, cap2)
-    }
+    const pillOp = createRoundedRectPrism({
+      Manifold,
+      width,
+      height,
+      thickness: depth,
+      borderRadius: Math.min(width, height) / 2,
+    })
     manifoldInstancesForCleanup.push(pillOp)
     return pillOp
   }
@@ -273,11 +246,6 @@ export function processPlatedHolesForManifold(
       const drillDepth = pcbThickness * 1.2
 
       let boardPillDrillOp = createPillOp(drillW, drillH, drillDepth)
-      if (shouldRotate) {
-        const rotatedOp = boardPillDrillOp.rotate([0, 0, 90])
-        manifoldInstancesForCleanup.push(rotatedOp)
-        boardPillDrillOp = rotatedOp
-      }
 
       if (holeRotation) {
         const rotatedOp = boardPillDrillOp.rotate([0, 0, holeRotation])
@@ -305,12 +273,6 @@ export function processPlatedHolesForManifold(
         holeH,
         pcbThickness + 2 * MANIFOLD_Z_OFFSET,
       )
-
-      if (shouldRotate) {
-        const rotatedOp = copperBarrelOp.rotate([0, 0, 90])
-        manifoldInstancesForCleanup.push(rotatedOp)
-        copperBarrelOp = rotatedOp
-      }
 
       if (holeRotation) {
         const rotatedOp = copperBarrelOp.rotate([0, 0, holeRotation])
@@ -344,16 +306,6 @@ export function processPlatedHolesForManifold(
         borderRadius: rectBorderRadius,
       })
       manifoldInstancesForCleanup.push(bottomPadOp)
-
-      if (shouldRotate) {
-        const rotatedTop = topPadOp.rotate([0, 0, 90])
-        manifoldInstancesForCleanup.push(rotatedTop)
-        topPadOp = rotatedTop
-
-        const rotatedBottom = bottomPadOp.rotate([0, 0, 90])
-        manifoldInstancesForCleanup.push(rotatedBottom)
-        bottomPadOp = rotatedBottom
-      }
 
       if (padRotation) {
         const rotatedTop = topPadOp.rotate([0, 0, padRotation])
@@ -394,11 +346,6 @@ export function processPlatedHolesForManifold(
         pcbThickness + 2 * padThickness + 4 * MANIFOLD_Z_OFFSET
 
       let holeCutOp = createPillOp(holeCutWidth, holeCutHeight, holeCutDepth)
-      if (shouldRotate) {
-        const rotatedOp = holeCutOp.rotate([0, 0, 90])
-        manifoldInstancesForCleanup.push(rotatedOp)
-        holeCutOp = rotatedOp
-      }
 
       if (holeRotation) {
         const rotatedOp = holeCutOp.rotate([0, 0, holeRotation])
