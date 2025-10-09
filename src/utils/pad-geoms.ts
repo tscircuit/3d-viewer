@@ -77,6 +77,22 @@ export function createPadManifoldOp({
       thickness: padBaseThickness,
       borderRadius: rectBorderRadius,
     })
+  } else if (pad.shape === "rotated_rect") {
+    const rectBorderRadius = extractRectBorderRadius(pad)
+    let padOp = createRoundedRectPrism({
+      Manifold,
+      width: pad.width,
+      height: pad.height,
+      thickness: padBaseThickness,
+      borderRadius: rectBorderRadius,
+    })
+
+    const rotation = pad.ccw_rotation ?? 0
+    if (rotation) {
+      padOp = padOp.rotate([0, 0, rotation])
+    }
+
+    return padOp
   } else if (pad.shape === "circle" && pad.radius) {
     return Manifold.cylinder(padBaseThickness, pad.radius, -1, 32, true)
   }
