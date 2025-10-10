@@ -166,17 +166,11 @@ export function processPlatedHolesForManifold(
       const holeW = ph.hole_width!
       const holeH = ph.hole_height!
 
-      const holeOffset = ph.hole_offset as { x?: number; y?: number } | undefined
-
       const holeOffsetX =
-        typeof ph.hole_offset_x === "number"
-          ? ph.hole_offset_x
-          : holeOffset?.x ?? 0
+        typeof ph.hole_offset_x === "number" ? ph.hole_offset_x : 0
 
       const holeOffsetY =
-        typeof ph.hole_offset_y === "number"
-          ? ph.hole_offset_y
-          : holeOffset?.y ?? 0
+        typeof ph.hole_offset_y === "number" ? ph.hole_offset_y : 0
 
       const padWidth = ph.rect_pad_width ?? holeW + 0.2
       const padHeight = ph.rect_pad_height ?? holeH + 0.2
