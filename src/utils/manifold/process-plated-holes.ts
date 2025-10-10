@@ -162,49 +162,15 @@ export function processPlatedHolesForManifold(
         geometry: threeGeom,
         color: COPPER_COLOR,
       })
-    } else if (
-      ph.shape === "pill_hole_with_rect_pad" ||
-      ph.shape === "rotated_pill_hole_with_rect_pad"
-    ) {
+    } else if (ph.shape === "pill_hole_with_rect_pad") {
       const holeW = ph.hole_width!
       const holeH = ph.hole_height!
 
-      const holeRotation =
-        ("hole_ccw_rotation" in ph && typeof ph.hole_ccw_rotation === "number"
-          ? ph.hole_ccw_rotation
-          : undefined) ?? 0
-      const padRotation =
-        ("rect_ccw_rotation" in ph && typeof ph.rect_ccw_rotation === "number"
-          ? ph.rect_ccw_rotation
-          : undefined) ?? 0
-      const rawHoleOffsetX =
-        ("hole_offset_x" in ph && typeof ph.hole_offset_x === "number"
-          ? ph.hole_offset_x
-          : undefined) ??
-        ("holeOffsetX" in ph && typeof ph.holeOffsetX === "number"
-          ? ph.holeOffsetX
-          : undefined) ??
-        ("hole_offset" in ph &&
-        ph.hole_offset &&
-        typeof (ph.hole_offset as any).x === "number"
-          ? (ph.hole_offset as any).x
-          : undefined) ??
-        0
-      const rawHoleOffsetY =
-        ("hole_offset_y" in ph && typeof ph.hole_offset_y === "number"
-          ? ph.hole_offset_y
-          : undefined) ??
-        ("holeOffsetY" in ph && typeof ph.holeOffsetY === "number"
-          ? ph.holeOffsetY
-          : undefined) ??
-        ("hole_offset" in ph &&
-        ph.hole_offset &&
-        typeof (ph.hole_offset as any).y === "number"
-          ? (ph.hole_offset as any).y
-          : undefined) ??
-        0
-      const holeOffsetX = rawHoleOffsetX ?? 0
-      const holeOffsetY = rawHoleOffsetY ?? 0
+      const holeOffsetX =
+        typeof ph.hole_offset_x === "number" ? ph.hole_offset_x : 0
+
+      const holeOffsetY =
+        typeof ph.hole_offset_y === "number" ? ph.hole_offset_y : 0
 
       const padWidth = ph.rect_pad_width ?? holeW + 0.2
       const padHeight = ph.rect_pad_height ?? holeH + 0.2
@@ -217,12 +183,6 @@ export function processPlatedHolesForManifold(
       const drillDepth = pcbThickness * 1.2
 
       let boardPillDrillOp = createPillOp(drillW, drillH, drillDepth)
-
-      if (holeRotation) {
-        const rotatedOp = boardPillDrillOp.rotate([0, 0, holeRotation])
-        manifoldInstancesForCleanup.push(rotatedOp)
-        boardPillDrillOp = rotatedOp
-      }
 
       if (holeOffsetX || holeOffsetY) {
         const translatedOp = boardPillDrillOp.translate([
@@ -248,12 +208,6 @@ export function processPlatedHolesForManifold(
         holeH,
         pcbThickness + 2 * MANIFOLD_Z_OFFSET,
       )
-
-      if (holeRotation) {
-        const rotatedOp = copperBarrelOp.rotate([0, 0, holeRotation])
-        manifoldInstancesForCleanup.push(rotatedOp)
-        copperBarrelOp = rotatedOp
-      }
 
       if (holeOffsetX || holeOffsetY) {
         const translatedOp = copperBarrelOp.translate([
@@ -282,16 +236,6 @@ export function processPlatedHolesForManifold(
       })
       manifoldInstancesForCleanup.push(bottomPadOp)
 
-      if (padRotation) {
-        const rotatedTop = topPadOp.rotate([0, 0, padRotation])
-        manifoldInstancesForCleanup.push(rotatedTop)
-        topPadOp = rotatedTop
-
-        const rotatedBottom = bottomPadOp.rotate([0, 0, padRotation])
-        manifoldInstancesForCleanup.push(rotatedBottom)
-        bottomPadOp = rotatedBottom
-      }
-
       const topPadZ = pcbThickness / 2 + padThickness / 2 + MANIFOLD_Z_OFFSET
       const bottomPadZ =
         -pcbThickness / 2 - padThickness / 2 - MANIFOLD_Z_OFFSET
@@ -314,12 +258,6 @@ export function processPlatedHolesForManifold(
         pcbThickness + 2 * padThickness + 4 * MANIFOLD_Z_OFFSET
 
       let holeCutOp = createPillOp(holeCutWidth, holeCutHeight, holeCutDepth)
-
-      if (holeRotation) {
-        const rotatedOp = holeCutOp.rotate([0, 0, holeRotation])
-        manifoldInstancesForCleanup.push(rotatedOp)
-        holeCutOp = rotatedOp
-      }
 
       if (holeOffsetX || holeOffsetY) {
         const translatedOp = holeCutOp.translate([holeOffsetX, holeOffsetY, 0])
