@@ -15,6 +15,7 @@ import {
 import { extractRectBorderRadius } from "../rect-border-radius"
 
 const COPPER_COLOR = new THREE.Color(...defaultColors.copper)
+const PLATED_HOLE_LIP_HEIGHT = 0.05
 
 export interface ProcessPlatedHolesResult {
   platedHoleBoardDrills: any[]
@@ -38,6 +39,18 @@ export function processPlatedHolesForManifold(
     geometry: THREE.BufferGeometry
     color: THREE.Color
   }> = []
+
+  const createPillOp = (width: number, height: number, depth: number) => {
+    const pillOp = createRoundedRectPrism({
+      Manifold,
+      width,
+      height,
+      thickness: depth,
+      borderRadius: Math.min(width, height) / 2,
+    })
+    manifoldInstancesForCleanup.push(pillOp)
+    return pillOp
+  }
 
   pcbPlatedHoles.forEach((ph: PcbPlatedHole, index: number) => {
     if (ph.shape === "circle") {
@@ -85,71 +98,19 @@ export function processPlatedHolesForManifold(
         color: COPPER_COLOR,
       })
     } else if (ph.shape === "pill") {
-      const holeWidthRaw = ph.hole_width!
-      const holeHeightRaw = ph.hole_height!
-      const shouldRotate = holeHeightRaw > holeWidthRaw
-
-      const holeW = shouldRotate ? holeHeightRaw : holeWidthRaw
-      const holeH = shouldRotate ? holeWidthRaw : holeHeightRaw
+      const holeW = ph.hole_width!
+      const holeH = ph.hole_height!
 
       const defaultPadExtension = 0.4 // 0.2mm pad extension per side
-      const outerW = shouldRotate
-        ? (ph.outer_height ?? holeH + defaultPadExtension / 2)
-        : (ph.outer_width ?? holeW + defaultPadExtension / 2)
-      const outerH = shouldRotate
-        ? (ph.outer_width ?? holeW + defaultPadExtension / 2)
-        : (ph.outer_height ?? holeH + defaultPadExtension / 2)
-
-      const createPill = (width: number, height: number, depth: number) => {
-        const radius = height / 2
-        const rectLength = width - height
-        let pillOp: any
-        if (rectLength < 1e-9) {
-          // Primarily cylindrical
-          pillOp = Manifold.cylinder(
-            depth,
-            radius,
-            radius,
-            SMOOTH_CIRCLE_SEGMENTS,
-            true,
-          )
-        } else {
-          const rect = Manifold.cube(
-            [Math.max(0, rectLength), height, depth],
-            true,
-          )
-          const cap1 = Manifold.cylinder(
-            depth,
-            radius,
-            radius,
-            SMOOTH_CIRCLE_SEGMENTS,
-            true,
-          ).translate([-rectLength / 2, 0, 0])
-          const cap2 = Manifold.cylinder(
-            depth,
-            radius,
-            radius,
-            SMOOTH_CIRCLE_SEGMENTS,
-            true,
-          ).translate([rectLength / 2, 0, 0])
-          pillOp = Manifold.union([rect, cap1, cap2])
-          manifoldInstancesForCleanup.push(rect, cap1, cap2)
-        }
-        manifoldInstancesForCleanup.push(pillOp)
-        return pillOp
-      }
+      const outerW = ph.outer_width ?? holeW + defaultPadExtension
+      const outerH = ph.outer_height ?? holeH + defaultPadExtension
 
       // Board Drill
       const drillW = holeW + 2 * MANIFOLD_Z_OFFSET
       const drillH = holeH + 2 * MANIFOLD_Z_OFFSET
       const drillDepth = pcbThickness * 1.2 // Ensure cut-through
 
-      let boardPillDrillOp = createPill(drillW, drillH, drillDepth)
-      if (shouldRotate) {
-        const rotatedOp = boardPillDrillOp.rotate([0, 0, 90]) // Rotate 90 deg around Z
-        manifoldInstancesForCleanup.push(rotatedOp)
-        boardPillDrillOp = rotatedOp
-      }
+      let boardPillDrillOp = createPillOp(drillW, drillH, drillDepth)
 
       if (ph.ccw_rotation) {
         const rotatedOp = boardPillDrillOp.rotate([0, 0, ph.ccw_rotation])
@@ -168,12 +129,12 @@ export function processPlatedHolesForManifold(
       // Copper Part
       const copperPartThickness = pcbThickness + 2 * MANIFOLD_Z_OFFSET
 
-      const outerCopperOpUnrotated = createPill(
+      const outerCopperOpUnrotated = createPillOp(
         outerW,
         outerH,
         copperPartThickness,
       )
-      const innerDrillOpUnrotated = createPill(
+      const innerDrillOpUnrotated = createPillOp(
         holeW,
         holeH,
         copperPartThickness * 1.05, // Make drill slightly thicker to ensure cut
@@ -184,17 +145,96 @@ export function processPlatedHolesForManifold(
       )
       manifoldInstancesForCleanup.push(finalPlatedPartOp)
 
-      if (shouldRotate) {
-        const rotatedOp = finalPlatedPartOp.rotate([0, 0, 90])
-        manifoldInstancesForCleanup.push(rotatedOp)
-        finalPlatedPartOp = rotatedOp
-      }
-
       if (ph.ccw_rotation) {
         const rotatedOp = finalPlatedPartOp.rotate([0, 0, ph.ccw_rotation])
         manifoldInstancesForCleanup.push(rotatedOp)
         finalPlatedPartOp = rotatedOp
       }
+
+      const translatedPlatedPart = finalPlatedPartOp.translate([ph.x, ph.y, 0])
+      manifoldInstancesForCleanup.push(translatedPlatedPart)
+
+      const threeGeom = manifoldMeshToThreeGeometry(
+        translatedPlatedPart.getMesh(),
+      )
+      platedHoleCopperGeoms.push({
+        key: `ph-${ph.pcb_plated_hole_id || index}`,
+        geometry: threeGeom,
+        color: COPPER_COLOR,
+      })
+    } else if (ph.shape === "pill_hole_with_rect_pad") {
+      const holeW = ph.hole_width!
+      const holeH = ph.hole_height!
+
+      const padWidth = ph.rect_pad_width!
+      const padHeight = ph.rect_pad_height!
+      const rectBorderRadius = extractRectBorderRadius(ph)
+      const padThickness = DEFAULT_SMT_PAD_THICKNESS
+
+      // Board Drill
+      const drillW = holeW + 2 * MANIFOLD_Z_OFFSET
+      const drillH = holeH + 2 * MANIFOLD_Z_OFFSET
+      const drillDepth = pcbThickness * 1.2
+
+      let boardPillDrillOp = createPillOp(drillW, drillH, drillDepth)
+
+      const translatedBoardPillDrill = boardPillDrillOp.translate([
+        ph.x,
+        ph.y,
+        0,
+      ])
+      manifoldInstancesForCleanup.push(translatedBoardPillDrill)
+      platedHoleBoardDrills.push(translatedBoardPillDrill)
+
+      // Copper Part with rectangular pads
+      let copperBarrelOp = createPillOp(
+        holeW,
+        holeH,
+        pcbThickness + 2 * MANIFOLD_Z_OFFSET,
+      )
+
+      let topPadOp = createRoundedRectPrism({
+        Manifold,
+        width: padWidth,
+        height: padHeight,
+        thickness: padThickness,
+        borderRadius: rectBorderRadius,
+      })
+      manifoldInstancesForCleanup.push(topPadOp)
+      let bottomPadOp = createRoundedRectPrism({
+        Manifold,
+        width: padWidth,
+        height: padHeight,
+        thickness: padThickness,
+        borderRadius: rectBorderRadius,
+      })
+      manifoldInstancesForCleanup.push(bottomPadOp)
+
+      const topPadZ = pcbThickness / 2 + padThickness / 2 + MANIFOLD_Z_OFFSET
+      const bottomPadZ =
+        -pcbThickness / 2 - padThickness / 2 - MANIFOLD_Z_OFFSET
+
+      topPadOp = topPadOp.translate([0, 0, topPadZ])
+      manifoldInstancesForCleanup.push(topPadOp)
+      bottomPadOp = bottomPadOp.translate([0, 0, bottomPadZ])
+      manifoldInstancesForCleanup.push(bottomPadOp)
+
+      const copperUnionBeforeCut = Manifold.union([
+        copperBarrelOp,
+        topPadOp,
+        bottomPadOp,
+      ])
+      manifoldInstancesForCleanup.push(copperUnionBeforeCut)
+
+      const holeCutWidth = Math.max(holeW - 2 * PLATED_HOLE_LIP_HEIGHT, 0.01)
+      const holeCutHeight = Math.max(holeH - 2 * PLATED_HOLE_LIP_HEIGHT, 0.01)
+      const holeCutDepth =
+        pcbThickness + 2 * padThickness + 4 * MANIFOLD_Z_OFFSET
+
+      let holeCutOp = createPillOp(holeCutWidth, holeCutHeight, holeCutDepth)
+
+      const finalPlatedPartOp = copperUnionBeforeCut.subtract(holeCutOp)
+      manifoldInstancesForCleanup.push(finalPlatedPartOp)
 
       const translatedPlatedPart = finalPlatedPartOp.translate([ph.x, ph.y, 0])
       manifoldInstancesForCleanup.push(translatedPlatedPart)
