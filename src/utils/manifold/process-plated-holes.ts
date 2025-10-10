@@ -162,10 +162,7 @@ export function processPlatedHolesForManifold(
         geometry: threeGeom,
         color: COPPER_COLOR,
       })
-    } else if (
-      ph.shape === "pill_hole_with_rect_pad" ||
-      ph.shape === "rotated_pill_hole_with_rect_pad"
-    ) {
+    } else if (ph.shape === "pill_hole_with_rect_pad") {
       const holeW = ph.hole_width!
       const holeH = ph.hole_height!
 
