@@ -169,42 +169,31 @@ export function processPlatedHolesForManifold(
       const holeW = ph.hole_width!
       const holeH = ph.hole_height!
 
-      const holeRotation =
-        ("hole_ccw_rotation" in ph && typeof ph.hole_ccw_rotation === "number"
-          ? ph.hole_ccw_rotation
-          : undefined) ?? 0
-      const padRotation =
-        ("rect_ccw_rotation" in ph && typeof ph.rect_ccw_rotation === "number"
-          ? ph.rect_ccw_rotation
-          : undefined) ?? 0
-      const rawHoleOffsetX =
-        ("hole_offset_x" in ph && typeof ph.hole_offset_x === "number"
-          ? ph.hole_offset_x
-          : undefined) ??
-        ("holeOffsetX" in ph && typeof ph.holeOffsetX === "number"
-          ? ph.holeOffsetX
-          : undefined) ??
-        ("hole_offset" in ph &&
-        ph.hole_offset &&
-        typeof (ph.hole_offset as any).x === "number"
-          ? (ph.hole_offset as any).x
-          : undefined) ??
-        0
-      const rawHoleOffsetY =
-        ("hole_offset_y" in ph && typeof ph.hole_offset_y === "number"
-          ? ph.hole_offset_y
-          : undefined) ??
-        ("holeOffsetY" in ph && typeof ph.holeOffsetY === "number"
-          ? ph.holeOffsetY
-          : undefined) ??
-        ("hole_offset" in ph &&
-        ph.hole_offset &&
-        typeof (ph.hole_offset as any).y === "number"
-          ? (ph.hole_offset as any).y
-          : undefined) ??
-        0
-      const holeOffsetX = rawHoleOffsetX ?? 0
-      const holeOffsetY = rawHoleOffsetY ?? 0
+      let holeRotation = 0
+      if (typeof ph.hole_ccw_rotation === "number") {
+        holeRotation = ph.hole_ccw_rotation
+      }
+
+      let padRotation = 0
+      if (typeof ph.rect_ccw_rotation === "number") {
+        padRotation = ph.rect_ccw_rotation
+      }
+
+      const holeOffset = ph.hole_offset as { x?: number; y?: number } | undefined
+
+      let holeOffsetX = 0
+      if (typeof ph.hole_offset_x === "number") {
+        holeOffsetX = ph.hole_offset_x
+      } else if (holeOffset && typeof holeOffset.x === "number") {
+        holeOffsetX = holeOffset.x
+      }
+
+      let holeOffsetY = 0
+      if (typeof ph.hole_offset_y === "number") {
+        holeOffsetY = ph.hole_offset_y
+      } else if (holeOffset && typeof holeOffset.y === "number") {
+        holeOffsetY = holeOffset.y
+      }
 
       const padWidth = ph.rect_pad_width ?? holeW + 0.2
       const padHeight = ph.rect_pad_height ?? holeH + 0.2
