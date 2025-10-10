@@ -166,8 +166,8 @@ export function processPlatedHolesForManifold(
       const holeW = ph.hole_width!
       const holeH = ph.hole_height!
 
-      const padWidth = ph.rect_pad_width ?? holeW + 0.2
-      const padHeight = ph.rect_pad_height ?? holeH + 0.2
+      const padWidth = ph.rect_pad_width!
+      const padHeight = ph.rect_pad_height!
       const rectBorderRadius = extractRectBorderRadius(ph)
       const padThickness = DEFAULT_SMT_PAD_THICKNESS
 
