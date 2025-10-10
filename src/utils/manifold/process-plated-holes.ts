@@ -166,12 +166,6 @@ export function processPlatedHolesForManifold(
       const holeW = ph.hole_width!
       const holeH = ph.hole_height!
 
-      const holeOffsetX =
-        typeof ph.hole_offset_x === "number" ? ph.hole_offset_x : 0
-
-      const holeOffsetY =
-        typeof ph.hole_offset_y === "number" ? ph.hole_offset_y : 0
-
       const padWidth = ph.rect_pad_width ?? holeW + 0.2
       const padHeight = ph.rect_pad_height ?? holeH + 0.2
       const rectBorderRadius = extractRectBorderRadius(ph)
@@ -183,16 +177,6 @@ export function processPlatedHolesForManifold(
       const drillDepth = pcbThickness * 1.2
 
       let boardPillDrillOp = createPillOp(drillW, drillH, drillDepth)
-
-      if (holeOffsetX || holeOffsetY) {
-        const translatedOp = boardPillDrillOp.translate([
-          holeOffsetX,
-          holeOffsetY,
-          0,
-        ])
-        manifoldInstancesForCleanup.push(translatedOp)
-        boardPillDrillOp = translatedOp
-      }
 
       const translatedBoardPillDrill = boardPillDrillOp.translate([
         ph.x,
@@ -208,16 +192,6 @@ export function processPlatedHolesForManifold(
         holeH,
         pcbThickness + 2 * MANIFOLD_Z_OFFSET,
       )
-
-      if (holeOffsetX || holeOffsetY) {
-        const translatedOp = copperBarrelOp.translate([
-          holeOffsetX,
-          holeOffsetY,
-          0,
-        ])
-        manifoldInstancesForCleanup.push(translatedOp)
-        copperBarrelOp = translatedOp
-      }
 
       let topPadOp = createRoundedRectPrism({
         Manifold,
@@ -258,12 +232,6 @@ export function processPlatedHolesForManifold(
         pcbThickness + 2 * padThickness + 4 * MANIFOLD_Z_OFFSET
 
       let holeCutOp = createPillOp(holeCutWidth, holeCutHeight, holeCutDepth)
-
-      if (holeOffsetX || holeOffsetY) {
-        const translatedOp = holeCutOp.translate([holeOffsetX, holeOffsetY, 0])
-        manifoldInstancesForCleanup.push(translatedOp)
-        holeCutOp = translatedOp
-      }
 
       const finalPlatedPartOp = copperUnionBeforeCut.subtract(holeCutOp)
       manifoldInstancesForCleanup.push(finalPlatedPartOp)
