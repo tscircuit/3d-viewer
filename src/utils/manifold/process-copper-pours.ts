@@ -113,6 +113,7 @@ export function processCopperPoursForManifold(
   pcbThickness: number,
   manifoldInstancesForCleanup: any[],
   holeUnion?: any,
+  boardClipVolume?: any,
 ): ProcessCopperPoursResult {
   const copperPourGeoms: ProcessCopperPoursResult["copperPourGeoms"] = []
   const copperPours = circuitJson.filter(
@@ -200,6 +201,11 @@ export function processCopperPoursForManifold(
         const withHoles = pourOp.subtract(holeUnion)
         manifoldInstancesForCleanup.push(withHoles)
         pourOp = withHoles
+      }
+      if (boardClipVolume) {
+        const clipped = Manifold.intersection([pourOp, boardClipVolume])
+        manifoldInstancesForCleanup.push(clipped)
+        pourOp = clipped
       }
       const threeGeom = manifoldMeshToThreeGeometry(pourOp.getMesh())
       copperPourGeoms.push({

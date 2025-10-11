@@ -26,6 +26,7 @@ export function processSmtPadsForManifold(
   pcbThickness: number,
   manifoldInstancesForCleanup: any[],
   holeUnion?: any,
+  boardClipVolume?: any,
 ): ProcessSmtPadsResult {
   const smtPadGeoms: Array<{
     key: string
@@ -56,6 +57,11 @@ export function processSmtPadsForManifold(
       if (holeUnion) {
         finalPadOp = translatedPad.subtract(holeUnion)
         manifoldInstancesForCleanup.push(finalPadOp)
+      }
+      if (boardClipVolume) {
+        const clipped = Manifold.intersection([finalPadOp, boardClipVolume])
+        manifoldInstancesForCleanup.push(clipped)
+        finalPadOp = clipped
       }
       const threeGeom = manifoldMeshToThreeGeometry(finalPadOp.getMesh())
       smtPadGeoms.push({
