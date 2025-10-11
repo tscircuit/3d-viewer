@@ -23,7 +23,11 @@ import {
   roundedRectangle,
 } from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
-import { subtract, union } from "@jscad/modeling/src/operations/booleans"
+import {
+  subtract,
+  union,
+  intersect,
+} from "@jscad/modeling/src/operations/booleans"
 import { platedHole } from "./geoms/plated-hole"
 import {
   M,
@@ -48,6 +52,8 @@ import {
 } from "./utils/rect-border-radius"
 
 const PAD_ROUNDED_SEGMENTS = 64
+const BOARD_CLIP_Z_MARGIN = 1
+const BOARD_CLIP_XY_OUTSET = 0.05
 
 const createCenteredRectPadGeom = (
   width: number,
@@ -123,6 +129,7 @@ export class BoardGeomBuilder {
   private silkscreenTextGeoms: Geom3[] = []
   private silkscreenPathGeoms: Geom3[] = []
   private copperPourGeoms: Geom3[] = []
+  private boardClipGeom: Geom3 | null = null
 
   private state: BuilderState = "initializing"
   private currentIndex = 0
@@ -175,13 +182,15 @@ export class BoardGeomBuilder {
       (e) => e.type === "pcb_copper_pour",
     ) as any
 
-    this.ctx = { pcbThickness: 1.2 } // TODO derive from board?
+    this.ctx = { pcbThickness: this.board.thickness ?? 1.2 }
 
     // Start processing
     this.initializeBoard()
   }
 
   private initializeBoard() {
+    const clipDepth = this.ctx.pcbThickness + 2 * BOARD_CLIP_Z_MARGIN
+
     if (this.board.outline && this.board.outline.length > 0) {
       this.boardGeom = createBoardGeomWithOutline(
         {
@@ -189,9 +198,24 @@ export class BoardGeomBuilder {
         },
         this.ctx.pcbThickness,
       )
+      this.boardClipGeom = createBoardGeomWithOutline(
+        {
+          outline: this.board.outline!,
+        },
+        clipDepth,
+        { xyOutset: BOARD_CLIP_XY_OUTSET },
+      )
     } else {
       this.boardGeom = cuboid({
         size: [this.board.width, this.board.height, this.ctx.pcbThickness],
+        center: [this.board.center.x, this.board.center.y, 0],
+      })
+      this.boardClipGeom = cuboid({
+        size: [
+          this.board.width + 2 * BOARD_CLIP_XY_OUTSET,
+          this.board.height + 2 * BOARD_CLIP_XY_OUTSET,
+          clipDepth,
+        ],
         center: [this.board.center.x, this.board.center.y, 0],
       })
     }
@@ -395,6 +419,9 @@ export class BoardGeomBuilder {
 
     if (pourGeom) {
       // TODO subtract vias/holes etc.
+      if (this.boardClipGeom) {
+        pourGeom = intersect(this.boardClipGeom, pourGeom)
+      }
       const coloredPourGeom = colorize(colors.copper, pourGeom)
       this.copperPourGeoms.push(coloredPourGeom)
     }
@@ -420,7 +447,9 @@ export class BoardGeomBuilder {
         colorize(colors.copper, subtract(pg, cyGeom)),
       )
 
-      const platedHoleGeom = platedHole(ph, this.ctx)
+      const platedHoleGeom = platedHole(ph, this.ctx, {
+        clipGeom: this.boardClipGeom,
+      })
       this.platedHoleGeoms.push(platedHoleGeom)
     } else if (ph.shape === "pill" || ph.shape === "pill_hole_with_rect_pad") {
       const shouldRotate = ph.hole_height! > ph.hole_width!
@@ -460,7 +489,9 @@ export class BoardGeomBuilder {
         colorize(colors.copper, subtract(pg, pillHole)),
       )
 
-      const platedHoleGeom = platedHole(ph, this.ctx)
+      const platedHoleGeom = platedHole(ph, this.ctx, {
+        clipGeom: this.boardClipGeom,
+      })
       this.platedHoleGeoms.push(platedHoleGeom)
     }
   }
@@ -497,8 +528,12 @@ export class BoardGeomBuilder {
         rectBorderRadius,
       )
       const positionedPadGeom = translate([pad.x, pad.y, zPos], basePadGeom)
-      const padGeom = colorize(colors.copper, positionedPadGeom)
-      this.padGeoms.push(padGeom)
+      let finalPadGeom: Geom3 = positionedPadGeom
+      if (this.boardClipGeom) {
+        finalPadGeom = intersect(this.boardClipGeom, finalPadGeom)
+      }
+      finalPadGeom = colorize(colors.copper, finalPadGeom)
+      this.padGeoms.push(finalPadGeom)
     } else if (pad.shape === "rotated_rect") {
       let basePadGeom = createCenteredRectPadGeom(
         pad.width,
@@ -510,17 +545,22 @@ export class BoardGeomBuilder {
       basePadGeom = rotateZ(rotationRadians, basePadGeom)
       // Translate to final position
       const positionedPadGeom = translate([pad.x, pad.y, zPos], basePadGeom)
-      const padGeom = colorize(colors.copper, positionedPadGeom)
-      this.padGeoms.push(padGeom)
+      let finalPadGeom: Geom3 = positionedPadGeom
+      if (this.boardClipGeom) {
+        finalPadGeom = intersect(this.boardClipGeom, finalPadGeom)
+      }
+      finalPadGeom = colorize(colors.copper, finalPadGeom)
+      this.padGeoms.push(finalPadGeom)
     } else if (pad.shape === "circle") {
-      const padGeom = colorize(
-        colors.copper,
-        cylinder({
-          center: [pad.x, pad.y, zPos],
-          radius: pad.radius,
-          height: M,
-        }),
-      )
+      let padGeom = cylinder({
+        center: [pad.x, pad.y, zPos],
+        radius: pad.radius,
+        height: M,
+      })
+      if (this.boardClipGeom) {
+        padGeom = intersect(this.boardClipGeom, padGeom)
+      }
+      padGeom = colorize(colors.copper, padGeom)
       this.padGeoms.push(padGeom)
     }
   }
@@ -582,6 +622,9 @@ export class BoardGeomBuilder {
           tracesMaterialColors[this.board.material] ??
           colors.fr4GreenSolderWithMask
 
+        if (this.boardClipGeom) {
+          traceGeom = intersect(this.boardClipGeom, traceGeom)
+        }
         traceGeom = colorize(tracesMaterialColor, traceGeom)
 
         this.traceGeoms.push(traceGeom)
