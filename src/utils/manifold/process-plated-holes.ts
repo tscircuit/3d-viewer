@@ -31,6 +31,7 @@ export function processPlatedHolesForManifold(
   circuitJson: AnyCircuitElement[],
   pcbThickness: number,
   manifoldInstancesForCleanup: any[],
+  boardClipVolume?: any,
 ): ProcessPlatedHolesResult {
   const platedHoleBoardDrills: any[] = []
   const pcbPlatedHoles = su(circuitJson).pcb_plated_hole.list()
@@ -89,9 +90,16 @@ export function processPlatedHolesForManifold(
       manifoldInstancesForCleanup.push(finalPlatedPartOp)
       const translatedPlatedPart = finalPlatedPartOp.translate([ph.x, ph.y, 0])
       manifoldInstancesForCleanup.push(translatedPlatedPart)
-      const threeGeom = manifoldMeshToThreeGeometry(
-        translatedPlatedPart.getMesh(),
-      )
+      let finalCopperOp: any = translatedPlatedPart
+      if (boardClipVolume) {
+        const clipped = Manifold.intersection([
+          translatedPlatedPart,
+          boardClipVolume,
+        ])
+        manifoldInstancesForCleanup.push(clipped)
+        finalCopperOp = clipped
+      }
+      const threeGeom = manifoldMeshToThreeGeometry(finalCopperOp.getMesh())
       platedHoleCopperGeoms.push({
         key: `ph-${ph.pcb_plated_hole_id || index}`,
         geometry: threeGeom,
@@ -239,9 +247,17 @@ export function processPlatedHolesForManifold(
       const translatedPlatedPart = finalPlatedPartOp.translate([ph.x, ph.y, 0])
       manifoldInstancesForCleanup.push(translatedPlatedPart)
 
-      const threeGeom = manifoldMeshToThreeGeometry(
-        translatedPlatedPart.getMesh(),
-      )
+      let finalCopperOp: any = translatedPlatedPart
+      if (boardClipVolume) {
+        const clipped = Manifold.intersection([
+          translatedPlatedPart,
+          boardClipVolume,
+        ])
+        manifoldInstancesForCleanup.push(clipped)
+        finalCopperOp = clipped
+      }
+
+      const threeGeom = manifoldMeshToThreeGeometry(finalCopperOp.getMesh())
       platedHoleCopperGeoms.push({
         key: `ph-${ph.pcb_plated_hole_id || index}`,
         geometry: threeGeom,
@@ -326,7 +342,17 @@ export function processPlatedHolesForManifold(
       const translatedCopper = copperUnion.translate([ph.x, ph.y, 0])
       manifoldInstancesForCleanup.push(translatedCopper)
 
-      const threeGeom = manifoldMeshToThreeGeometry(translatedCopper.getMesh())
+      let finalCopperOp: any = translatedCopper
+      if (boardClipVolume) {
+        const clipped = Manifold.intersection([
+          translatedCopper,
+          boardClipVolume,
+        ])
+        manifoldInstancesForCleanup.push(clipped)
+        finalCopperOp = clipped
+      }
+
+      const threeGeom = manifoldMeshToThreeGeometry(finalCopperOp.getMesh())
       platedHoleCopperGeoms.push({
         key: `ph-${ph.pcb_plated_hole_id || index}`,
         geometry: threeGeom,

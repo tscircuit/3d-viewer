@@ -1,4 +1,7 @@
-import type { ManifoldToplevel } from "manifold-3d/manifold.d.ts"
+import type {
+  ManifoldToplevel,
+  CrossSection as ManifoldCrossSection,
+} from "manifold-3d/manifold.d.ts"
 import type { PcbBoard } from "circuit-json"
 
 const arePointsClockwise = (points: Array<[number, number]>): boolean => {
@@ -14,14 +17,20 @@ const arePointsClockwise = (points: Array<[number, number]>): boolean => {
   return signedArea <= 0
 }
 
+export interface CreateManifoldBoardResult {
+  boardOp: any
+  outlineCrossSection: ManifoldCrossSection | null
+}
+
 export function createManifoldBoard(
   Manifold: ManifoldToplevel["Manifold"],
   CrossSection: ManifoldToplevel["CrossSection"],
   boardData: PcbBoard,
   pcbThickness: number,
   manifoldInstancesForCleanup: any[],
-): any {
+): CreateManifoldBoardResult {
   let boardOp: any
+  let outlineCrossSection: ManifoldCrossSection | null = null
 
   if (boardData.outline && boardData.outline.length >= 3) {
     let outlineVec2: Array<[number, number]> = boardData.outline.map((p) => [
@@ -35,6 +44,7 @@ export function createManifoldBoard(
 
     const crossSection = CrossSection.ofPolygons([outlineVec2])
     manifoldInstancesForCleanup.push(crossSection)
+    outlineCrossSection = crossSection
 
     boardOp = Manifold.extrude(
       crossSection,
@@ -62,5 +72,5 @@ export function createManifoldBoard(
     manifoldInstancesForCleanup.push(boardOp) // Also track the translated op
   }
 
-  return boardOp
+  return { boardOp, outlineCrossSection }
 }
