@@ -3,6 +3,7 @@ import {
   getJscadModelForFootprint,
 } from "jscad-electronics/vanilla"
 import { useMemo, useEffect } from "react"
+import * as jscadModeling from "@jscad/modeling"
 import * as THREE from "three"
 import { useThree } from "src/react-three/ThreeContext"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
@@ -27,7 +28,7 @@ export const FootprinterModel = ({
   const { rootObject } = useThree()
   const group = useMemo(() => {
     if (!footprint) return null
-    const { geometries } = getJscadModelForFootprint(footprint)
+    const { geometries } = getJscadModelForFootprint(footprint, jscadModeling)
 
     const group = new THREE.Group()
 

@@ -15,4 +15,24 @@ export default defineConfig({
       // doesn't work when configured here
     },
   },
+  optimizeDeps: {
+    exclude: [
+      "circuit-json-to-spice",
+      "spicey",
+      "calculate-packing",
+      "circuit-json",
+      "@tscircuit/props",
+    ],
+  },
+  build: {
+    rollupOptions: {
+      external: [
+        "circuit-json-to-spice",
+        "spicey",
+        "calculate-packing",
+        "circuit-json",
+        "@tscircuit/props",
+      ],
+    },
+  },
 })
