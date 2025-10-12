@@ -19,6 +19,7 @@ const circuitJson: AnyCircuitElement[] = [
       width: 1,
       height: 0.3,
     },
+    is_box_with_pins: false,
     center: {
       x: 0,
       y: 2,
@@ -113,6 +114,7 @@ const circuitJson: AnyCircuitElement[] = [
       x: 0,
       y: 0,
     },
+    obstructs_within_bounds: false,
     rotation: 0,
     width: 3.0999999999999996,
     height: 1.2,
@@ -179,6 +181,7 @@ const circuitJson: AnyCircuitElement[] = [
       width: 1,
       height: 0.3,
     },
+    is_box_with_pins: false,
     center: {
       x: 0,
       y: 0,
@@ -273,6 +276,7 @@ const circuitJson: AnyCircuitElement[] = [
       x: 2,
       y: 2,
     },
+    obstructs_within_bounds: false,
     rotation: 1.5707963267948966,
     width: 1.2000000000000002,
     height: 3.1,

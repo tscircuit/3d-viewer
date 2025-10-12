@@ -6,6 +6,7 @@ import {
 } from "jscad-electronics/vanilla"
 import { executeJscadOperations } from "jscad-planner"
 import * as THREE from "three"
+import * as jscadModeling from "@jscad/modeling"
 import { load3DModel } from "./load-model"
 import type { CadComponent } from "circuit-json"
 
@@ -80,6 +81,7 @@ export async function renderComponent(
   if (component.footprinter_string) {
     const { geometries } = getJscadModelForFootprint(
       component.footprinter_string,
+      jscadModeling,
     )
 
     // Process each operation from the footprinter
