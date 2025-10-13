@@ -19,6 +19,7 @@ export async function renderComponent(
     component.model_obj_url ??
     component.model_wrl_url ??
     component.model_stl_url ??
+    component.model_glb_url ??
     component.model_gltf_url
   if (url) {
     const model = await load3DModel(url)
