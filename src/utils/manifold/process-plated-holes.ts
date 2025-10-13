@@ -162,9 +162,17 @@ export function processPlatedHolesForManifold(
       const translatedPlatedPart = finalPlatedPartOp.translate([ph.x, ph.y, 0])
       manifoldInstancesForCleanup.push(translatedPlatedPart)
 
-      const threeGeom = manifoldMeshToThreeGeometry(
-        translatedPlatedPart.getMesh(),
-      )
+      let finalCopperOp: any = translatedPlatedPart
+      if (boardClipVolume) {
+        const clipped = Manifold.intersection([
+          translatedPlatedPart,
+          boardClipVolume,
+        ])
+        manifoldInstancesForCleanup.push(clipped)
+        finalCopperOp = clipped
+      }
+
+      const threeGeom = manifoldMeshToThreeGeometry(finalCopperOp.getMesh())
       platedHoleCopperGeoms.push({
         key: `ph-${ph.pcb_plated_hole_id || index}`,
         geometry: threeGeom,
