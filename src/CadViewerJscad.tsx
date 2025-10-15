@@ -26,6 +26,18 @@ interface Props {
   circuitJson?: AnyCircuitElement[]
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
+  layerVisibility?: {
+    board: boolean
+    platedHoles: boolean
+    smtPads: boolean
+    vias: boolean
+    copperPours: boolean
+    topTrace: boolean
+    bottomTrace: boolean
+    topSilkscreen: boolean
+    bottomSilkscreen: boolean
+    cadComponents: boolean
+  }
   onUserInteraction?: () => void
 }
 
@@ -40,6 +52,18 @@ export const CadViewerJscad = forwardRef<
       children,
       autoRotateDisabled,
       clickToInteractEnabled,
+      layerVisibility = {
+        board: true,
+        platedHoles: true,
+        smtPads: true,
+        vias: true,
+        copperPours: true,
+        topTrace: true,
+        bottomTrace: true,
+        topSilkscreen: true,
+        bottomSilkscreen: true,
+        cadComponents: true,
+      },
       onUserInteraction,
     },
     ref,
@@ -114,7 +138,7 @@ export const CadViewerJscad = forwardRef<
         boardCenter={boardCenter}
         onUserInteraction={onUserInteraction}
       >
-        {boardStls.map(({ stlData, color }, index) => (
+        {layerVisibility.board && boardStls.map(({ stlData, color }, index) => (
           <STLModel
             key={`board-${index - boardStls.length}`}
             stlData={stlData}
@@ -122,7 +146,7 @@ export const CadViewerJscad = forwardRef<
             opacity={index === 0 ? 0.95 : 1}
           />
         ))}
-        {cad_components.map((cad_component) => (
+        {layerVisibility.cadComponents && cad_components.map((cad_component) => (
           <ThreeErrorBoundary
             key={cad_component.cad_component_id}
             fallback={({ error }) => (

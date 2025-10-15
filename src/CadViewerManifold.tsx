@@ -25,29 +25,74 @@ declare global {
 const BoardMeshes = ({
   geometryMeshes,
   textureMeshes,
+  layerVisibility,
 }: {
   geometryMeshes: THREE.Mesh[]
   textureMeshes: THREE.Mesh[]
+  layerVisibility: LayerVisibility
 }) => {
   const { rootObject } = useThree()
 
   useEffect(() => {
     if (!rootObject) return
-    geometryMeshes.forEach((mesh) => rootObject.add(mesh))
-    textureMeshes.forEach((mesh) => rootObject.add(mesh))
+
+    const meshesToAdd: THREE.Mesh[] = []
+
+    // Add geometry meshes based on visibility
+    geometryMeshes.forEach((mesh) => {
+      if (mesh.name === "board-geom" && layerVisibility.board) {
+        meshesToAdd.push(mesh)
+      } else if (mesh.name.startsWith("plated-hole-") && layerVisibility.platedHoles) {
+        meshesToAdd.push(mesh)
+      } else if (mesh.name.startsWith("smt-pad-") && layerVisibility.smtPads) {
+        meshesToAdd.push(mesh)
+      } else if (mesh.name.startsWith("via-") && layerVisibility.vias) {
+        meshesToAdd.push(mesh)
+      } else if (mesh.name.startsWith("copper-pour-") && layerVisibility.copperPours) {
+        meshesToAdd.push(mesh)
+      }
+    })
+
+    // Add texture meshes based on visibility
+    textureMeshes.forEach((mesh) => {
+      if (mesh.name === "top-trace-texture-plane" && layerVisibility.topTrace) {
+        meshesToAdd.push(mesh)
+      } else if (mesh.name === "bottom-trace-texture-plane" && layerVisibility.bottomTrace) {
+        meshesToAdd.push(mesh)
+      } else if (mesh.name === "top-silkscreen-texture-plane" && layerVisibility.topSilkscreen) {
+        meshesToAdd.push(mesh)
+      } else if (mesh.name === "bottom-silkscreen-texture-plane" && layerVisibility.bottomSilkscreen) {
+        meshesToAdd.push(mesh)
+      }
+    })
+
+    meshesToAdd.forEach((mesh) => rootObject.add(mesh))
 
     return () => {
-      geometryMeshes.forEach((mesh) => rootObject.remove(mesh))
-      textureMeshes.forEach((mesh) => rootObject.remove(mesh))
+      meshesToAdd.forEach((mesh) => rootObject.remove(mesh))
     }
-  }, [rootObject, geometryMeshes, textureMeshes])
+  }, [rootObject, geometryMeshes, textureMeshes, layerVisibility])
 
   return null
+}
+
+type LayerVisibility = {
+  board: boolean
+  platedHoles: boolean
+  smtPads: boolean
+  vias: boolean
+  copperPours: boolean
+  topTrace: boolean
+  bottomTrace: boolean
+  topSilkscreen: boolean
+  bottomSilkscreen: boolean
+  cadComponents: boolean
 }
 
 type CadViewerManifoldProps = {
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
+  layerVisibility?: LayerVisibility
   onUserInteraction?: () => void
 } & (
   | { circuitJson: AnyCircuitElement[]; children?: React.ReactNode }
@@ -60,6 +105,18 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   circuitJson: circuitJsonProp,
   autoRotateDisabled,
   clickToInteractEnabled,
+  layerVisibility = {
+    board: true,
+    platedHoles: true,
+    smtPads: true,
+    vias: true,
+    copperPours: true,
+    topTrace: true,
+    bottomTrace: true,
+    topSilkscreen: true,
+    bottomSilkscreen: true,
+    cadComponents: true,
+  },
   onUserInteraction,
   children,
 }) => {
@@ -239,8 +296,9 @@ try {
       <BoardMeshes
         geometryMeshes={geometryMeshes}
         textureMeshes={textureMeshes}
+        layerVisibility={layerVisibility}
       />
-      {cadComponents.map((cad_component: CadComponent) => (
+      {layerVisibility.cadComponents && cadComponents.map((cad_component: CadComponent) => (
         <ThreeErrorBoundary
           key={cad_component.cad_component_id}
           fallback={({ error }) => (
