@@ -11,6 +11,8 @@ export const PlatedHoleOffset = () => {
           rectPadHeight={4}
           holeOffsetX={1}
           holeOffsetY={-0.5}
+          pcbX={-5}
+          pcbY={-5}
         />
         <platedhole
           shape="pill_hole_with_rect_pad"
@@ -20,7 +22,6 @@ export const PlatedHoleOffset = () => {
           holeHeight={3}
           rectPadWidth={4}
           rectPadHeight={5}
-          holeOffsetX={-0.75}
           holeOffsetY={0.5}
           pcbX={5.5}
           pcbY={4.5}

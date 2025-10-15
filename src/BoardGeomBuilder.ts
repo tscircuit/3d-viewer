@@ -439,8 +439,8 @@ export class BoardGeomBuilder {
       if (ph.shape === "circular_hole_with_rect_pad") {
         cyGeom = cylinder({
           center: [
-            ph.x + ph.hole_offset_x || 0,
-            ph.y + ph.hole_offset_y || 0,
+            ph.x + (ph.hole_offset_x || 0),
+            ph.y + (ph.hole_offset_y || 0),
             0,
           ],
           radius: ph.hole_diameter / 2 + M, // Add margin for subtraction
