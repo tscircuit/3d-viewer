@@ -40,8 +40,12 @@ export const LayerVisibilitySubmenu = forwardRef<
         ref={ref}
         style={{
           position: "fixed",
+
           top: position.y,
-          left: position.x + 220,
+          left: (submenuRef.current && window.innerWidth < position.x + submenuRef.current.offsetWidth + 220) 
+            ? position.x - submenuRef.current?.offsetWidth 
+            : position.x + 220,
+
           background: "#23272f",
           color: "#f5f6fa",
           borderRadius: 6,
