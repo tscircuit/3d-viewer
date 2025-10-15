@@ -438,7 +438,11 @@ export class BoardGeomBuilder {
 
       if (ph.shape === "circular_hole_with_rect_pad") {
         cyGeom = cylinder({
-          center: [ph.x + ph.hole_offset_x, ph.y + ph.hole_offset_y, 0],
+          center: [
+            ph.x + ph.hole_offset_x || 0,
+            ph.y + ph.hole_offset_y || 0,
+            0,
+          ],
           radius: ph.hole_diameter / 2 + M, // Add margin for subtraction
           height: this.ctx.pcbThickness * 1.5, // Ensure it cuts through
         })
@@ -473,7 +477,11 @@ export class BoardGeomBuilder {
       if (ph.shape === "pill_hole_with_rect_pad") {
         pillHole = union(
           cuboid({
-            center: [ph.x + ph.hole_offset_x, ph.y + ph.hole_offset_y, 0],
+            center: [
+              ph.x + (ph.hole_offset_x || 0),
+              ph.y + (ph.hole_offset_y || 0),
+              0,
+            ],
             size: shouldRotate
               ? [holeHeight, rectLength, this.ctx.pcbThickness * 1.5]
               : [rectLength, holeHeight, this.ctx.pcbThickness * 1.5],
@@ -481,13 +489,13 @@ export class BoardGeomBuilder {
           cylinder({
             center: shouldRotate
               ? [
-                  ph.x + ph.hole_offset_x,
-                  ph.y + ph.hole_offset_y - rectLength / 2,
+                  ph.x + (ph.hole_offset_x || 0),
+                  ph.y + (ph.hole_offset_y || 0) - rectLength / 2,
                   0,
                 ]
               : [
-                  ph.x + ph.hole_offset_x - rectLength / 2,
-                  ph.y + ph.hole_offset_y,
+                  ph.x + (ph.hole_offset_x || 0) - rectLength / 2,
+                  ph.y + (ph.hole_offset_y || 0),
                   0,
                 ],
             radius: holeRadius,
@@ -496,13 +504,13 @@ export class BoardGeomBuilder {
           cylinder({
             center: shouldRotate
               ? [
-                  ph.x + ph.hole_offset_x,
-                  ph.y + ph.hole_offset_y + rectLength / 2,
+                  ph.x + (ph.hole_offset_x || 0),
+                  ph.y + (ph.hole_offset_y || 0) + rectLength / 2,
                   0,
                 ]
               : [
-                  ph.x + ph.hole_offset_x + rectLength / 2,
-                  ph.y + ph.hole_offset_y,
+                  ph.x + (ph.hole_offset_x || 0) + rectLength / 2,
+                  ph.y + (ph.hole_offset_y || 0),
                   0,
                 ],
             radius: holeRadius,
