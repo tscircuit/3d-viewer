@@ -88,39 +88,64 @@ export const platedHole = (
     return colorize(colors.copper, subtract(copperSolid, drill))
   }
   if (plated_hole.shape === "circular_hole_with_rect_pad") {
+    const holeOffsetX = plated_hole.hole_offset_x || 0
+    const holeOffsetY = plated_hole.hole_offset_y || 0
     const padWidth = plated_hole.rect_pad_width || plated_hole.hole_diameter
     const padHeight = plated_hole.rect_pad_height || plated_hole.hole_diameter
     const rectBorderRadius = extractRectBorderRadius(plated_hole)
-
+    // Create a solid copper shape that connects the top and bottom pads
     const copperSolid = maybeClip(
       union(
-        // Top rectangular pad
+        // Top rectangular pad (thicker to ensure connection)
         createRectPadGeom({
           width: padWidth,
           height: padHeight,
-          thickness: platedHoleLipHeight,
+          thickness: platedHoleLipHeight + 0.1, // Slightly thicker to ensure connection
           center: [
             plated_hole.x,
             plated_hole.y,
-            ctx.pcbThickness / 2 + platedHoleLipHeight / 2 + M,
+            ctx.pcbThickness / 2 + platedHoleLipHeight / 2 + M - 0.05, // Adjusted for thickness
           ],
           borderRadius: rectBorderRadius,
         }),
-        // Bottom rectangular pad
+        // Bottom rectangular pad (thicker to ensure connection)
         createRectPadGeom({
           width: padWidth,
           height: padHeight,
-          thickness: platedHoleLipHeight,
+          thickness: platedHoleLipHeight + 0.1, // Slightly thicker to ensure connection
           center: [
             plated_hole.x,
             plated_hole.y,
-            -ctx.pcbThickness / 2 - platedHoleLipHeight / 2 - M,
+            -ctx.pcbThickness / 2 - platedHoleLipHeight / 2 - M + 0.05, // Adjusted for thickness
           ],
           borderRadius: rectBorderRadius,
         }),
-        // Plated barrel around hole
+        // Main copper fill between pads with rounded corners
+        (() => {
+          const height =
+            ctx.pcbThickness - platedHoleLipHeight * 2 - M * 2 + 0.1
+          const rect2d = roundedRectangle({
+            size: [padWidth, padHeight],
+            roundRadius: rectBorderRadius || 0,
+            segments: RECT_PAD_SEGMENTS,
+          })
+          const extruded = extrudeLinear({ height }, rect2d)
+          return translate(
+            [
+              plated_hole.x,
+              plated_hole.y,
+              -height / 2, // Center vertically
+            ],
+            extruded,
+          )
+        })(),
+        // Plated barrel around hole (ensured connection with pads)
         cylinder({
-          center: [plated_hole.x, plated_hole.y, 0],
+          center: [
+            plated_hole.x + (holeOffsetX || 0),
+            plated_hole.y + (holeOffsetY || 0),
+            0,
+          ],
           radius: plated_hole.hole_diameter / 2,
           height: ctx.pcbThickness,
         }),
@@ -129,12 +154,44 @@ export const platedHole = (
     )
 
     const drill = cylinder({
-      center: [plated_hole.x, plated_hole.y, 0],
+      center: [
+        plated_hole.x + (holeOffsetX || 0),
+        plated_hole.y + (holeOffsetY || 0),
+        0,
+      ],
       radius: Math.max(plated_hole.hole_diameter / 2 - M, 0.01),
       height: throughDrillHeight,
     })
 
-    return colorize(colors.copper, subtract(copperSolid, drill))
+    // Create the barrel with offset
+    const barrel = cylinder({
+      center: [
+        plated_hole.x + (holeOffsetX || 0),
+        plated_hole.y + (holeOffsetY || 0),
+        0,
+      ],
+      radius: plated_hole.hole_diameter / 2,
+      height: ctx.pcbThickness,
+    })
+
+    // Create the final copper solid with the offset barrel and hole
+    let finalCopper = union(
+      subtract(copperSolid, barrel), // Subtract the barrel from the main shape
+      barrel, // Add the barrel back to ensure proper connection
+    )
+
+    // Apply clip geometry if provided to ensure we don't extend beyond board boundaries
+    if (options.clipGeom) {
+      // First, subtract the drill from the copper
+      finalCopper = subtract(finalCopper, drill)
+
+      // Then clip to the board boundaries
+      finalCopper = intersect(finalCopper, options.clipGeom)
+
+      return colorize(colors.copper, finalCopper)
+    }
+
+    return colorize(colors.copper, subtract(finalCopper, drill))
   }
 
   if (plated_hole.shape === "pill") {
@@ -236,6 +293,8 @@ export const platedHole = (
     // biome-ignore lint/style/noUselessElse: <explanation>
   }
   if (plated_hole.shape === "pill_hole_with_rect_pad") {
+    const holeOffsetX = plated_hole.hole_offset_x || 0
+    const holeOffsetY = plated_hole.hole_offset_y || 0
     const shouldRotate = plated_hole.hole_height! > plated_hole.hole_width!
     const holeWidth = shouldRotate
       ? plated_hole.hole_height!
@@ -250,83 +309,177 @@ export const platedHole = (
     const padHeight = plated_hole.rect_pad_height || holeHeight + 0.2
     const rectBorderRadius = extractRectBorderRadius(plated_hole)
 
-    const mainRect = cuboid({
-      center: [plated_hole.x, plated_hole.y, 0],
-      size: shouldRotate
-        ? [holeHeight, rectLength, ctx.pcbThickness]
-        : [rectLength, holeHeight, ctx.pcbThickness],
-    })
+    // Create the barrel (main pill shape for the hole)
+    const barrelMargin = 0.03 // Larger than M for robust boolean subtraction
 
-    const leftCap = cylinder({
-      center: shouldRotate
-        ? [plated_hole.x, plated_hole.y - rectLength / 2, 0]
-        : [plated_hole.x - rectLength / 2, plated_hole.y, 0],
-      radius: holeRadius,
-      height: ctx.pcbThickness,
-    })
+    const barrel = union(
+      cuboid({
+        center: [plated_hole.x + holeOffsetX, plated_hole.y + holeOffsetY, 0],
+        size: shouldRotate
+          ? [
+              holeHeight + 2 * barrelMargin,
+              rectLength + 2 * barrelMargin,
+              ctx.pcbThickness + 0.2,
+            ]
+          : [
+              rectLength + 2 * barrelMargin,
+              holeHeight + 2 * barrelMargin,
+              ctx.pcbThickness + 0.2,
+            ],
+      }),
+      cylinder({
+        center: shouldRotate
+          ? [
+              plated_hole.x + holeOffsetX,
+              plated_hole.y + holeOffsetY - rectLength / 2,
+              0,
+            ]
+          : [
+              plated_hole.x + holeOffsetX - rectLength / 2,
+              plated_hole.y + holeOffsetY,
+              0,
+            ],
+        radius: holeRadius + barrelMargin,
+        height: ctx.pcbThickness + 0.2, // extend slightly above/below PCB
+      }),
+      cylinder({
+        center: shouldRotate
+          ? [
+              plated_hole.x + holeOffsetX,
+              plated_hole.y + holeOffsetY + rectLength / 2,
+              0,
+            ]
+          : [
+              plated_hole.x + holeOffsetX + rectLength / 2,
+              plated_hole.y + holeOffsetY,
+              0,
+            ],
+        radius: holeRadius + barrelMargin,
+        height: ctx.pcbThickness + 0.2,
+      }),
+    )
 
-    const rightCap = cylinder({
-      center: shouldRotate
-        ? [plated_hole.x, plated_hole.y + rectLength / 2, 0]
-        : [plated_hole.x + rectLength / 2, plated_hole.y, 0],
-      radius: holeRadius,
-      height: ctx.pcbThickness,
-    })
-
-    const topPad = createRectPadGeom({
-      width: padWidth,
-      height: padHeight,
-      thickness: platedHoleLipHeight,
-      center: [
-        plated_hole.x,
-        plated_hole.y,
-        ctx.pcbThickness / 2 + platedHoleLipHeight / 2 + M,
-      ],
-      borderRadius: rectBorderRadius,
-    })
-
-    const bottomPad = createRectPadGeom({
-      width: padWidth,
-      height: padHeight,
-      thickness: platedHoleLipHeight,
-      center: [
-        plated_hole.x,
-        plated_hole.y,
-        -ctx.pcbThickness / 2 - platedHoleLipHeight / 2 - M,
-      ],
-      borderRadius: rectBorderRadius,
-    })
-
+    // Create hole cutout that matches the barrel size for pads and fill
     const holeCut = union(
       cuboid({
-        center: [plated_hole.x, plated_hole.y, 0],
+        center: [plated_hole.x + holeOffsetX, plated_hole.y + holeOffsetY, 0],
         size: shouldRotate
-          ? [holeHeight - platedHoleLipHeight, rectLength, throughDrillHeight]
-          : [rectLength, holeHeight - platedHoleLipHeight, throughDrillHeight],
+          ? [holeHeight, rectLength, throughDrillHeight * 1.1]
+          : [rectLength, holeHeight, throughDrillHeight * 1.1],
       }),
       cylinder({
         center: shouldRotate
-          ? [plated_hole.x, plated_hole.y - rectLength / 2, 0]
-          : [plated_hole.x - rectLength / 2, plated_hole.y, 0],
-        radius: holeRadius - platedHoleLipHeight,
-        height: throughDrillHeight,
+          ? [
+              plated_hole.x + holeOffsetX,
+              plated_hole.y + holeOffsetY - rectLength / 2,
+              0,
+            ]
+          : [
+              plated_hole.x + holeOffsetX - rectLength / 2,
+              plated_hole.y + holeOffsetY,
+              0,
+            ],
+        radius: holeRadius,
+        height: throughDrillHeight * 1.1,
       }),
       cylinder({
         center: shouldRotate
-          ? [plated_hole.x, plated_hole.y + rectLength / 2, 0]
-          : [plated_hole.x + rectLength / 2, plated_hole.y, 0],
-        radius: holeRadius - platedHoleLipHeight,
-        height: throughDrillHeight,
+          ? [
+              plated_hole.x + holeOffsetX,
+              plated_hole.y + holeOffsetY + rectLength / 2,
+              0,
+            ]
+          : [
+              plated_hole.x + holeOffsetX + rectLength / 2,
+              plated_hole.y + holeOffsetY,
+              0,
+            ],
+        radius: holeRadius,
+        height: throughDrillHeight * 1.1,
       }),
     )
 
-    const copperSolid = maybeClip(
-      union(mainRect, leftCap, rightCap, topPad, bottomPad),
-      clipGeom,
-    )
-    const drill = holeCut
+    // Create main fill between pads (centered on the pad, not the hole)
+    const mainFill = createRectPadGeom({
+      width: padWidth,
+      height: padHeight,
+      thickness: ctx.pcbThickness - 2 * platedHoleLipHeight - M * 2 + 0.1,
+      center: [plated_hole.x, plated_hole.y, 0],
+      borderRadius: rectBorderRadius,
+    })
 
-    return colorize(colors.copper, subtract(copperSolid, drill))
+    // Create top and bottom pads with proper thickness and hole cutouts
+    const createPadWithHole = (zOffset: number) => {
+      const pad = createRectPadGeom({
+        width: padWidth,
+        height: padHeight,
+        thickness: platedHoleLipHeight + 0.1,
+        center: [plated_hole.x, plated_hole.y, zOffset],
+        borderRadius: rectBorderRadius,
+      })
+      return subtract(pad, holeCut)
+    }
+
+    const topPad = createPadWithHole(
+      ctx.pcbThickness / 2 - platedHoleLipHeight / 2 + 0.05,
+    )
+    const bottomPad = createPadWithHole(
+      -ctx.pcbThickness / 2 + platedHoleLipHeight / 2 - 0.05,
+    )
+
+    // Create main fill with hole
+    const filledArea = subtract(mainFill, holeCut)
+
+    // Create a slightly smaller hole cutout for the barrel
+    const barrelHoleCut = union(
+      cuboid({
+        center: [plated_hole.x + holeOffsetX, plated_hole.y + holeOffsetY, 0],
+        size: shouldRotate
+          ? [holeHeight - 2 * M, rectLength - 2 * M, throughDrillHeight * 1.1]
+          : [rectLength - 2 * M, holeHeight - 2 * M, throughDrillHeight * 1.1],
+      }),
+      cylinder({
+        center: shouldRotate
+          ? [
+              plated_hole.x + holeOffsetX,
+              plated_hole.y + holeOffsetY - rectLength / 2,
+              0,
+            ]
+          : [
+              plated_hole.x + holeOffsetX - rectLength / 2,
+              plated_hole.y + holeOffsetY,
+              0,
+            ],
+        radius: holeRadius - M,
+        height: throughDrillHeight * 1.1,
+      }),
+      cylinder({
+        center: shouldRotate
+          ? [
+              plated_hole.x + holeOffsetX,
+              plated_hole.y + holeOffsetY + rectLength / 2,
+              0,
+            ]
+          : [
+              plated_hole.x + holeOffsetX + rectLength / 2,
+              plated_hole.y + holeOffsetY,
+              0,
+            ],
+        radius: holeRadius - M,
+        height: throughDrillHeight * 1.1,
+      }),
+    )
+
+    // Create barrel with its own hole cutout
+    const barrelWithHole = subtract(barrel, barrelHoleCut)
+
+    // Combine all parts
+    const finalCopper = union(filledArea, barrelWithHole, topPad, bottomPad)
+
+    // Apply clipping if needed
+    let result = maybeClip(finalCopper, clipGeom)
+
+    return colorize(colors.copper, result)
   } else {
     throw new Error(`Unsupported plated hole shape: ${plated_hole.shape}`)
   }
