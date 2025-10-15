@@ -42,13 +42,19 @@ const BoardMeshes = ({
     geometryMeshes.forEach((mesh) => {
       if (mesh.name === "board-geom" && layerVisibility.board) {
         meshesToAdd.push(mesh)
-      } else if (mesh.name.startsWith("plated-hole-") && layerVisibility.platedHoles) {
+      } else if (
+        mesh.name.startsWith("plated-hole-") &&
+        layerVisibility.platedHoles
+      ) {
         meshesToAdd.push(mesh)
       } else if (mesh.name.startsWith("smt-pad-") && layerVisibility.smtPads) {
         meshesToAdd.push(mesh)
       } else if (mesh.name.startsWith("via-") && layerVisibility.vias) {
         meshesToAdd.push(mesh)
-      } else if (mesh.name.startsWith("copper-pour-") && layerVisibility.copperPours) {
+      } else if (
+        mesh.name.startsWith("copper-pour-") &&
+        layerVisibility.copperPours
+      ) {
         meshesToAdd.push(mesh)
       }
     })
@@ -57,11 +63,20 @@ const BoardMeshes = ({
     textureMeshes.forEach((mesh) => {
       if (mesh.name === "top-trace-texture-plane" && layerVisibility.topTrace) {
         meshesToAdd.push(mesh)
-      } else if (mesh.name === "bottom-trace-texture-plane" && layerVisibility.bottomTrace) {
+      } else if (
+        mesh.name === "bottom-trace-texture-plane" &&
+        layerVisibility.bottomTrace
+      ) {
         meshesToAdd.push(mesh)
-      } else if (mesh.name === "top-silkscreen-texture-plane" && layerVisibility.topSilkscreen) {
+      } else if (
+        mesh.name === "top-silkscreen-texture-plane" &&
+        layerVisibility.topSilkscreen
+      ) {
         meshesToAdd.push(mesh)
-      } else if (mesh.name === "bottom-silkscreen-texture-plane" && layerVisibility.bottomSilkscreen) {
+      } else if (
+        mesh.name === "bottom-silkscreen-texture-plane" &&
+        layerVisibility.bottomSilkscreen
+      ) {
         meshesToAdd.push(mesh)
       }
     })
@@ -298,19 +313,20 @@ try {
         textureMeshes={textureMeshes}
         layerVisibility={layerVisibility}
       />
-      {layerVisibility.cadComponents && cadComponents.map((cad_component: CadComponent) => (
-        <ThreeErrorBoundary
-          key={cad_component.cad_component_id}
-          fallback={({ error }) => (
-            <Error3d cad_component={cad_component} error={error} />
-          )}
-        >
-          <AnyCadComponent
-            cad_component={cad_component}
-            circuitJson={circuitJson}
-          />
-        </ThreeErrorBoundary>
-      ))}
+      {layerVisibility.cadComponents &&
+        cadComponents.map((cad_component: CadComponent) => (
+          <ThreeErrorBoundary
+            key={cad_component.cad_component_id}
+            fallback={({ error }) => (
+              <Error3d cad_component={cad_component} error={error} />
+            )}
+          >
+            <AnyCadComponent
+              cad_component={cad_component}
+              circuitJson={circuitJson}
+            />
+          </ThreeErrorBoundary>
+        ))}
     </CadViewerContainer>
   )
 }

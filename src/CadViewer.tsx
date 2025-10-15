@@ -26,9 +26,13 @@ export const CadViewer = (props: any) => {
   const submenuRef = useRef<HTMLDivElement | null>(null)
   const [autoRotate, setAutoRotate] = useState(true)
   const [autoRotateUserToggled, setAutoRotateUserToggled] = useState(false)
-  const [layerVisibility, setLayerVisibility] = useState<LayerVisibility>(defaultLayerVisibility)
+  const [layerVisibility, setLayerVisibility] = useState<LayerVisibility>(
+    defaultLayerVisibility,
+  )
   const [layersSubmenuVisible, setLayersSubmenuVisible] = useState(false)
-  const [presentLayers, setPresentLayers] = useState<Partial<LayerVisibility>>({})
+  const [presentLayers, setPresentLayers] = useState<Partial<LayerVisibility>>(
+    {},
+  )
 
   const {
     menuVisible,
@@ -54,9 +58,11 @@ export const CadViewer = (props: any) => {
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       const target = e.target as Node
-      const isClickInsideMainMenu = menuRef.current && menuRef.current.contains(target)
-      const isClickInsideSubmenu = submenuRef.current && submenuRef.current.contains(target)
-      
+      const isClickInsideMainMenu =
+        menuRef.current && menuRef.current.contains(target)
+      const isClickInsideSubmenu =
+        submenuRef.current && submenuRef.current.contains(target)
+
       if (!isClickInsideMainMenu && !isClickInsideSubmenu) {
         setMenuVisible(false)
         setLayersSubmenuVisible(false)
@@ -103,9 +109,9 @@ export const CadViewer = (props: any) => {
   const downloadGltf = useGlobalDownloadGltf()
 
   const toggleLayerVisibility = useCallback((layer: keyof LayerVisibility) => {
-    setLayerVisibility(prev => ({
+    setLayerVisibility((prev) => ({
       ...prev,
-      [layer]: !prev[layer]
+      [layer]: !prev[layer],
     }))
   }, [])
 
@@ -295,7 +301,7 @@ export const CadViewer = (props: any) => {
             onClick={() => setLayersSubmenuVisible(!layersSubmenuVisible)}
             onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
             onMouseOut={(e) => {
-              (e.currentTarget.style.background = "transparent")
+              e.currentTarget.style.background = "transparent"
             }}
           >
             <span>Toggle Layers</span>
@@ -322,17 +328,17 @@ export const CadViewer = (props: any) => {
             </span>
           </div>
         </div>
-        )}
-        {layersSubmenuVisible && (
-          <LayerVisibilitySubmenu
-            ref={submenuRef}
-            layerVisibility={layerVisibility}
-            presentLayers={presentLayers}
-            onToggleLayer={toggleLayerVisibility}
-            onShowAllLayers={showAllLayers}
-            position={menuPos}
-          />
-        )}
+      )}
+      {layersSubmenuVisible && (
+        <LayerVisibilitySubmenu
+          ref={submenuRef}
+          layerVisibility={layerVisibility}
+          presentLayers={presentLayers}
+          onToggleLayer={toggleLayerVisibility}
+          onShowAllLayers={showAllLayers}
+          position={menuPos}
+        />
+      )}
     </div>
   )
 }

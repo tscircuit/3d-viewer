@@ -138,28 +138,30 @@ export const CadViewerJscad = forwardRef<
         boardCenter={boardCenter}
         onUserInteraction={onUserInteraction}
       >
-        {layerVisibility.board && boardStls.map(({ stlData, color }, index) => (
-          <STLModel
-            key={`board-${index - boardStls.length}`}
-            stlData={stlData}
-            color={color}
-            opacity={index === 0 ? 0.95 : 1}
-          />
-        ))}
-        {layerVisibility.cadComponents && cad_components.map((cad_component) => (
-          <ThreeErrorBoundary
-            key={cad_component.cad_component_id}
-            fallback={({ error }) => (
-              <Error3d cad_component={cad_component} error={error} />
-            )}
-          >
-            <AnyCadComponent
-              key={cad_component.cad_component_id}
-              cad_component={cad_component}
-              circuitJson={internalCircuitJson}
+        {layerVisibility.board &&
+          boardStls.map(({ stlData, color }, index) => (
+            <STLModel
+              key={`board-${index - boardStls.length}`}
+              stlData={stlData}
+              color={color}
+              opacity={index === 0 ? 0.95 : 1}
             />
-          </ThreeErrorBoundary>
-        ))}
+          ))}
+        {layerVisibility.cadComponents &&
+          cad_components.map((cad_component) => (
+            <ThreeErrorBoundary
+              key={cad_component.cad_component_id}
+              fallback={({ error }) => (
+                <Error3d cad_component={cad_component} error={error} />
+              )}
+            >
+              <AnyCadComponent
+                key={cad_component.cad_component_id}
+                cad_component={cad_component}
+                circuitJson={internalCircuitJson}
+              />
+            </ThreeErrorBoundary>
+          ))}
       </CadViewerContainer>
     )
   },
