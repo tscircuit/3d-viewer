@@ -44,15 +44,24 @@ const BoardMeshes = ({
       if (mesh.name === "board-geom") {
         shouldShow = visibility.boardBody
       }
-      // Copper layers (pads, vias, copper pours)
-      else if (
-        mesh.name.includes("smt_pad") ||
-        mesh.name.includes("plated_hole") ||
-        mesh.name.includes("via") ||
-        mesh.name.includes("copper_pour")
-      ) {
-        // For now, show copper elements if either top or bottom copper is visible
-        // In the future, could check layer-specific visibility
+      // SMT Pads - check layer-specific visibility
+      else if (mesh.name.includes("smt_pad")) {
+        if (mesh.name.includes("smt_pad-top")) {
+          shouldShow = visibility.topCopper
+        } else if (mesh.name.includes("smt_pad-bottom")) {
+          shouldShow = visibility.bottomCopper
+        } else {
+          // Fallback for pads without layer info
+          shouldShow = visibility.topCopper || visibility.bottomCopper
+        }
+      }
+      // Plated holes and vias go through both layers
+      else if (mesh.name.includes("plated_hole") || mesh.name.includes("via")) {
+        shouldShow = visibility.topCopper || visibility.bottomCopper
+      }
+      // Copper pours
+      else if (mesh.name.includes("copper_pour")) {
+        // TODO: Add layer-specific visibility for copper pours
         shouldShow = visibility.topCopper || visibility.bottomCopper
       }
 

@@ -65,7 +65,7 @@ export function processSmtPadsForManifold(
       }
       const threeGeom = manifoldMeshToThreeGeometry(finalPadOp.getMesh())
       smtPadGeoms.push({
-        key: `pad-${pad.pcb_smtpad_id || index}`,
+        key: `smt_pad-${pad.layer || "top"}-${pad.pcb_smtpad_id || index}`,
         geometry: threeGeom,
         color: COPPER_COLOR,
       })
