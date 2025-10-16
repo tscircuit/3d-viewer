@@ -13,6 +13,7 @@ import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
 import { createTextureMeshes } from "./utils/manifold/create-three-texture-meshes"
+import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
 
 declare global {
   interface Window {
@@ -30,17 +31,66 @@ const BoardMeshes = ({
   textureMeshes: THREE.Mesh[]
 }) => {
   const { rootObject } = useThree()
+  const { visibility } = useLayerVisibility()
 
   useEffect(() => {
     if (!rootObject) return
-    geometryMeshes.forEach((mesh) => rootObject.add(mesh))
-    textureMeshes.forEach((mesh) => rootObject.add(mesh))
+
+    // Filter and add meshes based on visibility settings
+    geometryMeshes.forEach((mesh) => {
+      let shouldShow = true
+
+      // Board body
+      if (mesh.name === "board-geom") {
+        shouldShow = visibility.boardBody
+      }
+      // Copper layers (pads, vias, copper pours)
+      else if (
+        mesh.name.includes("smt_pad") ||
+        mesh.name.includes("plated_hole") ||
+        mesh.name.includes("via") ||
+        mesh.name.includes("copper_pour")
+      ) {
+        // For now, show copper elements if either top or bottom copper is visible
+        // In the future, could check layer-specific visibility
+        shouldShow = visibility.topCopper || visibility.bottomCopper
+      }
+
+      if (shouldShow) {
+        rootObject.add(mesh)
+      }
+    })
+
+    textureMeshes.forEach((mesh) => {
+      let shouldShow = true
+
+      // Top trace layer
+      if (mesh.name.includes("top-trace")) {
+        shouldShow = visibility.topCopper
+      }
+      // Bottom trace layer
+      else if (mesh.name.includes("bottom-trace")) {
+        shouldShow = visibility.bottomCopper
+      }
+      // Top silkscreen
+      else if (mesh.name.includes("top-silkscreen")) {
+        shouldShow = visibility.topSilkscreen
+      }
+      // Bottom silkscreen
+      else if (mesh.name.includes("bottom-silkscreen")) {
+        shouldShow = visibility.bottomSilkscreen
+      }
+
+      if (shouldShow) {
+        rootObject.add(mesh)
+      }
+    })
 
     return () => {
       geometryMeshes.forEach((mesh) => rootObject.remove(mesh))
       textureMeshes.forEach((mesh) => rootObject.remove(mesh))
     }
-  }, [rootObject, geometryMeshes, textureMeshes])
+  }, [rootObject, geometryMeshes, textureMeshes, visibility])
 
   return null
 }

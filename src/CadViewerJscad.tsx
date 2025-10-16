@@ -15,6 +15,7 @@ import { FootprinterModel } from "./three-components/FootprinterModel"
 import { JscadModel } from "./three-components/JscadModel"
 import { MixedStlModel } from "./three-components/MixedStlModel"
 import { STLModel } from "./three-components/STLModel"
+import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { tuple } from "./utils/tuple"
 
@@ -115,11 +116,13 @@ export const CadViewerJscad = forwardRef<
         onUserInteraction={onUserInteraction}
       >
         {boardStls.map(({ stlData, color }, index) => (
-          <STLModel
+          <VisibleSTLModel
             key={`board-${index - boardStls.length}`}
             stlData={stlData}
             color={color}
             opacity={index === 0 ? 0.95 : 1}
+            index={index}
+            totalModels={boardStls.length}
           />
         ))}
         {cad_components.map((cad_component) => (
