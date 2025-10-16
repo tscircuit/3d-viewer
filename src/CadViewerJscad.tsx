@@ -16,7 +16,7 @@ import { JscadModel } from "./three-components/JscadModel"
 import { MixedStlModel } from "./three-components/MixedStlModel"
 import { STLModel } from "./three-components/STLModel"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
-import { tuple } from "./utils/tuple"
+import type { LayerVisibility } from "./utils/layerDetection"
 
 interface Props {
   /**
@@ -26,6 +26,7 @@ interface Props {
   circuitJson?: AnyCircuitElement[]
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
+  layerVisibility?: LayerVisibility
   onUserInteraction?: () => void
 }
 
@@ -40,6 +41,14 @@ export const CadViewerJscad = forwardRef<
       children,
       autoRotateDisabled,
       clickToInteractEnabled,
+      layerVisibility = {
+        board: true,
+        fCu: true,
+        bCu: true,
+        fSilkscreen: true,
+        bSilkscreen: true,
+        cadComponents: true,
+      },
       onUserInteraction,
     },
     ref,
@@ -114,28 +123,30 @@ export const CadViewerJscad = forwardRef<
         boardCenter={boardCenter}
         onUserInteraction={onUserInteraction}
       >
-        {boardStls.map(({ stlData, color }, index) => (
-          <STLModel
-            key={`board-${index - boardStls.length}`}
-            stlData={stlData}
-            color={color}
-            opacity={index === 0 ? 0.95 : 1}
-          />
-        ))}
-        {cad_components.map((cad_component) => (
-          <ThreeErrorBoundary
-            key={cad_component.cad_component_id}
-            fallback={({ error }) => (
-              <Error3d cad_component={cad_component} error={error} />
-            )}
-          >
-            <AnyCadComponent
-              key={cad_component.cad_component_id}
-              cad_component={cad_component}
-              circuitJson={internalCircuitJson}
+        {layerVisibility.board &&
+          boardStls.map(({ stlData, color }, index) => (
+            <STLModel
+              key={`board-${index - boardStls.length}`}
+              stlData={stlData}
+              color={color}
+              opacity={index === 0 ? 0.95 : 1}
             />
-          </ThreeErrorBoundary>
-        ))}
+          ))}
+        {layerVisibility.cadComponents &&
+          cad_components.map((cad_component) => (
+            <ThreeErrorBoundary
+              key={cad_component.cad_component_id}
+              fallback={({ error }) => (
+                <Error3d cad_component={cad_component} error={error} />
+              )}
+            >
+              <AnyCadComponent
+                key={cad_component.cad_component_id}
+                cad_component={cad_component}
+                circuitJson={internalCircuitJson}
+              />
+            </ThreeErrorBoundary>
+          ))}
       </CadViewerContainer>
     )
   },

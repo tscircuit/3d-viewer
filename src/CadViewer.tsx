@@ -3,13 +3,32 @@ import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
 import { useGlobalDownloadGltf } from "./hooks/useGlobalDownloadGltf"
+import { LayerVisibilitySubmenu } from "./LayerVisibilitySubmenu"
+import { getPresentLayers, type LayerVisibility } from "./utils/layerDetection"
 import packageJson from "../package.json"
+
+const defaultLayerVisibility: LayerVisibility = {
+  board: true,
+  fCu: true,
+  bCu: true,
+  fSilkscreen: true,
+  bSilkscreen: true,
+  cadComponents: true,
+}
 
 export const CadViewer = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const submenuRef = useRef<HTMLDivElement | null>(null)
   const [autoRotate, setAutoRotate] = useState(true)
   const [autoRotateUserToggled, setAutoRotateUserToggled] = useState(false)
+  const [layerVisibility, setLayerVisibility] = useState<LayerVisibility>(
+    defaultLayerVisibility,
+  )
+  const [layersSubmenuVisible, setLayersSubmenuVisible] = useState(false)
+  const [presentLayers, setPresentLayers] = useState<Partial<LayerVisibility>>(
+    {},
+  )
 
   const {
     menuVisible,
@@ -18,6 +37,56 @@ export const CadViewer = (props: any) => {
     contextMenuEventHandlers,
     setMenuVisible,
   } = useContextMenu({ containerRef })
+
+  // Override menuRef.contains to include both main menu and submenu
+  useEffect(() => {
+    if (menuRef.current) {
+      const originalContains = menuRef.current.contains
+      menuRef.current.contains = (node: Node) => {
+        const isInMainMenu = originalContains.call(menuRef.current!, node)
+        const isInSubmenu = submenuRef.current?.contains(node) || false
+        return isInMainMenu || isInSubmenu
+      }
+    }
+  }, [menuVisible]) // Re-run when menu becomes visible
+
+  // Handle clicks outside both menus to close them
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node
+      const isClickInsideMainMenu =
+        menuRef.current && menuRef.current.contains(target)
+      const isClickInsideSubmenu =
+        submenuRef.current && submenuRef.current.contains(target)
+
+      if (!isClickInsideMainMenu && !isClickInsideSubmenu) {
+        setMenuVisible(false)
+        setLayersSubmenuVisible(false)
+      } else {
+        // If click is inside either menu, prevent the useContextMenu's click outside from running
+        e.stopPropagation()
+      }
+    }
+
+    if (menuVisible) {
+      // Add our handler first (higher priority)
+      document.addEventListener("mousedown", handleClickOutside, true) // use capture phase
+      document.addEventListener("touchstart", handleClickOutside, true)
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside, true)
+        document.removeEventListener("touchstart", handleClickOutside, true)
+      }
+    }
+  }, [menuVisible])
+
+  // Update present layers when circuitJson changes
+  useEffect(() => {
+    if (props.circuitJson) {
+      setPresentLayers(getPresentLayers(props.circuitJson))
+    } else {
+      setPresentLayers({})
+    }
+  }, [props.circuitJson])
 
   const autoRotateUserToggledRef = useRef(autoRotateUserToggled)
   autoRotateUserToggledRef.current = autoRotateUserToggled
@@ -34,6 +103,17 @@ export const CadViewer = (props: any) => {
   }, [])
 
   const downloadGltf = useGlobalDownloadGltf()
+
+  const toggleLayerVisibility = useCallback((layer: keyof LayerVisibility) => {
+    setLayerVisibility((prev) => ({
+      ...prev,
+      [layer]: !prev[layer],
+    }))
+  }, [])
+
+  const showAllLayers = useCallback(() => {
+    setLayerVisibility(defaultLayerVisibility)
+  }, [])
 
   const handleMenuClick = (newEngine: "jscad" | "manifold") => {
     setEngine(newEngine)
@@ -76,12 +156,14 @@ export const CadViewer = (props: any) => {
           {...props}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
+          layerVisibility={layerVisibility}
         />
       ) : (
         <CadViewerManifold
           {...props}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
+          layerVisibility={layerVisibility}
         />
       )}
       <div
@@ -201,6 +283,28 @@ export const CadViewer = (props: any) => {
           </div>
           <div
             style={{
+              padding: "12px 18px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              color: "#f5f6fa",
+              fontWeight: 500,
+              borderRadius: 6,
+              transition: "background 0.1s",
+              position: "relative",
+            }}
+            onClick={() => setLayersSubmenuVisible(!layersSubmenuVisible)}
+            onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = "transparent"
+            }}
+          >
+            <span>Toggle Layers</span>
+            <span style={{ marginLeft: "auto", fontSize: 12 }}>▶</span>
+          </div>
+          <div
+            style={{
               display: "flex",
               justifyContent: "center",
               padding: "8px 0",
@@ -220,6 +324,16 @@ export const CadViewer = (props: any) => {
             </span>
           </div>
         </div>
+      )}
+      {layersSubmenuVisible && (
+        <LayerVisibilitySubmenu
+          ref={submenuRef}
+          layerVisibility={layerVisibility}
+          presentLayers={presentLayers}
+          onToggleLayer={toggleLayerVisibility}
+          onShowAllLayers={showAllLayers}
+          position={menuPos}
+        />
       )}
     </div>
   )
