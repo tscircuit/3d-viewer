@@ -434,11 +434,25 @@ export class BoardGeomBuilder {
     if (!this.boardGeom) return
 
     if (ph.shape === "circle" || ph.shape === "circular_hole_with_rect_pad") {
-      const cyGeom = cylinder({
-        center: [ph.x, ph.y, 0],
-        radius: ph.hole_diameter / 2 + M, // Add margin for subtraction
-        height: this.ctx.pcbThickness * 1.5, // Ensure it cuts through
-      })
+      let cyGeom: Geom3 | null = null
+
+      if (ph.shape === "circular_hole_with_rect_pad") {
+        cyGeom = cylinder({
+          center: [
+            ph.x + (ph.hole_offset_x || 0),
+            ph.y + (ph.hole_offset_y || 0),
+            0,
+          ],
+          radius: ph.hole_diameter / 2 + M, // Add margin for subtraction
+          height: this.ctx.pcbThickness * 1.5, // Ensure it cuts through
+        })
+      } else {
+        cyGeom = cylinder({
+          center: [ph.x, ph.y, 0],
+          radius: ph.hole_diameter / 2 + M, // Add margin for subtraction
+          height: this.ctx.pcbThickness * 1.5, // Ensure it cuts through
+        })
+      }
 
       if (!opts.dontCutBoard) {
         this.boardGeom = subtract(this.boardGeom, cyGeom)
@@ -458,28 +472,75 @@ export class BoardGeomBuilder {
       const holeRadius = holeHeight / 2
       const rectLength = Math.abs(holeWidth - holeHeight)
 
-      const pillHole = union(
-        cuboid({
-          center: [ph.x, ph.y, 0],
-          size: shouldRotate
-            ? [holeHeight, rectLength, this.ctx.pcbThickness * 1.5]
-            : [rectLength, holeHeight, this.ctx.pcbThickness * 1.5],
-        }),
-        cylinder({
-          center: shouldRotate
-            ? [ph.x, ph.y - rectLength / 2, 0]
-            : [ph.x - rectLength / 2, ph.y, 0],
-          radius: holeRadius,
-          height: this.ctx.pcbThickness * 1.5,
-        }),
-        cylinder({
-          center: shouldRotate
-            ? [ph.x, ph.y + rectLength / 2, 0]
-            : [ph.x + rectLength / 2, ph.y, 0],
-          radius: holeRadius,
-          height: this.ctx.pcbThickness * 1.5,
-        }),
-      )
+      let pillHole: Geom3
+
+      if (ph.shape === "pill_hole_with_rect_pad") {
+        pillHole = union(
+          cuboid({
+            center: [
+              ph.x + (ph.hole_offset_x || 0),
+              ph.y + (ph.hole_offset_y || 0),
+              0,
+            ],
+            size: shouldRotate
+              ? [holeHeight, rectLength, this.ctx.pcbThickness * 1.5]
+              : [rectLength, holeHeight, this.ctx.pcbThickness * 1.5],
+          }),
+          cylinder({
+            center: shouldRotate
+              ? [
+                  ph.x + (ph.hole_offset_x || 0),
+                  ph.y + (ph.hole_offset_y || 0) - rectLength / 2,
+                  0,
+                ]
+              : [
+                  ph.x + (ph.hole_offset_x || 0) - rectLength / 2,
+                  ph.y + (ph.hole_offset_y || 0),
+                  0,
+                ],
+            radius: holeRadius,
+            height: this.ctx.pcbThickness * 1.5,
+          }),
+          cylinder({
+            center: shouldRotate
+              ? [
+                  ph.x + (ph.hole_offset_x || 0),
+                  ph.y + (ph.hole_offset_y || 0) + rectLength / 2,
+                  0,
+                ]
+              : [
+                  ph.x + (ph.hole_offset_x || 0) + rectLength / 2,
+                  ph.y + (ph.hole_offset_y || 0),
+                  0,
+                ],
+            radius: holeRadius,
+            height: this.ctx.pcbThickness * 1.5,
+          }),
+        )
+      } else {
+        pillHole = union(
+          cuboid({
+            center: [ph.x, ph.y, 0],
+            size: shouldRotate
+              ? [holeHeight, rectLength, this.ctx.pcbThickness * 1.5]
+              : [rectLength, holeHeight, this.ctx.pcbThickness * 1.5],
+          }),
+          cylinder({
+            center: shouldRotate
+              ? [ph.x, ph.y - rectLength / 2, 0]
+              : [ph.x - rectLength / 2, ph.y, 0],
+            radius: holeRadius,
+            height: this.ctx.pcbThickness * 1.5,
+          }),
+          cylinder({
+            center: shouldRotate
+              ? [ph.x, ph.y + rectLength / 2, 0]
+              : [ph.x + rectLength / 2, ph.y, 0],
+            radius: holeRadius,
+            height: this.ctx.pcbThickness * 1.5,
+          }),
+        )
+      }
       if (!opts.dontCutBoard) {
         this.boardGeom = subtract(this.boardGeom, pillHole)
       }
