@@ -91,14 +91,7 @@ const BoardMeshes = ({
   return null
 }
 
-type LayerVisibility = {
-  board: boolean
-  fCu: boolean
-  bCu: boolean
-  fSilkscreen: boolean
-  bSilkscreen: boolean
-  cadComponents: boolean
-}
+import type { LayerVisibility } from "./utils/layerDetection"
 
 type CadViewerManifoldProps = {
   autoRotateDisabled?: boolean

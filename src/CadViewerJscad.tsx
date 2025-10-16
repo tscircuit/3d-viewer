@@ -16,7 +16,7 @@ import { JscadModel } from "./three-components/JscadModel"
 import { MixedStlModel } from "./three-components/MixedStlModel"
 import { STLModel } from "./three-components/STLModel"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
-import { tuple } from "./utils/tuple"
+import type { LayerVisibility } from "./utils/layerDetection"
 
 interface Props {
   /**
@@ -26,18 +26,7 @@ interface Props {
   circuitJson?: AnyCircuitElement[]
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
-  layerVisibility?: {
-    board: boolean
-    platedHoles: boolean
-    smtPads: boolean
-    vias: boolean
-    copperPours: boolean
-    topTrace: boolean
-    bottomTrace: boolean
-    topSilkscreen: boolean
-    bottomSilkscreen: boolean
-    cadComponents: boolean
-  }
+  layerVisibility?: LayerVisibility
   onUserInteraction?: () => void
 }
 
@@ -54,14 +43,10 @@ export const CadViewerJscad = forwardRef<
       clickToInteractEnabled,
       layerVisibility = {
         board: true,
-        platedHoles: true,
-        smtPads: true,
-        vias: true,
-        copperPours: true,
-        topTrace: true,
-        bottomTrace: true,
-        topSilkscreen: true,
-        bottomSilkscreen: true,
+        fCu: true,
+        bCu: true,
+        fSilkscreen: true,
+        bSilkscreen: true,
         cadComponents: true,
       },
       onUserInteraction,
