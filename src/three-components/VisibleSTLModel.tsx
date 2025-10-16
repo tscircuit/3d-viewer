@@ -1,4 +1,4 @@
-import { useLayerVisibility } from "src/contexts/LayerVisibilityContext"
+import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import { STLModel } from "./STLModel"
 
 interface VisibleSTLModelProps {
