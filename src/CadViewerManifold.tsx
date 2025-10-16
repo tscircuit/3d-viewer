@@ -38,44 +38,44 @@ const BoardMeshes = ({
 
     const meshesToAdd: THREE.Mesh[] = []
 
-    // Add geometry meshes based on visibility
     geometryMeshes.forEach((mesh) => {
       if (mesh.name === "board-geom" && layerVisibility.board) {
         meshesToAdd.push(mesh)
+      } else if (mesh.name.startsWith("pad-")) {
+        const isTopPad = mesh.name.startsWith("pad-top-")
+        const isBottomPad = mesh.name.startsWith("pad-bottom-")
+
+        if (
+          (isTopPad && layerVisibility.fCu) ||
+          (isBottomPad && layerVisibility.bCu)
+        ) {
+          meshesToAdd.push(mesh)
+        }
       } else if (
-        mesh.name.startsWith("plated-hole-") &&
-        layerVisibility.platedHoles
-      ) {
-        meshesToAdd.push(mesh)
-      } else if (mesh.name.startsWith("smt-pad-") && layerVisibility.smtPads) {
-        meshesToAdd.push(mesh)
-      } else if (mesh.name.startsWith("via-") && layerVisibility.vias) {
-        meshesToAdd.push(mesh)
-      } else if (
-        mesh.name.startsWith("copper-pour-") &&
-        layerVisibility.copperPours
+        mesh.name.startsWith("via-") &&
+        layerVisibility.fCu &&
+        layerVisibility.bCu
       ) {
         meshesToAdd.push(mesh)
       }
     })
 
-    // Add texture meshes based on visibility
     textureMeshes.forEach((mesh) => {
-      if (mesh.name === "top-trace-texture-plane" && layerVisibility.topTrace) {
+      if (mesh.name === "top-trace-texture-plane" && layerVisibility.fCu) {
         meshesToAdd.push(mesh)
       } else if (
         mesh.name === "bottom-trace-texture-plane" &&
-        layerVisibility.bottomTrace
+        layerVisibility.bCu
       ) {
         meshesToAdd.push(mesh)
       } else if (
         mesh.name === "top-silkscreen-texture-plane" &&
-        layerVisibility.topSilkscreen
+        layerVisibility.fSilkscreen
       ) {
         meshesToAdd.push(mesh)
       } else if (
         mesh.name === "bottom-silkscreen-texture-plane" &&
-        layerVisibility.bottomSilkscreen
+        layerVisibility.bSilkscreen
       ) {
         meshesToAdd.push(mesh)
       }
@@ -93,14 +93,10 @@ const BoardMeshes = ({
 
 type LayerVisibility = {
   board: boolean
-  platedHoles: boolean
-  smtPads: boolean
-  vias: boolean
-  copperPours: boolean
-  topTrace: boolean
-  bottomTrace: boolean
-  topSilkscreen: boolean
-  bottomSilkscreen: boolean
+  fCu: boolean
+  bCu: boolean
+  fSilkscreen: boolean
+  bSilkscreen: boolean
   cadComponents: boolean
 }
 
@@ -122,14 +118,10 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   clickToInteractEnabled,
   layerVisibility = {
     board: true,
-    platedHoles: true,
-    smtPads: true,
-    vias: true,
-    copperPours: true,
-    topTrace: true,
-    bottomTrace: true,
-    topSilkscreen: true,
-    bottomSilkscreen: true,
+    fCu: true,
+    bCu: true,
+    fSilkscreen: true,
+    bSilkscreen: true,
     cadComponents: true,
   },
   onUserInteraction,

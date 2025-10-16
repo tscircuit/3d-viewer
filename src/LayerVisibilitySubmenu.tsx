@@ -2,14 +2,10 @@ import React, { forwardRef } from "react"
 
 export type LayerVisibility = {
   board: boolean
-  platedHoles: boolean
-  smtPads: boolean
-  vias: boolean
-  copperPours: boolean
-  topTrace: boolean
-  bottomTrace: boolean
-  topSilkscreen: boolean
-  bottomSilkscreen: boolean
+  fCu: boolean
+  bCu: boolean
+  fSilkscreen: boolean
+  bSilkscreen: boolean
   cadComponents: boolean
 }
 
@@ -35,18 +31,28 @@ export const LayerVisibilitySubmenu = forwardRef<
     },
     ref,
   ) => {
-    const submenuWidth = 200
+    const SUBMENU_WIDTH = 200
+    const SUBMENU_HEIGHT = 300
+    const HORIZONTAL_OFFSET = 220
+    const MARGIN = 20
+
+    // Calculate position to keep submenu within viewport bounds
     const left =
-      position.x + 220 > window.innerWidth - submenuWidth
-        ? position.x - submenuWidth - 20
-        : position.x + 220
+      position.x + HORIZONTAL_OFFSET + SUBMENU_WIDTH > window.innerWidth
+        ? position.x - SUBMENU_WIDTH - MARGIN
+        : position.x + HORIZONTAL_OFFSET
+
+    const top =
+      position.y + SUBMENU_HEIGHT > window.innerHeight
+        ? window.innerHeight - SUBMENU_HEIGHT - MARGIN
+        : position.y
 
     return (
       <div
         ref={ref}
         style={{
           position: "fixed",
-          top: position.y,
+          top,
           left,
           background: "#23272f",
           color: "#f5f6fa",
@@ -118,23 +124,19 @@ export const LayerVisibilitySubmenu = forwardRef<
               }
             >
               <span style={{ marginRight: 8 }}>{visible ? "✔" : ""}</span>
-              {layer === "cadComponents"
-                ? "CAD Components"
-                : layer === "platedHoles"
-                  ? "Plated Holes"
-                  : layer === "smtPads"
-                    ? "SMT Pads"
-                    : layer === "copperPours"
-                      ? "Copper Pours"
-                      : layer === "topTrace"
-                        ? "Top Traces"
-                        : layer === "bottomTrace"
-                          ? "Bottom Traces"
-                          : layer === "topSilkscreen"
-                            ? "Top Silkscreen"
-                            : layer === "bottomSilkscreen"
-                              ? "Bottom Silkscreen"
-                              : layer.charAt(0).toUpperCase() + layer.slice(1)}
+              {layer === "board"
+                ? "Board Body"
+                : layer === "cadComponents"
+                  ? "CAD Components"
+                  : layer === "fCu"
+                    ? "F.Cu"
+                    : layer === "bCu"
+                      ? "B.Cu"
+                      : layer === "fSilkscreen"
+                        ? "F.Silkscreen"
+                        : layer === "bSilkscreen"
+                          ? "B.Silkscreen"
+                          : layer.charAt(0).toUpperCase() + layer.slice(1)}
             </div>
           ))}
       </div>

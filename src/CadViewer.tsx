@@ -9,14 +9,10 @@ import packageJson from "../package.json"
 
 const defaultLayerVisibility: LayerVisibility = {
   board: true,
-  platedHoles: true,
-  smtPads: true,
-  vias: true,
-  copperPours: true,
-  topTrace: true,
-  bottomTrace: true,
-  topSilkscreen: true,
-  bottomSilkscreen: true,
+  fCu: true,
+  bCu: true,
+  fSilkscreen: true,
+  bSilkscreen: true,
   cadComponents: true,
 }
 
