@@ -32,6 +32,24 @@ export const getPresentLayers = (
     presentLayers.bCu = true
   }
 
+  // Add detection for pads and vias
+  const smtPads = circuitJson.filter((e) => e.type === "pcb_smtpad")
+  if (smtPads.some((p) => p.layer === "top")) {
+    presentLayers.fCu = true
+  }
+  if (smtPads.some((p) => p.layer === "bottom")) {
+    presentLayers.bCu = true
+  }
+  // Also check for vias
+  if (
+    circuitJson.some(
+      (e) => e.type === "pcb_via" || e.type === "pcb_plated_hole",
+    )
+  ) {
+    presentLayers.fCu = true
+    presentLayers.bCu = true
+  }
+
   // Check for silkscreen
   const silkscreenTexts = circuitJson.filter(
     (e) => e.type === "pcb_silkscreen_text" || e.type === "pcb_silkscreen_path",
