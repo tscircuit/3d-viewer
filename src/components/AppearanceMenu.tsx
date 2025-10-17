@@ -70,6 +70,8 @@ export const AppearanceMenu = () => {
               borderRadius: 6,
               boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
               zIndex: 1000,
+              marginTop: 8,
+              marginBottom: 8,
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -93,7 +95,7 @@ export const AppearanceMenu = () => {
               <span style={checkmarkStyle}>
                 {visibility.topCopper ? "✔" : ""}
               </span>
-              F.Cu
+              Top Copper
             </div>
             <div
               style={menuItemStyle}
@@ -104,7 +106,7 @@ export const AppearanceMenu = () => {
               <span style={checkmarkStyle}>
                 {visibility.bottomCopper ? "✔" : ""}
               </span>
-              B.Cu
+              Bottom Copper
             </div>
             <div
               style={menuItemStyle}
@@ -115,7 +117,7 @@ export const AppearanceMenu = () => {
               <span style={checkmarkStyle}>
                 {visibility.topSilkscreen ? "✔" : ""}
               </span>
-              F.Silkscreen
+              Top Silkscreen
             </div>
             <div
               style={menuItemStyle}
@@ -126,7 +128,7 @@ export const AppearanceMenu = () => {
               <span style={checkmarkStyle}>
                 {visibility.bottomSilkscreen ? "✔" : ""}
               </span>
-              B.Silkscreen
+              Bottom Silkscreen
             </div>
             <div
               style={menuItemStyle}
@@ -137,7 +139,7 @@ export const AppearanceMenu = () => {
               <span style={checkmarkStyle}>
                 {visibility.smtModels ? "✔" : ""}
               </span>
-              SMT Models
+              CAD Models
             </div>
           </div>
         )}
