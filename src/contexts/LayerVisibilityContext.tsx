@@ -59,8 +59,6 @@ const defaultVisibility: LayerVisibilityState = {
   backgroundEnd: true,
 }
 
-const STORAGE_KEY = "cadViewer_layerVisibility"
-
 const LayerVisibilityContext = createContext<
   LayerVisibilityContextType | undefined
 >(undefined)
@@ -70,28 +68,6 @@ export const LayerVisibilityProvider: React.FC<{
 }> = ({ children }) => {
   const [visibility, setVisibility] =
     useState<LayerVisibilityState>(defaultVisibility)
-
-  // Load from localStorage on mount
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        setVisibility({ ...defaultVisibility, ...parsed })
-      }
-    } catch (e) {
-      console.error("Failed to load layer visibility from localStorage:", e)
-    }
-  }, [])
-
-  // Save to localStorage whenever visibility changes
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(visibility))
-    } catch (e) {
-      console.error("Failed to save layer visibility to localStorage:", e)
-    }
-  }, [visibility])
 
   const toggleLayer = useCallback((layer: keyof LayerVisibilityState) => {
     setVisibility((prev) => ({
