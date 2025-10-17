@@ -1,41 +1,37 @@
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
+import type { LayerType } from "../hooks/use-stls-from-geom"
 import { STLModel } from "./STLModel"
 
 interface VisibleSTLModelProps {
   stlData: ArrayBuffer
   color: any
   opacity?: number
-  index: number
-  totalModels: number
+  layerType?: LayerType
 }
 
 export function VisibleSTLModel({
   stlData,
   color,
   opacity = 1,
-  index,
-  totalModels,
+  layerType,
 }: VisibleSTLModelProps) {
   const { visibility } = useLayerVisibility()
 
-  // Determine what layer this STL represents based on its index
-  // Index 0 is the board body
-  // Other indices are copper/silkscreen layers
-  const isBoardBody = index === 0
-  const isCopper = index > 0 && index <= totalModels - 2 // Copper layers
-  const isSilkscreen = index > totalModels - 2 // Last items are silkscreen
-
-  // Check visibility
+  // Determine visibility based on layerType
   let shouldShow = true
-  if (isBoardBody) {
+
+  if (layerType === "board") {
     shouldShow = visibility.boardBody
-  } else if (isCopper) {
-    // Show if either top or bottom copper is visible
-    shouldShow = visibility.topCopper || visibility.bottomCopper
-  } else if (isSilkscreen) {
-    // Show if either top or bottom silkscreen is visible
-    shouldShow = visibility.topSilkscreen || visibility.bottomSilkscreen
+  } else if (layerType === "top-copper") {
+    shouldShow = visibility.topCopper
+  } else if (layerType === "bottom-copper") {
+    shouldShow = visibility.bottomCopper
+  } else if (layerType === "top-silkscreen") {
+    shouldShow = visibility.topSilkscreen
+  } else if (layerType === "bottom-silkscreen") {
+    shouldShow = visibility.bottomSilkscreen
   }
+  // If layerType is undefined, show by default (backwards compatibility)
 
   if (!shouldShow) {
     return null

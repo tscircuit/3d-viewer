@@ -115,14 +115,13 @@ export const CadViewerJscad = forwardRef<
         boardCenter={boardCenter}
         onUserInteraction={onUserInteraction}
       >
-        {boardStls.map(({ stlData, color }, index) => (
+        {boardStls.map(({ stlData, color, layerType }, index) => (
           <VisibleSTLModel
-            key={`board-${index - boardStls.length}`}
+            key={`board-${index}`}
             stlData={stlData}
             color={color}
             opacity={index === 0 ? 0.95 : 1}
-            index={index}
-            totalModels={boardStls.length}
+            layerType={layerType}
           />
         ))}
         {cad_components.map((cad_component) => (
