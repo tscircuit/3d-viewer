@@ -96,8 +96,17 @@ const BoardMeshes = ({
     })
 
     return () => {
-      geometryMeshes.forEach((mesh) => rootObject.remove(mesh))
-      textureMeshes.forEach((mesh) => rootObject.remove(mesh))
+      // Only remove meshes that were actually added
+      geometryMeshes.forEach((mesh) => {
+        if (mesh.parent === rootObject) {
+          rootObject.remove(mesh)
+        }
+      })
+      textureMeshes.forEach((mesh) => {
+        if (mesh.parent === rootObject) {
+          rootObject.remove(mesh)
+        }
+      })
     }
   }, [rootObject, geometryMeshes, textureMeshes, visibility])
 
