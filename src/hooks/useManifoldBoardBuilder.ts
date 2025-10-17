@@ -205,14 +205,18 @@ export const useManifoldBoardBuilder = (
       allBoardDrills.push(...nonPlatedHoleBoardDrills)
 
       // Process plated holes
-      const { platedHoleBoardDrills, platedHoleCopperGeoms } =
-        processPlatedHolesForManifold(
-          Manifold,
-          circuitJson,
-          currentPcbThickness,
-          manifoldInstancesForCleanup.current,
-          boardClipVolume,
-        )
+      const {
+        platedHoleBoardDrills,
+        platedHoleCopperGeoms,
+        // NEW: bring in platedHoleSubtractOp
+        platedHoleSubtractOp,
+      } = processPlatedHolesForManifold(
+        Manifold,
+        circuitJson,
+        currentPcbThickness,
+        manifoldInstancesForCleanup.current,
+        boardClipVolume,
+      )
       allBoardDrills.push(...platedHoleBoardDrills)
       currentGeoms.platedHoles = platedHoleCopperGeoms
 
@@ -231,9 +235,35 @@ export const useManifoldBoardBuilder = (
       if (allBoardDrills.length > 0) {
         holeUnion = Manifold.union(allBoardDrills)
         manifoldInstancesForCleanup.current.push(holeUnion)
-        const nextBoardAfterDrills = currentBoardOp.subtract(holeUnion)
+
+        const totalSubtractionOps = platedHoleSubtractOp
+          ? Manifold.union([holeUnion, platedHoleSubtractOp])
+          : holeUnion
+        manifoldInstancesForCleanup.current.push(totalSubtractionOps)
+
+        const nextBoardAfterDrills =
+          currentBoardOp.subtract(totalSubtractionOps)
         manifoldInstancesForCleanup.current.push(nextBoardAfterDrills)
         currentBoardOp = nextBoardAfterDrills
+        if (platedHoleSubtractOp) {
+          const cutPlatedCopper = platedHoleSubtractOp.subtract(holeUnion)
+          manifoldInstancesForCleanup.current.push(cutPlatedCopper)
+          const cutPlatedMesh = cutPlatedCopper.getMesh()
+          const cutPlatedGeom = manifoldMeshToThreeGeometry(cutPlatedMesh)
+
+          // Replace platedHoles array with a single unioned, already-cut geom
+          currentGeoms.platedHoles = [
+            {
+              key: "plated-holes-union",
+              geometry: cutPlatedGeom,
+              color: new THREE.Color(
+                defaultColors.copper[0],
+                defaultColors.copper[1],
+                defaultColors.copper[2],
+              ),
+            },
+          ]
+        }
       }
 
       const { cutoutOps } = processCutoutsForManifold(

@@ -24,6 +24,8 @@ export interface ProcessPlatedHolesResult {
     geometry: THREE.BufferGeometry
     color: THREE.Color
   }>
+  /** Union of all plated-hole copper Manifold ops (for subtraction upstream) */
+  platedHoleSubtractOp?: any
 }
 
 export function processPlatedHolesForManifold(
@@ -40,6 +42,9 @@ export function processPlatedHolesForManifold(
     geometry: THREE.BufferGeometry
     color: THREE.Color
   }> = []
+
+  // NEW: collect copper Manifold ops to union at the end
+  const platedHoleCopperOpsForSubtract: any[] = []
 
   const createPillOp = (width: number, height: number, depth: number) => {
     const pillOp = createRoundedRectPrism({
@@ -99,6 +104,10 @@ export function processPlatedHolesForManifold(
         manifoldInstancesForCleanup.push(clipped)
         finalCopperOp = clipped
       }
+
+      // NEW: retain manifold op for upstream subtraction
+      platedHoleCopperOpsForSubtract.push(finalCopperOp)
+
       const threeGeom = manifoldMeshToThreeGeometry(finalCopperOp.getMesh())
       platedHoleCopperGeoms.push({
         key: `ph-${ph.pcb_plated_hole_id || index}`,
@@ -162,9 +171,19 @@ export function processPlatedHolesForManifold(
       const translatedPlatedPart = finalPlatedPartOp.translate([ph.x, ph.y, 0])
       manifoldInstancesForCleanup.push(translatedPlatedPart)
 
-      const threeGeom = manifoldMeshToThreeGeometry(
-        translatedPlatedPart.getMesh(),
-      )
+      // NEW: retain manifold op for upstream subtraction
+      let finalCopperOp: any = translatedPlatedPart
+      if (boardClipVolume) {
+        const clipped = Manifold.intersection([
+          translatedPlatedPart,
+          boardClipVolume,
+        ])
+        manifoldInstancesForCleanup.push(clipped)
+        finalCopperOp = clipped
+      }
+      platedHoleCopperOpsForSubtract.push(finalCopperOp)
+
+      const threeGeom = manifoldMeshToThreeGeometry(finalCopperOp.getMesh())
       platedHoleCopperGeoms.push({
         key: `ph-${ph.pcb_plated_hole_id || index}`,
         geometry: threeGeom,
@@ -212,7 +231,7 @@ export function processPlatedHolesForManifold(
         Manifold,
         width: padWidth,
         height: padHeight,
-        thickness: padThickness + 0.1,
+        thickness: padThickness,
         borderRadius: rectBorderRadius,
       }).translate([0, 0, pcbThickness / 2 - padThickness / 2 + 0.05])
 
@@ -220,7 +239,7 @@ export function processPlatedHolesForManifold(
         Manifold,
         width: padWidth,
         height: padHeight,
-        thickness: padThickness + 0.1,
+        thickness: padThickness,
         borderRadius: rectBorderRadius,
       }).translate([0, 0, -pcbThickness / 2 + padThickness / 2 - 0.05])
       manifoldInstancesForCleanup.push(topPad, bottomPad)
@@ -268,6 +287,9 @@ export function processPlatedHolesForManifold(
         finalCopperOp = clipped
       }
 
+      // NEW: retain manifold op for upstream subtraction
+      platedHoleCopperOpsForSubtract.push(finalCopperOp)
+
       const threeGeom = manifoldMeshToThreeGeometry(finalCopperOp.getMesh())
       platedHoleCopperGeoms.push({
         key: `ph-${ph.pcb_plated_hole_id || index}`,
@@ -313,7 +335,7 @@ export function processPlatedHolesForManifold(
         Manifold,
         width: padWidth!,
         height: padHeight!,
-        thickness: padThickness + 0.1,
+        thickness: padThickness,
         borderRadius: rectBorderRadius,
       }).translate([0, 0, pcbThickness / 2 - padThickness / 2 + 0.05])
 
@@ -321,7 +343,7 @@ export function processPlatedHolesForManifold(
         Manifold,
         width: padWidth!,
         height: padHeight!,
-        thickness: padThickness + 0.1,
+        thickness: padThickness,
         borderRadius: rectBorderRadius,
       }).translate([0, 0, -pcbThickness / 2 + padThickness / 2 - 0.05])
       manifoldInstancesForCleanup.push(topPad, bottomPad)
@@ -373,6 +395,9 @@ export function processPlatedHolesForManifold(
         finalCopperOp = clipped
       }
 
+      // NEW: retain manifold op for upstream subtraction
+      platedHoleCopperOpsForSubtract.push(finalCopperOp)
+
       const threeGeom = manifoldMeshToThreeGeometry(finalCopperOp.getMesh())
       platedHoleCopperGeoms.push({
         key: `ph-${ph.pcb_plated_hole_id || index}`,
@@ -382,5 +407,12 @@ export function processPlatedHolesForManifold(
     }
   })
 
-  return { platedHoleBoardDrills, platedHoleCopperGeoms }
+  // NEW: build a single subtraction op from all plated-hole copper ops
+  let platedHoleSubtractOp: any = undefined
+  if (platedHoleCopperOpsForSubtract.length > 0) {
+    platedHoleSubtractOp = Manifold.union(platedHoleCopperOpsForSubtract)
+    manifoldInstancesForCleanup.push(platedHoleSubtractOp)
+  }
+
+  return { platedHoleBoardDrills, platedHoleCopperGeoms, platedHoleSubtractOp }
 }
