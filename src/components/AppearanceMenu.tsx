@@ -57,7 +57,16 @@ export const AppearanceMenu = () => {
         onMouseOut={handleMouseOut}
       >
         <span>Appearance</span>
-        <span style={{ fontSize: 10 }}>▶</span>
+        <span
+          style={{
+            fontSize: 10,
+            transform: showSubmenu ? "rotate(90deg)" : "rotate(0deg)",
+            transition: "transform 0.2s",
+            display: "inline-block",
+          }}
+        >
+          ▶
+        </span>
 
         {showSubmenu && (
           <div
