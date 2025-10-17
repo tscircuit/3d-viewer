@@ -71,6 +71,7 @@ export const AppearanceMenu = () => {
               boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
               zIndex: 1000,
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             <div
               style={menuItemStyle}
