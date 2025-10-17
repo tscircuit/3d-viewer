@@ -51,7 +51,8 @@ export const AppearanceMenu = () => {
           transition: "background 0.1s",
           position: "relative",
         }}
-        onClick={() => setShowSubmenu(!showSubmenu)}
+        onMouseEnter={() => setShowSubmenu(true)}
+        onMouseLeave={() => setShowSubmenu(false)}
         onMouseOver={handleMouseOver}
         onMouseOut={handleMouseOut}
       >
@@ -73,6 +74,8 @@ export const AppearanceMenu = () => {
               marginTop: 8,
               marginBottom: 8,
             }}
+            onMouseEnter={() => setShowSubmenu(true)}
+            onMouseLeave={() => setShowSubmenu(false)}
             onClick={(e) => e.stopPropagation()}
           >
             <div
