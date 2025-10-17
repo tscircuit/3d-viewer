@@ -2,7 +2,18 @@ import { useState, useEffect } from "react"
 import stlSerializer from "@jscad/stl-serializer"
 import { Geom3 } from "@jscad/modeling/src/geometries/types"
 
-type StlObj = { stlData: ArrayBuffer; color: number[] }
+export type LayerType =
+  | "board"
+  | "top-copper"
+  | "bottom-copper"
+  | "top-silkscreen"
+  | "bottom-silkscreen"
+
+type StlObj = {
+  stlData: ArrayBuffer
+  color: number[]
+  layerType?: LayerType
+}
 
 export const useStlsFromGeom = (
   geom: Geom3[] | Geom3 | null,
@@ -19,12 +30,21 @@ export const useStlsFromGeom = (
       setLoading(true)
       const geometries = Array.isArray(geom) ? geom : [geom]
 
-      const stlPromises = geometries.map(async (g) => {
+      const stlPromises = geometries.map(async (g, index) => {
         const rawParts = stlSerializer.serialize({ binary: true }, [g])
         // Serialize to a Blob then get a single ArrayBuffer for direct parsing
         const blob = new Blob(rawParts)
         const stlData = await blob.arrayBuffer()
-        return { stlData, color: g.color! }
+
+        // Extract layerType from geometry metadata if available
+        const layerType = (g as any).layerType as LayerType | undefined
+
+        // Fallback: infer from index if layerType not set
+        // Index 0 is typically the board body
+        const inferredLayerType: LayerType | undefined =
+          layerType || (index === 0 ? "board" : undefined)
+
+        return { stlData, color: g.color!, layerType: inferredLayerType }
       })
 
       try {

@@ -4,12 +4,18 @@ import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
 import { useGlobalDownloadGltf } from "./hooks/useGlobalDownloadGltf"
 import packageJson from "../package.json"
+import {
+  LayerVisibilityProvider,
+  useLayerVisibility,
+} from "./contexts/LayerVisibilityContext"
+import { AppearanceMenu } from "./components/AppearanceMenu"
 
-export const CadViewer = (props: any) => {
+const CadViewerInner = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [autoRotate, setAutoRotate] = useState(true)
   const [autoRotateUserToggled, setAutoRotateUserToggled] = useState(false)
+  const { visibility, toggleLayer } = useLayerVisibility()
 
   const {
     menuVisible,
@@ -199,6 +205,7 @@ export const CadViewer = (props: any) => {
           >
             Download GLTF
           </div>
+          <AppearanceMenu />
           <div
             style={{
               display: "flex",
@@ -222,5 +229,13 @@ export const CadViewer = (props: any) => {
         </div>
       )}
     </div>
+  )
+}
+
+export const CadViewer = (props: any) => {
+  return (
+    <LayerVisibilityProvider>
+      <CadViewerInner {...props} />
+    </LayerVisibilityProvider>
   )
 }
