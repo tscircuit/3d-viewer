@@ -41,9 +41,9 @@ export const AppearanceMenu = () => {
       <div
         style={{
           padding: "8px 18px",
-          fontSize: 13,
-          color: "#a0a0a0",
-          fontWeight: 600,
+          fontSize: 14,
+          color: "#f5f6fa",
+          fontWeight: 400,
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
