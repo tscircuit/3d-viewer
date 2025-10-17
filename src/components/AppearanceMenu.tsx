@@ -1,4 +1,29 @@
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
+import type React from "react"
+
+const menuItemStyle: React.CSSProperties = {
+  padding: "8px 18px",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  color: "#f5f6fa",
+  fontWeight: 400,
+  fontSize: 14,
+  transition: "background 0.1s",
+}
+
+const checkmarkStyle: React.CSSProperties = {
+  width: 20,
+}
+
+const handleMouseOver = (e: React.MouseEvent<HTMLDivElement>) => {
+  e.currentTarget.style.background = "#2d313a"
+}
+
+const handleMouseOut = (e: React.MouseEvent<HTMLDivElement>) => {
+  e.currentTarget.style.background = "transparent"
+}
 
 export const AppearanceMenu = () => {
   const { visibility, toggleLayer } = useLayerVisibility()
@@ -22,119 +47,61 @@ export const AppearanceMenu = () => {
         Appearance
       </div>
       <div
-        style={{
-          padding: "8px 18px",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          color: "#f5f6fa",
-          fontWeight: 400,
-          fontSize: 14,
-          transition: "background 0.1s",
-        }}
+        style={menuItemStyle}
         onClick={() => toggleLayer("boardBody")}
-        onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
-        onMouseOut={(e) => (e.currentTarget.style.background = "transparent")}
+        onMouseOver={handleMouseOver}
+        onMouseOut={handleMouseOut}
       >
-        <span style={{ width: 20 }}>{visibility.boardBody ? "✔" : ""}</span>
+        <span style={checkmarkStyle}>{visibility.boardBody ? "✔" : ""}</span>
         Board Body
       </div>
       <div
-        style={{
-          padding: "8px 18px",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          color: "#f5f6fa",
-          fontWeight: 400,
-          fontSize: 14,
-          transition: "background 0.1s",
-        }}
+        style={menuItemStyle}
         onClick={() => toggleLayer("topCopper")}
-        onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
-        onMouseOut={(e) => (e.currentTarget.style.background = "transparent")}
+        onMouseOver={handleMouseOver}
+        onMouseOut={handleMouseOut}
       >
-        <span style={{ width: 20 }}>{visibility.topCopper ? "✔" : ""}</span>
+        <span style={checkmarkStyle}>{visibility.topCopper ? "✔" : ""}</span>
         F.Cu
       </div>
       <div
-        style={{
-          padding: "8px 18px",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          color: "#f5f6fa",
-          fontWeight: 400,
-          fontSize: 14,
-          transition: "background 0.1s",
-        }}
+        style={menuItemStyle}
         onClick={() => toggleLayer("bottomCopper")}
-        onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
-        onMouseOut={(e) => (e.currentTarget.style.background = "transparent")}
+        onMouseOver={handleMouseOver}
+        onMouseOut={handleMouseOut}
       >
-        <span style={{ width: 20 }}>{visibility.bottomCopper ? "✔" : ""}</span>
+        <span style={checkmarkStyle}>{visibility.bottomCopper ? "✔" : ""}</span>
         B.Cu
       </div>
       <div
-        style={{
-          padding: "8px 18px",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          color: "#f5f6fa",
-          fontWeight: 400,
-          fontSize: 14,
-          transition: "background 0.1s",
-        }}
+        style={menuItemStyle}
         onClick={() => toggleLayer("topSilkscreen")}
-        onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
-        onMouseOut={(e) => (e.currentTarget.style.background = "transparent")}
+        onMouseOver={handleMouseOver}
+        onMouseOut={handleMouseOut}
       >
-        <span style={{ width: 20 }}>{visibility.topSilkscreen ? "✔" : ""}</span>
+        <span style={checkmarkStyle}>
+          {visibility.topSilkscreen ? "✔" : ""}
+        </span>
         F.Silkscreen
       </div>
       <div
-        style={{
-          padding: "8px 18px",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          color: "#f5f6fa",
-          fontWeight: 400,
-          fontSize: 14,
-          transition: "background 0.1s",
-        }}
+        style={menuItemStyle}
         onClick={() => toggleLayer("bottomSilkscreen")}
-        onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
-        onMouseOut={(e) => (e.currentTarget.style.background = "transparent")}
+        onMouseOver={handleMouseOver}
+        onMouseOut={handleMouseOut}
       >
-        <span style={{ width: 20 }}>
+        <span style={checkmarkStyle}>
           {visibility.bottomSilkscreen ? "✔" : ""}
         </span>
         B.Silkscreen
       </div>
       <div
-        style={{
-          padding: "8px 18px",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          color: "#f5f6fa",
-          fontWeight: 400,
-          fontSize: 14,
-          transition: "background 0.1s",
-        }}
+        style={menuItemStyle}
         onClick={() => toggleLayer("smtModels")}
-        onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
-        onMouseOut={(e) => (e.currentTarget.style.background = "transparent")}
+        onMouseOver={handleMouseOver}
+        onMouseOut={handleMouseOut}
       >
-        <span style={{ width: 20 }}>{visibility.smtModels ? "✔" : ""}</span>
+        <span style={checkmarkStyle}>{visibility.smtModels ? "✔" : ""}</span>
         SMT Models
       </div>
     </>
