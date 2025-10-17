@@ -28,7 +28,7 @@ const handleMouseOut = (e: React.MouseEvent<HTMLDivElement>) => {
 
 export const AppearanceMenu = () => {
   const { visibility, toggleLayer } = useLayerVisibility()
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [showSubmenu, setShowSubmenu] = useState(false)
 
   return (
     <>
@@ -49,84 +49,98 @@ export const AppearanceMenu = () => {
           alignItems: "center",
           justifyContent: "space-between",
           transition: "background 0.1s",
+          position: "relative",
         }}
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={() => setShowSubmenu(!showSubmenu)}
         onMouseOver={handleMouseOver}
         onMouseOut={handleMouseOut}
       >
         <span>Appearance</span>
-        <span style={{ fontSize: 10 }}>{isExpanded ? "▼" : "▶"}</span>
+        <span style={{ fontSize: 10 }}>▶</span>
+
+        {showSubmenu && (
+          <div
+            style={{
+              position: "absolute",
+              left: "100%",
+              top: 0,
+              minWidth: 200,
+              background: "#23272f",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: 6,
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
+              zIndex: 1000,
+            }}
+          >
+            <div
+              style={menuItemStyle}
+              onClick={() => toggleLayer("boardBody")}
+              onMouseOver={handleMouseOver}
+              onMouseOut={handleMouseOut}
+            >
+              <span style={checkmarkStyle}>
+                {visibility.boardBody ? "✔" : ""}
+              </span>
+              Board Body
+            </div>
+            <div
+              style={menuItemStyle}
+              onClick={() => toggleLayer("topCopper")}
+              onMouseOver={handleMouseOver}
+              onMouseOut={handleMouseOut}
+            >
+              <span style={checkmarkStyle}>
+                {visibility.topCopper ? "✔" : ""}
+              </span>
+              F.Cu
+            </div>
+            <div
+              style={menuItemStyle}
+              onClick={() => toggleLayer("bottomCopper")}
+              onMouseOver={handleMouseOver}
+              onMouseOut={handleMouseOut}
+            >
+              <span style={checkmarkStyle}>
+                {visibility.bottomCopper ? "✔" : ""}
+              </span>
+              B.Cu
+            </div>
+            <div
+              style={menuItemStyle}
+              onClick={() => toggleLayer("topSilkscreen")}
+              onMouseOver={handleMouseOver}
+              onMouseOut={handleMouseOut}
+            >
+              <span style={checkmarkStyle}>
+                {visibility.topSilkscreen ? "✔" : ""}
+              </span>
+              F.Silkscreen
+            </div>
+            <div
+              style={menuItemStyle}
+              onClick={() => toggleLayer("bottomSilkscreen")}
+              onMouseOver={handleMouseOver}
+              onMouseOut={handleMouseOut}
+            >
+              <span style={checkmarkStyle}>
+                {visibility.bottomSilkscreen ? "✔" : ""}
+              </span>
+              B.Silkscreen
+            </div>
+            <div
+              style={menuItemStyle}
+              onClick={() => toggleLayer("smtModels")}
+              onMouseOver={handleMouseOver}
+              onMouseOut={handleMouseOut}
+            >
+              <span style={checkmarkStyle}>
+                {visibility.smtModels ? "✔" : ""}
+              </span>
+              SMT Models
+            </div>
+          </div>
+        )}
       </div>
-      {isExpanded && (
-        <>
-          <div
-            style={menuItemStyle}
-            onClick={() => toggleLayer("boardBody")}
-            onMouseOver={handleMouseOver}
-            onMouseOut={handleMouseOut}
-          >
-            <span style={checkmarkStyle}>
-              {visibility.boardBody ? "✔" : ""}
-            </span>
-            Board Body
-          </div>
-          <div
-            style={menuItemStyle}
-            onClick={() => toggleLayer("topCopper")}
-            onMouseOver={handleMouseOver}
-            onMouseOut={handleMouseOut}
-          >
-            <span style={checkmarkStyle}>
-              {visibility.topCopper ? "✔" : ""}
-            </span>
-            F.Cu
-          </div>
-          <div
-            style={menuItemStyle}
-            onClick={() => toggleLayer("bottomCopper")}
-            onMouseOver={handleMouseOver}
-            onMouseOut={handleMouseOut}
-          >
-            <span style={checkmarkStyle}>
-              {visibility.bottomCopper ? "✔" : ""}
-            </span>
-            B.Cu
-          </div>
-          <div
-            style={menuItemStyle}
-            onClick={() => toggleLayer("topSilkscreen")}
-            onMouseOver={handleMouseOver}
-            onMouseOut={handleMouseOut}
-          >
-            <span style={checkmarkStyle}>
-              {visibility.topSilkscreen ? "✔" : ""}
-            </span>
-            F.Silkscreen
-          </div>
-          <div
-            style={menuItemStyle}
-            onClick={() => toggleLayer("bottomSilkscreen")}
-            onMouseOver={handleMouseOver}
-            onMouseOut={handleMouseOut}
-          >
-            <span style={checkmarkStyle}>
-              {visibility.bottomSilkscreen ? "✔" : ""}
-            </span>
-            B.Silkscreen
-          </div>
-          <div
-            style={menuItemStyle}
-            onClick={() => toggleLayer("smtModels")}
-            onMouseOver={handleMouseOver}
-            onMouseOut={handleMouseOut}
-          >
-            <span style={checkmarkStyle}>
-              {visibility.smtModels ? "✔" : ""}
-            </span>
-            SMT Models
-          </div>
-        </>
-      )}
     </>
   )
 }
