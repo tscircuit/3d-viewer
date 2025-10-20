@@ -14,7 +14,9 @@ const extractDegrees = (value: RotationValue): number | undefined => {
   return undefined
 }
 
-export const rotationValueToRadians = (value: RotationValue): number | undefined => {
+export const rotationValueToRadians = (
+  value: RotationValue,
+): number | undefined => {
   const degrees = extractDegrees(value)
   if (degrees === undefined) return undefined
   return (degrees * Math.PI) / 180
@@ -40,5 +42,6 @@ export const getRotationInDegrees = (
   return [x, y, z]
 }
 
-export const parseRotationDegrees = (value: RotationValue): number | undefined =>
-  extractDegrees(value)
+export const parseRotationDegrees = (
+  value: RotationValue,
+): number | undefined => extractDegrees(value)
