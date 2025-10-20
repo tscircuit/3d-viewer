@@ -9,6 +9,7 @@ import * as THREE from "three"
 import * as jscadModeling from "@jscad/modeling"
 import { load3DModel } from "./load-model"
 import type { CadComponent } from "circuit-json"
+import { getRotationInRadians } from "./rotation"
 
 export async function renderComponent(
   component: CadComponent,
@@ -31,12 +32,9 @@ export async function renderComponent(
           (component.position.z ?? 0) + 0.5,
         )
       }
-      if (component.rotation) {
-        model.rotation.set(
-          THREE.MathUtils.degToRad(component.rotation.x ?? 0),
-          THREE.MathUtils.degToRad(component.rotation.y ?? 0),
-          THREE.MathUtils.degToRad(component.rotation.z ?? 0),
-        )
+      const rotationRadians = getRotationInRadians(component.rotation)
+      if (rotationRadians) {
+        model.rotation.set(...rotationRadians)
       }
       scene.add(model)
       return
@@ -66,12 +64,9 @@ export async function renderComponent(
           (component.position.z ?? 0) + 0.5,
         )
       }
-      if (component.rotation) {
-        mesh.rotation.set(
-          THREE.MathUtils.degToRad(component.rotation.x ?? 0),
-          THREE.MathUtils.degToRad(component.rotation.y ?? 0),
-          THREE.MathUtils.degToRad(component.rotation.z ?? 0),
-        )
+      const rotationRadians = getRotationInRadians(component.rotation)
+      if (rotationRadians) {
+        mesh.rotation.set(...rotationRadians)
       }
       scene.add(mesh)
     }
@@ -112,12 +107,9 @@ export async function renderComponent(
           (component.position.z ?? 0) + 0.5,
         )
       }
-      if (component.rotation) {
-        mesh.rotation.set(
-          THREE.MathUtils.degToRad(component.rotation.x ?? 0),
-          THREE.MathUtils.degToRad(component.rotation.y ?? 0),
-          THREE.MathUtils.degToRad(component.rotation.z ?? 0),
-        )
+      const rotationRadians = getRotationInRadians(component.rotation)
+      if (rotationRadians) {
+        mesh.rotation.set(...rotationRadians)
       }
       scene.add(mesh)
     }

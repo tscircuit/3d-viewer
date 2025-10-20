@@ -9,6 +9,7 @@ import { GltfModel } from "./three-components/GltfModel"
 import { JscadModel } from "./three-components/JscadModel"
 import { FootprinterModel } from "./three-components/FootprinterModel"
 import { tuple } from "./utils/tuple"
+import { getRotationInRadians } from "./utils/rotation"
 import { Html } from "./react-three/Html"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
 
@@ -53,13 +54,11 @@ export const AnyCadComponent = ({
     cad_component.model_wrl_url ??
     cad_component.model_stl_url
   const gltfUrl = cad_component.model_glb_url ?? cad_component.model_gltf_url
-  const rotationOffset = cad_component.rotation
-    ? tuple(
-        (cad_component.rotation.x * Math.PI) / 180,
-        (cad_component.rotation.y * Math.PI) / 180,
-        (cad_component.rotation.z * Math.PI) / 180,
-      )
-    : undefined
+  const rotationOffset = (() => {
+    const rotationRadians = getRotationInRadians(cad_component.rotation)
+    if (!rotationRadians) return undefined
+    return tuple(...rotationRadians)
+  })()
 
   let modelComponent: React.ReactNode = null
 
