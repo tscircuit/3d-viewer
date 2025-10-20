@@ -83,6 +83,31 @@ const roundedRectPadsCircuit = [
     rect_pad_height: 4.5,
     rect_pad_border_radius: 0.6,
   },
+  {
+    type: "pcb_smtpad",
+    pcb_smtpad_id: "pad-bottom-rounded",
+    pcb_component_id: "component-rounded",
+    layer: "top",
+    shape: "rotated_rect",
+    width: 4,
+    height: 2,
+    x: -18,
+    y: -6,
+    ccw_rotation: 35,
+    corner_radius: 1,
+  },
+  {
+    type: "pcb_smtpad",
+    pcb_smtpad_id: "pad-bottom-rounded",
+    pcb_component_id: "component-rounded",
+    layer: "top",
+    shape: "rect",
+    width: 6,
+    height: 2,
+    x: -12,
+    y: -6,
+    corner_radius: 1,
+  },
 ] as const
 
 export const RoundedRectPadsDemo = () => (

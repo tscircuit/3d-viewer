@@ -23,6 +23,8 @@ export function extractRectBorderRadius(source: any): RectBorderRadiusInput {
   if (!source || typeof source !== "object") return undefined
 
   return (
+    source.corner_radius ??
+    source.cornerRadius ??
     source.rect_pad_border_radius ??
     source.rectPadBorderRadius ??
     source.rect_border_radius ??
