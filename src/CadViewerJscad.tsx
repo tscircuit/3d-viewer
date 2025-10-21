@@ -7,6 +7,7 @@ import type * as THREE from "three"
 import { Euler } from "three"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
+import type { CameraController } from "./CadViewerContainer"
 import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
 import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { useBoardGeomBuilder } from "./hooks/useBoardGeomBuilder"
@@ -28,6 +29,7 @@ interface Props {
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
   onUserInteraction?: () => void
+  onCameraControllerReady?: (controller: CameraController | null) => void
 }
 
 export const CadViewerJscad = forwardRef<
@@ -42,6 +44,7 @@ export const CadViewerJscad = forwardRef<
       autoRotateDisabled,
       clickToInteractEnabled,
       onUserInteraction,
+      onCameraControllerReady,
     },
     ref,
   ) => {
@@ -114,6 +117,7 @@ export const CadViewerJscad = forwardRef<
         boardDimensions={boardDimensions}
         boardCenter={boardCenter}
         onUserInteraction={onUserInteraction}
+        onCameraControllerReady={onCameraControllerReady}
       >
         {boardStls.map(({ stlData, color, layerType }, index) => (
           <VisibleSTLModel

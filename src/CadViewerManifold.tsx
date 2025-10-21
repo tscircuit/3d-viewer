@@ -7,6 +7,7 @@ import type * as THREE from "three"
 import { useThree } from "./react-three/ThreeContext"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
+import type { CameraController } from "./CadViewerContainer"
 import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
 import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
 import { Error3d } from "./three-components/Error3d"
@@ -117,6 +118,7 @@ type CadViewerManifoldProps = {
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
   onUserInteraction?: () => void
+  onCameraControllerReady?: (controller: CameraController | null) => void
 } & (
   | { circuitJson: AnyCircuitElement[]; children?: React.ReactNode }
   | { circuitJson?: never; children: React.ReactNode }
@@ -130,6 +132,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   clickToInteractEnabled,
   onUserInteraction,
   children,
+  onCameraControllerReady,
 }) => {
   const childrenCircuitJson = useConvertChildrenToCircuitJson(children)
   const circuitJson = useMemo(() => {
@@ -303,6 +306,7 @@ try {
       boardDimensions={boardDimensions}
       boardCenter={boardCenter}
       onUserInteraction={onUserInteraction}
+      onCameraControllerReady={onCameraControllerReady}
     >
       <BoardMeshes
         geometryMeshes={geometryMeshes}
