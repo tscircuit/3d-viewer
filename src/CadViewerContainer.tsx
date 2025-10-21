@@ -102,6 +102,11 @@ const CameraAnimator: React.FC<CameraAnimatorProps> = ({
     controlsRef.current?.update()
 
     if (progress >= 1) {
+      camera.position.copy(toPosition)
+      camera.up.copy(toUp)
+      controlsRef.current?.target.copy(toTarget)
+      camera.lookAt(toTarget)
+      controlsRef.current?.update()
       animationRef.current = null
     }
   })
@@ -217,16 +222,18 @@ export const CadViewerContainer = forwardRef<
         const heightOffset = distance * 0.3
 
         switch (preset) {
-          case "Top Centered":
+          case "Top Centered": {
+            const angledOffset = distance / Math.sqrt(2)
             return {
               position: [
                 defaultTarget.x,
-                defaultTarget.y,
-                defaultTarget.z + distance * 0.75,
+                defaultTarget.y - angledOffset,
+                defaultTarget.z + angledOffset,
               ],
               target: targetVector,
               up: [0, 0, 1],
             }
+          }
           case "Top-Down":
             return {
               position: [
