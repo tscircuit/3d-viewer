@@ -10,7 +10,10 @@ import {
   useLayerVisibility,
 } from "./contexts/LayerVisibilityContext"
 import { AppearanceMenu } from "./components/AppearanceMenu"
-import type { CameraController, CameraPreset } from "./CadViewerContainer"
+import type {
+  CameraController,
+  CameraPreset,
+} from "./hooks/useCameraController"
 
 const CadViewerInner = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")

@@ -1,12 +1,5 @@
 import type * as React from "react"
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react"
+import { forwardRef, useMemo, useState } from "react"
 import * as THREE from "three"
 import packageJson from "../package.json"
 import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
@@ -15,104 +8,15 @@ import { OrbitControls } from "./react-three/OrbitControls"
 import { Grid } from "./react-three/Grid"
 import { useFrame, useThree } from "./react-three/ThreeContext"
 import { Lights } from "./react-three/Lights"
-import type { OrbitControls as ThreeOrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
-
-const easeInOutCubic = (t: number) =>
-  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
-
-interface CameraAnimatorProps {
-  defaultTarget: THREE.Vector3
-  controlsRef: React.MutableRefObject<ThreeOrbitControls | null>
-  onReady?: (
-    controller: { animateTo: CameraController["animateTo"] } | null,
-  ) => void
-}
-
-const CameraAnimator: React.FC<CameraAnimatorProps> = ({
-  defaultTarget,
-  controlsRef,
-  onReady,
-}) => {
-  const { camera } = useThree()
-  const animationRef = useRef<{
-    fromPosition: THREE.Vector3
-    toPosition: THREE.Vector3
-    fromTarget: THREE.Vector3
-    toTarget: THREE.Vector3
-    fromUp: THREE.Vector3
-    toUp: THREE.Vector3
-    startTime: number
-    duration: number
-  } | null>(null)
-
-  const animateTo = useCallback<CameraController["animateTo"]>(
-    ({ position, target, up, durationMs = 600 }) => {
-      if (!camera) return
-
-      const currentTarget = controlsRef.current?.target ?? defaultTarget
-
-      animationRef.current = {
-        fromPosition: camera.position.clone(),
-        toPosition: new THREE.Vector3(position[0], position[1], position[2]),
-        fromTarget: currentTarget.clone(),
-        toTarget: new THREE.Vector3(
-          ...(target ?? [defaultTarget.x, defaultTarget.y, defaultTarget.z]),
-        ),
-        fromUp: camera.up.clone(),
-        toUp: new THREE.Vector3(...(up ?? [0, 0, 1])),
-        startTime: performance.now(),
-        duration: durationMs,
-      }
-    },
-    [camera, controlsRef, defaultTarget],
-  )
-
-  useEffect(() => {
-    if (!onReady || !camera) return
-    onReady({ animateTo })
-    return () => {
-      onReady(null)
-    }
-  }, [animateTo, camera, onReady])
-
-  useFrame(() => {
-    if (!camera || !animationRef.current) return
-
-    const {
-      fromPosition,
-      toPosition,
-      fromTarget,
-      toTarget,
-      fromUp,
-      toUp,
-      startTime,
-      duration,
-    } = animationRef.current
-
-    const elapsed = performance.now() - startTime
-    const progress = Math.min(elapsed / duration, 1)
-    const eased = easeInOutCubic(progress)
-
-    camera.position.lerpVectors(fromPosition, toPosition, eased)
-    const nextTarget = fromTarget.clone().lerp(toTarget, eased)
-    camera.up.lerpVectors(fromUp, toUp, eased)
-
-    controlsRef.current?.target.copy(nextTarget)
-    camera.lookAt(nextTarget)
-    controlsRef.current?.update()
-
-    if (progress >= 1) {
-      camera.position.copy(toPosition)
-      camera.up.copy(toUp)
-      controlsRef.current?.target.copy(toTarget)
-      camera.lookAt(toTarget)
-      controlsRef.current?.update()
-      animationRef.current = null
-    }
-  })
-
-  return null
-}
+import {
+  CameraAnimator,
+  useCameraController,
+} from "./hooks/useCameraController"
+import type { CameraController } from "./hooks/useCameraController"
+export type {
+  CameraController,
+  CameraPreset,
+} from "./hooks/useCameraController"
 
 export const RotationTracker = () => {
   const { camera } = useThree()
@@ -123,28 +27,6 @@ export const RotationTracker = () => {
   })
 
   return null
-}
-
-export type CameraPreset =
-  | "Custom"
-  | "Top-Down"
-  | "Top Left Corner"
-  | "Top Right Corner"
-  | "Left Sideview"
-  | "Right Sideview"
-  | "Front"
-  | "Top Centered"
-
-export interface CameraAnimationConfig {
-  position: readonly [number, number, number]
-  target?: readonly [number, number, number]
-  up?: readonly [number, number, number]
-  durationMs?: number
-}
-
-export interface CameraController {
-  animateTo: (config: CameraAnimationConfig) => void
-  animateToPreset: (preset: CameraPreset) => void
 }
 
 interface Props {
@@ -192,8 +74,6 @@ export const CadViewerContainer = forwardRef<
       return [boardCenter.x, boardCenter.y, 0] as [number, number, number]
     }, [boardCenter])
 
-    const controlsRef = useRef<ThreeOrbitControls | null>(null)
-
     const defaultTarget = useMemo(() => {
       if (orbitTarget) {
         return new THREE.Vector3(orbitTarget[0], orbitTarget[1], orbitTarget[2])
@@ -201,129 +81,11 @@ export const CadViewerContainer = forwardRef<
       return new THREE.Vector3(0, 0, 0)
     }, [orbitTarget])
 
-    const baseDistance = useMemo(() => {
-      const [x, y, z] = initialCameraPosition ?? [5, 5, 5]
-      const distance = Math.hypot(
-        x - defaultTarget.x,
-        y - defaultTarget.y,
-        z - defaultTarget.z,
-      )
-      return distance > 0 ? distance : 5
-    }, [initialCameraPosition, defaultTarget])
-
-    const getPresetConfig = useCallback(
-      (preset: CameraPreset): CameraAnimationConfig | null => {
-        const targetVector = [
-          defaultTarget.x,
-          defaultTarget.y,
-          defaultTarget.z,
-        ] as const
-        const distance = baseDistance
-        const heightOffset = distance * 0.3
-
-        switch (preset) {
-          case "Top Centered": {
-            const angledOffset = distance / Math.sqrt(2)
-            return {
-              position: [
-                defaultTarget.x,
-                defaultTarget.y - angledOffset,
-                defaultTarget.z + angledOffset,
-              ],
-              target: targetVector,
-              up: [0, 0, 1],
-            }
-          }
-          case "Top-Down":
-            return {
-              position: [
-                defaultTarget.x,
-                defaultTarget.y,
-                defaultTarget.z + distance,
-              ],
-              target: targetVector,
-              up: [0, 0, 1],
-            }
-          case "Top Left Corner":
-            return {
-              position: [
-                defaultTarget.x - distance,
-                defaultTarget.y + distance,
-                defaultTarget.z + distance,
-              ],
-              target: targetVector,
-              up: [0, 0, 1],
-            }
-          case "Top Right Corner":
-            return {
-              position: [
-                defaultTarget.x + distance,
-                defaultTarget.y + distance,
-                defaultTarget.z + distance,
-              ],
-              target: targetVector,
-              up: [0, 0, 1],
-            }
-          case "Left Sideview":
-            return {
-              position: [
-                defaultTarget.x - distance,
-                defaultTarget.y,
-                defaultTarget.z + heightOffset,
-              ],
-              target: targetVector,
-              up: [0, 0, 1],
-            }
-          case "Right Sideview":
-            return {
-              position: [
-                defaultTarget.x + distance,
-                defaultTarget.y,
-                defaultTarget.z + heightOffset,
-              ],
-              target: targetVector,
-              up: [0, 0, 1],
-            }
-          case "Front":
-            return {
-              position: [
-                defaultTarget.x,
-                defaultTarget.y - distance,
-                defaultTarget.z + heightOffset,
-              ],
-              target: targetVector,
-              up: [0, 0, 1],
-            }
-          case "Custom":
-          default:
-            return null
-        }
-      },
-      [baseDistance, defaultTarget],
-    )
-
-    const handleControllerReady = useCallback(
-      (controller: { animateTo: CameraController["animateTo"] } | null) => {
-        if (!onCameraControllerReady) return
-        if (!controller) {
-          onCameraControllerReady(null)
-          return
-        }
-
-        const enhancedController: CameraController = {
-          animateTo: controller.animateTo,
-          animateToPreset: (preset) => {
-            if (preset === "Custom") return
-            const config = getPresetConfig(preset)
-            if (!config) return
-            controller.animateTo(config)
-          },
-        }
-
-        onCameraControllerReady(enhancedController)
-      },
-      [getPresetConfig, onCameraControllerReady],
-    )
+    const { cameraAnimatorProps, handleControlsChange } = useCameraController({
+      defaultTarget,
+      initialCameraPosition,
+      onCameraControllerReady,
+    })
 
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -351,11 +113,7 @@ export const CadViewerContainer = forwardRef<
           scene={{ up: new THREE.Vector3(0, 0, 1) }}
           camera={{ up: [0, 0, 1], position: initialCameraPosition }}
         >
-          <CameraAnimator
-            defaultTarget={defaultTarget}
-            controlsRef={controlsRef}
-            onReady={handleControllerReady}
-          />
+          <CameraAnimator {...cameraAnimatorProps} />
           <RotationTracker />
           {isInteractionEnabled && (
             <OrbitControls
@@ -368,9 +126,7 @@ export const CadViewerContainer = forwardRef<
               enableDamping={true}
               dampingFactor={0.1}
               target={orbitTarget}
-              onControlsChange={(controls) => {
-                controlsRef.current = controls
-              }}
+              onControlsChange={handleControlsChange}
             />
           )}
           <Lights />
