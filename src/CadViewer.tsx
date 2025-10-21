@@ -1,3 +1,4 @@
+import type React from "react"
 import { useState, useCallback, useRef, useEffect } from "react"
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
@@ -9,13 +10,24 @@ import {
   useLayerVisibility,
 } from "./contexts/LayerVisibilityContext"
 import { AppearanceMenu } from "./components/AppearanceMenu"
+import type {
+  CameraController,
+  CameraPreset,
+} from "./hooks/useCameraController"
 
 const CadViewerInner = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [autoRotate, setAutoRotate] = useState(true)
   const [autoRotateUserToggled, setAutoRotateUserToggled] = useState(false)
+  const [cameraPreset, setCameraPreset] = useState<CameraPreset>("Custom")
+  const [activeSubmenu, setActiveSubmenu] = useState<"camera" | null>(null)
   const { visibility, toggleLayer } = useLayerVisibility()
+
+  const cameraControllerRef = useRef<CameraController | null>(null)
+  const externalCameraControllerReady = props.onCameraControllerReady as
+    | ((controller: CameraController | null) => void)
+    | undefined
 
   const {
     menuVisible,
@@ -32,6 +44,7 @@ const CadViewerInner = (props: any) => {
     if (!autoRotateUserToggledRef.current) {
       setAutoRotate(false)
     }
+    setCameraPreset("Custom")
   }, [])
 
   const toggleAutoRotate = useCallback(() => {
@@ -41,10 +54,54 @@ const CadViewerInner = (props: any) => {
 
   const downloadGltf = useGlobalDownloadGltf()
 
+  const closeMenu = useCallback(() => {
+    setMenuVisible(false)
+    setActiveSubmenu(null)
+  }, [setMenuVisible, setActiveSubmenu])
+
   const handleMenuClick = (newEngine: "jscad" | "manifold") => {
     setEngine(newEngine)
-    setMenuVisible(false)
+    closeMenu()
   }
+
+  const handleCameraControllerReady = useCallback(
+    (controller: CameraController | null) => {
+      cameraControllerRef.current = controller
+      externalCameraControllerReady?.(controller)
+      if (controller && cameraPreset !== "Custom") {
+        controller.animateToPreset(cameraPreset)
+      }
+    },
+    [cameraPreset, externalCameraControllerReady],
+  )
+
+  const handleCameraPresetSelect = useCallback(
+    (preset: CameraPreset) => {
+      setCameraPreset(preset)
+      closeMenu()
+      if (preset === "Custom") return
+      cameraControllerRef.current?.animateToPreset(preset)
+    },
+    [closeMenu],
+  )
+
+  const handleMenuItemHover = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>, hovered: boolean) => {
+      event.currentTarget.style.background = hovered ? "#2d313a" : "transparent"
+    },
+    [],
+  )
+
+  const cameraOptions: CameraPreset[] = [
+    "Custom",
+    "Top Centered",
+    "Top-Down",
+    "Top Left Corner",
+    "Top Right Corner",
+    "Left Sideview",
+    "Right Sideview",
+    "Front",
+  ]
 
   useEffect(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
@@ -56,6 +113,12 @@ const CadViewerInner = (props: any) => {
   useEffect(() => {
     window.localStorage.setItem("cadViewerEngine", engine)
   }, [engine])
+
+  useEffect(() => {
+    if (!menuVisible) {
+      setActiveSubmenu(null)
+    }
+  }, [menuVisible])
 
   const viewerKey = props.circuitJson
     ? JSON.stringify(props.circuitJson)
@@ -82,12 +145,14 @@ const CadViewerInner = (props: any) => {
           {...props}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
+          onCameraControllerReady={handleCameraControllerReady}
         />
       ) : (
         <CadViewerManifold
           {...props}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
+          onCameraControllerReady={handleCameraControllerReady}
         />
       )}
       <div
@@ -141,10 +206,8 @@ const CadViewerInner = (props: any) => {
             onClick={() =>
               handleMenuClick(engine === "jscad" ? "manifold" : "jscad")
             }
-            onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
-            onMouseOut={(e) =>
-              (e.currentTarget.style.background = "transparent")
-            }
+            onMouseOver={(event) => handleMenuItemHover(event, true)}
+            onMouseOut={(event) => handleMenuItemHover(event, false)}
           >
             Switch to {engine === "jscad" ? "Manifold" : "JSCAD"} Engine
             <span
@@ -157,6 +220,81 @@ const CadViewerInner = (props: any) => {
             >
               {engine === "jscad" ? "experimental" : "default"}
             </span>
+          </div>
+          <div
+            style={{ position: "relative" }}
+            onMouseEnter={() => setActiveSubmenu("camera")}
+            onMouseLeave={() => setActiveSubmenu(null)}
+          >
+            <div
+              style={{
+                padding: "10px 18px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                color: "#f5f6fa",
+                fontWeight: 500,
+                borderRadius: 6,
+                transition: "background 0.1s",
+                background:
+                  activeSubmenu === "camera" ? "#2d313a" : "transparent",
+              }}
+              onClick={() =>
+                setActiveSubmenu((current) =>
+                  current === "camera" ? null : "camera",
+                )
+              }
+            >
+              Camera Position
+              <span style={{ marginLeft: "auto", opacity: 0.75 }}>
+                {cameraPreset}
+              </span>
+              <span style={{ marginLeft: 4, opacity: 0.5 }}>›</span>
+            </div>
+            {activeSubmenu === "camera" && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: "100%",
+                  marginLeft: 4,
+                  background: "#23272f",
+                  color: "#f5f6fa",
+                  borderRadius: 6,
+                  boxShadow: "0 6px 24px 0 rgba(0,0,0,0.18)",
+                  border: "1px solid #353945",
+                  minWidth: 200,
+                  padding: "6px 0",
+                  zIndex: 1001,
+                }}
+              >
+                {cameraOptions.map((option) => (
+                  <div
+                    key={option}
+                    style={{
+                      padding: "10px 18px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      color: "#f5f6fa",
+                      fontWeight: 500,
+                      borderRadius: 6,
+                      transition: "background 0.1s",
+                    }}
+                    onClick={() => handleCameraPresetSelect(option)}
+                    onMouseOver={(event) => handleMenuItemHover(event, true)}
+                    onMouseOut={(event) => handleMenuItemHover(event, false)}
+                  >
+                    <span style={{ width: 18 }}>
+                      {cameraPreset === option ? "✔" : ""}
+                    </span>
+                    {option}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div
             style={{
@@ -172,12 +310,10 @@ const CadViewerInner = (props: any) => {
             }}
             onClick={() => {
               toggleAutoRotate()
-              setMenuVisible(false)
+              closeMenu()
             }}
-            onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
-            onMouseOut={(e) =>
-              (e.currentTarget.style.background = "transparent")
-            }
+            onMouseOver={(event) => handleMenuItemHover(event, true)}
+            onMouseOut={(event) => handleMenuItemHover(event, false)}
           >
             <span style={{ marginRight: 8 }}>{autoRotate ? "✔" : ""}</span>
             Auto rotate
@@ -196,12 +332,10 @@ const CadViewerInner = (props: any) => {
             }}
             onClick={() => {
               downloadGltf()
-              setMenuVisible(false)
+              closeMenu()
             }}
-            onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
-            onMouseOut={(e) =>
-              (e.currentTarget.style.background = "transparent")
-            }
+            onMouseOver={(event) => handleMenuItemHover(event, true)}
+            onMouseOut={(event) => handleMenuItemHover(event, false)}
           >
             Download GLTF
           </div>
