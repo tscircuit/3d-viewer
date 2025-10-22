@@ -104,7 +104,13 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
           }
         >
           {cameraOptions.map((option) => (
-            <MenuItem key={option} onClick={() => onCameraPresetSelect(option)}>
+            <MenuItem
+              key={option}
+              onClick={(e) => {
+                e.keepOpen = true
+                onCameraPresetSelect(option)
+              }}
+            >
               <span className="menu-checkmark">
                 {cameraPreset === option ? "✔" : ""}
               </span>
