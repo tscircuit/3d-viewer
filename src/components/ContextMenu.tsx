@@ -95,6 +95,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
         state="open"
         anchorRef={anchorRef as any}
         onClose={() => {}}
+        theming="dark"
+        transition
         menuStyle={menuStyles}
         boundingBoxPadding="10"
         position="auto"
