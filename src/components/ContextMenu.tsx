@@ -1,5 +1,5 @@
 import type React from "react"
-import { useEffect } from "react"
+import { useState } from "react"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { AppearanceMenu } from "./AppearanceMenu"
 import type { CameraPreset } from "../hooks/useCameraController"
@@ -74,37 +74,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onAutoRotateToggle,
   onDownloadGltf,
 }) => {
-  // Inject styles for hover effects and arrow animations
-  useEffect(() => {
-    const styleId = "radix-dropdown-menu-styles"
-    if (document.getElementById(styleId)) return
-
-    const style = document.createElement("style")
-    style.id = styleId
-    style.textContent = `
-      .radix-dropdown-item[data-highlighted] {
-        background-color: #2d313a !important;
-        color: #f5f6fa;
-      }
-      .radix-dropdown-sub-trigger[data-state="open"] {
-        background-color: #2d313a !important;
-      }
-      .submenu-arrow {
-        display: inline-block;
-        transition: transform 0.2s ease;
-        margin-left: 4px;
-        opacity: 0.5;
-      }
-      .radix-dropdown-sub-trigger[data-state="open"] .submenu-arrow {
-        transform: rotate(90deg);
-      }
-    `
-    document.head.appendChild(style)
-    return () => {
-      const el = document.getElementById(styleId)
-      if (el) document.head.removeChild(el)
-    }
-  }, [])
+  const [cameraSubOpen, setCameraSubOpen] = useState(false)
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
   return (
     <div
@@ -132,11 +103,16 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
           >
             {/* Engine Switch */}
             <DropdownMenu.Item
-              className="radix-dropdown-item"
-              style={itemStyles}
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "engine" ? "#2d313a" : "transparent",
+              }}
               onSelect={() =>
                 onEngineSwitch(engine === "jscad" ? "manifold" : "jscad")
               }
+              onMouseEnter={() => setHoveredItem("engine")}
+              onMouseLeave={() => setHoveredItem(null)}
             >
               <span>
                 Switch to {engine === "jscad" ? "Manifold" : "JSCAD"} Engine
@@ -154,10 +130,18 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             </DropdownMenu.Item>
 
             {/* Camera Position Submenu */}
-            <DropdownMenu.Sub>
+            <DropdownMenu.Sub onOpenChange={setCameraSubOpen}>
               <DropdownMenu.SubTrigger
-                className="radix-dropdown-item radix-dropdown-sub-trigger"
-                style={{ ...itemStyles, padding: "10px 18px" }}
+                style={{
+                  ...itemStyles,
+                  padding: "10px 18px",
+                  backgroundColor:
+                    cameraSubOpen || hoveredItem === "camera"
+                      ? "#2d313a"
+                      : "transparent",
+                }}
+                onMouseEnter={() => setHoveredItem("camera")}
+                onMouseLeave={() => setHoveredItem(null)}
               >
                 <span>Camera Position</span>
                 <span
@@ -165,7 +149,17 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 >
                   {cameraPreset}
                 </span>
-                <span className="submenu-arrow">›</span>
+                <span
+                  style={{
+                    display: "inline-block",
+                    transition: "transform 0.2s ease",
+                    marginLeft: 4,
+                    opacity: 0.5,
+                    transform: cameraSubOpen ? "rotate(90deg)" : "rotate(0deg)",
+                  }}
+                >
+                  ›
+                </span>
               </DropdownMenu.SubTrigger>
 
               <DropdownMenu.Portal>
@@ -177,13 +171,19 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                   {cameraOptions.map((option) => (
                     <DropdownMenu.Item
                       key={option}
-                      className="radix-dropdown-item"
-                      style={{ ...itemStyles, padding: "10px 18px" }}
+                      style={{
+                        ...itemStyles,
+                        padding: "10px 18px",
+                        backgroundColor:
+                          hoveredItem === option ? "#2d313a" : "transparent",
+                      }}
                       onSelect={(e) => e.preventDefault()}
                       onPointerDown={(e) => {
                         e.preventDefault()
                         onCameraPresetSelect(option)
                       }}
+                      onMouseEnter={() => setHoveredItem(option)}
+                      onMouseLeave={() => setHoveredItem(null)}
                     >
                       <span style={{ width: 18 }}>
                         {cameraPreset === option ? "✔" : ""}
@@ -197,13 +197,18 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
 
             {/* Auto Rotate */}
             <DropdownMenu.Item
-              className="radix-dropdown-item"
-              style={itemStyles}
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "autorotate" ? "#2d313a" : "transparent",
+              }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
                 e.preventDefault()
                 onAutoRotateToggle()
               }}
+              onMouseEnter={() => setHoveredItem("autorotate")}
+              onMouseLeave={() => setHoveredItem(null)}
             >
               <span style={{ marginRight: 8 }}>{autoRotate ? "✔" : ""}</span>
               Auto rotate
@@ -211,9 +216,14 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
 
             {/* Download GLTF */}
             <DropdownMenu.Item
-              className="radix-dropdown-item"
-              style={itemStyles}
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "download" ? "#2d313a" : "transparent",
+              }}
               onSelect={onDownloadGltf}
+              onMouseEnter={() => setHoveredItem("download")}
+              onMouseLeave={() => setHoveredItem(null)}
             >
               Download GLTF
             </DropdownMenu.Item>

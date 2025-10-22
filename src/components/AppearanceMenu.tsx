@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import type React from "react"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
@@ -41,18 +42,38 @@ const contentStyles: React.CSSProperties = {
 
 export const AppearanceMenu = () => {
   const { visibility, toggleLayer } = useLayerVisibility()
+  const [appearanceSubOpen, setAppearanceSubOpen] = useState(false)
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
   return (
     <>
       <DropdownMenu.Separator style={separatorStyles} />
 
-      <DropdownMenu.Sub>
+      <DropdownMenu.Sub onOpenChange={setAppearanceSubOpen}>
         <DropdownMenu.SubTrigger
-          className="radix-dropdown-item radix-dropdown-sub-trigger"
-          style={{ ...itemStyles, justifyContent: "space-between" }}
+          style={{
+            ...itemStyles,
+            justifyContent: "space-between",
+            backgroundColor:
+              appearanceSubOpen || hoveredItem === "appearance"
+                ? "#2d313a"
+                : "transparent",
+          }}
+          onMouseEnter={() => setHoveredItem("appearance")}
+          onMouseLeave={() => setHoveredItem(null)}
         >
           <span>Appearance</span>
-          <span className="submenu-arrow">›</span>
+          <span
+            style={{
+              display: "inline-block",
+              transition: "transform 0.2s ease",
+              marginLeft: 4,
+              opacity: 0.5,
+              transform: appearanceSubOpen ? "rotate(90deg)" : "rotate(0deg)",
+            }}
+          >
+            ›
+          </span>
         </DropdownMenu.SubTrigger>
 
         <DropdownMenu.Portal>
@@ -62,13 +83,18 @@ export const AppearanceMenu = () => {
             avoidCollisions={true}
           >
             <DropdownMenu.Item
-              className="radix-dropdown-item"
-              style={itemStyles}
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "boardBody" ? "#2d313a" : "transparent",
+              }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
                 e.preventDefault()
                 toggleLayer("boardBody")
               }}
+              onMouseEnter={() => setHoveredItem("boardBody")}
+              onMouseLeave={() => setHoveredItem(null)}
             >
               <span style={checkmarkStyle}>
                 {visibility.boardBody ? "✔" : ""}
@@ -77,13 +103,18 @@ export const AppearanceMenu = () => {
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
-              className="radix-dropdown-item"
-              style={itemStyles}
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "topCopper" ? "#2d313a" : "transparent",
+              }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
                 e.preventDefault()
                 toggleLayer("topCopper")
               }}
+              onMouseEnter={() => setHoveredItem("topCopper")}
+              onMouseLeave={() => setHoveredItem(null)}
             >
               <span style={checkmarkStyle}>
                 {visibility.topCopper ? "✔" : ""}
@@ -92,13 +123,18 @@ export const AppearanceMenu = () => {
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
-              className="radix-dropdown-item"
-              style={itemStyles}
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "bottomCopper" ? "#2d313a" : "transparent",
+              }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
                 e.preventDefault()
                 toggleLayer("bottomCopper")
               }}
+              onMouseEnter={() => setHoveredItem("bottomCopper")}
+              onMouseLeave={() => setHoveredItem(null)}
             >
               <span style={checkmarkStyle}>
                 {visibility.bottomCopper ? "✔" : ""}
@@ -107,13 +143,18 @@ export const AppearanceMenu = () => {
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
-              className="radix-dropdown-item"
-              style={itemStyles}
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "topSilkscreen" ? "#2d313a" : "transparent",
+              }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
                 e.preventDefault()
                 toggleLayer("topSilkscreen")
               }}
+              onMouseEnter={() => setHoveredItem("topSilkscreen")}
+              onMouseLeave={() => setHoveredItem(null)}
             >
               <span style={checkmarkStyle}>
                 {visibility.topSilkscreen ? "✔" : ""}
@@ -122,13 +163,20 @@ export const AppearanceMenu = () => {
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
-              className="radix-dropdown-item"
-              style={itemStyles}
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "bottomSilkscreen"
+                    ? "#2d313a"
+                    : "transparent",
+              }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
                 e.preventDefault()
                 toggleLayer("bottomSilkscreen")
               }}
+              onMouseEnter={() => setHoveredItem("bottomSilkscreen")}
+              onMouseLeave={() => setHoveredItem(null)}
             >
               <span style={checkmarkStyle}>
                 {visibility.bottomSilkscreen ? "✔" : ""}
@@ -137,13 +185,18 @@ export const AppearanceMenu = () => {
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
-              className="radix-dropdown-item"
-              style={itemStyles}
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "smtModels" ? "#2d313a" : "transparent",
+              }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
                 e.preventDefault()
                 toggleLayer("smtModels")
               }}
+              onMouseEnter={() => setHoveredItem("smtModels")}
+              onMouseLeave={() => setHoveredItem(null)}
             >
               <span style={checkmarkStyle}>
                 {visibility.smtModels ? "✔" : ""}

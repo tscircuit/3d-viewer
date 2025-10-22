@@ -67,11 +67,15 @@ const CadViewerInner = (props: any) => {
     [cameraPreset, externalCameraControllerReady],
   )
 
-  const handleCameraPresetSelect = useCallback((preset: CameraPreset) => {
-    setCameraPreset(preset)
-    if (preset === "Custom") return
-    cameraControllerRef.current?.animateToPreset(preset)
-  }, [])
+  const handleCameraPresetSelect = useCallback(
+    (preset: CameraPreset) => {
+      setCameraPreset(preset)
+      closeMenu()
+      if (preset === "Custom") return
+      cameraControllerRef.current?.animateToPreset(preset)
+    },
+    [closeMenu],
+  )
 
   useEffect(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
