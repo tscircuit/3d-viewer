@@ -194,9 +194,7 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
     if (progress >= 1) {
       camera.position.copy(toPosition)
       camera.quaternion.copy(toQuaternion)
-      const finalUp = tempUp.current
-      finalUp.set(0, 1, 0).applyQuaternion(toQuaternion).normalize()
-      camera.up.copy(finalUp)
+      camera.up.set(0, 0, 1)
       camera.updateMatrixWorld()
       controlsRef.current?.target.copy(toTarget)
       controlsRef.current?.update()
@@ -272,7 +270,7 @@ export const useCameraController = ({
           return {
             position: [
               defaultTarget.x - distance,
-              defaultTarget.y + distance,
+              defaultTarget.y - distance,
               defaultTarget.z + distance,
             ],
             target: targetVector,
@@ -282,7 +280,7 @@ export const useCameraController = ({
           return {
             position: [
               defaultTarget.x + distance,
-              defaultTarget.y + distance,
+              defaultTarget.y - distance,
               defaultTarget.z + distance,
             ],
             target: targetVector,
