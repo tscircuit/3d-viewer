@@ -50,36 +50,37 @@ export const AppearanceMenu = () => {
         const PADDING = 20
 
         let style: React.CSSProperties = {
-          position: 'absolute',
+          position: "absolute",
           minWidth: 200,
-          background: '#2c313a',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          background: "#2c313a",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
           borderRadius: 8,
-          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2)',
+          boxShadow:
+            "0 10px 40px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2)",
           zIndex: 1001,
-          padding: '4px 0',
+          padding: "4px 0",
         }
 
         // Determine horizontal placement
         const spaceOnRight = viewportWidth - triggerRect.right
         const spaceOnLeft = triggerRect.left
         const submenuWidthWithSpacing = submenuRect.width + Math.abs(SPACING)
-        
+
         if (spaceOnRight >= submenuWidthWithSpacing + PADDING) {
           // Enough space on right - position to the right
-          style.left = '100%'
+          style.left = "100%"
           style.marginLeft = SPACING
         } else if (spaceOnLeft >= submenuWidthWithSpacing + PADDING) {
           // Not enough space on right, but enough on left - position to the left
-          style.right = '100%'
+          style.right = "100%"
           style.marginRight = SPACING
         } else {
           // Not enough space on either side - choose side with more space
           if (spaceOnRight > spaceOnLeft) {
-            style.left = '100%'
+            style.left = "100%"
             style.marginLeft = SPACING
           } else {
-            style.right = '100%'
+            style.right = "100%"
             style.marginRight = SPACING
           }
         }
@@ -87,7 +88,7 @@ export const AppearanceMenu = () => {
         // Vertical placement - check if submenu fits below
         const spaceBelow = viewportHeight - triggerRect.top - PADDING
         const spaceAbove = triggerRect.bottom - PADDING
-        
+
         if (submenuRect.height <= spaceBelow) {
           // Fits below - align with Appearance item
           style.top = 0
@@ -100,12 +101,12 @@ export const AppearanceMenu = () => {
             // More space below - align to top and let it extend
             style.top = 0
             style.maxHeight = spaceBelow - PADDING
-            style.overflowY = 'auto'
+            style.overflowY = "auto"
           } else {
             // More space above - align to bottom
             style.bottom = 0
             style.maxHeight = spaceAbove - PADDING
-            style.overflowY = 'auto'
+            style.overflowY = "auto"
           }
         }
 
@@ -141,7 +142,11 @@ export const AppearanceMenu = () => {
           <span style={checkmarkStyle}></span>
           Appearance
         </div>
-        <span style={{ fontSize: 16, opacity: 0.7, transform: "translateY(1px)" }}>›</span>
+        <span
+          style={{ fontSize: 16, opacity: 0.7, transform: "translateY(1px)" }}
+        >
+          ›
+        </span>
 
         {showSubmenu && (
           <div

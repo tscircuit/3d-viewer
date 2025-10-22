@@ -1,5 +1,5 @@
 import type React from "react"
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { AppearanceMenu } from "./AppearanceMenu"
 import type { CameraPreset } from "../hooks/useCameraController"
 import packageJson from "../../package.json"
@@ -39,6 +39,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onDownloadGltf,
 }) => {
   const [activeSubmenu, setActiveSubmenu] = useState<"camera" | null>(null)
+  const submenuRef = useRef<HTMLDivElement>(null)
+  const menuItemRef = useRef<HTMLDivElement>(null)
+  const [submenuStyle, setSubmenuStyle] = useState<React.CSSProperties>({})
 
   const handleMenuItemHover = useCallback(
     (event: React.MouseEvent<HTMLDivElement>, hovered: boolean) => {
@@ -46,6 +49,81 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
     },
     [],
   )
+
+  useEffect(() => {
+    if (
+      activeSubmenu === "camera" &&
+      submenuRef.current &&
+      menuItemRef.current
+    ) {
+      const adjustSubmenuPosition = () => {
+        if (!submenuRef.current || !menuItemRef.current) return
+
+        const submenuRect = submenuRef.current.getBoundingClientRect()
+        const triggerRect = menuItemRef.current.getBoundingClientRect()
+        const viewportWidth = window.innerWidth
+        const viewportHeight = window.innerHeight
+        const SPACING = -6
+        const PADDING = 20
+
+        let style: React.CSSProperties = {
+          position: "absolute",
+          minWidth: 200,
+          background: "#23272f",
+          border: "1px solid #353945",
+          borderRadius: 6,
+          boxShadow: "0 6px 24px 0 rgba(0,0,0,0.18)",
+          zIndex: 1001,
+          padding: "6px 0",
+        }
+
+        // Determine horizontal placement
+        const spaceOnRight = viewportWidth - triggerRect.right
+        const spaceOnLeft = triggerRect.left
+        const submenuWidthWithSpacing = submenuRect.width + Math.abs(SPACING)
+
+        if (spaceOnRight >= submenuWidthWithSpacing + PADDING) {
+          style.left = "100%"
+          style.marginLeft = SPACING
+        } else if (spaceOnLeft >= submenuWidthWithSpacing + PADDING) {
+          style.right = "100%"
+          style.marginRight = SPACING
+        } else {
+          if (spaceOnRight > spaceOnLeft) {
+            style.left = "100%"
+            style.marginLeft = SPACING
+          } else {
+            style.right = "100%"
+            style.marginRight = SPACING
+          }
+        }
+
+        // Vertical placement
+        const spaceBelow = viewportHeight - triggerRect.top - PADDING
+        const spaceAbove = triggerRect.bottom - PADDING
+
+        if (submenuRect.height <= spaceBelow) {
+          style.top = 0
+        } else if (submenuRect.height <= spaceAbove) {
+          style.bottom = 0
+        } else {
+          if (spaceBelow > spaceAbove) {
+            style.top = 0
+            style.maxHeight = spaceBelow - PADDING
+            style.overflowY = "auto"
+          } else {
+            style.bottom = 0
+            style.maxHeight = spaceAbove - PADDING
+            style.overflowY = "auto"
+          }
+        }
+
+        setSubmenuStyle(style)
+      }
+
+      requestAnimationFrame(adjustSubmenuPosition)
+    }
+  }, [activeSubmenu])
 
   return (
     <div
@@ -103,6 +181,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
         onMouseLeave={() => setActiveSubmenu(null)}
       >
         <div
+          ref={menuItemRef}
           style={{
             padding: "10px 18px",
             cursor: "pointer",
@@ -129,20 +208,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
         </div>
         {activeSubmenu === "camera" && (
           <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: "100%",
-              marginLeft: -2,
-              background: "#23272f",
-              color: "#f5f6fa",
-              borderRadius: 6,
-              boxShadow: "0 6px 24px 0 rgba(0,0,0,0.18)",
-              border: "1px solid #353945",
-              minWidth: 200,
-              padding: "6px 0",
-              zIndex: 1001,
-            }}
+            ref={submenuRef}
+            style={submenuStyle}
+            onMouseEnter={() => setActiveSubmenu("camera")}
+            onMouseLeave={() => setActiveSubmenu(null)}
           >
             {cameraOptions.map((option) => (
               <div

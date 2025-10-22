@@ -53,43 +53,49 @@ export const useContextMenu = ({ containerRef }: ContextMenuProps) => {
       // Initial position at click
       const initialX = eventX
       const initialY = eventY
-      
+
       setMenuPos({ x: initialX, y: initialY })
       setMenuVisible(true)
-      
+
       // Adjust position after render using actual menu dimensions
       setTimeout(() => {
         if (!menuRef.current) return
-        
+
         const menuRect = menuRef.current.getBoundingClientRect()
         const viewportWidth = window.innerWidth
         const viewportHeight = window.innerHeight
-        
+
         let adjustedX = initialX
         let adjustedY = initialY
-        
+
         // Adjust horizontal position
         if (initialX + menuRect.width > viewportWidth - VIEWPORT_PADDING) {
-          adjustedX = Math.max(VIEWPORT_PADDING, viewportWidth - menuRect.width - VIEWPORT_PADDING)
+          adjustedX = Math.max(
+            VIEWPORT_PADDING,
+            viewportWidth - menuRect.width - VIEWPORT_PADDING,
+          )
         }
         if (adjustedX < VIEWPORT_PADDING) {
           adjustedX = VIEWPORT_PADDING
         }
-        
+
         // Adjust vertical position
         if (initialY + menuRect.height > viewportHeight - VIEWPORT_PADDING) {
-          adjustedY = Math.max(VIEWPORT_PADDING, viewportHeight - menuRect.height - VIEWPORT_PADDING)
+          adjustedY = Math.max(
+            VIEWPORT_PADDING,
+            viewportHeight - menuRect.height - VIEWPORT_PADDING,
+          )
         }
         if (adjustedY < VIEWPORT_PADDING) {
           adjustedY = VIEWPORT_PADDING
         }
-        
+
         // Only update if position changed
         if (adjustedX !== initialX || adjustedY !== initialY) {
           setMenuPos({ x: adjustedX, y: adjustedY })
         }
       }, 0)
-      
+
       // Reset after menu is shown or if swipe check passed but didn't swipe
       interactionOriginPosRef.current = null
     },
@@ -187,13 +193,13 @@ export const useContextMenu = ({ containerRef }: ContextMenuProps) => {
     if (!menuVisible) return
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         setMenuVisible(false)
       }
     }
 
-    document.addEventListener('keydown', handleEscape)
-    return () => document.removeEventListener('keydown', handleEscape)
+    document.addEventListener("keydown", handleEscape)
+    return () => document.removeEventListener("keydown", handleEscape)
   }, [menuVisible])
 
   // Close on scroll
@@ -204,8 +210,8 @@ export const useContextMenu = ({ containerRef }: ContextMenuProps) => {
       setMenuVisible(false)
     }
 
-    window.addEventListener('scroll', handleScroll, true)
-    return () => window.removeEventListener('scroll', handleScroll, true)
+    window.addEventListener("scroll", handleScroll, true)
+    return () => window.removeEventListener("scroll", handleScroll, true)
   }, [menuVisible])
 
   const contextMenuEventHandlers = {
