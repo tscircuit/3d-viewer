@@ -1,4 +1,10 @@
-import { useState, useCallback, useRef, useEffect } from "react"
+import {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useLayoutEffect,
+} from "react"
 
 interface ContextMenuProps {
   containerRef: React.RefObject<HTMLDivElement | null>
@@ -14,6 +20,29 @@ export const useContextMenu = ({ containerRef }: ContextMenuProps) => {
   const interactionOriginPosRef = useRef<{ x: number; y: number } | null>(null)
   const longPressTimeoutRef = useRef<number | null>(null)
   const ignoreNextContextMenuRef = useRef(false)
+
+  const adjustMenuPosition = useCallback(() => {
+    if (!menuRef.current) return
+
+    const margin = 8
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+
+    setMenuPos((prevPos) => {
+      const rect = menuRef.current!.getBoundingClientRect()
+      const maxX = Math.max(margin, viewportWidth - rect.width - margin)
+      const maxY = Math.max(margin, viewportHeight - rect.height - margin)
+
+      const nextX = Math.min(Math.max(prevPos.x, margin), maxX)
+      const nextY = Math.min(Math.max(prevPos.y, margin), maxY)
+
+      if (nextX === prevPos.x && nextY === prevPos.y) {
+        return prevPos
+      }
+
+      return { x: nextX, y: nextY }
+    })
+  }, [])
 
   const clearLongPressTimeout = () => {
     if (longPressTimeoutRef.current !== null) {
@@ -141,6 +170,27 @@ export const useContextMenu = ({ containerRef }: ContextMenuProps) => {
       }
     }
   }, [menuVisible, handleClickAway])
+
+  useLayoutEffect(() => {
+    if (!menuVisible) return
+    adjustMenuPosition()
+  }, [menuVisible, menuPos.x, menuPos.y, adjustMenuPosition])
+
+  useEffect(() => {
+    if (!menuVisible) return
+
+    const handleWindowChange = () => {
+      adjustMenuPosition()
+    }
+
+    window.addEventListener("resize", handleWindowChange)
+    window.addEventListener("scroll", handleWindowChange, true)
+
+    return () => {
+      window.removeEventListener("resize", handleWindowChange)
+      window.removeEventListener("scroll", handleWindowChange, true)
+    }
+  }, [menuVisible, adjustMenuPosition])
 
   const contextMenuEventHandlers = {
     onMouseDown: (e: React.MouseEvent) => {
