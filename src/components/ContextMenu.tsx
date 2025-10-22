@@ -19,7 +19,7 @@ interface ContextMenuProps {
 const cameraOptions: CameraPreset[] = [
   "Custom",
   "Top Centered",
-  "Top-Down",
+  "Top Down",
   "Top Left Corner",
   "Top Right Corner",
   "Left Sideview",
@@ -133,7 +133,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               position: "absolute",
               top: 0,
               left: "100%",
-              marginLeft: 4,
+              marginLeft: -2,
               background: "#23272f",
               color: "#f5f6fa",
               borderRadius: 6,

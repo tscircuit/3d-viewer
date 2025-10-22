@@ -9,7 +9,7 @@ const easeInOutCubic = (t: number) =>
 
 export type CameraPreset =
   | "Custom"
-  | "Top-Down"
+  | "Top Down"
   | "Top Left Corner"
   | "Top Right Corner"
   | "Left Sideview"
@@ -256,7 +256,7 @@ export const useCameraController = ({
             up: [0, 0, 1],
           }
         }
-        case "Top-Down":
+        case "Top Down":
           return {
             position: [
               defaultTarget.x,
@@ -269,9 +269,9 @@ export const useCameraController = ({
         case "Top Left Corner":
           return {
             position: [
-              defaultTarget.x - distance,
-              defaultTarget.y - distance,
-              defaultTarget.z + distance,
+              defaultTarget.x - distance * 0.6,
+              defaultTarget.y - distance * 0.6,
+              defaultTarget.z + distance * 0.6,
             ],
             target: targetVector,
             up: [0, 0, 1],
@@ -279,9 +279,9 @@ export const useCameraController = ({
         case "Top Right Corner":
           return {
             position: [
-              defaultTarget.x + distance,
-              defaultTarget.y - distance,
-              defaultTarget.z + distance,
+              defaultTarget.x + distance * 0.6,
+              defaultTarget.y - distance * 0.6,
+              defaultTarget.z + distance * 0.6,
             ],
             target: targetVector,
             up: [0, 0, 1],
