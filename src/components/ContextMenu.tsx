@@ -108,9 +108,11 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 backgroundColor:
                   hoveredItem === "engine" ? "#2d313a" : "transparent",
               }}
-              onSelect={() =>
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
                 onEngineSwitch(engine === "jscad" ? "manifold" : "jscad")
-              }
+              }}
               onMouseEnter={() => setHoveredItem("engine")}
               onMouseLeave={() => setHoveredItem(null)}
             >
