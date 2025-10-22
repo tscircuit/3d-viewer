@@ -1,7 +1,7 @@
 import { SubMenu, MenuItem } from "@szhsin/react-menu"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 
-export const AppearanceMenuItems = () => {
+export const AppearanceMenu = () => {
   const { visibility, toggleLayer } = useLayerVisibility()
 
   return (
@@ -50,6 +50,3 @@ export const AppearanceMenuItems = () => {
     </SubMenu>
   )
 }
-
-// Keep old export for backwards compatibility if needed
-export const AppearanceMenu = AppearanceMenuItems

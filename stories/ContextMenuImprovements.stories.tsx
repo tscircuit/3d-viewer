@@ -38,46 +38,6 @@ export const ContextMenuDemo = () => (
   </div>
 )
 
-ContextMenuDemo.parameters = {
-  docs: {
-    description: {
-      story: `
-## Context Menu Improvements
-
-The context menu has been upgraded with the following features:
-
-### 🎯 Smart Positioning
-- **Viewport-aware**: Automatically adjusts position to stay on screen
-- **Edge detection**: Opens to the left when near right edge, upward when near bottom
-- **Submenu intelligence**: Submenus reposition themselves to remain visible
-
-### 🎨 Conventional Design
-- **Standard hover effect**: Blue highlight (#0078d4) instead of custom dark gray
-- **Professional styling**: Rounded corners, proper shadows, smooth animations
-- **Consistent spacing**: 32px item height, proper padding and gaps
-
-### ♿ Accessibility
-- **Keyboard navigation**: Arrow keys to navigate, Enter to select, Escape to close
-- **Screen reader friendly**: Proper ARIA labels and roles
-- **Focus management**: Clear focus indicators
-
-### 📱 Touch Support
-- **Long press**: Works on mobile devices
-- **Proper touch targets**: Adequate spacing for finger taps
-
-## Try It Out
-1. **Right-click anywhere** on the 3D viewer
-2. **Test edge cases**: Right-click near the edges of the screen
-3. **Explore submenus**: Hover over "Camera Position" or "Appearance"
-4. **Keyboard**: Tab to focus, use arrow keys, press Enter
-
-## Technical Details
-Powered by **@radix-ui/react-context-menu** - a production-ready, accessible component library.
-      `,
-    },
-  },
-}
-
 export const EdgePositioning = () => (
   <div
     style={{

@@ -1,22 +1,22 @@
 import type React from "react"
 import { useRef } from "react"
 import {
-  Menu,
+  ControlledMenu,
   MenuItem,
   SubMenu,
   MenuDivider,
-  ControlledMenu,
   useMenuState,
 } from "@szhsin/react-menu"
 import "@szhsin/react-menu/dist/index.css"
 import "@szhsin/react-menu/dist/transitions/slide.css"
-import { AppearanceMenuItems } from "./AppearanceMenu"
+import { AppearanceMenu } from "./AppearanceMenu"
 import type { CameraPreset } from "../hooks/useCameraController"
 import packageJson from "../../package.json"
 import "./context-menu.css"
 
 interface ContextMenuProps {
-  children: React.ReactNode
+  menuRef: React.RefObject<HTMLDivElement | null>
+  menuPos: { x: number; y: number }
   engine: "jscad" | "manifold"
   cameraPreset: CameraPreset
   autoRotate: boolean
@@ -38,7 +38,8 @@ const cameraOptions: CameraPreset[] = [
 ]
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({
-  children,
+  menuRef,
+  menuPos,
   engine,
   cameraPreset,
   autoRotate,
@@ -47,29 +48,33 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onAutoRotateToggle,
   onDownloadGltf,
 }) => {
-  const ref = useRef<HTMLDivElement>(null)
-  const [menuState, toggleMenu] = useMenuState()
-
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault()
-    toggleMenu(true)
-  }
+  // Create a controlled menu that opens at specific position
+  const anchorRef = useRef<HTMLDivElement>(null)
 
   return (
-    <div
-      ref={ref}
-      onContextMenu={handleContextMenu}
-      style={{ width: "100%", height: "100%", position: "relative" }}
-    >
-      {children}
+    <>
+      {/* Hidden anchor element at cursor position */}
+      <div
+        ref={anchorRef}
+        style={{
+          position: "fixed",
+          left: menuPos.x,
+          top: menuPos.y,
+          width: 1,
+          height: 1,
+          pointerEvents: "none",
+        }}
+      />
 
       <ControlledMenu
-        {...menuState}
-        anchorRef={ref as any}
-        onClose={() => toggleMenu(false)}
+        ref={menuRef as any}
+        state="open"
+        anchorRef={anchorRef as any}
+        onClose={() => {}}
         theming="dark"
         transition
         boundingBoxPadding="10"
+        position="auto"
       >
         <MenuItem
           onClick={() =>
@@ -117,7 +122,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
 
         <MenuDivider />
 
-        <AppearanceMenuItems />
+        <AppearanceMenu />
 
         <MenuDivider />
 
@@ -127,6 +132,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
           </span>
         </div>
       </ControlledMenu>
-    </div>
+    </>
   )
 }

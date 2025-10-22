@@ -20,6 +20,7 @@
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
+  border-radius: 4px !important;
 }
 
 .szh-menu__item:hover {
