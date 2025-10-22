@@ -10,6 +10,7 @@ import {
 import { AppearanceMenu } from "./AppearanceMenu"
 import type { CameraPreset } from "../hooks/useCameraController"
 import packageJson from "../../package.json"
+import "./context-menu.css"
 
 interface ContextMenuProps {
   menuRef: React.RefObject<HTMLDivElement | null>
