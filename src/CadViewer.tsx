@@ -69,7 +69,6 @@ const CadViewerInner = (props: any) => {
 
   const handleCameraPresetSelect = useCallback((preset: CameraPreset) => {
     setCameraPreset(preset)
-    // Don't close menu - let the MenuItem handle it with e.keepOpen
     if (preset === "Custom") return
     cameraControllerRef.current?.animateToPreset(preset)
   }, [])
@@ -150,7 +149,6 @@ const CadViewerInner = (props: any) => {
           onCameraPresetSelect={handleCameraPresetSelect}
           onAutoRotateToggle={() => {
             toggleAutoRotate()
-            closeMenu()
           }}
           onDownloadGltf={() => {
             downloadGltf()
