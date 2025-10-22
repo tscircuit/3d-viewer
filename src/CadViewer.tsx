@@ -153,6 +153,7 @@ const CadViewerInner = (props: any) => {
           onCameraPresetSelect={handleCameraPresetSelect}
           onAutoRotateToggle={() => {
             toggleAutoRotate()
+            closeMenu()
           }}
           onDownloadGltf={() => {
             downloadGltf()
