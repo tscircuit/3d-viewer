@@ -7,6 +7,8 @@ import {
   MenuDivider,
   useMenuState,
 } from "@szhsin/react-menu"
+import "@szhsin/react-menu/dist/index.css"
+import "@szhsin/react-menu/dist/transitions/slide.css"
 import { AppearanceMenu } from "./AppearanceMenu"
 import type { CameraPreset } from "../hooks/useCameraController"
 import packageJson from "../../package.json"
@@ -34,33 +36,6 @@ const cameraOptions: CameraPreset[] = [
   "Right Sideview",
   "Front",
 ]
-
-// Custom styles for the menu
-const menuStyles = {
-  backgroundColor: "#1e1e1e",
-  border: "1px solid rgba(255, 255, 255, 0.1)",
-  borderRadius: "6px",
-  padding: "5px",
-  boxShadow:
-    "0px 10px 38px -10px rgba(0, 0, 0, 0.35), 0px 10px 20px -15px rgba(0, 0, 0, 0.2)",
-  minWidth: "220px",
-}
-
-const menuItemStyles = {
-  color: "#f5f6fa",
-  padding: "8px 12px",
-  fontSize: "14px",
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
-  borderRadius: "4px",
-  cursor: "pointer",
-}
-
-const menuItemHoverStyles = {
-  backgroundColor: "#0078d4",
-  color: "white",
-}
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({
   menuRef,
@@ -98,7 +73,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
         onClose={() => {}}
         theming="dark"
         transition
-        menuStyle={menuStyles}
         boundingBoxPadding="10"
         position="auto"
       >
@@ -110,14 +84,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
           <span>
             Switch to {engine === "jscad" ? "Manifold" : "JSCAD"} Engine
           </span>
-          <span
-            style={{
-              marginLeft: "auto",
-              fontSize: "12px",
-              opacity: 0.6,
-              color: "#a0a0a0",
-            }}
-          >
+          <span className="menu-hint">
             {engine === "jscad" ? "experimental" : "default"}
           </span>
         </MenuItem>
@@ -132,16 +99,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               }}
             >
               <span>Camera Position</span>
-              <span
-                style={{
-                  marginLeft: "auto",
-                  fontSize: "12px",
-                  opacity: 0.6,
-                  color: "#a0a0a0",
-                }}
-              >
-                {cameraPreset}
-              </span>
+              <span className="menu-hint">{cameraPreset}</span>
             </div>
           }
         >
@@ -153,15 +111,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 onCameraPresetSelect(option)
               }}
             >
-              <span
-                style={{
-                  width: "20px",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: "4px",
-                }}
-              >
+              <span className="menu-checkmark">
                 {cameraPreset === option ? "✔" : ""}
               </span>
               {option}
@@ -170,54 +120,20 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
         </SubMenu>
 
         <MenuItem onClick={onAutoRotateToggle}>
-          <span
-            style={{
-              width: "20px",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginRight: "4px",
-            }}
-          >
-            {autoRotate ? "✔" : ""}
-          </span>
+          <span className="menu-checkmark">{autoRotate ? "✔" : ""}</span>
           Auto rotate
         </MenuItem>
 
         <MenuItem onClick={onDownloadGltf}>Download GLTF</MenuItem>
 
-        <MenuDivider
-          style={{
-            backgroundColor: "rgba(255, 255, 255, 0.1)",
-            margin: "5px 8px",
-          }}
-        />
+        <MenuDivider />
 
         <AppearanceMenu />
 
-        <MenuDivider
-          style={{
-            backgroundColor: "rgba(255, 255, 255, 0.1)",
-            margin: "5px 8px",
-          }}
-        />
+        <MenuDivider />
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            padding: "8px 12px 4px",
-            pointerEvents: "none",
-          }}
-        >
-          <span
-            style={{
-              fontSize: "10px",
-              opacity: 0.5,
-              color: "#a0a0a0",
-              fontWeight: 300,
-            }}
-          >
+        <div className="context-menu-footer">
+          <span className="context-menu-version">
             @tscircuit/3d-viewer@{packageJson.version}
           </span>
         </div>
