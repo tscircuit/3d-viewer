@@ -88,7 +88,9 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "boardBody" ? "rgba(255, 255, 255, 0.1)" : "transparent",
+                  hoveredItem === "boardBody"
+                    ? "rgba(255, 255, 255, 0.1)"
+                    : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -108,7 +110,9 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "topCopper" ? "rgba(255, 255, 255, 0.1)" : "transparent",
+                  hoveredItem === "topCopper"
+                    ? "rgba(255, 255, 255, 0.1)"
+                    : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -128,7 +132,9 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "bottomCopper" ? "rgba(255, 255, 255, 0.1)" : "transparent",
+                  hoveredItem === "bottomCopper"
+                    ? "rgba(255, 255, 255, 0.1)"
+                    : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -148,7 +154,9 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "topSilkscreen" ? "rgba(255, 255, 255, 0.1)" : "transparent",
+                  hoveredItem === "topSilkscreen"
+                    ? "rgba(255, 255, 255, 0.1)"
+                    : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -190,7 +198,9 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "smtModels" ? "rgba(255, 255, 255, 0.1)" : "transparent",
+                  hoveredItem === "smtModels"
+                    ? "rgba(255, 255, 255, 0.1)"
+                    : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {

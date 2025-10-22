@@ -106,7 +106,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "engine" ? "rgba(255, 255, 255, 0.1)" : "transparent",
+                  hoveredItem === "engine"
+                    ? "rgba(255, 255, 255, 0.1)"
+                    : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -146,13 +148,13 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               >
                 <span>Camera Position</span>
                 <span
-                  style={{ 
-                    marginLeft: "auto", 
-                    opacity: 0.5, 
+                  style={{
+                    marginLeft: "auto",
+                    opacity: 0.5,
                     fontSize: 12,
                     display: "flex",
                     alignItems: "center",
-                    gap: 4
+                    gap: 4,
                   }}
                 >
                   {cameraPreset}
@@ -161,7 +163,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                       display: "inline-block",
                       transition: "transform 0.2s ease",
                       opacity: 0.7,
-                      transform: cameraSubOpen ? "rotate(90deg)" : "rotate(0deg)",
+                      transform: cameraSubOpen
+                        ? "rotate(90deg)"
+                        : "rotate(0deg)",
                     }}
                   >
                     ›
@@ -181,7 +185,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                       style={{
                         ...itemStyles,
                         backgroundColor:
-                          hoveredItem === option ? "rgba(255, 255, 255, 0.1)" : "transparent",
+                          hoveredItem === option
+                            ? "rgba(255, 255, 255, 0.1)"
+                            : "transparent",
                       }}
                       onSelect={(e) => e.preventDefault()}
                       onPointerDown={(e) => {
@@ -206,7 +212,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "autorotate" ? "rgba(255, 255, 255, 0.1)" : "transparent",
+                  hoveredItem === "autorotate"
+                    ? "rgba(255, 255, 255, 0.1)"
+                    : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -227,7 +235,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "download" ? "rgba(255, 255, 255, 0.1)" : "transparent",
+                  hoveredItem === "download"
+                    ? "rgba(255, 255, 255, 0.1)"
+                    : "transparent",
               }}
               onSelect={onDownloadGltf}
               onMouseEnter={() => setHoveredItem("download")}
