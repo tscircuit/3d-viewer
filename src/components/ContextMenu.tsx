@@ -40,7 +40,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   return (
     <ContextMenuPrimitive.Root>
       <ContextMenuPrimitive.Trigger asChild>
-        {children}
+        <div style={{ width: "100%", height: "100%" }}>{children}</div>
       </ContextMenuPrimitive.Trigger>
       <ContextMenuPrimitive.Portal>
         <ContextMenuPrimitive.Content className="context-menu-content">

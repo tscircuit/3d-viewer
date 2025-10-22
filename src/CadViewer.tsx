@@ -76,64 +76,71 @@ const CadViewerInner = (props: any) => {
     : undefined
 
   return (
-    <ContextMenu
-      engine={engine}
-      cameraPreset={cameraPreset}
-      autoRotate={autoRotate}
-      onEngineSwitch={(newEngine) => {
-        setEngine(newEngine)
+    <div
+      key={viewerKey}
+      ref={containerRef}
+      style={{
+        width: "100%",
+        height: "100%",
+        position: "relative",
       }}
-      onCameraPresetSelect={handleCameraPresetSelect}
-      onAutoRotateToggle={toggleAutoRotate}
-      onDownloadGltf={downloadGltf}
     >
-      <div
-        key={viewerKey}
-        ref={containerRef}
-        style={{
-          width: "100%",
-          height: "100%",
-          position: "relative",
-          userSelect: "none",
-          MozUserSelect: "none",
-          msUserSelect: "none",
-          WebkitUserSelect: "none",
-          WebkitTouchCallout: "none",
+      <ContextMenu
+        engine={engine}
+        cameraPreset={cameraPreset}
+        autoRotate={autoRotate}
+        onEngineSwitch={(newEngine) => {
+          setEngine(newEngine)
         }}
+        onCameraPresetSelect={handleCameraPresetSelect}
+        onAutoRotateToggle={toggleAutoRotate}
+        onDownloadGltf={downloadGltf}
       >
-        {engine === "jscad" ? (
-          <CadViewerJscad
-            {...props}
-            autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
-            onUserInteraction={handleUserInteraction}
-            onCameraControllerReady={handleCameraControllerReady}
-          />
-        ) : (
-          <CadViewerManifold
-            {...props}
-            autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
-            onUserInteraction={handleUserInteraction}
-            onCameraControllerReady={handleCameraControllerReady}
-          />
-        )}
         <div
           style={{
-            position: "absolute",
-            right: 8,
-            top: 8,
-            background: "#222",
-            color: "#fff",
-            padding: "2px 8px",
-            borderRadius: 4,
-            fontSize: 12,
-            opacity: 0.7,
+            width: "100%",
+            height: "100%",
             userSelect: "none",
+            MozUserSelect: "none",
+            msUserSelect: "none",
+            WebkitUserSelect: "none",
+            WebkitTouchCallout: "none",
           }}
         >
-          Engine: <b>{engine === "jscad" ? "JSCAD" : "Manifold"}</b>
+          {engine === "jscad" ? (
+            <CadViewerJscad
+              {...props}
+              autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+              onUserInteraction={handleUserInteraction}
+              onCameraControllerReady={handleCameraControllerReady}
+            />
+          ) : (
+            <CadViewerManifold
+              {...props}
+              autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+              onUserInteraction={handleUserInteraction}
+              onCameraControllerReady={handleCameraControllerReady}
+            />
+          )}
+          <div
+            style={{
+              position: "absolute",
+              right: 8,
+              top: 8,
+              background: "#222",
+              color: "#fff",
+              padding: "2px 8px",
+              borderRadius: 4,
+              fontSize: 12,
+              opacity: 0.7,
+              userSelect: "none",
+            }}
+          >
+            Engine: <b>{engine === "jscad" ? "JSCAD" : "Manifold"}</b>
+          </div>
         </div>
-      </div>
-    </ContextMenu>
+      </ContextMenu>
+    </div>
   )
 }
 
