@@ -51,6 +51,11 @@
             "filenameCases": ["kebab-case", "export"]
           }
         }
+      },
+      "a11y": {
+        "useKeyWithClickEvents": "off",
+        "noStaticElementInteractions": "off",
+        "useKeyWithMouseEvents": "off"
       }
     }
   }
