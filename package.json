@@ -29,6 +29,7 @@
   "dependencies": {
     "@jscad/regl-renderer": "^2.6.12",
     "@jscad/stl-serializer": "^2.1.20",
+    "@radix-ui/react-context-menu": "^2.2.16",
     "three": "^0.165.0",
     "three-stdlib": "^2.36.0",
     "troika-three-text": "^0.52.4"
