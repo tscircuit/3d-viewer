@@ -4,18 +4,68 @@ import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
 import { useGlobalDownloadGltf } from "./hooks/useGlobalDownloadGltf"
 import packageJson from "../package.json"
-import {
-  LayerVisibilityProvider,
-  useLayerVisibility,
-} from "./contexts/LayerVisibilityContext"
+import { LayerVisibilityProvider } from "./contexts/LayerVisibilityContext"
 import { AppearanceMenu } from "./components/AppearanceMenu"
+import {
+  MENU_HOVER_BACKGROUND,
+  menuCheckColumn,
+  menuContainerBase,
+  menuDetailText,
+  menuItemButton,
+  menuSeparator,
+  menuFooterText,
+} from "./components/contextMenuStyles"
+
+type ContextMenuItemProps = {
+  label: string
+  onClick: () => void
+  detail?: string
+  checked?: boolean
+  role?: "menuitem" | "menuitemcheckbox"
+}
+
+const ContextMenuItem = ({
+  label,
+  onClick,
+  detail,
+  checked,
+  role = "menuitem",
+}: ContextMenuItemProps) => {
+  const [hovered, setHovered] = useState(false)
+
+  return (
+    <button
+      type="button"
+      role={role}
+      aria-checked={
+        role === "menuitemcheckbox" ? (checked ?? false) : undefined
+      }
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={onClick}
+      style={{
+        ...menuItemButton,
+        backgroundColor: hovered ? MENU_HOVER_BACKGROUND : "transparent",
+      }}
+    >
+      {role === "menuitemcheckbox" ? (
+        <span style={menuCheckColumn}>{checked ? "✓" : ""}</span>
+      ) : (
+        <span style={menuCheckColumn} aria-hidden="true">
+          {checked ? "✓" : ""}
+        </span>
+      )}
+      <span>{label}</span>
+      {detail ? <span style={menuDetailText}>{detail}</span> : null}
+    </button>
+  )
+}
 
 const CadViewerInner = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [autoRotate, setAutoRotate] = useState(true)
   const [autoRotateUserToggled, setAutoRotateUserToggled] = useState(false)
-  const { visibility, toggleLayer } = useLayerVisibility()
 
   const {
     menuVisible,
@@ -109,122 +159,43 @@ const CadViewerInner = (props: any) => {
       {menuVisible && (
         <div
           ref={menuRef}
+          role="menu"
           style={{
+            ...menuContainerBase,
             position: "fixed",
             top: menuPos.y,
             left: menuPos.x,
-            background: "#23272f",
-            color: "#f5f6fa",
-            borderRadius: 6,
-            boxShadow: "0 6px 24px 0 rgba(0,0,0,0.18)",
             zIndex: 1000,
-            minWidth: 200,
-            border: "1px solid #353945",
-            padding: 0,
-            fontSize: 15,
-            fontWeight: 500,
-            transition: "opacity 0.1s",
           }}
         >
-          <div
-            style={{
-              padding: "12px 18px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              color: "#f5f6fa",
-              fontWeight: 500,
-              borderRadius: 6,
-              transition: "background 0.1s",
-            }}
+          <ContextMenuItem
+            label={`Switch to ${engine === "jscad" ? "Manifold" : "JSCAD"} Engine`}
+            detail={engine === "jscad" ? "experimental" : "default"}
             onClick={() =>
               handleMenuClick(engine === "jscad" ? "manifold" : "jscad")
             }
-            onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
-            onMouseOut={(e) =>
-              (e.currentTarget.style.background = "transparent")
-            }
-          >
-            Switch to {engine === "jscad" ? "Manifold" : "JSCAD"} Engine
-            <span
-              style={{
-                fontSize: 12,
-                marginLeft: "auto",
-                opacity: 0.5,
-                fontWeight: 400,
-              }}
-            >
-              {engine === "jscad" ? "experimental" : "default"}
-            </span>
-          </div>
-          <div
-            style={{
-              padding: "12px 18px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              color: "#f5f6fa",
-              fontWeight: 500,
-              borderRadius: 6,
-              transition: "background 0.1s",
-            }}
+          />
+          <ContextMenuItem
+            label="Auto rotate"
+            checked={autoRotate}
+            role="menuitemcheckbox"
             onClick={() => {
               toggleAutoRotate()
               setMenuVisible(false)
             }}
-            onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
-            onMouseOut={(e) =>
-              (e.currentTarget.style.background = "transparent")
-            }
-          >
-            <span style={{ marginRight: 8 }}>{autoRotate ? "✔" : ""}</span>
-            Auto rotate
-          </div>
-          <div
-            style={{
-              padding: "12px 18px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              color: "#f5f6fa",
-              fontWeight: 500,
-              borderRadius: 6,
-              transition: "background 0.1s",
-            }}
+          />
+          <ContextMenuItem
+            label="Download GLTF"
             onClick={() => {
               downloadGltf()
               setMenuVisible(false)
             }}
-            onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
-            onMouseOut={(e) =>
-              (e.currentTarget.style.background = "transparent")
-            }
-          >
-            Download GLTF
-          </div>
+          />
+          <div style={menuSeparator} />
           <AppearanceMenu />
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              padding: "8px 0",
-              borderTop: "1px solid rgba(255, 255, 255, 0.1)",
-              marginTop: "8px",
-            }}
-          >
-            <span
-              style={{
-                fontSize: 10,
-                opacity: 0.6,
-                fontWeight: 300,
-                color: "#c0c0c0",
-              }}
-            >
-              @tscircuit/3d-viewer@{packageJson.version}
-            </span>
+          <div style={menuSeparator} />
+          <div style={menuFooterText}>
+            @tscircuit/3d-viewer@{packageJson.version}
           </div>
         </div>
       )}
