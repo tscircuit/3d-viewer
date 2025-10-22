@@ -4,38 +4,40 @@ import type React from "react"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 
 const itemStyles: React.CSSProperties = {
-  padding: "8px 18px",
+  padding: "8px 12px",
+  borderRadius: 6,
   cursor: "default",
   outline: "none",
   userSelect: "none",
   display: "flex",
   alignItems: "center",
-  gap: 10,
-  color: "#f5f6fa",
+  gap: 8,
+  color: "#e4e4e7",
   fontWeight: 400,
   fontSize: 14,
-  transition: "background 0.1s",
+  transition: "background-color 0.12s ease",
 }
 
 const checkmarkStyle: React.CSSProperties = {
   width: 20,
+  fontSize: 14,
 }
 
 const separatorStyles: React.CSSProperties = {
   height: 1,
-  backgroundColor: "rgba(255, 255, 255, 0.1)",
-  margin: "8px 0",
+  backgroundColor: "rgba(255, 255, 255, 0.08)",
+  margin: "6px 0",
 }
 
 const contentStyles: React.CSSProperties = {
-  backgroundColor: "#23272f",
-  color: "#f5f6fa",
-  borderRadius: 6,
+  backgroundColor: "#1e1e1e",
+  color: "#e4e4e7",
+  borderRadius: 8,
   boxShadow:
-    "0px 10px 38px -10px rgba(0, 0, 0, 0.35), 0px 10px 20px -15px rgba(0, 0, 0, 0.2)",
-  border: "1px solid #353945",
-  padding: 0,
-  minWidth: 200,
+    "0px 10px 40px -10px rgba(0, 0, 0, 0.5), 0px 0px 0px 1px rgba(255, 255, 255, 0.08)",
+  border: "none",
+  padding: "6px",
+  minWidth: 220,
   zIndex: 10001,
   fontSize: 14,
 }
@@ -56,7 +58,7 @@ export const AppearanceMenu = () => {
             justifyContent: "space-between",
             backgroundColor:
               appearanceSubOpen || hoveredItem === "appearance"
-                ? "#2d313a"
+                ? "rgba(255, 255, 255, 0.1)"
                 : "transparent",
           }}
           onMouseEnter={() => setHoveredItem("appearance")}
@@ -68,7 +70,7 @@ export const AppearanceMenu = () => {
               display: "inline-block",
               transition: "transform 0.2s ease",
               marginLeft: 4,
-              opacity: 0.5,
+              opacity: 0.7,
               transform: appearanceSubOpen ? "rotate(90deg)" : "rotate(0deg)",
             }}
           >
@@ -86,7 +88,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "boardBody" ? "#2d313a" : "transparent",
+                  hoveredItem === "boardBody" ? "rgba(255, 255, 255, 0.1)" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -97,7 +99,7 @@ export const AppearanceMenu = () => {
               onMouseLeave={() => setHoveredItem(null)}
             >
               <span style={checkmarkStyle}>
-                {visibility.boardBody ? "✔" : ""}
+                {visibility.boardBody ? "✓" : ""}
               </span>
               Board Body
             </DropdownMenu.Item>
@@ -106,7 +108,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "topCopper" ? "#2d313a" : "transparent",
+                  hoveredItem === "topCopper" ? "rgba(255, 255, 255, 0.1)" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -117,7 +119,7 @@ export const AppearanceMenu = () => {
               onMouseLeave={() => setHoveredItem(null)}
             >
               <span style={checkmarkStyle}>
-                {visibility.topCopper ? "✔" : ""}
+                {visibility.topCopper ? "✓" : ""}
               </span>
               Top Copper
             </DropdownMenu.Item>
@@ -126,7 +128,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "bottomCopper" ? "#2d313a" : "transparent",
+                  hoveredItem === "bottomCopper" ? "rgba(255, 255, 255, 0.1)" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -137,7 +139,7 @@ export const AppearanceMenu = () => {
               onMouseLeave={() => setHoveredItem(null)}
             >
               <span style={checkmarkStyle}>
-                {visibility.bottomCopper ? "✔" : ""}
+                {visibility.bottomCopper ? "✓" : ""}
               </span>
               Bottom Copper
             </DropdownMenu.Item>
@@ -146,7 +148,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "topSilkscreen" ? "#2d313a" : "transparent",
+                  hoveredItem === "topSilkscreen" ? "rgba(255, 255, 255, 0.1)" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -157,7 +159,7 @@ export const AppearanceMenu = () => {
               onMouseLeave={() => setHoveredItem(null)}
             >
               <span style={checkmarkStyle}>
-                {visibility.topSilkscreen ? "✔" : ""}
+                {visibility.topSilkscreen ? "✓" : ""}
               </span>
               Top Silkscreen
             </DropdownMenu.Item>
@@ -167,7 +169,7 @@ export const AppearanceMenu = () => {
                 ...itemStyles,
                 backgroundColor:
                   hoveredItem === "bottomSilkscreen"
-                    ? "#2d313a"
+                    ? "rgba(255, 255, 255, 0.1)"
                     : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
@@ -179,7 +181,7 @@ export const AppearanceMenu = () => {
               onMouseLeave={() => setHoveredItem(null)}
             >
               <span style={checkmarkStyle}>
-                {visibility.bottomSilkscreen ? "✔" : ""}
+                {visibility.bottomSilkscreen ? "✓" : ""}
               </span>
               Bottom Silkscreen
             </DropdownMenu.Item>
@@ -188,7 +190,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "smtModels" ? "#2d313a" : "transparent",
+                  hoveredItem === "smtModels" ? "rgba(255, 255, 255, 0.1)" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -199,7 +201,7 @@ export const AppearanceMenu = () => {
               onMouseLeave={() => setHoveredItem(null)}
             >
               <span style={checkmarkStyle}>
-                {visibility.smtModels ? "✔" : ""}
+                {visibility.smtModels ? "✓" : ""}
               </span>
               CAD Models
             </DropdownMenu.Item>

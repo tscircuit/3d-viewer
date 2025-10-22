@@ -30,37 +30,37 @@ const cameraOptions: CameraPreset[] = [
 
 // Inline styles
 const contentStyles: React.CSSProperties = {
-  backgroundColor: "#23272f",
-  color: "#f5f6fa",
-  borderRadius: 6,
+  backgroundColor: "#1e1e1e",
+  color: "#e4e4e7",
+  borderRadius: 8,
   boxShadow:
-    "0px 10px 38px -10px rgba(0, 0, 0, 0.35), 0px 10px 20px -15px rgba(0, 0, 0, 0.2)",
-  border: "1px solid #353945",
-  padding: 0,
-  minWidth: 200,
+    "0px 10px 40px -10px rgba(0, 0, 0, 0.5), 0px 0px 0px 1px rgba(255, 255, 255, 0.08)",
+  border: "none",
+  padding: "6px",
+  minWidth: 220,
   zIndex: 10000,
-  fontSize: 15,
-  fontWeight: 500,
+  fontSize: 14,
+  fontWeight: 400,
 }
 
 const itemStyles: React.CSSProperties = {
-  padding: "12px 18px",
+  padding: "8px 12px",
   borderRadius: 6,
   cursor: "default",
   outline: "none",
   userSelect: "none",
   display: "flex",
   alignItems: "center",
-  gap: 10,
-  color: "#f5f6fa",
-  fontWeight: 500,
-  transition: "background 0.1s",
+  gap: 8,
+  color: "#e4e4e7",
+  fontWeight: 400,
+  transition: "background-color 0.12s ease",
 }
 
 const separatorStyles: React.CSSProperties = {
   height: 1,
-  backgroundColor: "rgba(255, 255, 255, 0.1)",
-  margin: "8px 0",
+  backgroundColor: "rgba(255, 255, 255, 0.08)",
+  margin: "6px 0",
 }
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({
@@ -106,7 +106,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "engine" ? "#2d313a" : "transparent",
+                  hoveredItem === "engine" ? "rgba(255, 255, 255, 0.1)" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -136,10 +136,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               <DropdownMenu.SubTrigger
                 style={{
                   ...itemStyles,
-                  padding: "10px 18px",
                   backgroundColor:
                     cameraSubOpen || hoveredItem === "camera"
-                      ? "#2d313a"
+                      ? "rgba(255, 255, 255, 0.1)"
                       : "transparent",
                 }}
                 onMouseEnter={() => setHoveredItem("camera")}
@@ -147,26 +146,32 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               >
                 <span>Camera Position</span>
                 <span
-                  style={{ marginLeft: "auto", opacity: 0.75, fontSize: 12 }}
-                >
-                  {cameraPreset}
-                </span>
-                <span
-                  style={{
-                    display: "inline-block",
-                    transition: "transform 0.2s ease",
-                    marginLeft: 4,
-                    opacity: 0.5,
-                    transform: cameraSubOpen ? "rotate(90deg)" : "rotate(0deg)",
+                  style={{ 
+                    marginLeft: "auto", 
+                    opacity: 0.5, 
+                    fontSize: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4
                   }}
                 >
-                  ›
+                  {cameraPreset}
+                  <span
+                    style={{
+                      display: "inline-block",
+                      transition: "transform 0.2s ease",
+                      opacity: 0.7,
+                      transform: cameraSubOpen ? "rotate(90deg)" : "rotate(0deg)",
+                    }}
+                  >
+                    ›
+                  </span>
                 </span>
               </DropdownMenu.SubTrigger>
 
               <DropdownMenu.Portal>
                 <DropdownMenu.SubContent
-                  style={{ ...contentStyles, padding: "6px 0", marginLeft: -2 }}
+                  style={{ ...contentStyles, marginLeft: -2 }}
                   collisionPadding={10}
                   avoidCollisions={true}
                 >
@@ -175,9 +180,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                       key={option}
                       style={{
                         ...itemStyles,
-                        padding: "10px 18px",
                         backgroundColor:
-                          hoveredItem === option ? "#2d313a" : "transparent",
+                          hoveredItem === option ? "rgba(255, 255, 255, 0.1)" : "transparent",
                       }}
                       onSelect={(e) => e.preventDefault()}
                       onPointerDown={(e) => {
@@ -187,8 +191,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                       onMouseEnter={() => setHoveredItem(option)}
                       onMouseLeave={() => setHoveredItem(null)}
                     >
-                      <span style={{ width: 18 }}>
-                        {cameraPreset === option ? "✔" : ""}
+                      <span style={{ width: 16, fontSize: 14 }}>
+                        {cameraPreset === option ? "✓" : ""}
                       </span>
                       {option}
                     </DropdownMenu.Item>
@@ -202,7 +206,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "autorotate" ? "#2d313a" : "transparent",
+                  hoveredItem === "autorotate" ? "rgba(255, 255, 255, 0.1)" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -212,7 +216,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               onMouseEnter={() => setHoveredItem("autorotate")}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <span style={{ marginRight: 8 }}>{autoRotate ? "✔" : ""}</span>
+              <span style={{ width: 16, fontSize: 14 }}>
+                {autoRotate ? "✓" : ""}
+              </span>
               Auto rotate
             </DropdownMenu.Item>
 
@@ -221,7 +227,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "download" ? "#2d313a" : "transparent",
+                  hoveredItem === "download" ? "rgba(255, 255, 255, 0.1)" : "transparent",
               }}
               onSelect={onDownloadGltf}
               onMouseEnter={() => setHoveredItem("download")}
@@ -240,15 +246,16 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               style={{
                 display: "flex",
                 justifyContent: "center",
-                padding: "8px 0",
+                padding: "6px 0 4px",
+                marginTop: 2,
               }}
             >
               <span
                 style={{
-                  fontSize: 10,
-                  opacity: 0.6,
-                  fontWeight: 300,
-                  color: "#c0c0c0",
+                  fontSize: 11,
+                  opacity: 0.4,
+                  fontWeight: 400,
+                  color: "#a1a1aa",
                 }}
               >
                 @tscircuit/3d-viewer@{packageJson.version}
