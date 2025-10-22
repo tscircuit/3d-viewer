@@ -12,6 +12,7 @@ interface OrbitControlsProps {
   enableDamping?: boolean
   dampingFactor?: number
   target?: [number, number, number]
+  onControlsChange?: (controls: ThreeOrbitControls | null) => void
 }
 
 export const OrbitControls: React.FC<OrbitControlsProps> = ({
@@ -24,6 +25,7 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
   enableDamping,
   dampingFactor,
   target,
+  onControlsChange,
 }) => {
   const { camera, renderer } = useThree()
 
@@ -31,6 +33,14 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
     if (!camera || !renderer) return null
     return new ThreeOrbitControls(camera, renderer.domElement)
   }, [camera, renderer])
+
+  useEffect(() => {
+    if (!onControlsChange) return
+    onControlsChange(controls ?? null)
+    return () => {
+      onControlsChange(null)
+    }
+  }, [controls, onControlsChange])
 
   useEffect(() => {
     if (!controls) return
