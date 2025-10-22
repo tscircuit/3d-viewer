@@ -113,35 +113,35 @@ const CadViewerInner = (props: any) => {
             position: "fixed",
             top: menuPos.y,
             left: menuPos.x,
-            background: "#23272f",
-            color: "#f5f6fa",
-            borderRadius: 6,
-            boxShadow: "0 6px 24px 0 rgba(0,0,0,0.18)",
+            background: "#2c313a",
+            color: "#e4e4e7",
+            borderRadius: 8,
+            boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2)",
             zIndex: 1000,
-            minWidth: 200,
-            border: "1px solid #353945",
-            padding: 0,
-            fontSize: 15,
-            fontWeight: 500,
-            transition: "opacity 0.1s",
+            minWidth: 220,
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            padding: "4px 0",
+            fontSize: 14,
+            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           <div
             style={{
-              padding: "12px 18px",
+              padding: "8px 12px",
+              margin: "0 4px",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
-              gap: 10,
-              color: "#f5f6fa",
-              fontWeight: 500,
-              borderRadius: 6,
-              transition: "background 0.1s",
+              gap: 8,
+              color: "#e4e4e7",
+              fontWeight: 400,
+              borderRadius: 4,
+              transition: "background 0.15s ease",
             }}
             onClick={() =>
               handleMenuClick(engine === "jscad" ? "manifold" : "jscad")
             }
-            onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
+            onMouseOver={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)")}
             onMouseOut={(e) =>
               (e.currentTarget.style.background = "transparent")
             }
@@ -149,9 +149,9 @@ const CadViewerInner = (props: any) => {
             Switch to {engine === "jscad" ? "Manifold" : "JSCAD"} Engine
             <span
               style={{
-                fontSize: 12,
+                fontSize: 11,
                 marginLeft: "auto",
-                opacity: 0.5,
+                opacity: 0.6,
                 fontWeight: 400,
               }}
             >
@@ -160,49 +160,52 @@ const CadViewerInner = (props: any) => {
           </div>
           <div
             style={{
-              padding: "12px 18px",
+              padding: "8px 12px",
+              margin: "0 4px",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
-              gap: 10,
-              color: "#f5f6fa",
-              fontWeight: 500,
-              borderRadius: 6,
-              transition: "background 0.1s",
+              gap: 8,
+              color: "#e4e4e7",
+              fontWeight: 400,
+              borderRadius: 4,
+              transition: "background 0.15s ease",
             }}
             onClick={() => {
               toggleAutoRotate()
               setMenuVisible(false)
             }}
-            onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
+            onMouseOver={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)")}
             onMouseOut={(e) =>
               (e.currentTarget.style.background = "transparent")
             }
           >
-            <span style={{ marginRight: 8 }}>{autoRotate ? "✔" : ""}</span>
+            <span style={{ width: 16, textAlign: "center", fontSize: 12 }}>{autoRotate ? "✓" : ""}</span>
             Auto rotate
           </div>
           <div
             style={{
-              padding: "12px 18px",
+              padding: "8px 12px",
+              margin: "0 4px",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
-              gap: 10,
-              color: "#f5f6fa",
-              fontWeight: 500,
-              borderRadius: 6,
-              transition: "background 0.1s",
+              gap: 8,
+              color: "#e4e4e7",
+              fontWeight: 400,
+              borderRadius: 4,
+              transition: "background 0.15s ease",
             }}
             onClick={() => {
               downloadGltf()
               setMenuVisible(false)
             }}
-            onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
+            onMouseOver={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)")}
             onMouseOut={(e) =>
               (e.currentTarget.style.background = "transparent")
             }
           >
+            <span style={{ width: 16 }}></span>
             Download GLTF
           </div>
           <AppearanceMenu />
