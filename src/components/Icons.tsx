@@ -50,6 +50,6 @@ export const DotIcon = () => (
     stroke-linejoin="round"
     className="lucide lucide-dot-icon lucide-dot"
   >
-    <circle cx="12.1" cy="12.1" r="5" fill="white" />
+    <circle cx="12.1" cy="12.1" r="4.5" fill="white" />
   </svg>
 )

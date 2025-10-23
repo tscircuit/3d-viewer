@@ -62,6 +62,15 @@ const itemStyles: React.CSSProperties = {
     'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
 }
 
+const iconContainerStyles: React.CSSProperties = {
+  width: 16,
+  height: 20,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+}
+
 const separatorStyles: React.CSSProperties = {
   height: 1,
   backgroundColor: "#2a2a2a",
@@ -131,15 +140,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 onMouseEnter={() => setHoveredItem("camera")}
                 onMouseLeave={() => setHoveredItem(null)}
               >
-                <span
-                  style={{
-                    width: 16,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                />
+                <span style={iconContainerStyles} />
                 <span style={{ flex: 1 }}>Camera Position</span>
                 <div
                   style={{
@@ -178,15 +179,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                       onMouseEnter={() => setHoveredItem(option)}
                       onMouseLeave={() => setHoveredItem(null)}
                     >
-                      <span
-                        style={{
-                          width: 16,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                        }}
-                      >
+                      <span style={iconContainerStyles}>
                         {cameraPreset === option && <DotIcon />}
                       </span>
                       {option}
@@ -211,15 +204,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               onMouseEnter={() => setHoveredItem("autorotate")}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <span
-                style={{
-                  width: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
+              <span style={iconContainerStyles}>
                 {autoRotate && <CheckIcon />}
               </span>
               Auto rotate
@@ -241,15 +226,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               onMouseEnter={() => setHoveredItem("download")}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <span
-                style={{
-                  width: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              />
+              <span style={iconContainerStyles} />
               Download GLTF
             </DropdownMenu.Item>
 
@@ -270,15 +247,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               onMouseEnter={() => setHoveredItem("engine")}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <span
-                style={{
-                  width: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              />
+              <span style={iconContainerStyles} />
               <span style={{ flex: 1 }}>
                 Switch to {engine === "jscad" ? "Manifold" : "JSCAD"} Engine
               </span>
