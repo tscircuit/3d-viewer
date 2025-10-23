@@ -63,7 +63,7 @@ const itemStyles: React.CSSProperties = {
 }
 
 const iconContainerStyles: React.CSSProperties = {
-  width: 16,
+  width: 18,
   height: 18,
   display: "flex",
   alignItems: "center",
