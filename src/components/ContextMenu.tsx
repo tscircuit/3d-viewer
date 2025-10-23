@@ -66,7 +66,7 @@ const iconContainerStyles: React.CSSProperties = {
   width: 16,
   height: 16,
   display: "flex",
-  alignItems: "center",
+  alignItems: "flex-end",
   justifyContent: "center",
   flexShrink: 0,
 }
@@ -141,11 +141,15 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 onMouseLeave={() => setHoveredItem(null)}
               >
                 <span style={iconContainerStyles} />
-                <span style={{ flex: 1 }}>Camera Position</span>
+                <span
+                  style={{ flex: 1, display: "flex", alignItems: "center" }}
+                >
+                  Camera Position
+                </span>
                 <div
                   style={{
                     display: "flex",
-                    alignItems: "center",
+                    alignItems: "flex-end",
                     gap: 6,
                     marginLeft: "auto",
                   }}
@@ -182,7 +186,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                       <span style={iconContainerStyles}>
                         {cameraPreset === option && <DotIcon />}
                       </span>
-                      {option}
+                      <span style={{ display: "flex", alignItems: "center" }}>
+                        {option}
+                      </span>
                     </DropdownMenu.Item>
                   ))}
                 </DropdownMenu.SubContent>
@@ -207,7 +213,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               <span style={iconContainerStyles}>
                 {autoRotate && <CheckIcon />}
               </span>
-              Auto rotate
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Auto rotate
+              </span>
             </DropdownMenu.Item>
 
             {/* Appearance Menu */}
@@ -227,7 +235,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               onMouseLeave={() => setHoveredItem(null)}
             >
               <span style={iconContainerStyles} />
-              Download GLTF
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Download GLTF
+              </span>
             </DropdownMenu.Item>
 
             <DropdownMenu.Separator style={separatorStyles} />
@@ -248,8 +258,16 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               onMouseLeave={() => setHoveredItem(null)}
             >
               <span style={iconContainerStyles} />
-              <span style={{ flex: 1 }}>Switch Engine</span>
-              <div style={badgeStyles}>
+              <span style={{ flex: 1, display: "flex", alignItems: "center" }}>
+                Switch Engine
+              </span>
+              <div
+                style={{
+                  ...badgeStyles,
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
                 {engine === "jscad" ? "Manifold" : "JSCAD"}
               </div>
             </DropdownMenu.Item>

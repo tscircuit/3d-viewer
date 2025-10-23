@@ -43,10 +43,10 @@ const contentStyles: React.CSSProperties = {
 }
 
 const iconContainerStyles: React.CSSProperties = {
-  width: 18,
-  height: 18,
+  width: 16,
+  height: 16,
   display: "flex",
-  alignItems: "center",
+  alignItems: "flex-end",
   justifyContent: "center",
   flexShrink: 0,
 }
@@ -73,8 +73,17 @@ export const AppearanceMenu = () => {
           onMouseLeave={() => setHoveredItem(null)}
         >
           <span style={iconContainerStyles} />
-          <span style={{ flex: 1 }}>Appearance</span>
-          <div style={{ marginLeft: "auto" }}>
+          <span style={{ flex: 1, display: "flex", alignItems: "center" }}>
+            Appearance
+          </span>
+          <div
+            style={{
+              marginLeft: "auto",
+              display: "flex",
+              alignItems: "flex-end",
+              marginBottom: "-3px",
+            }}
+          >
             <ChevronRightIcon isOpen={appearanceSubOpen} />
           </div>
         </DropdownMenu.SubTrigger>
@@ -102,7 +111,9 @@ export const AppearanceMenu = () => {
               <span style={iconContainerStyles}>
                 {visibility.boardBody && <CheckIcon />}
               </span>
-              Board Body
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Board Body
+              </span>
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
@@ -122,7 +133,9 @@ export const AppearanceMenu = () => {
               <span style={iconContainerStyles}>
                 {visibility.topCopper && <CheckIcon />}
               </span>
-              Top Copper
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Top Copper
+              </span>
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
@@ -142,7 +155,9 @@ export const AppearanceMenu = () => {
               <span style={iconContainerStyles}>
                 {visibility.bottomCopper && <CheckIcon />}
               </span>
-              Bottom Copper
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Bottom Copper
+              </span>
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
@@ -162,7 +177,9 @@ export const AppearanceMenu = () => {
               <span style={iconContainerStyles}>
                 {visibility.topSilkscreen && <CheckIcon />}
               </span>
-              Top Silkscreen
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Top Silkscreen
+              </span>
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
@@ -184,7 +201,9 @@ export const AppearanceMenu = () => {
               <span style={iconContainerStyles}>
                 {visibility.bottomSilkscreen && <CheckIcon />}
               </span>
-              Bottom Silkscreen
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Bottom Silkscreen
+              </span>
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
@@ -204,7 +223,9 @@ export const AppearanceMenu = () => {
               <span style={iconContainerStyles}>
                 {visibility.smtModels && <CheckIcon />}
               </span>
-              CAD Models
+              <span style={{ display: "flex", alignItems: "center" }}>
+                CAD Models
+              </span>
             </DropdownMenu.Item>
           </DropdownMenu.SubContent>
         </DropdownMenu.Portal>
