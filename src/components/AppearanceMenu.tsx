@@ -5,37 +5,37 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { CheckIcon, ChevronRightIcon } from "./Icons"
 
 const itemStyles: React.CSSProperties = {
-  padding: "6px 8px",
+  padding: "8px 10px",
   borderRadius: 6,
   cursor: "default",
   outline: "none",
   userSelect: "none",
   display: "flex",
   alignItems: "center",
-  gap: 8,
-  color: "#fafafa",
+  gap: 10,
+  color: "#f5f5f5",
   fontWeight: 400,
   fontSize: 14,
-  transition: "background-color 0.1s ease",
+  transition: "background-color 0.15s ease, color 0.15s ease",
   fontFamily:
     'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
 }
 
 const separatorStyles: React.CSSProperties = {
   height: 1,
-  backgroundColor: "#404040",
-  margin: "4px 0",
+  backgroundColor: "#2a2a2a",
+  margin: "6px 0",
 }
 
 const contentStyles: React.CSSProperties = {
-  backgroundColor: "#262626",
-  color: "#fafafa",
-  borderRadius: 6,
+  backgroundColor: "#1a1a1a",
+  color: "#f5f5f5",
+  borderRadius: 8,
   boxShadow:
-    "0px 10px 38px -10px rgba(0, 0, 0, 0.35), 0px 10px 20px -15px rgba(0, 0, 0, 0.2)",
-  border: "1px solid #404040",
+    "0px 12px 48px -12px rgba(0, 0, 0, 0.5), 0px 8px 24px -8px rgba(0, 0, 0, 0.3)",
+  border: "1px solid #333333",
   padding: "6px",
-  minWidth: 220,
+  minWidth: 240,
   zIndex: 10001,
   fontSize: 14,
   fontFamily:
@@ -57,7 +57,7 @@ export const AppearanceMenu = () => {
             ...itemStyles,
             backgroundColor:
               appearanceSubOpen || hoveredItem === "appearance"
-                ? "#404040"
+                ? "#2a2a2a"
                 : "transparent",
           }}
           onMouseEnter={() => setHoveredItem("appearance")}
@@ -69,9 +69,10 @@ export const AppearanceMenu = () => {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              flexShrink: 0,
             }}
           />
-          <span>Appearance</span>
+          <span style={{ flex: 1 }}>Appearance</span>
           <div style={{ marginLeft: "auto" }}>
             <ChevronRightIcon isOpen={appearanceSubOpen} />
           </div>
@@ -87,7 +88,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "boardBody" ? "#404040" : "transparent",
+                  hoveredItem === "boardBody" ? "#2a2a2a" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -99,10 +100,11 @@ export const AppearanceMenu = () => {
             >
               <span
                 style={{
-                  width: 20,
+                  width: 16,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  flexShrink: 0,
                 }}
               >
                 {visibility.boardBody && <CheckIcon />}
@@ -114,7 +116,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "topCopper" ? "#404040" : "transparent",
+                  hoveredItem === "topCopper" ? "#2a2a2a" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -126,10 +128,11 @@ export const AppearanceMenu = () => {
             >
               <span
                 style={{
-                  width: 20,
+                  width: 16,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  flexShrink: 0,
                 }}
               >
                 {visibility.topCopper && <CheckIcon />}
@@ -141,7 +144,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "bottomCopper" ? "#404040" : "transparent",
+                  hoveredItem === "bottomCopper" ? "#2a2a2a" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -153,10 +156,11 @@ export const AppearanceMenu = () => {
             >
               <span
                 style={{
-                  width: 20,
+                  width: 16,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  flexShrink: 0,
                 }}
               >
                 {visibility.bottomCopper && <CheckIcon />}
@@ -168,7 +172,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "topSilkscreen" ? "#404040" : "transparent",
+                  hoveredItem === "topSilkscreen" ? "#2a2a2a" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -180,10 +184,11 @@ export const AppearanceMenu = () => {
             >
               <span
                 style={{
-                  width: 20,
+                  width: 16,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  flexShrink: 0,
                 }}
               >
                 {visibility.topSilkscreen && <CheckIcon />}
@@ -196,7 +201,7 @@ export const AppearanceMenu = () => {
                 ...itemStyles,
                 backgroundColor:
                   hoveredItem === "bottomSilkscreen"
-                    ? "#404040"
+                    ? "#2a2a2a"
                     : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
@@ -209,10 +214,11 @@ export const AppearanceMenu = () => {
             >
               <span
                 style={{
-                  width: 20,
+                  width: 16,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  flexShrink: 0,
                 }}
               >
                 {visibility.bottomSilkscreen && <CheckIcon />}
@@ -224,7 +230,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "smtModels" ? "#404040" : "transparent",
+                  hoveredItem === "smtModels" ? "#2a2a2a" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -236,10 +242,11 @@ export const AppearanceMenu = () => {
             >
               <span
                 style={{
-                  width: 20,
+                  width: 16,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  flexShrink: 0,
                 }}
               >
                 {visibility.smtModels && <CheckIcon />}

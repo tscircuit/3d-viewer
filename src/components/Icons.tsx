@@ -36,3 +36,20 @@ export const ChevronRightIcon = ({ isOpen }: { isOpen: boolean }) => (
     <path d="m9 18 6-6-6-6" />
   </svg>
 )
+
+export const DotIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    className="lucide lucide-dot-icon lucide-dot"
+  >
+    <circle cx="12.1" cy="12.1" r="5" fill="white" />
+  </svg>
+)

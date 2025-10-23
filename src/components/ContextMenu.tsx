@@ -4,7 +4,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { AppearanceMenu } from "./AppearanceMenu"
 import type { CameraPreset } from "../hooks/useCameraController"
 import packageJson from "../../package.json"
-import { CheckIcon, ChevronRightIcon } from "./Icons"
+import { CheckIcon, ChevronRightIcon, DotIcon } from "./Icons"
 
 interface ContextMenuProps {
   menuRef: React.RefObject<HTMLDivElement | null>
@@ -29,16 +29,15 @@ const cameraOptions: CameraPreset[] = [
   "Front",
 ]
 
-// Inline styles
 const contentStyles: React.CSSProperties = {
-  backgroundColor: "#262626",
-  color: "#fafafa",
-  borderRadius: 6,
+  backgroundColor: "#1a1a1a",
+  color: "#f5f5f5",
+  borderRadius: 8,
   boxShadow:
-    "0px 10px 38px -10px rgba(0, 0, 0, 0.35), 0px 10px 20px -15px rgba(0, 0, 0, 0.2)",
-  border: "1px solid #404040",
-  padding: "4px",
-  minWidth: 220,
+    "0px 12px 48px -12px rgba(0, 0, 0, 0.5), 0px 8px 24px -8px rgba(0, 0, 0, 0.3)",
+  border: "1px solid #333333",
+  padding: "6px",
+  minWidth: 240,
   zIndex: 10000,
   fontSize: 14,
   fontWeight: 400,
@@ -47,26 +46,38 @@ const contentStyles: React.CSSProperties = {
 }
 
 const itemStyles: React.CSSProperties = {
-  padding: "6px 8px",
+  padding: "8px 10px",
   borderRadius: 6,
   cursor: "default",
   outline: "none",
   userSelect: "none",
   display: "flex",
   alignItems: "center",
-  gap: 8,
-  color: "#fafafa",
+  gap: 10,
+  color: "#f5f5f5",
   fontWeight: 400,
   fontSize: 14,
-  transition: "background-color 0.1s ease",
+  transition: "background-color 0.15s ease, color 0.15s ease",
   fontFamily:
     'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
 }
 
 const separatorStyles: React.CSSProperties = {
   height: 1,
-  backgroundColor: "#404040",
-  margin: "4px 0",
+  backgroundColor: "#2a2a2a",
+  margin: "6px 0",
+}
+
+const badgeStyles: React.CSSProperties = {
+  fontSize: 11,
+  opacity: 0.65,
+  fontWeight: 500,
+  color: "#a1a1aa",
+  backgroundColor: "rgba(161, 161, 170, 0.1)",
+  padding: "2px 6px",
+  borderRadius: 4,
+  border: "1px solid rgba(161, 161, 170, 0.2)",
+  letterSpacing: "0.3px",
 }
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({
@@ -114,7 +125,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                   ...itemStyles,
                   backgroundColor:
                     cameraSubOpen || hoveredItem === "camera"
-                      ? "#404040"
+                      ? "#2a2a2a"
                       : "transparent",
                 }}
                 onMouseEnter={() => setHoveredItem("camera")}
@@ -126,19 +137,21 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    flexShrink: 0,
                   }}
                 />
-                <span>Camera Position</span>
+                <span style={{ flex: 1 }}>Camera Position</span>
                 <div
                   style={{
-                    marginLeft: "auto",
-                    fontSize: 11,
                     display: "flex",
                     alignItems: "center",
-                    gap: 4,
+                    gap: 6,
+                    marginLeft: "auto",
                   }}
                 >
-                  <span style={{ opacity: 0.6 }}>{cameraPreset}</span>
+                  <span style={{ opacity: 0.55, fontSize: 13 }}>
+                    {cameraPreset}
+                  </span>
                   <ChevronRightIcon isOpen={cameraSubOpen} />
                 </div>
               </DropdownMenu.SubTrigger>
@@ -155,7 +168,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                       style={{
                         ...itemStyles,
                         backgroundColor:
-                          hoveredItem === option ? "#404040" : "transparent",
+                          hoveredItem === option ? "#2a2a2a" : "transparent",
                       }}
                       onSelect={(e) => e.preventDefault()}
                       onPointerDown={(e) => {
@@ -171,9 +184,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
+                          flexShrink: 0,
                         }}
                       >
-                        {cameraPreset === option && <CheckIcon />}
+                        {cameraPreset === option && <DotIcon />}
                       </span>
                       {option}
                     </DropdownMenu.Item>
@@ -187,7 +201,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "autorotate" ? "#404040" : "transparent",
+                  hoveredItem === "autorotate" ? "#2a2a2a" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -203,6 +217,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  flexShrink: 0,
                 }}
               >
                 {autoRotate && <CheckIcon />}
@@ -220,7 +235,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "download" ? "#404040" : "transparent",
+                  hoveredItem === "download" ? "#2a2a2a" : "transparent",
               }}
               onSelect={onDownloadGltf}
               onMouseEnter={() => setHoveredItem("download")}
@@ -232,6 +247,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  flexShrink: 0,
                 }}
               />
               Download GLTF
@@ -244,7 +260,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "engine" ? "#404040" : "transparent",
+                  hoveredItem === "engine" ? "#2a2a2a" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -260,21 +276,15 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  flexShrink: 0,
                 }}
               />
-              <span>
+              <span style={{ flex: 1 }}>
                 Switch to {engine === "jscad" ? "Manifold" : "JSCAD"} Engine
               </span>
-              <span
-                style={{
-                  marginLeft: "auto",
-                  fontSize: 11,
-                  opacity: 0.6,
-                  fontWeight: 400,
-                }}
-              >
+              <div style={badgeStyles}>
                 {engine === "jscad" ? "experimental" : "default"}
-              </span>
+              </div>
             </DropdownMenu.Item>
 
             <DropdownMenu.Separator style={separatorStyles} />
@@ -284,16 +294,17 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               style={{
                 display: "flex",
                 justifyContent: "center",
-                padding: "4px 0 2px",
+                padding: "6px 0 4px",
                 marginTop: 2,
               }}
             >
               <span
                 style={{
                   fontSize: 11,
-                  opacity: 0.4,
+                  opacity: 0.35,
                   fontWeight: 400,
                   color: "#a1a1aa",
+                  letterSpacing: "0.2px",
                 }}
               >
                 @tscircuit/3d-viewer@{packageJson.version}
