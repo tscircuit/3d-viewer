@@ -36,8 +36,8 @@ const contentStyles: React.CSSProperties = {
   boxShadow:
     "0px 12px 48px -12px rgba(0, 0, 0, 0.5), 0px 8px 24px -8px rgba(0, 0, 0, 0.3)",
   border: "1px solid #333333",
-  padding: "6px",
-  minWidth: 240,
+  padding: "4px",
+  minWidth: 160,
   zIndex: 10000,
   fontSize: 14,
   fontWeight: 400,
@@ -46,14 +46,14 @@ const contentStyles: React.CSSProperties = {
 }
 
 const itemStyles: React.CSSProperties = {
-  padding: "8px 10px",
+  padding: "8px 8px",
   borderRadius: 6,
   cursor: "default",
   outline: "none",
   userSelect: "none",
   display: "flex",
   alignItems: "center",
-  gap: 10,
+  gap: 8,
   color: "#fafafa",
   fontWeight: 400,
   fontSize: 14,
@@ -64,7 +64,7 @@ const itemStyles: React.CSSProperties = {
 
 const iconContainerStyles: React.CSSProperties = {
   width: 16,
-  height: 20,
+  height: 18,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -74,7 +74,7 @@ const iconContainerStyles: React.CSSProperties = {
 const separatorStyles: React.CSSProperties = {
   height: 1,
   backgroundColor: "#ffffff1a",
-  margin: "6px 0",
+  margin: "4px 0",
 }
 
 const badgeStyles: React.CSSProperties = {
@@ -263,8 +263,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               style={{
                 display: "flex",
                 justifyContent: "center",
-                padding: "6px 0 4px",
-                marginTop: 2,
+                padding: "4px 0 2px",
+                marginTop: 0,
               }}
             >
               <span

@@ -5,14 +5,14 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { CheckIcon, ChevronRightIcon } from "./Icons"
 
 const itemStyles: React.CSSProperties = {
-  padding: "8px 10px",
+  padding: "8px 8px",
   borderRadius: 6,
   cursor: "default",
   outline: "none",
   userSelect: "none",
   display: "flex",
   alignItems: "center",
-  gap: 10,
+  gap: 8,
   color: "#fafafa",
   fontWeight: 400,
   fontSize: 14,
@@ -24,7 +24,7 @@ const itemStyles: React.CSSProperties = {
 const separatorStyles: React.CSSProperties = {
   height: 1,
   backgroundColor: "#ffffff1a",
-  margin: "6px 0",
+  margin: "4px 0",
 }
 
 const contentStyles: React.CSSProperties = {
@@ -34,12 +34,21 @@ const contentStyles: React.CSSProperties = {
   boxShadow:
     "0px 12px 48px -12px rgba(0, 0, 0, 0.5), 0px 8px 24px -8px rgba(0, 0, 0, 0.3)",
   border: "1px solid #333333",
-  padding: "6px",
-  minWidth: 240,
+  padding: "4px",
+  minWidth: 160,
   zIndex: 10001,
   fontSize: 14,
   fontFamily:
     'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+}
+
+const iconContainerStyles: React.CSSProperties = {
+  width: 16,
+  height: 18,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
 }
 
 export const AppearanceMenu = () => {
@@ -63,15 +72,7 @@ export const AppearanceMenu = () => {
           onMouseEnter={() => setHoveredItem("appearance")}
           onMouseLeave={() => setHoveredItem(null)}
         >
-          <span
-            style={{
-              width: 16,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          />
+          <span style={iconContainerStyles} />
           <span style={{ flex: 1 }}>Appearance</span>
           <div style={{ marginLeft: "auto" }}>
             <ChevronRightIcon isOpen={appearanceSubOpen} />
@@ -98,15 +99,7 @@ export const AppearanceMenu = () => {
               onMouseEnter={() => setHoveredItem("boardBody")}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <span
-                style={{
-                  width: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
+              <span style={iconContainerStyles}>
                 {visibility.boardBody && <CheckIcon />}
               </span>
               Board Body
@@ -126,15 +119,7 @@ export const AppearanceMenu = () => {
               onMouseEnter={() => setHoveredItem("topCopper")}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <span
-                style={{
-                  width: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
+              <span style={iconContainerStyles}>
                 {visibility.topCopper && <CheckIcon />}
               </span>
               Top Copper
@@ -154,15 +139,7 @@ export const AppearanceMenu = () => {
               onMouseEnter={() => setHoveredItem("bottomCopper")}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <span
-                style={{
-                  width: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
+              <span style={iconContainerStyles}>
                 {visibility.bottomCopper && <CheckIcon />}
               </span>
               Bottom Copper
@@ -182,15 +159,7 @@ export const AppearanceMenu = () => {
               onMouseEnter={() => setHoveredItem("topSilkscreen")}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <span
-                style={{
-                  width: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
+              <span style={iconContainerStyles}>
                 {visibility.topSilkscreen && <CheckIcon />}
               </span>
               Top Silkscreen
@@ -212,15 +181,7 @@ export const AppearanceMenu = () => {
               onMouseEnter={() => setHoveredItem("bottomSilkscreen")}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <span
-                style={{
-                  width: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
+              <span style={iconContainerStyles}>
                 {visibility.bottomSilkscreen && <CheckIcon />}
               </span>
               Bottom Silkscreen
@@ -240,15 +201,7 @@ export const AppearanceMenu = () => {
               onMouseEnter={() => setHoveredItem("smtModels")}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <span
-                style={{
-                  width: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
+              <span style={iconContainerStyles}>
                 {visibility.smtModels && <CheckIcon />}
               </span>
               CAD Models
