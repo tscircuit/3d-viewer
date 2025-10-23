@@ -34,6 +34,7 @@ import {
   colors,
   boardMaterialColors,
   tracesMaterialColors,
+  BOARD_SURFACE_OFFSET,
 } from "./geoms/constants"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { expand } from "@jscad/modeling/src/operations/expansions"
@@ -378,7 +379,9 @@ export class BoardGeomBuilder {
 
   private processCopperPour(pour: PcbCopperPour) {
     const layerSign = pour.layer === "bottom" ? -1 : 1
-    const zPos = (layerSign * this.ctx.pcbThickness) / 2 + layerSign * M
+    const zPos =
+      (layerSign * this.ctx.pcbThickness) / 2 +
+      layerSign * BOARD_SURFACE_OFFSET.copper
 
     let pourGeom: Geom3 | null = null
 
@@ -655,7 +658,9 @@ export class BoardGeomBuilder {
 
   private processPad(pad: PcbSmtPad) {
     const layerSign = pad.layer === "bottom" ? -1 : 1
-    const zPos = (layerSign * this.ctx.pcbThickness) / 2 + layerSign * M * 2 // Slightly offset from board surface
+    const zPos =
+      (layerSign * this.ctx.pcbThickness) / 2 +
+      layerSign * BOARD_SURFACE_OFFSET.copper // Slightly offset from board surface
 
     const rectBorderRadius = extractRectBorderRadius(pad)
 
@@ -716,7 +721,9 @@ export class BoardGeomBuilder {
     const finishSegment = () => {
       if (currentSegmentPoints.length >= 2 && currentLayer) {
         const layerSign = currentLayer === "bottom" ? -1 : 1
-        const zPos = (layerSign * this.ctx.pcbThickness) / 2 + layerSign * M
+        const zPos =
+          (layerSign * this.ctx.pcbThickness) / 2 +
+          layerSign * BOARD_SURFACE_OFFSET.traces
 
         const linePath = line(currentSegmentPoints)
         // Use the width of the starting point of the segment for consistency

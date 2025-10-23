@@ -11,7 +11,7 @@ import {
   subtract,
   union,
 } from "@jscad/modeling/src/operations/booleans"
-import { M, colors } from "./constants"
+import { BOARD_SURFACE_OFFSET, M, colors } from "./constants"
 import type { GeomContext } from "../GeomContext"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { translate } from "@jscad/modeling/src/operations/transforms"
@@ -104,7 +104,10 @@ export const platedHole = (
           center: [
             plated_hole.x,
             plated_hole.y,
-            ctx.pcbThickness / 2 + platedHoleLipHeight / 2 + M - 0.05, // Adjusted for thickness
+            ctx.pcbThickness / 2 +
+              platedHoleLipHeight / 2 +
+              BOARD_SURFACE_OFFSET.copper -
+              0.05, // Adjusted for thickness
           ],
           borderRadius: rectBorderRadius,
         }),
@@ -116,14 +119,20 @@ export const platedHole = (
           center: [
             plated_hole.x,
             plated_hole.y,
-            -ctx.pcbThickness / 2 - platedHoleLipHeight / 2 - M + 0.05, // Adjusted for thickness
+            -ctx.pcbThickness / 2 -
+              platedHoleLipHeight / 2 -
+              BOARD_SURFACE_OFFSET.copper +
+              0.05, // Adjusted for thickness
           ],
           borderRadius: rectBorderRadius,
         }),
         // Main copper fill between pads with rounded corners
         (() => {
           const height =
-            ctx.pcbThickness - platedHoleLipHeight * 2 - M * 2 + 0.1
+            ctx.pcbThickness -
+            platedHoleLipHeight * 2 -
+            BOARD_SURFACE_OFFSET.copper * 2 +
+            0.1
           const rect2d = roundedRectangle({
             size: [padWidth, padHeight],
             roundRadius: rectBorderRadius || 0,
@@ -214,7 +223,8 @@ export const platedHole = (
     const outerRadius = outerPillHeight / 2
     const rectLength = Math.abs(holeWidth - holeHeight)
     const outerRectLength = Math.abs(outerPillWidth - outerPillHeight)
-    const copperHeight = ctx.pcbThickness + 2 * (platedHoleLipHeight + M)
+    const copperHeight =
+      ctx.pcbThickness + 2 * (platedHoleLipHeight + BOARD_SURFACE_OFFSET.copper)
 
     const createPillSection = (
       width: number,
@@ -407,7 +417,10 @@ export const platedHole = (
       center: [
         plated_hole.x,
         plated_hole.y,
-        ctx.pcbThickness / 2 + platedHoleLipHeight / 2 + M - 0.05,
+        ctx.pcbThickness / 2 +
+          platedHoleLipHeight / 2 +
+          BOARD_SURFACE_OFFSET.copper -
+          0.05,
       ],
       borderRadius: rectBorderRadius,
     })
@@ -419,13 +432,20 @@ export const platedHole = (
       center: [
         plated_hole.x,
         plated_hole.y,
-        -ctx.pcbThickness / 2 - platedHoleLipHeight / 2 - M + 0.05,
+        -ctx.pcbThickness / 2 -
+          platedHoleLipHeight / 2 -
+          BOARD_SURFACE_OFFSET.copper +
+          0.05,
       ],
       borderRadius: rectBorderRadius,
     })
 
     const copperFill = (() => {
-      const height = ctx.pcbThickness - platedHoleLipHeight * 2 - M * 2 + 0.1
+      const height =
+        ctx.pcbThickness -
+        platedHoleLipHeight * 2 -
+        BOARD_SURFACE_OFFSET.copper * 2 +
+        0.1
       const rect2d = roundedRectangle({
         size: [padWidth, padHeight],
         roundRadius: rectBorderRadius || 0,
