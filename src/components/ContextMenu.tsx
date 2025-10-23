@@ -4,6 +4,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { AppearanceMenu } from "./AppearanceMenu"
 import type { CameraPreset } from "../hooks/useCameraController"
 import packageJson from "../../package.json"
+import { CheckIcon, ChevronRightIcon } from "./Icons"
 
 interface ContextMenuProps {
   menuRef: React.RefObject<HTMLDivElement | null>
@@ -30,21 +31,23 @@ const cameraOptions: CameraPreset[] = [
 
 // Inline styles
 const contentStyles: React.CSSProperties = {
-  backgroundColor: "#1e1e1e",
-  color: "#e4e4e7",
-  borderRadius: 8,
+  backgroundColor: "#262626",
+  color: "#fafafa",
+  borderRadius: 6,
   boxShadow:
-    "0px 10px 40px -10px rgba(0, 0, 0, 0.5), 0px 0px 0px 1px rgba(255, 255, 255, 0.08)",
-  border: "none",
-  padding: "6px",
+    "0px 10px 38px -10px rgba(0, 0, 0, 0.35), 0px 10px 20px -15px rgba(0, 0, 0, 0.2)",
+  border: "1px solid #404040",
+  padding: "4px",
   minWidth: 220,
   zIndex: 10000,
   fontSize: 14,
   fontWeight: 400,
+  fontFamily:
+    'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
 }
 
 const itemStyles: React.CSSProperties = {
-  padding: "8px 12px",
+  padding: "6px 8px",
   borderRadius: 6,
   cursor: "default",
   outline: "none",
@@ -52,15 +55,18 @@ const itemStyles: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 8,
-  color: "#e4e4e7",
+  color: "#fafafa",
   fontWeight: 400,
-  transition: "background-color 0.12s ease",
+  fontSize: 14,
+  transition: "background-color 0.1s ease",
+  fontFamily:
+    'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
 }
 
 const separatorStyles: React.CSSProperties = {
   height: 1,
-  backgroundColor: "rgba(255, 255, 255, 0.08)",
-  margin: "6px 0",
+  backgroundColor: "#404040",
+  margin: "4px 0",
 }
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({
@@ -101,14 +107,128 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             sideOffset={0}
             align="start"
           >
+            {/* Camera Position Submenu */}
+            <DropdownMenu.Sub onOpenChange={setCameraSubOpen}>
+              <DropdownMenu.SubTrigger
+                style={{
+                  ...itemStyles,
+                  backgroundColor:
+                    cameraSubOpen || hoveredItem === "camera"
+                      ? "#404040"
+                      : "transparent",
+                }}
+                onMouseEnter={() => setHoveredItem("camera")}
+                onMouseLeave={() => setHoveredItem(null)}
+              >
+                <span>Camera Position</span>
+                <div
+                  style={{
+                    marginLeft: "auto",
+                    fontSize: 11,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                  }}
+                >
+                  <span style={{ opacity: 0.6 }}>{cameraPreset}</span>
+                  <ChevronRightIcon isOpen={cameraSubOpen} />
+                </div>
+              </DropdownMenu.SubTrigger>
+
+              <DropdownMenu.Portal>
+                <DropdownMenu.SubContent
+                  style={{ ...contentStyles, marginLeft: -2 }}
+                  collisionPadding={10}
+                  avoidCollisions={true}
+                >
+                  {cameraOptions.map((option) => (
+                    <DropdownMenu.Item
+                      key={option}
+                      style={{
+                        ...itemStyles,
+                        backgroundColor:
+                          hoveredItem === option ? "#404040" : "transparent",
+                      }}
+                      onSelect={(e) => e.preventDefault()}
+                      onPointerDown={(e) => {
+                        e.preventDefault()
+                        onCameraPresetSelect(option)
+                      }}
+                      onMouseEnter={() => setHoveredItem(option)}
+                      onMouseLeave={() => setHoveredItem(null)}
+                    >
+                      <span
+                        style={{
+                          width: 16,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {cameraPreset === option && <CheckIcon />}
+                      </span>
+                      {option}
+                    </DropdownMenu.Item>
+                  ))}
+                </DropdownMenu.SubContent>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Sub>
+
+            {/* Auto Rotate */}
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "autorotate" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                onAutoRotateToggle()
+              }}
+              onMouseEnter={() => setHoveredItem("autorotate")}
+              onMouseLeave={() => setHoveredItem(null)}
+            >
+              <span
+                style={{
+                  width: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {autoRotate && <CheckIcon />}
+              </span>
+              Auto rotate
+            </DropdownMenu.Item>
+
+            {/* Appearance Menu */}
+            <AppearanceMenu />
+
+            <DropdownMenu.Separator style={separatorStyles} />
+
+            {/* Download GLTF */}
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "download" ? "#404040" : "transparent",
+              }}
+              onSelect={onDownloadGltf}
+              onMouseEnter={() => setHoveredItem("download")}
+              onMouseLeave={() => setHoveredItem(null)}
+            >
+              Download GLTF
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Separator style={separatorStyles} />
+
             {/* Engine Switch */}
             <DropdownMenu.Item
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "engine"
-                    ? "rgba(255, 255, 255, 0.1)"
-                    : "transparent",
+                  hoveredItem === "engine" ? "#404040" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -124,130 +244,14 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               <span
                 style={{
                   marginLeft: "auto",
-                  fontSize: 12,
-                  opacity: 0.5,
+                  fontSize: 11,
+                  opacity: 0.6,
                   fontWeight: 400,
                 }}
               >
                 {engine === "jscad" ? "experimental" : "default"}
               </span>
             </DropdownMenu.Item>
-
-            {/* Camera Position Submenu */}
-            <DropdownMenu.Sub onOpenChange={setCameraSubOpen}>
-              <DropdownMenu.SubTrigger
-                style={{
-                  ...itemStyles,
-                  backgroundColor:
-                    cameraSubOpen || hoveredItem === "camera"
-                      ? "rgba(255, 255, 255, 0.1)"
-                      : "transparent",
-                }}
-                onMouseEnter={() => setHoveredItem("camera")}
-                onMouseLeave={() => setHoveredItem(null)}
-              >
-                <span>Camera Position</span>
-                <span
-                  style={{
-                    marginLeft: "auto",
-                    opacity: 0.5,
-                    fontSize: 12,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 4,
-                  }}
-                >
-                  {cameraPreset}
-                  <span
-                    style={{
-                      display: "inline-block",
-                      transition: "transform 0.2s ease",
-                      opacity: 0.7,
-                      transform: cameraSubOpen
-                        ? "rotate(90deg)"
-                        : "rotate(0deg)",
-                    }}
-                  >
-                    ›
-                  </span>
-                </span>
-              </DropdownMenu.SubTrigger>
-
-              <DropdownMenu.Portal>
-                <DropdownMenu.SubContent
-                  style={{ ...contentStyles, marginLeft: -2 }}
-                  collisionPadding={10}
-                  avoidCollisions={true}
-                >
-                  {cameraOptions.map((option) => (
-                    <DropdownMenu.Item
-                      key={option}
-                      style={{
-                        ...itemStyles,
-                        backgroundColor:
-                          hoveredItem === option
-                            ? "rgba(255, 255, 255, 0.1)"
-                            : "transparent",
-                      }}
-                      onSelect={(e) => e.preventDefault()}
-                      onPointerDown={(e) => {
-                        e.preventDefault()
-                        onCameraPresetSelect(option)
-                      }}
-                      onMouseEnter={() => setHoveredItem(option)}
-                      onMouseLeave={() => setHoveredItem(null)}
-                    >
-                      <span style={{ width: 16, fontSize: 14 }}>
-                        {cameraPreset === option ? "✓" : ""}
-                      </span>
-                      {option}
-                    </DropdownMenu.Item>
-                  ))}
-                </DropdownMenu.SubContent>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Sub>
-
-            {/* Auto Rotate */}
-            <DropdownMenu.Item
-              style={{
-                ...itemStyles,
-                backgroundColor:
-                  hoveredItem === "autorotate"
-                    ? "rgba(255, 255, 255, 0.1)"
-                    : "transparent",
-              }}
-              onSelect={(e) => e.preventDefault()}
-              onPointerDown={(e) => {
-                e.preventDefault()
-                onAutoRotateToggle()
-              }}
-              onMouseEnter={() => setHoveredItem("autorotate")}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <span style={{ width: 16, fontSize: 14 }}>
-                {autoRotate ? "✓" : ""}
-              </span>
-              Auto rotate
-            </DropdownMenu.Item>
-
-            {/* Download GLTF */}
-            <DropdownMenu.Item
-              style={{
-                ...itemStyles,
-                backgroundColor:
-                  hoveredItem === "download"
-                    ? "rgba(255, 255, 255, 0.1)"
-                    : "transparent",
-              }}
-              onSelect={onDownloadGltf}
-              onMouseEnter={() => setHoveredItem("download")}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              Download GLTF
-            </DropdownMenu.Item>
-
-            {/* Appearance Menu */}
-            <AppearanceMenu />
 
             <DropdownMenu.Separator style={separatorStyles} />
 
@@ -256,7 +260,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               style={{
                 display: "flex",
                 justifyContent: "center",
-                padding: "6px 0 4px",
+                padding: "4px 0 2px",
                 marginTop: 2,
               }}
             >

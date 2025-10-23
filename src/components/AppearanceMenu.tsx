@@ -2,9 +2,10 @@ import { useState } from "react"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import type React from "react"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
+import { CheckIcon, ChevronRightIcon } from "./Icons"
 
 const itemStyles: React.CSSProperties = {
-  padding: "8px 12px",
+  padding: "6px 8px",
   borderRadius: 6,
   cursor: "default",
   outline: "none",
@@ -12,34 +13,33 @@ const itemStyles: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 8,
-  color: "#e4e4e7",
+  color: "#fafafa",
   fontWeight: 400,
   fontSize: 14,
-  transition: "background-color 0.12s ease",
-}
-
-const checkmarkStyle: React.CSSProperties = {
-  width: 20,
-  fontSize: 14,
+  transition: "background-color 0.1s ease",
+  fontFamily:
+    'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
 }
 
 const separatorStyles: React.CSSProperties = {
   height: 1,
-  backgroundColor: "rgba(255, 255, 255, 0.08)",
-  margin: "6px 0",
+  backgroundColor: "#404040",
+  margin: "4px 0",
 }
 
 const contentStyles: React.CSSProperties = {
-  backgroundColor: "#1e1e1e",
-  color: "#e4e4e7",
-  borderRadius: 8,
+  backgroundColor: "#262626",
+  color: "#fafafa",
+  borderRadius: 6,
   boxShadow:
-    "0px 10px 40px -10px rgba(0, 0, 0, 0.5), 0px 0px 0px 1px rgba(255, 255, 255, 0.08)",
-  border: "none",
+    "0px 10px 38px -10px rgba(0, 0, 0, 0.35), 0px 10px 20px -15px rgba(0, 0, 0, 0.2)",
+  border: "1px solid #404040",
   padding: "6px",
   minWidth: 220,
   zIndex: 10001,
   fontSize: 14,
+  fontFamily:
+    'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
 }
 
 export const AppearanceMenu = () => {
@@ -58,24 +58,14 @@ export const AppearanceMenu = () => {
             justifyContent: "space-between",
             backgroundColor:
               appearanceSubOpen || hoveredItem === "appearance"
-                ? "rgba(255, 255, 255, 0.1)"
+                ? "#404040"
                 : "transparent",
           }}
           onMouseEnter={() => setHoveredItem("appearance")}
           onMouseLeave={() => setHoveredItem(null)}
         >
           <span>Appearance</span>
-          <span
-            style={{
-              display: "inline-block",
-              transition: "transform 0.2s ease",
-              marginLeft: 4,
-              opacity: 0.7,
-              transform: appearanceSubOpen ? "rotate(90deg)" : "rotate(0deg)",
-            }}
-          >
-            ›
-          </span>
+          <ChevronRightIcon isOpen={appearanceSubOpen} />
         </DropdownMenu.SubTrigger>
 
         <DropdownMenu.Portal>
@@ -88,9 +78,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "boardBody"
-                    ? "rgba(255, 255, 255, 0.1)"
-                    : "transparent",
+                  hoveredItem === "boardBody" ? "#404040" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -100,8 +88,15 @@ export const AppearanceMenu = () => {
               onMouseEnter={() => setHoveredItem("boardBody")}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <span style={checkmarkStyle}>
-                {visibility.boardBody ? "✓" : ""}
+              <span
+                style={{
+                  width: 20,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {visibility.boardBody && <CheckIcon />}
               </span>
               Board Body
             </DropdownMenu.Item>
@@ -110,9 +105,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "topCopper"
-                    ? "rgba(255, 255, 255, 0.1)"
-                    : "transparent",
+                  hoveredItem === "topCopper" ? "#404040" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -122,8 +115,15 @@ export const AppearanceMenu = () => {
               onMouseEnter={() => setHoveredItem("topCopper")}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <span style={checkmarkStyle}>
-                {visibility.topCopper ? "✓" : ""}
+              <span
+                style={{
+                  width: 20,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {visibility.topCopper && <CheckIcon />}
               </span>
               Top Copper
             </DropdownMenu.Item>
@@ -132,9 +132,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "bottomCopper"
-                    ? "rgba(255, 255, 255, 0.1)"
-                    : "transparent",
+                  hoveredItem === "bottomCopper" ? "#404040" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -144,8 +142,15 @@ export const AppearanceMenu = () => {
               onMouseEnter={() => setHoveredItem("bottomCopper")}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <span style={checkmarkStyle}>
-                {visibility.bottomCopper ? "✓" : ""}
+              <span
+                style={{
+                  width: 20,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {visibility.bottomCopper && <CheckIcon />}
               </span>
               Bottom Copper
             </DropdownMenu.Item>
@@ -154,9 +159,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "topSilkscreen"
-                    ? "rgba(255, 255, 255, 0.1)"
-                    : "transparent",
+                  hoveredItem === "topSilkscreen" ? "#404040" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -166,8 +169,15 @@ export const AppearanceMenu = () => {
               onMouseEnter={() => setHoveredItem("topSilkscreen")}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <span style={checkmarkStyle}>
-                {visibility.topSilkscreen ? "✓" : ""}
+              <span
+                style={{
+                  width: 20,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {visibility.topSilkscreen && <CheckIcon />}
               </span>
               Top Silkscreen
             </DropdownMenu.Item>
@@ -177,7 +187,7 @@ export const AppearanceMenu = () => {
                 ...itemStyles,
                 backgroundColor:
                   hoveredItem === "bottomSilkscreen"
-                    ? "rgba(255, 255, 255, 0.1)"
+                    ? "#404040"
                     : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
@@ -188,8 +198,15 @@ export const AppearanceMenu = () => {
               onMouseEnter={() => setHoveredItem("bottomSilkscreen")}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <span style={checkmarkStyle}>
-                {visibility.bottomSilkscreen ? "✓" : ""}
+              <span
+                style={{
+                  width: 20,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {visibility.bottomSilkscreen && <CheckIcon />}
               </span>
               Bottom Silkscreen
             </DropdownMenu.Item>
@@ -198,9 +215,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "smtModels"
-                    ? "rgba(255, 255, 255, 0.1)"
-                    : "transparent",
+                  hoveredItem === "smtModels" ? "#404040" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -210,8 +225,15 @@ export const AppearanceMenu = () => {
               onMouseEnter={() => setHoveredItem("smtModels")}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <span style={checkmarkStyle}>
-                {visibility.smtModels ? "✓" : ""}
+              <span
+                style={{
+                  width: 20,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {visibility.smtModels && <CheckIcon />}
               </span>
               CAD Models
             </DropdownMenu.Item>
