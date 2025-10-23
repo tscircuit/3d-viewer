@@ -11,12 +11,12 @@ async function loadResvg(): Promise<any> {
   if (resvgLoaded) return Resvg
   resvgLoading = true
   try {
-    const resvgModule = await import("resvg-wasm")
+    const resvgModule = await import("@resvg/resvg-wasm")
     Resvg = resvgModule.Resvg
     resvgLoaded = true
     return Resvg
   } catch (error) {
-    console.warn("Failed to load resvg-wasm:", error)
+    console.warn("Failed to load @resvg/resvg-wasm:", error)
     return null
   } finally {
     resvgLoading = false
@@ -83,8 +83,6 @@ export async function convertCircuitToTexture(
       width: opts.width,
       height: opts.height,
       backgroundColor: opts.backgroundColor,
-      zoom: opts.zoom,
-      layers: opts.layers,
     })
 
     // Validate SVG string
@@ -111,9 +109,6 @@ export async function convertCircuitToTexture(
         mode: "width",
         value: opts.width,
       },
-      font: {
-        loadSystemFonts: false, // Disable system fonts for better performance
-      },
     })
 
     const pngData = resvg.render()
@@ -133,8 +128,6 @@ export async function convertCircuitToTexture(
         width: opts.width,
         height: opts.height,
         backgroundColor: opts.backgroundColor,
-        zoom: opts.zoom,
-        layers: opts.layers,
       })
       return createCanvasTexture(
         svgString,
@@ -249,15 +242,15 @@ function createPCBPattern(
 export async function createCircuitTexture(
   circuitJson: AnyCircuitElement[],
   options: CircuitToTextureOptions = {},
-): Promise<THREE.Texture> {
+): Promise<any> {
   const pngData = await convertCircuitToTexture(circuitJson, options)
 
   // Create a blob URL from the PNG data
-  const blob = new Blob([pngData.buffer], { type: "image/png" })
+  const blob = new Blob([pngData.buffer as ArrayBuffer], { type: "image/png" })
   const url = URL.createObjectURL(blob)
 
   // Create Three.js texture with optimized settings
-  const texture = new THREE.TextureLoader().load(url)
+  const texture = new (THREE as any).TextureLoader().load(url)
   texture.wrapS = THREE.RepeatWrapping
   texture.wrapT = THREE.RepeatWrapping
   texture.flipY = false // SVG coordinates are already correct
@@ -279,7 +272,7 @@ export async function createCircuitTexture(
 export async function createTopSideTexture(
   circuitJson: AnyCircuitElement[],
   options: CircuitToTextureOptions = {},
-): Promise<THREE.Texture> {
+): Promise<any> {
   return createCircuitTexture(circuitJson, {
     ...options,
     layers: {
@@ -297,7 +290,7 @@ export async function createTopSideTexture(
 export async function createBottomSideTexture(
   circuitJson: AnyCircuitElement[],
   options: CircuitToTextureOptions = {},
-): Promise<THREE.Texture> {
+): Promise<any> {
   return createCircuitTexture(circuitJson, {
     ...options,
     layers: {
@@ -313,7 +306,7 @@ export async function createBottomSideTexture(
  * Creates a texture cache to avoid regenerating the same textures
  */
 class TextureCache {
-  private cache = new Map<string, THREE.Texture>()
+  private cache = new Map<string, any>()
   private maxSize = 50
 
   private generateKey(
@@ -326,7 +319,7 @@ class TextureCache {
   get(
     circuitJson: AnyCircuitElement[],
     options: CircuitToTextureOptions,
-  ): THREE.Texture | null {
+  ): any | null {
     const key = this.generateKey(circuitJson, options)
     return this.cache.get(key) || null
   }
@@ -334,7 +327,7 @@ class TextureCache {
   set(
     circuitJson: AnyCircuitElement[],
     options: CircuitToTextureOptions,
-    texture: THREE.Texture,
+    texture: any,
   ): void {
     const key = this.generateKey(circuitJson, options)
 
@@ -363,7 +356,7 @@ const textureCache = new TextureCache()
 export async function createCachedCircuitTexture(
   circuitJson: AnyCircuitElement[],
   options: CircuitToTextureOptions = {},
-): Promise<THREE.Texture> {
+): Promise<any> {
   // Check cache first
   const cached = textureCache.get(circuitJson, options)
   if (cached) {

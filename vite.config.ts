@@ -22,7 +22,7 @@ export default defineConfig({
       "calculate-packing",
       "circuit-json",
       "@tscircuit/props",
-      "resvg-wasm",
+      "@resvg/resvg-wasm",
     ],
   },
   build: {
@@ -33,7 +33,7 @@ export default defineConfig({
         "calculate-packing",
         "circuit-json",
         "@tscircuit/props",
-        "resvg-wasm",
+        "@resvg/resvg-wasm",
       ],
     },
   },
