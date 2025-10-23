@@ -7,6 +7,7 @@ interface VisibleSTLModelProps {
   color: any
   opacity?: number
   layerType?: LayerType
+  texture?: THREE.Texture
 }
 
 export function VisibleSTLModel({
@@ -14,6 +15,7 @@ export function VisibleSTLModel({
   color,
   opacity = 1,
   layerType,
+  texture,
 }: VisibleSTLModelProps) {
   const { visibility } = useLayerVisibility()
 
@@ -37,5 +39,5 @@ export function VisibleSTLModel({
     return null
   }
 
-  return <STLModel stlData={stlData} color={color} opacity={opacity} />
+  return <STLModel stlData={stlData} color={color} opacity={opacity} texture={texture} />
 }

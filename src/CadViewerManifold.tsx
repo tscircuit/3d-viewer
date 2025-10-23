@@ -120,9 +120,9 @@ type CadViewerManifoldProps = {
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
 } & (
-  | { circuitJson: AnyCircuitElement[]; children?: React.ReactNode }
-  | { circuitJson?: never; children: React.ReactNode }
-)
+    | { circuitJson: AnyCircuitElement[]; children?: React.ReactNode }
+    | { circuitJson?: never; children: React.ReactNode }
+  )
 
 const MANIFOLD_CDN_BASE_URL = "https://cdn.jsdelivr.net/npm/manifold-3d@3.2.1"
 
@@ -230,7 +230,15 @@ try {
     boardData,
   } = useManifoldBoardBuilder(manifoldJSModule, circuitJson)
 
-  const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
+  const [geometryMeshes, setGeometryMeshes] = useState<THREE.Mesh[]>([])
+
+  useEffect(() => {
+    if (geoms) {
+      createGeometryMeshes(geoms, circuitJson, true).then(setGeometryMeshes)
+    } else {
+      setGeometryMeshes([])
+    }
+  }, [geoms, circuitJson])
   const textureMeshes = useMemo(
     () => createTextureMeshes(textures, boardData, pcbThickness),
     [textures, boardData, pcbThickness],

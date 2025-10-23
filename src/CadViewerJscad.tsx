@@ -11,6 +11,7 @@ import type { CameraController } from "./hooks/useCameraController"
 import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
 import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { useBoardGeomBuilder } from "./hooks/useBoardGeomBuilder"
+import { useCircuitTexture } from "./hooks/useCircuitTexture"
 import { Error3d } from "./three-components/Error3d"
 import { FootprinterModel } from "./three-components/FootprinterModel"
 import { JscadModel } from "./three-components/JscadModel"
@@ -56,6 +57,9 @@ export const CadViewerJscad = forwardRef<
 
     // Use the new hook to manage board geometry building
     const boardGeom = useBoardGeomBuilder(internalCircuitJson)
+
+    // Generate texture for the board
+    const boardTexture = useCircuitTexture(internalCircuitJson, true)
 
     const initialCameraPosition = useMemo(() => {
       if (!internalCircuitJson) return [5, 5, 5] as const
@@ -126,6 +130,7 @@ export const CadViewerJscad = forwardRef<
             color={color}
             opacity={index === 0 ? 0.95 : 1}
             layerType={layerType}
+            texture={layerType === "board" ? boardTexture : undefined}
           />
         ))}
         {cad_components.map((cad_component) => (

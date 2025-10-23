@@ -2,21 +2,24 @@ import * as THREE from "three"
 import type { ManifoldGeoms } from "../../hooks/useManifoldBoardBuilder"
 import { createBoardMaterial } from "../create-board-material"
 
-export function createGeometryMeshes(
+export async function createGeometryMeshes(
   geoms: ManifoldGeoms | null,
-): THREE.Mesh[] {
+  circuitJson?: any,
+  enableTexture?: boolean,
+): Promise<THREE.Mesh[]> {
   const meshes: THREE.Mesh[] = []
   if (!geoms) return meshes
 
   if (geoms.board && geoms.board.geometry) {
-    const mesh = new THREE.Mesh(
-      geoms.board.geometry,
-      createBoardMaterial({
-        material: geoms.board.material,
-        color: geoms.board.color,
-        side: THREE.DoubleSide,
-      }),
-    )
+    const material = await createBoardMaterial({
+      material: geoms.board.material,
+      color: geoms.board.color,
+      side: THREE.DoubleSide,
+      circuitJson,
+      enableTexture,
+    })
+
+    const mesh = new THREE.Mesh(geoms.board.geometry, material)
     mesh.name = "board-geom"
     meshes.push(mesh)
   }
