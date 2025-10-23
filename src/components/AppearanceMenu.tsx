@@ -13,7 +13,7 @@ const itemStyles: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 10,
-  color: "#f5f5f5",
+  color: "#fafafa",
   fontWeight: 400,
   fontSize: 14,
   transition: "background-color 0.15s ease, color 0.15s ease",
@@ -23,13 +23,13 @@ const itemStyles: React.CSSProperties = {
 
 const separatorStyles: React.CSSProperties = {
   height: 1,
-  backgroundColor: "#2a2a2a",
+  backgroundColor: "#ffffff1a",
   margin: "6px 0",
 }
 
 const contentStyles: React.CSSProperties = {
-  backgroundColor: "#1a1a1a",
-  color: "#f5f5f5",
+  backgroundColor: "#262626",
+  color: "#fafafa",
   borderRadius: 8,
   boxShadow:
     "0px 12px 48px -12px rgba(0, 0, 0, 0.5), 0px 8px 24px -8px rgba(0, 0, 0, 0.3)",
@@ -57,7 +57,7 @@ export const AppearanceMenu = () => {
             ...itemStyles,
             backgroundColor:
               appearanceSubOpen || hoveredItem === "appearance"
-                ? "#2a2a2a"
+                ? "#404040"
                 : "transparent",
           }}
           onMouseEnter={() => setHoveredItem("appearance")}
@@ -88,7 +88,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "boardBody" ? "#2a2a2a" : "transparent",
+                  hoveredItem === "boardBody" ? "#404040" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -116,7 +116,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "topCopper" ? "#2a2a2a" : "transparent",
+                  hoveredItem === "topCopper" ? "#404040" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -144,7 +144,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "bottomCopper" ? "#2a2a2a" : "transparent",
+                  hoveredItem === "bottomCopper" ? "#404040" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -172,7 +172,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "topSilkscreen" ? "#2a2a2a" : "transparent",
+                  hoveredItem === "topSilkscreen" ? "#404040" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
@@ -201,7 +201,7 @@ export const AppearanceMenu = () => {
                 ...itemStyles,
                 backgroundColor:
                   hoveredItem === "bottomSilkscreen"
-                    ? "#2a2a2a"
+                    ? "#404040"
                     : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
@@ -230,7 +230,7 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
-                  hoveredItem === "smtModels" ? "#2a2a2a" : "transparent",
+                  hoveredItem === "smtModels" ? "#404040" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
