@@ -21,6 +21,13 @@ const itemStyles: React.CSSProperties = {
     'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
 }
 
+const itemPaddingStyles: React.CSSProperties = {
+  paddingLeft: 32,
+  paddingTop: 6,
+  paddingBottom: 6,
+  paddingRight: 8,
+}
+
 const separatorStyles: React.CSSProperties = {
   height: 1,
   backgroundColor: "#ffffff1a",
@@ -64,6 +71,7 @@ export const AppearanceMenu = () => {
         <DropdownMenu.SubTrigger
           style={{
             ...itemStyles,
+            ...itemPaddingStyles,
             backgroundColor:
               appearanceSubOpen || hoveredItem === "appearance"
                 ? "#404040"
@@ -72,7 +80,6 @@ export const AppearanceMenu = () => {
           onMouseEnter={() => setHoveredItem("appearance")}
           onMouseLeave={() => setHoveredItem(null)}
         >
-          <span style={iconContainerStyles} />
           <span style={{ flex: 1, display: "flex", alignItems: "center" }}>
             Appearance
           </span>
@@ -81,7 +88,7 @@ export const AppearanceMenu = () => {
               marginLeft: "auto",
               display: "flex",
               alignItems: "flex-end",
-              marginBottom: "-3px",
+              marginBottom: "-5px",
             }}
           >
             <ChevronRightIcon isOpen={appearanceSubOpen} />

@@ -62,6 +62,13 @@ const itemStyles: React.CSSProperties = {
     'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
 }
 
+const itemPaddingStyles: React.CSSProperties = {
+  paddingLeft: 32,
+  paddingTop: 6,
+  paddingBottom: 6,
+  paddingRight: 8,
+}
+
 const iconContainerStyles: React.CSSProperties = {
   width: 16,
   height: 16,
@@ -132,6 +139,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               <DropdownMenu.SubTrigger
                 style={{
                   ...itemStyles,
+                  ...itemPaddingStyles,
                   backgroundColor:
                     cameraSubOpen || hoveredItem === "camera"
                       ? "#404040"
@@ -140,7 +148,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 onMouseEnter={() => setHoveredItem("camera")}
                 onMouseLeave={() => setHoveredItem(null)}
               >
-                <span style={iconContainerStyles} />
                 <span
                   style={{ flex: 1, display: "flex", alignItems: "center" }}
                 >
@@ -227,6 +234,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             <DropdownMenu.Item
               style={{
                 ...itemStyles,
+                ...itemPaddingStyles,
                 backgroundColor:
                   hoveredItem === "download" ? "#404040" : "transparent",
               }}
@@ -234,7 +242,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               onMouseEnter={() => setHoveredItem("download")}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <span style={iconContainerStyles} />
               <span style={{ display: "flex", alignItems: "center" }}>
                 Download GLTF
               </span>
@@ -246,6 +253,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             <DropdownMenu.Item
               style={{
                 ...itemStyles,
+                ...itemPaddingStyles,
                 backgroundColor:
                   hoveredItem === "engine" ? "#404040" : "transparent",
               }}
@@ -257,9 +265,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               onMouseEnter={() => setHoveredItem("engine")}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <span style={iconContainerStyles} />
               <span style={{ flex: 1, display: "flex", alignItems: "center" }}>
-                Switch Engine
+                Switch to {engine === "jscad" ? "Manifold" : "JSCAD"} Engine
               </span>
               <div
                 style={{
@@ -268,7 +275,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                   alignItems: "center",
                 }}
               >
-                {engine === "jscad" ? "Manifold" : "JSCAD"}
+                {engine === "jscad" ? "experimental" : "default"}
               </div>
             </DropdownMenu.Item>
 
@@ -278,9 +285,11 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             <div
               style={{
                 display: "flex",
-                justifyContent: "center",
-                padding: "4px 0 2px",
+                alignItems: "center",
                 marginTop: 0,
+                paddingLeft: 32,
+                paddingTop: 4,
+                paddingBottom: 4,
               }}
             >
               <span
