@@ -5,7 +5,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { CheckIcon, ChevronRightIcon } from "./Icons"
 
 const itemStyles: React.CSSProperties = {
-  padding: "8px 8px",
+  padding: "6px 8px",
   borderRadius: 6,
   cursor: "default",
   outline: "none",
