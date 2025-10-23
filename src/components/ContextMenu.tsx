@@ -120,6 +120,14 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 onMouseEnter={() => setHoveredItem("camera")}
                 onMouseLeave={() => setHoveredItem(null)}
               >
+                <span
+                  style={{
+                    width: 16,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                />
                 <span>Camera Position</span>
                 <div
                   style={{
@@ -218,6 +226,14 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               onMouseEnter={() => setHoveredItem("download")}
               onMouseLeave={() => setHoveredItem(null)}
             >
+              <span
+                style={{
+                  width: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              />
               Download GLTF
             </DropdownMenu.Item>
 
@@ -238,6 +254,14 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               onMouseEnter={() => setHoveredItem("engine")}
               onMouseLeave={() => setHoveredItem(null)}
             >
+              <span
+                style={{
+                  width: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              />
               <span>
                 Switch to {engine === "jscad" ? "Manifold" : "JSCAD"} Engine
               </span>

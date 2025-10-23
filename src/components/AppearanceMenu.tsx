@@ -55,7 +55,6 @@ export const AppearanceMenu = () => {
         <DropdownMenu.SubTrigger
           style={{
             ...itemStyles,
-            justifyContent: "space-between",
             backgroundColor:
               appearanceSubOpen || hoveredItem === "appearance"
                 ? "#404040"
@@ -64,8 +63,18 @@ export const AppearanceMenu = () => {
           onMouseEnter={() => setHoveredItem("appearance")}
           onMouseLeave={() => setHoveredItem(null)}
         >
+          <span
+            style={{
+              width: 16,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          />
           <span>Appearance</span>
-          <ChevronRightIcon isOpen={appearanceSubOpen} />
+          <div style={{ marginLeft: "auto" }}>
+            <ChevronRightIcon isOpen={appearanceSubOpen} />
+          </div>
         </DropdownMenu.SubTrigger>
 
         <DropdownMenu.Portal>
