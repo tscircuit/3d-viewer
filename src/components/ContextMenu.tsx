@@ -32,7 +32,7 @@ const cameraOptions: CameraPreset[] = [
 const contentStyles: React.CSSProperties = {
   backgroundColor: "#262626",
   color: "#fafafa",
-  borderRadius: 8,
+  borderRadius: 6,
   boxShadow:
     "0px 12px 48px -12px rgba(0, 0, 0, 0.5), 0px 8px 24px -8px rgba(0, 0, 0, 0.3)",
   border: "1px solid #333333",
@@ -46,7 +46,7 @@ const contentStyles: React.CSSProperties = {
 }
 
 const itemStyles: React.CSSProperties = {
-  padding: "8px 8px",
+  padding: "6px 8px",
   borderRadius: 6,
   cursor: "default",
   outline: "none",
@@ -63,8 +63,8 @@ const itemStyles: React.CSSProperties = {
 }
 
 const iconContainerStyles: React.CSSProperties = {
-  width: 18,
-  height: 18,
+  width: 16,
+  height: 16,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -248,11 +248,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               onMouseLeave={() => setHoveredItem(null)}
             >
               <span style={iconContainerStyles} />
-              <span style={{ flex: 1 }}>
-                Switch to {engine === "jscad" ? "Manifold" : "JSCAD"} Engine
-              </span>
+              <span style={{ flex: 1 }}>Switch Engine</span>
               <div style={badgeStyles}>
-                {engine === "jscad" ? "experimental" : "default"}
+                {engine === "jscad" ? "Manifold" : "JSCAD"}
               </div>
             </DropdownMenu.Item>
 
