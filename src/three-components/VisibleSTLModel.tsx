@@ -39,5 +39,12 @@ export function VisibleSTLModel({
     return null
   }
 
-  return <STLModel stlData={stlData} color={color} opacity={opacity} texture={texture} />
+  return (
+    <STLModel
+      stlData={stlData}
+      color={color}
+      opacity={opacity}
+      texture={texture}
+    />
+  )
 }

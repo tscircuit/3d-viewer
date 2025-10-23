@@ -54,7 +54,10 @@ export const createBoardMaterial = async ({
           map: topTexture,
         })
       } catch (error) {
-        console.warn('Failed to create board texture, falling back to solid material:', error)
+        console.warn(
+          "Failed to create board texture, falling back to solid material:",
+          error,
+        )
       }
     }
 
@@ -83,7 +86,10 @@ export const createBoardMaterial = async ({
         map: topTexture,
       })
     } catch (error) {
-      console.warn('Failed to create board texture, falling back to solid material:', error)
+      console.warn(
+        "Failed to create board texture, falling back to solid material:",
+        error,
+      )
     }
   }
 
