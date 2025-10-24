@@ -18,26 +18,21 @@ export const ResistorPlatedHoleShowcase = () => (
         pcbY={0}
       />
       <platedhole
-        name="PH_CIRCLE"
         shape="circle"
         holeDiameter={1.2}
         outerDiameter={2.6}
-        portHints={["PH_CIRCLE", "1"]}
         pcbX={-15}
         pcbY={10}
       />
       <platedhole
-        name="PH_RECT"
         shape="circular_hole_with_rect_pad"
         holeDiameter={1.2}
         rectPadWidth={3.4}
         rectPadHeight={2.6}
-        portHints={["PH_RECT", "1"]}
         pcbX={0}
         pcbY={10}
       />
       <platedhole
-        name="PH_PILL"
         shape="pill_hole_with_rect_pad"
         holeShape="pill"
         padShape="rect"
@@ -45,15 +40,10 @@ export const ResistorPlatedHoleShowcase = () => (
         holeHeight={2.6}
         rectPadWidth={3.6}
         rectPadHeight={3.2}
-        portHints={["PH_PILL", "1"]}
         pcbX={15}
         pcbY={10}
       />
-      <trace from=".R1 > .pin1" to=".PH_CIRCLE > .1" thickness="0.3mm" />
-      <trace from=".R1 > .pin2" to=".PH_RECT > .1" thickness="0.3mm" />
-      <trace from=".R2 > .pin1" to=".PH_RECT > .1" thickness="0.3mm" />
-      <trace from=".R2 > .pin2" to=".PH_PILL > .1" thickness="0.3mm" />
-      <trace path={[".PH_CIRCLE > .1", ".PH_PILL > .1"]} thickness="0.3mm" />
+      <trace from=".R1 > .pin1" to=".R1 > .pin2" thickness="0.3mm" />
     </board>
   </CadViewer>
 )
