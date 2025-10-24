@@ -67,10 +67,13 @@ export const platedHole = (
   const { clipGeom } = options
   if (!(plated_hole as PCBPlatedHole).shape) plated_hole.shape = "circle"
   const throughDrillHeight = ctx.pcbThickness + 2 * platedHoleLipHeight + 4 * M
+  const topSurfaceZ = ctx.pcbThickness / 2 + BOARD_SURFACE_OFFSET.copper
+  const bottomSurfaceZ = -ctx.pcbThickness / 2 - BOARD_SURFACE_OFFSET.copper
+  const copperSpan = topSurfaceZ - bottomSurfaceZ
   if (plated_hole.shape === "circle") {
     const outerDiameter =
       plated_hole.outer_diameter ?? Math.max(plated_hole.hole_diameter, 0)
-    const copperHeight = ctx.pcbThickness + 2 * platedHoleLipHeight
+    const copperHeight = copperSpan
     const copperBody = cylinder({
       center: [plated_hole.x, plated_hole.y, 0],
       radius: outerDiameter / 2,
@@ -104,10 +107,7 @@ export const platedHole = (
           center: [
             plated_hole.x,
             plated_hole.y,
-            ctx.pcbThickness / 2 +
-              platedHoleLipHeight / 2 +
-              BOARD_SURFACE_OFFSET.copper -
-              0.05, // Adjusted for thickness
+            topSurfaceZ - platedHoleLipHeight / 2,
           ],
           borderRadius: rectBorderRadius,
         }),
@@ -119,20 +119,16 @@ export const platedHole = (
           center: [
             plated_hole.x,
             plated_hole.y,
-            -ctx.pcbThickness / 2 -
-              platedHoleLipHeight / 2 -
-              BOARD_SURFACE_OFFSET.copper +
-              0.05, // Adjusted for thickness
+            bottomSurfaceZ + platedHoleLipHeight / 2,
           ],
           borderRadius: rectBorderRadius,
         }),
         // Main copper fill between pads with rounded corners
         (() => {
-          const height =
-            ctx.pcbThickness -
-            platedHoleLipHeight * 2 -
-            BOARD_SURFACE_OFFSET.copper * 2 +
-            0.1
+          const height = Math.max(copperSpan - platedHoleLipHeight * 2, M)
+          const topPadBottom = topSurfaceZ - platedHoleLipHeight
+          const bottomPadTop = bottomSurfaceZ + platedHoleLipHeight
+          const centerZ = (topPadBottom + bottomPadTop) / 2
           const rect2d = roundedRectangle({
             size: [padWidth, padHeight],
             roundRadius: rectBorderRadius || 0,
@@ -140,11 +136,7 @@ export const platedHole = (
           })
           const extruded = extrudeLinear({ height }, rect2d)
           return translate(
-            [
-              plated_hole.x,
-              plated_hole.y,
-              -height / 2, // Center vertically
-            ],
+            [plated_hole.x, plated_hole.y, centerZ - height / 2],
             extruded,
           )
         })(),
@@ -156,7 +148,7 @@ export const platedHole = (
             0,
           ],
           radius: plated_hole.hole_diameter / 2,
-          height: ctx.pcbThickness,
+          height: copperSpan,
         }),
       ),
       clipGeom,
@@ -180,7 +172,7 @@ export const platedHole = (
         0,
       ],
       radius: plated_hole.hole_diameter / 2,
-      height: ctx.pcbThickness,
+      height: copperSpan,
     })
 
     // Create the final copper solid with the offset barrel and hole
@@ -223,8 +215,7 @@ export const platedHole = (
     const outerRadius = outerPillHeight / 2
     const rectLength = Math.abs(holeWidth - holeHeight)
     const outerRectLength = Math.abs(outerPillWidth - outerPillHeight)
-    const copperHeight =
-      ctx.pcbThickness + 2 * (platedHoleLipHeight + BOARD_SURFACE_OFFSET.copper)
+    const copperHeight = copperSpan
 
     const createPillSection = (
       width: number,
@@ -329,12 +320,12 @@ export const platedHole = (
           ? [
               holeHeight + 2 * barrelMargin,
               rectLength + 2 * barrelMargin,
-              ctx.pcbThickness + 0.02,
+              copperSpan,
             ]
           : [
               rectLength + 2 * barrelMargin,
               holeHeight + 2 * barrelMargin,
-              ctx.pcbThickness,
+              copperSpan,
             ],
       }),
       cylinder({
@@ -350,7 +341,7 @@ export const platedHole = (
               0,
             ],
         radius: holeRadius + barrelMargin,
-        height: ctx.pcbThickness + 0.02,
+        height: copperSpan,
       }),
       cylinder({
         center: shouldRotate
@@ -365,7 +356,7 @@ export const platedHole = (
               0,
             ],
         radius: holeRadius + barrelMargin,
-        height: ctx.pcbThickness + 0.02,
+        height: copperSpan,
       }),
     )
 
@@ -417,10 +408,7 @@ export const platedHole = (
       center: [
         plated_hole.x,
         plated_hole.y,
-        ctx.pcbThickness / 2 +
-          platedHoleLipHeight / 2 +
-          BOARD_SURFACE_OFFSET.copper -
-          0.05,
+        topSurfaceZ - platedHoleLipHeight / 2,
       ],
       borderRadius: rectBorderRadius,
     })
@@ -432,27 +420,26 @@ export const platedHole = (
       center: [
         plated_hole.x,
         plated_hole.y,
-        -ctx.pcbThickness / 2 -
-          platedHoleLipHeight / 2 -
-          BOARD_SURFACE_OFFSET.copper +
-          0.05,
+        bottomSurfaceZ + platedHoleLipHeight / 2,
       ],
       borderRadius: rectBorderRadius,
     })
 
     const copperFill = (() => {
-      const height =
-        ctx.pcbThickness -
-        platedHoleLipHeight * 2 -
-        BOARD_SURFACE_OFFSET.copper * 2 +
-        0.1
+      const height = Math.max(copperSpan - platedHoleLipHeight * 2, M)
+      const topPadBottom = topSurfaceZ - platedHoleLipHeight
+      const bottomPadTop = bottomSurfaceZ + platedHoleLipHeight
+      const centerZ = (topPadBottom + bottomPadTop) / 2
       const rect2d = roundedRectangle({
         size: [padWidth, padHeight],
         roundRadius: rectBorderRadius || 0,
         segments: RECT_PAD_SEGMENTS,
       })
       const extruded = extrudeLinear({ height }, rect2d)
-      return translate([plated_hole.x, plated_hole.y, -height / 2], extruded)
+      return translate(
+        [plated_hole.x, plated_hole.y, centerZ - height / 2],
+        extruded,
+      )
     })()
 
     // --- Cut pads with the hole ---
