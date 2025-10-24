@@ -721,7 +721,7 @@ export class BoardGeomBuilder {
     const finishSegment = () => {
       if (currentSegmentPoints.length >= 2 && currentLayer) {
         const layerSign = currentLayer === "bottom" ? -1 : 1
-        const zPos =
+        const zCenter =
           (layerSign * this.ctx.pcbThickness) / 2 +
           layerSign * BOARD_SURFACE_OFFSET.traces
 
@@ -732,7 +732,7 @@ export class BoardGeomBuilder {
           linePath,
         )
         let traceGeom = translate(
-          [0, 0, zPos],
+          [0, 0, zCenter - M / 2],
           extrudeLinear({ height: M }, expandedPath),
         )
 
@@ -747,7 +747,7 @@ export class BoardGeomBuilder {
         )
         if (startHole) {
           const cuttingCylinder = cylinder({
-            center: [startPointCoords[0], startPointCoords[1], zPos + M / 2],
+            center: [startPointCoords[0], startPointCoords[1], zCenter],
             radius: startHole.diameter / 2 + M,
             height: M,
           })
@@ -757,7 +757,7 @@ export class BoardGeomBuilder {
         const endHole = this.getHoleToCut(endPointCoords[0], endPointCoords[1])
         if (endHole) {
           const cuttingCylinder = cylinder({
-            center: [endPointCoords[0], endPointCoords[1], zPos + M / 2],
+            center: [endPointCoords[0], endPointCoords[1], zCenter],
             radius: endHole.diameter / 2 + M,
             height: M,
           })

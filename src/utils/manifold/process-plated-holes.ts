@@ -11,6 +11,7 @@ import {
   SMOOTH_CIRCLE_SEGMENTS,
   DEFAULT_SMT_PAD_THICKNESS,
   M,
+  BOARD_SURFACE_OFFSET,
 } from "../../geoms/constants"
 import { extractRectBorderRadius } from "../rect-border-radius"
 
@@ -221,7 +222,11 @@ export function processPlatedHolesForManifold(
         Manifold,
         width: padWidth,
         height: padHeight,
-        thickness: pcbThickness - 2 * padThickness + 0.1, // Fill between pads
+        thickness:
+          pcbThickness -
+          2 * padThickness -
+          2 * BOARD_SURFACE_OFFSET.copper +
+          0.1, // Fill between pads
         borderRadius: rectBorderRadius,
       })
       manifoldInstancesForCleanup.push(mainFill)
@@ -233,7 +238,11 @@ export function processPlatedHolesForManifold(
         height: padHeight,
         thickness: padThickness,
         borderRadius: rectBorderRadius,
-      }).translate([0, 0, pcbThickness / 2 - padThickness / 2 + 0.05])
+      }).translate([
+        0,
+        0,
+        pcbThickness / 2 - padThickness / 2 + BOARD_SURFACE_OFFSET.copper,
+      ])
 
       const bottomPad = createRoundedRectPrism({
         Manifold,
@@ -241,7 +250,11 @@ export function processPlatedHolesForManifold(
         height: padHeight,
         thickness: padThickness,
         borderRadius: rectBorderRadius,
-      }).translate([0, 0, -pcbThickness / 2 + padThickness / 2 - 0.05])
+      }).translate([
+        0,
+        0,
+        -pcbThickness / 2 + padThickness / 2 - BOARD_SURFACE_OFFSET.copper,
+      ])
       manifoldInstancesForCleanup.push(topPad, bottomPad)
 
       // Create the plated barrel at the offset position
@@ -325,7 +338,11 @@ export function processPlatedHolesForManifold(
         Manifold,
         width: padWidth!,
         height: padHeight!,
-        thickness: pcbThickness - 2 * padThickness + 0.1, // Fill between pads
+        thickness:
+          pcbThickness -
+          2 * padThickness -
+          2 * BOARD_SURFACE_OFFSET.copper +
+          0.1, // Fill between pads
         borderRadius: rectBorderRadius,
       })
       manifoldInstancesForCleanup.push(mainFill)
@@ -337,7 +354,11 @@ export function processPlatedHolesForManifold(
         height: padHeight!,
         thickness: padThickness,
         borderRadius: rectBorderRadius,
-      }).translate([0, 0, pcbThickness / 2 - padThickness / 2 + 0.05])
+      }).translate([
+        0,
+        0,
+        pcbThickness / 2 - padThickness / 2 + BOARD_SURFACE_OFFSET.copper,
+      ])
 
       const bottomPad = createRoundedRectPrism({
         Manifold,
@@ -345,7 +366,11 @@ export function processPlatedHolesForManifold(
         height: padHeight!,
         thickness: padThickness,
         borderRadius: rectBorderRadius,
-      }).translate([0, 0, -pcbThickness / 2 + padThickness / 2 - 0.05])
+      }).translate([
+        0,
+        0,
+        -pcbThickness / 2 + padThickness / 2 - BOARD_SURFACE_OFFSET.copper,
+      ])
       manifoldInstancesForCleanup.push(topPad, bottomPad)
 
       // Create the plated barrel at the offset position
