@@ -1,11 +1,7 @@
-import React, { useEffect, useState } from "react"
 import { CadViewer } from "src/CadViewer"
-import { Circuit } from "@tscircuit/core"
 
-const createCircuit = async () => {
-  const circuit = new Circuit()
-
-  circuit.add(
+export const ResistorPlatedHoleShowcase = () => (
+  <CadViewer>
     <board width="40mm" height="30mm">
       <resistor
         name="R1"
@@ -58,31 +54,9 @@ const createCircuit = async () => {
       <trace from=".R2 > .pin1" to=".PH_RECT > .1" thickness="0.3mm" />
       <trace from=".R2 > .pin2" to=".PH_PILL > .1" thickness="0.3mm" />
       <trace path={[".PH_CIRCLE > .1", ".PH_PILL > .1"]} thickness="0.3mm" />
-    </board>,
-  )
-
-  await circuit.renderUntilSettled()
-
-  return circuit.getCircuitJson()
-}
-
-export const ResistorPlatedHoleShowcase = () => {
-  const [circuitJson, setCircuitJson] = useState<any>(null)
-
-  useEffect(() => {
-    const renderCircuit = async () => {
-      const json = await createCircuit()
-      setCircuitJson(json)
-    }
-    renderCircuit()
-  }, [])
-
-  if (!circuitJson) {
-    return <div>Loading...</div>
-  }
-
-  return <CadViewer circuitJson={circuitJson as any} />
-}
+    </board>
+  </CadViewer>
+)
 
 export default {
   title: "Plated Holes/Resistor with Plated Holes",
