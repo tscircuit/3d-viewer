@@ -9,6 +9,7 @@ export const ResistorPlatedHoleShowcase = () => (
         resistance="4.7k"
         pcbX={-10}
         pcbY={0}
+        connections={"R2.pin2"}
       />
       <resistor
         name="R2"
@@ -43,7 +44,6 @@ export const ResistorPlatedHoleShowcase = () => (
         pcbX={15}
         pcbY={10}
       />
-      <trace from=".R1 > .pin1" to=".R2 > .pin2" thickness="0.3mm" />
     </board>
   </CadViewer>
 )
