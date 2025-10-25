@@ -8,6 +8,7 @@ import {
   colors as defaultColors,
   MANIFOLD_Z_OFFSET,
   DEFAULT_SMT_PAD_THICKNESS,
+  BOARD_SURFACE_OFFSET,
 } from "../../geoms/constants"
 
 const COPPER_COLOR = new THREE.Color(...defaultColors.copper)
@@ -39,8 +40,8 @@ export function processSmtPadsForManifold(
     const padBaseThickness = DEFAULT_SMT_PAD_THICKNESS
     const zPos =
       pad.layer === "bottom"
-        ? -pcbThickness / 2 - padBaseThickness / 2 - MANIFOLD_Z_OFFSET
-        : pcbThickness / 2 + padBaseThickness / 2 + MANIFOLD_Z_OFFSET
+        ? -pcbThickness / 2 - BOARD_SURFACE_OFFSET.copper
+        : pcbThickness / 2 + BOARD_SURFACE_OFFSET.copper
 
     let padManifoldOp = createPadManifoldOp({
       Manifold,
