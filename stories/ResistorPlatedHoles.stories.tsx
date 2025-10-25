@@ -3,21 +3,36 @@ import { CadViewer } from "src/CadViewer"
 export const ResistorPlatedHoleShowcase = () => (
   <CadViewer>
     <board width="40mm" height="30mm">
-      <resistor
+       <resistor
         name="R1"
         footprint="0805"
-        resistance="4.7k"
-        pcbX={-10}
+        resistance="10k"
+        pcbX={10}
         pcbY={0}
-        connections={{pin1:"R2.pin2"}}
       />
       <resistor
         name="R2"
         footprint="0805"
-        resistance="4.7k"
-        pcbX={10}
+        resistance="10k"
+        pcbX={-10}
         pcbY={0}
       />
+      <resistor
+        name="R3"
+        footprint="0805"
+        resistance="10k"
+        pcbX={0}
+        pcbY={-10}
+      />
+      <resistor
+        name="R4"
+        footprint="0805"
+        resistance="10k"
+        pcbX={0}
+        pcbY={10}
+      />
+      <trace from={".R1 > .pin1"} to={".R2 > .pin2"} />
+      <trace from={".R4 > .pin1"} to={".R3 > .pin2"} />
       <platedhole
         shape="circle"
         holeDiameter={1.2}
