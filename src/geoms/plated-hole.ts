@@ -73,7 +73,7 @@ export const platedHole = (
   if (plated_hole.shape === "circle") {
     const outerDiameter =
       plated_hole.outer_diameter ?? Math.max(plated_hole.hole_diameter, 0)
-    const copperHeight = copperSpan
+    const copperHeight = copperSpan + 0.01
     const copperBody = cylinder({
       center: [plated_hole.x, plated_hole.y, 0],
       radius: outerDiameter / 2,
@@ -207,7 +207,7 @@ export const platedHole = (
     const outerRadius = outerPillHeight / 2
     const rectLength = Math.abs(holeWidth - holeHeight)
     const outerRectLength = Math.abs(outerPillWidth - outerPillHeight)
-    const copperHeight = copperSpan
+    const copperHeight = copperSpan + 0.01
 
     const createPillSection = (
       width: number,
