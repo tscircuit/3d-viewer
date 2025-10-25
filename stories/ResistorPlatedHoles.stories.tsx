@@ -9,7 +9,7 @@ export const ResistorPlatedHoleShowcase = () => (
         resistance="4.7k"
         pcbX={-10}
         pcbY={0}
-        connections={"R2.pin2"}
+        connections={{pin1:"R2.pin2"}}
       />
       <resistor
         name="R2"
