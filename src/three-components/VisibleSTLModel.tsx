@@ -1,6 +1,7 @@
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import type { LayerType } from "../hooks/use-stls-from-geom"
 import { STLModel } from "./STLModel"
+import * as THREE from "three"
 
 interface VisibleSTLModelProps {
   stlData: ArrayBuffer
