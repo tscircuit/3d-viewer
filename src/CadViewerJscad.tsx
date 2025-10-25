@@ -130,7 +130,9 @@ export const CadViewerJscad = forwardRef<
             color={color}
             opacity={index === 0 ? 0.95 : 1}
             layerType={layerType}
-            texture={layerType === "board" ? boardTexture ?? undefined : undefined}
+            texture={
+              layerType === "board" ? (boardTexture ?? undefined) : undefined
+            }
           />
         ))}
         {cad_components.map((cad_component) => (
