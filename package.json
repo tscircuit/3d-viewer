@@ -52,7 +52,7 @@
     "@tscircuit/checks": "^0.0.85",
     "@tscircuit/math-utils": "^0.0.27",
     "@tscircuit/capacity-autorouter": "^0.0.131",
-    "calculate-packing": "^0.0.48",
+    "calculate-packing": "^0.0.50",
     "@types/jsdom": "^21.1.7",
     "@types/react": "19",
     "@types/react-dom": "19",
