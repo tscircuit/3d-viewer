@@ -17,8 +17,14 @@ import type {
 const CadViewerInner = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const [autoRotate, setAutoRotate] = useState(true)
-  const [autoRotateUserToggled, setAutoRotateUserToggled] = useState(false)
+  const [autoRotate, setAutoRotate] = useState(() => {
+    const stored = window.localStorage.getItem("cadViewerAutoRotate")
+    return stored === "false" ? false : true
+  })
+  const [autoRotateUserToggled, setAutoRotateUserToggled] = useState(() => {
+    const stored = window.localStorage.getItem("cadViewerAutoRotateUserToggled")
+    return stored === "true"
+  })
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>("Custom")
   const { visibility, toggleLayer } = useLayerVisibility()
 
@@ -87,6 +93,17 @@ const CadViewerInner = (props: any) => {
   useEffect(() => {
     window.localStorage.setItem("cadViewerEngine", engine)
   }, [engine])
+
+  useEffect(() => {
+    window.localStorage.setItem("cadViewerAutoRotate", String(autoRotate))
+  }, [autoRotate])
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      "cadViewerAutoRotateUserToggled",
+      String(autoRotateUserToggled),
+    )
+  }, [autoRotateUserToggled])
 
   const viewerKey = props.circuitJson
     ? JSON.stringify(props.circuitJson)
