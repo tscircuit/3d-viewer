@@ -206,6 +206,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             <DropdownMenu.Item
               style={{
                 ...itemStyles,
+                ...itemPaddingStyles,
                 backgroundColor:
                   hoveredItem === "autorotate" ? "#404040" : "transparent",
               }}
