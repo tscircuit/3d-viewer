@@ -38,6 +38,7 @@ const CadViewerInner = (props: any) => {
   const cameraControllerRef = useRef<CameraController | null>(null)
   const [cameraControllerReadyVersion, setCameraControllerReadyVersion] =
     useState(0)
+  const lastAppliedControllerVersionRef = useRef(cameraControllerReadyVersion)
   const externalCameraControllerReady = props.onCameraControllerReady as
     | ((controller: CameraController | null) => void)
     | undefined
@@ -89,14 +90,26 @@ const CadViewerInner = (props: any) => {
   const handleCameraPresetSelect = useCallback(
     (preset: CameraPreset) => {
       setCameraPreset(preset)
+      if (preset !== "Custom") {
+        lastAppliedControllerVersionRef.current = cameraControllerReadyVersion
+        cameraControllerRef.current?.animateToPreset(preset)
+      }
       closeMenu()
     },
-    [closeMenu],
+    [cameraControllerReadyVersion, closeMenu],
   )
 
   useEffect(() => {
     if (!cameraControllerRef.current) return
     if (cameraPreset === "Custom") return
+
+    if (
+      lastAppliedControllerVersionRef.current === cameraControllerReadyVersion
+    ) {
+      return
+    }
+
+    lastAppliedControllerVersionRef.current = cameraControllerReadyVersion
     cameraControllerRef.current.animateToPreset(cameraPreset)
   }, [cameraPreset, cameraControllerReadyVersion])
 
