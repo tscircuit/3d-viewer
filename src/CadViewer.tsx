@@ -26,6 +26,13 @@ const CadViewerInner = (props: any) => {
     return stored === "true"
   })
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>("Custom")
+  const [shouldUseOrthographicCamera, setShouldUseOrthographicCamera] =
+    useState(() => {
+      const stored = window.localStorage.getItem(
+        "cadViewerUseOrthographicCamera",
+      )
+      return stored === "true"
+    })
   const { visibility, toggleLayer } = useLayerVisibility()
 
   const cameraControllerRef = useRef<CameraController | null>(null)
@@ -54,6 +61,10 @@ const CadViewerInner = (props: any) => {
   const toggleAutoRotate = useCallback(() => {
     setAutoRotate((prev) => !prev)
     setAutoRotateUserToggled(true)
+  }, [])
+
+  const toggleOrthographicCamera = useCallback(() => {
+    setShouldUseOrthographicCamera((prev) => !prev)
   }, [])
 
   const downloadGltf = useGlobalDownloadGltf()
@@ -105,6 +116,13 @@ const CadViewerInner = (props: any) => {
     )
   }, [autoRotateUserToggled])
 
+  useEffect(() => {
+    window.localStorage.setItem(
+      "cadViewerUseOrthographicCamera",
+      String(shouldUseOrthographicCamera),
+    )
+  }, [shouldUseOrthographicCamera])
+
   const viewerKey = props.circuitJson
     ? JSON.stringify(props.circuitJson)
     : undefined
@@ -131,6 +149,7 @@ const CadViewerInner = (props: any) => {
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
           onCameraControllerReady={handleCameraControllerReady}
+          shouldUseOrthographicCamera={shouldUseOrthographicCamera}
         />
       ) : (
         <CadViewerManifold
@@ -138,6 +157,7 @@ const CadViewerInner = (props: any) => {
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
           onCameraControllerReady={handleCameraControllerReady}
+          shouldUseOrthographicCamera={shouldUseOrthographicCamera}
         />
       )}
       <div
@@ -163,6 +183,7 @@ const CadViewerInner = (props: any) => {
           engine={engine}
           cameraPreset={cameraPreset}
           autoRotate={autoRotate}
+          shouldUseOrthographicCamera={shouldUseOrthographicCamera}
           onEngineSwitch={(newEngine) => {
             setEngine(newEngine)
             closeMenu()
@@ -170,6 +191,10 @@ const CadViewerInner = (props: any) => {
           onCameraPresetSelect={handleCameraPresetSelect}
           onAutoRotateToggle={() => {
             toggleAutoRotate()
+            closeMenu()
+          }}
+          onOrthographicToggle={() => {
+            toggleOrthographicCamera()
             closeMenu()
           }}
           onDownloadGltf={() => {

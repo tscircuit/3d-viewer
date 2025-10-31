@@ -37,6 +37,7 @@ interface Props {
   boardCenter?: { x: number; y: number }
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
+  shouldUseOrthographicCamera?: boolean
 }
 
 export const CadViewerContainer = forwardRef<
@@ -53,6 +54,7 @@ export const CadViewerContainer = forwardRef<
       boardCenter,
       onUserInteraction,
       onCameraControllerReady,
+      shouldUseOrthographicCamera,
     },
     ref,
   ) => {
@@ -87,6 +89,22 @@ export const CadViewerContainer = forwardRef<
       onCameraControllerReady,
     })
 
+    const orthographicFrustumSize = useMemo(() => {
+      const [x, y, z] = initialCameraPosition
+      const maxComponent = Math.max(Math.abs(x), Math.abs(y), Math.abs(z))
+      return Math.max(maxComponent * 2, 10)
+    }, [initialCameraPosition])
+
+    const mutableInitialCameraPosition = useMemo(
+      () =>
+        [
+          initialCameraPosition[0],
+          initialCameraPosition[1],
+          initialCameraPosition[2],
+        ] as [number, number, number],
+      [initialCameraPosition],
+    )
+
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
         <div
@@ -111,7 +129,12 @@ export const CadViewerContainer = forwardRef<
         <Canvas
           ref={ref}
           scene={{ up: new THREE.Vector3(0, 0, 1) }}
-          camera={{ up: [0, 0, 1], position: initialCameraPosition }}
+          camera={{
+            up: [0, 0, 1],
+            position: mutableInitialCameraPosition,
+            type: shouldUseOrthographicCamera ? "orthographic" : "perspective",
+            frustumSize: orthographicFrustumSize,
+          }}
         >
           <CameraAnimator {...cameraAnimatorProps} />
           <RotationTracker />
