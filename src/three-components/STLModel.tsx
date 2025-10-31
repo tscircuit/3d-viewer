@@ -9,12 +9,14 @@ export function STLModel({
   mtlUrl,
   color,
   opacity = 1,
+  texture,
 }: {
   stlUrl?: string
   stlData?: ArrayBuffer
   color?: any
   mtlUrl?: string
   opacity?: number
+  texture?: THREE.Texture
 }) {
   const { rootObject } = useThree()
   const [geom, setGeom] = useState<THREE.BufferGeometry | null>(null)
@@ -46,9 +48,10 @@ export function STLModel({
         : color,
       transparent: opacity !== 1,
       opacity: opacity,
+      map: texture,
     })
     return new THREE.Mesh(geom, material)
-  }, [geom, color, opacity])
+  }, [geom, color, opacity, texture])
 
   useEffect(() => {
     if (!rootObject || !mesh) return

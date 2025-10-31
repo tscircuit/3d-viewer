@@ -107,10 +107,12 @@ export async function convertCircuitJsonTo3dSvg(
         g.color?.[2] ?? 0,
       )
 
-      const material = createBoardMaterial({
+      const material = await createBoardMaterial({
         material: boardData?.material,
         color: baseColor,
         side: THREE.DoubleSide,
+        circuitJson,
+        enableTexture: true,
       })
       const mesh = new THREE.Mesh(geometry, material)
       scene.add(mesh)
