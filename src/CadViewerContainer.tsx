@@ -18,11 +18,24 @@ export type {
   CameraPreset,
 } from "./hooks/useCameraController"
 
+declare global {
+  interface Window {
+    TSCI_MAIN_CAMERA_ROTATION: THREE.Euler
+    TSCI_MAIN_CAMERA_QUATERNION: THREE.Quaternion
+  }
+}
+
+if (typeof window !== "undefined") {
+  window.TSCI_MAIN_CAMERA_ROTATION ??= new THREE.Euler(0, 0, 0)
+  window.TSCI_MAIN_CAMERA_QUATERNION ??= new THREE.Quaternion()
+}
+
 export const RotationTracker = () => {
   const { camera } = useThree()
   useFrame(() => {
     if (camera) {
-      window.TSCI_MAIN_CAMERA_ROTATION = camera.rotation
+      window.TSCI_MAIN_CAMERA_ROTATION.copy(camera.rotation)
+      window.TSCI_MAIN_CAMERA_QUATERNION.copy(camera.quaternion)
     }
   })
 
