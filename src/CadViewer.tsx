@@ -36,6 +36,8 @@ const CadViewerInner = (props: any) => {
   const { visibility, toggleLayer } = useLayerVisibility()
 
   const cameraControllerRef = useRef<CameraController | null>(null)
+  const [cameraControllerReadyVersion, setCameraControllerReadyVersion] =
+    useState(0)
   const externalCameraControllerReady = props.onCameraControllerReady as
     | ((controller: CameraController | null) => void)
     | undefined
@@ -77,22 +79,26 @@ const CadViewerInner = (props: any) => {
     (controller: CameraController | null) => {
       cameraControllerRef.current = controller
       externalCameraControllerReady?.(controller)
-      if (controller && cameraPreset !== "Custom") {
-        controller.animateToPreset(cameraPreset)
+      if (controller) {
+        setCameraControllerReadyVersion((version) => version + 1)
       }
     },
-    [cameraPreset, externalCameraControllerReady],
+    [externalCameraControllerReady],
   )
 
   const handleCameraPresetSelect = useCallback(
     (preset: CameraPreset) => {
       setCameraPreset(preset)
       closeMenu()
-      if (preset === "Custom") return
-      cameraControllerRef.current?.animateToPreset(preset)
     },
     [closeMenu],
   )
+
+  useEffect(() => {
+    if (!cameraControllerRef.current) return
+    if (cameraPreset === "Custom") return
+    cameraControllerRef.current.animateToPreset(cameraPreset)
+  }, [cameraPreset, cameraControllerReadyVersion])
 
   useEffect(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
