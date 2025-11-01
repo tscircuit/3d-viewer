@@ -143,7 +143,14 @@ export function createSilkscreenTextureForLayer({
       halfHeightPx,
     )
 
-    const drawRoundedRect = (
+    const hasStroke = rect.has_stroke ?? false
+    const isFilled = rect.is_filled ?? true
+    const isDashed = rect.is_stroke_dashed ?? false
+    const strokeWidthPx = hasStroke
+      ? coerceDimensionToMm(rect.stroke_width, 0.1) * traceTextureResolution
+      : 0
+
+    const drawRoundedRectPath = (
       x: number,
       y: number,
       rectWidth: number,
@@ -168,16 +175,31 @@ export function createSilkscreenTextureForLayer({
         ctx.quadraticCurveTo(x, y, x + r, y)
         ctx.closePath()
       }
-      ctx.fill()
     }
 
-    drawRoundedRect(
+    drawRoundedRectPath(
       -halfWidthPx,
       -halfHeightPx,
       halfWidthPx * 2,
       halfHeightPx * 2,
       borderRadiusPx,
     )
+
+    if (isFilled) {
+      ctx.fill()
+    }
+
+    if (hasStroke && strokeWidthPx > 0) {
+      ctx.lineWidth = strokeWidthPx
+      if (isDashed) {
+        const dashLength = Math.max(strokeWidthPx * 2, 1)
+        ctx.setLineDash([dashLength, dashLength])
+      }
+      ctx.stroke()
+      if (isDashed) {
+        ctx.setLineDash([])
+      }
+    }
 
     ctx.restore()
   })

@@ -4,6 +4,7 @@ import { roundedRectangle } from "@jscad/modeling/src/primitives"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { translate, rotateZ } from "@jscad/modeling/src/operations/transforms"
 import { colorize } from "@jscad/modeling/src/colors"
+import { subtract, union } from "@jscad/modeling/src/operations/booleans"
 import type { GeomContext } from "../GeomContext"
 import { coerceDimensionToMm, parseDimensionToMm } from "../utils/units"
 import { clampRectBorderRadius, extractRectBorderRadius } from "../utils/rect-border-radius"
@@ -31,13 +32,52 @@ export function createSilkscreenRectGeom(
       : rawBorderRadius,
   )
 
-  const rect2d = roundedRectangle({
-    size: [width, height],
-    roundRadius: borderRadius,
-    segments: RECT_SEGMENTS,
-  })
+  const createRectGeom = (rectWidth: number, rectHeight: number, radius: number) =>
+    extrudeLinear(
+      { height: 0.012 },
+      roundedRectangle({
+        size: [rectWidth, rectHeight],
+        roundRadius: radius,
+        segments: RECT_SEGMENTS,
+      }),
+    )
 
-  let rectGeom = extrudeLinear({ height: 0.012 }, rect2d)
+  const isFilled = rect.is_filled ?? true
+  const hasStroke = rect.has_stroke ?? false
+  const strokeWidth = hasStroke
+    ? coerceDimensionToMm(rect.stroke_width, 0.1)
+    : 0
+
+  let fillGeom: Geom3 | undefined
+  if (isFilled) {
+    fillGeom = createRectGeom(width, height, borderRadius)
+  }
+
+  let strokeGeom: Geom3 | undefined
+  if (hasStroke && strokeWidth > 0) {
+    const outerGeom = createRectGeom(width, height, borderRadius)
+    const innerWidth = width - strokeWidth * 2
+    const innerHeight = height - strokeWidth * 2
+
+    if (innerWidth > 0 && innerHeight > 0) {
+      const innerRadius = clampRectBorderRadius(
+        innerWidth,
+        innerHeight,
+        Math.max(borderRadius - strokeWidth, 0),
+      )
+      const innerGeom = createRectGeom(innerWidth, innerHeight, innerRadius)
+      strokeGeom = subtract(outerGeom, innerGeom)
+    } else {
+      strokeGeom = outerGeom
+    }
+  }
+
+  let rectGeom = fillGeom
+  if (strokeGeom) {
+    rectGeom = rectGeom ? union(rectGeom, strokeGeom) : strokeGeom
+  }
+
+  if (!rectGeom) return undefined
 
   const rotationDeg = rect.ccw_rotation ?? rect.rotation ?? 0
   if (rotationDeg) {
