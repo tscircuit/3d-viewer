@@ -12,9 +12,11 @@ interface ContextMenuProps {
   engine: "jscad" | "manifold"
   cameraPreset: CameraPreset
   autoRotate: boolean
+  shouldUseOrthographicCamera: boolean
   onEngineSwitch: (engine: "jscad" | "manifold") => void
   onCameraPresetSelect: (preset: CameraPreset) => void
   onAutoRotateToggle: () => void
+  onOrthographicToggle: () => void
   onDownloadGltf: () => void
 }
 
@@ -102,9 +104,11 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   engine,
   cameraPreset,
   autoRotate,
+  shouldUseOrthographicCamera,
   onEngineSwitch,
   onCameraPresetSelect,
   onAutoRotateToggle,
+  onOrthographicToggle,
   onDownloadGltf,
 }) => {
   const [cameraSubOpen, setCameraSubOpen] = useState(false)
@@ -223,6 +227,29 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               </span>
               <span style={{ display: "flex", alignItems: "center" }}>
                 Auto rotate
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                ...itemPaddingStyles,
+                backgroundColor:
+                  hoveredItem === "orthographic" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                onOrthographicToggle()
+              }}
+              onMouseEnter={() => setHoveredItem("orthographic")}
+              onMouseLeave={() => setHoveredItem(null)}
+            >
+              <span style={iconContainerStyles}>
+                {shouldUseOrthographicCamera && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Orthographic camera
               </span>
             </DropdownMenu.Item>
 

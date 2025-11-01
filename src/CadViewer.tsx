@@ -26,9 +26,19 @@ const CadViewerInner = (props: any) => {
     return stored === "true"
   })
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>("Custom")
+  const [shouldUseOrthographicCamera, setShouldUseOrthographicCamera] =
+    useState(() => {
+      const stored = window.localStorage.getItem(
+        "cadViewerUseOrthographicCamera",
+      )
+      return stored === "true"
+    })
   const { visibility, toggleLayer } = useLayerVisibility()
 
   const cameraControllerRef = useRef<CameraController | null>(null)
+  const [cameraControllerReadyVersion, setCameraControllerReadyVersion] =
+    useState(0)
+  const lastAppliedControllerVersionRef = useRef(cameraControllerReadyVersion)
   const externalCameraControllerReady = props.onCameraControllerReady as
     | ((controller: CameraController | null) => void)
     | undefined
@@ -56,6 +66,10 @@ const CadViewerInner = (props: any) => {
     setAutoRotateUserToggled(true)
   }, [])
 
+  const toggleOrthographicCamera = useCallback(() => {
+    setShouldUseOrthographicCamera((prev) => !prev)
+  }, [])
+
   const downloadGltf = useGlobalDownloadGltf()
 
   const closeMenu = useCallback(() => {
@@ -66,22 +80,38 @@ const CadViewerInner = (props: any) => {
     (controller: CameraController | null) => {
       cameraControllerRef.current = controller
       externalCameraControllerReady?.(controller)
-      if (controller && cameraPreset !== "Custom") {
-        controller.animateToPreset(cameraPreset)
+      if (controller) {
+        setCameraControllerReadyVersion((version) => version + 1)
       }
     },
-    [cameraPreset, externalCameraControllerReady],
+    [externalCameraControllerReady],
   )
 
   const handleCameraPresetSelect = useCallback(
     (preset: CameraPreset) => {
       setCameraPreset(preset)
+      if (preset !== "Custom") {
+        lastAppliedControllerVersionRef.current = cameraControllerReadyVersion
+        cameraControllerRef.current?.animateToPreset(preset)
+      }
       closeMenu()
-      if (preset === "Custom") return
-      cameraControllerRef.current?.animateToPreset(preset)
     },
-    [closeMenu],
+    [cameraControllerReadyVersion, closeMenu],
   )
+
+  useEffect(() => {
+    if (!cameraControllerRef.current) return
+    if (cameraPreset === "Custom") return
+
+    if (
+      lastAppliedControllerVersionRef.current === cameraControllerReadyVersion
+    ) {
+      return
+    }
+
+    lastAppliedControllerVersionRef.current = cameraControllerReadyVersion
+    cameraControllerRef.current.animateToPreset(cameraPreset)
+  }, [cameraPreset, cameraControllerReadyVersion])
 
   useEffect(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
@@ -104,6 +134,13 @@ const CadViewerInner = (props: any) => {
       String(autoRotateUserToggled),
     )
   }, [autoRotateUserToggled])
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      "cadViewerUseOrthographicCamera",
+      String(shouldUseOrthographicCamera),
+    )
+  }, [shouldUseOrthographicCamera])
 
   const viewerKey = props.circuitJson
     ? JSON.stringify(props.circuitJson)
@@ -131,6 +168,7 @@ const CadViewerInner = (props: any) => {
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
           onCameraControllerReady={handleCameraControllerReady}
+          shouldUseOrthographicCamera={shouldUseOrthographicCamera}
         />
       ) : (
         <CadViewerManifold
@@ -138,6 +176,7 @@ const CadViewerInner = (props: any) => {
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
           onCameraControllerReady={handleCameraControllerReady}
+          shouldUseOrthographicCamera={shouldUseOrthographicCamera}
         />
       )}
       <div
@@ -163,6 +202,7 @@ const CadViewerInner = (props: any) => {
           engine={engine}
           cameraPreset={cameraPreset}
           autoRotate={autoRotate}
+          shouldUseOrthographicCamera={shouldUseOrthographicCamera}
           onEngineSwitch={(newEngine) => {
             setEngine(newEngine)
             closeMenu()
@@ -170,6 +210,10 @@ const CadViewerInner = (props: any) => {
           onCameraPresetSelect={handleCameraPresetSelect}
           onAutoRotateToggle={() => {
             toggleAutoRotate()
+            closeMenu()
+          }}
+          onOrthographicToggle={() => {
+            toggleOrthographicCamera()
             closeMenu()
           }}
           onDownloadGltf={() => {

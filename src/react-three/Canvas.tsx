@@ -19,10 +19,17 @@ declare global {
   }
 }
 
+type CanvasCameraProps = {
+  up?: [number, number, number]
+  position?: [number, number, number]
+  type?: "perspective" | "orthographic"
+  frustumSize?: number
+}
+
 interface CanvasProps {
   children: React.ReactNode
   scene?: Record<string, any>
-  camera?: Record<string, any>
+  camera?: CanvasCameraProps
   style?: React.CSSProperties
 }
 
@@ -35,6 +42,11 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
     const frameListeners = useRef<Array<(time: number, delta: number) => void>>(
       [],
     )
+    const lastCameraStateRef = useRef<{
+      position: THREE.Vector3
+      quaternion: THREE.Quaternion
+      up: THREE.Vector3
+    } | null>(null)
 
     const addFrameListener = useCallback(
       (listener: (time: number, delta: number) => void) => {
@@ -67,30 +79,47 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
 
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
       configureRenderer(renderer)
-      renderer.setSize(
-        mountRef.current.clientWidth,
-        mountRef.current.clientHeight,
-      )
+      const width = mountRef.current.clientWidth || 1
+      const height = mountRef.current.clientHeight || 1
+      renderer.setSize(width, height)
       renderer.setPixelRatio(window.devicePixelRatio)
       mountRef.current.appendChild(renderer.domElement)
 
-      const camera = new THREE.PerspectiveCamera(
-        75,
-        mountRef.current.clientWidth / mountRef.current.clientHeight,
-        0.1,
-        1000,
-      )
-      if (cameraProps?.up) {
-        camera.up.set(cameraProps.up[0], cameraProps.up[1], cameraProps.up[2])
+      const isOrthographic = cameraProps?.type === "orthographic"
+      const frustumSize = cameraProps?.frustumSize ?? 20
+      const aspect = width / height || 1
+
+      const camera = isOrthographic
+        ? new THREE.OrthographicCamera(
+            (-frustumSize * aspect) / 2,
+            (frustumSize * aspect) / 2,
+            frustumSize / 2,
+            -frustumSize / 2,
+            0.1,
+            2000,
+          )
+        : new THREE.PerspectiveCamera(75, aspect, 0.1, 1000)
+
+      const previousState = lastCameraStateRef.current
+      if (previousState) {
+        camera.position.copy(previousState.position)
+        camera.quaternion.copy(previousState.quaternion)
+        camera.up.copy(previousState.up)
+        camera.updateMatrixWorld()
+      } else {
+        if (cameraProps?.up) {
+          camera.up.set(cameraProps.up[0], cameraProps.up[1], cameraProps.up[2])
+        }
+        if (cameraProps?.position) {
+          camera.position.set(
+            cameraProps.position[0],
+            cameraProps.position[1],
+            cameraProps.position[2],
+          )
+        }
+        camera.lookAt(0, 0, 0)
       }
-      if (cameraProps?.position) {
-        camera.position.set(
-          cameraProps.position[0],
-          cameraProps.position[1],
-          cameraProps.position[2],
-        )
-      }
-      camera.lookAt(0, 0, 0)
+      camera.updateProjectionMatrix()
 
       scene.add(rootObject.current)
       window.__TSCIRCUIT_THREE_OBJECT = rootObject.current
@@ -117,21 +146,34 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
       animate()
 
       const handleResize = () => {
-        if (mountRef.current) {
-          camera.aspect =
-            mountRef.current.clientWidth / mountRef.current.clientHeight
-          camera.updateProjectionMatrix()
-          renderer.setSize(
-            mountRef.current.clientWidth,
-            mountRef.current.clientHeight,
-          )
+        if (!mountRef.current) return
+        const newWidth = mountRef.current.clientWidth || 1
+        const newHeight = mountRef.current.clientHeight || 1
+        const newAspect = newWidth / newHeight || 1
+        if (camera instanceof THREE.PerspectiveCamera) {
+          camera.aspect = newAspect
+        } else if (camera instanceof THREE.OrthographicCamera) {
+          const nextFrustumSize = cameraProps?.frustumSize ?? frustumSize
+          const halfHeight = nextFrustumSize / 2
+          const halfWidth = halfHeight * newAspect
+          camera.left = -halfWidth
+          camera.right = halfWidth
+          camera.top = halfHeight
+          camera.bottom = -halfHeight
         }
+        camera.updateProjectionMatrix()
+        renderer.setSize(newWidth, newHeight)
       }
       window.addEventListener("resize", handleResize)
 
       return () => {
         window.removeEventListener("resize", handleResize)
         cancelAnimationFrame(animationFrameId)
+        lastCameraStateRef.current = {
+          position: camera.position.clone(),
+          quaternion: camera.quaternion.clone(),
+          up: camera.up.clone(),
+        }
         if (mountRef.current && renderer.domElement) {
           mountRef.current.removeChild(renderer.domElement)
         }
@@ -140,8 +182,15 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
         if (window.__TSCIRCUIT_THREE_OBJECT === rootObject.current) {
           window.__TSCIRCUIT_THREE_OBJECT = undefined
         }
+        setContextState(null)
       }
-    }, [scene, addFrameListener, removeFrameListener])
+    }, [
+      scene,
+      addFrameListener,
+      removeFrameListener,
+      cameraProps?.type,
+      cameraProps?.frustumSize,
+    ])
 
     return (
       <div ref={mountRef} style={{ width: "100%", height: "100%", ...style }}>

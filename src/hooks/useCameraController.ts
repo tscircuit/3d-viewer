@@ -48,18 +48,15 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
     toPosition: THREE.Vector3
     fromTarget: THREE.Vector3
     toTarget: THREE.Vector3
+    fromQuaternion: THREE.Quaternion
     toQuaternion: THREE.Quaternion
-    rollFrom: THREE.Quaternion
-    rollTo: THREE.Quaternion
+    finalQuaternion: THREE.Quaternion
+    finalUp: THREE.Vector3
     startTime: number
     duration: number
   } | null>(null)
   const tempQuaternion = useRef(new THREE.Quaternion())
   const tempTarget = useRef(new THREE.Vector3())
-  const tempUp = useRef(new THREE.Vector3())
-  const tempRoll = useRef(new THREE.Quaternion())
-  const tempRollTarget = useRef(new THREE.Quaternion())
-  const baseOrientationHelper = useRef(new THREE.Object3D())
   const orientationHelper = useRef(new THREE.Object3D())
 
   const animateTo = useCallback<CameraController["animateTo"]>(
@@ -76,48 +73,58 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
       const resolvedTarget = target
         ? new THREE.Vector3(target[0], target[1], target[2])
         : defaultTarget.clone()
-      const resolvedUp = new THREE.Vector3(...(up ?? [0, 0, 1])).normalize()
+      const resolvedUp = new THREE.Vector3(...(up ?? [0, 0, 1]))
+      const viewDirection = resolvedTarget.clone().sub(toPosition).normalize()
+
+      if (viewDirection.lengthSq() > 0) {
+        const cross = new THREE.Vector3().crossVectors(
+          viewDirection,
+          resolvedUp,
+        )
+        if (cross.lengthSq() < 1e-6) {
+          const fallbackAxes = [
+            new THREE.Vector3(0, 1, 0),
+            new THREE.Vector3(1, 0, 0),
+            new THREE.Vector3(0, 0, 1),
+          ]
+          for (const axis of fallbackAxes) {
+            if (Math.abs(viewDirection.dot(axis)) < 0.95) {
+              resolvedUp.copy(axis)
+              break
+            }
+          }
+        }
+      }
+
+      resolvedUp.normalize()
 
       const toOrientationHelper = orientationHelper.current
       toOrientationHelper.position.copy(toPosition)
       toOrientationHelper.up.copy(resolvedUp)
       toOrientationHelper.lookAt(resolvedTarget)
 
-      const toQuaternion = toOrientationHelper.quaternion.clone()
-      const fromQuaternion = camera.quaternion.clone()
+      const toQuaternion = toOrientationHelper.quaternion.clone().normalize()
+      const fromQuaternion = camera.quaternion.clone().normalize()
       const fromPosition = camera.position.clone()
       const fromTarget = currentTarget.clone()
 
-      const baseHelper = baseOrientationHelper.current
-      baseHelper.up.set(0, 0, 1)
-      baseHelper.position.copy(fromPosition)
-      baseHelper.lookAt(fromTarget)
-      const baseFromQuaternion = baseHelper.quaternion.clone()
-
-      baseHelper.up.set(0, 0, 1)
-      baseHelper.position.copy(toPosition)
-      baseHelper.lookAt(resolvedTarget)
-      const baseToQuaternion = baseHelper.quaternion.clone()
-
-      const rollFrom = baseFromQuaternion
-        .clone()
-        .invert()
-        .multiply(fromQuaternion)
-        .normalize()
-      const rollTo = baseToQuaternion
-        .clone()
-        .invert()
-        .multiply(toQuaternion)
-        .normalize()
+      const slerpTarget = toQuaternion.clone()
+      if (fromQuaternion.dot(slerpTarget) < 0) {
+        slerpTarget.x *= -1
+        slerpTarget.y *= -1
+        slerpTarget.z *= -1
+        slerpTarget.w *= -1
+      }
 
       animationRef.current = {
         fromPosition,
         toPosition,
         fromTarget,
         toTarget: resolvedTarget,
-        toQuaternion,
-        rollFrom,
-        rollTo,
+        fromQuaternion,
+        toQuaternion: slerpTarget,
+        finalQuaternion: toQuaternion,
+        finalUp: resolvedUp.clone(),
         startTime: performance.now(),
         duration: durationMs,
       }
@@ -141,9 +148,10 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
       toPosition,
       fromTarget,
       toTarget,
+      fromQuaternion,
       toQuaternion,
-      rollFrom,
-      rollTo,
+      finalQuaternion,
+      finalUp,
       startTime,
       duration,
     } = animationRef.current
@@ -157,35 +165,10 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
     const nextTarget = tempTarget.current
     nextTarget.copy(fromTarget).lerp(toTarget, eased)
 
-    const baseHelper = baseOrientationHelper.current
-    baseHelper.up.set(0, 0, 1)
-    baseHelper.position.copy(camera.position)
-    baseHelper.lookAt(nextTarget)
+    const interpolatedQuaternion = tempQuaternion.current
+    interpolatedQuaternion.copy(fromQuaternion).slerp(toQuaternion, eased)
 
-    const baseQuaternion = tempQuaternion.current
-    baseQuaternion.copy(baseHelper.quaternion)
-
-    const interpolatedRoll = tempRoll.current
-    interpolatedRoll.copy(rollFrom)
-    const rollTarget = tempRollTarget.current
-    rollTarget.copy(rollTo)
-    if (rollFrom.dot(rollTo) < 0) {
-      rollTarget.x *= -1
-      rollTarget.y *= -1
-      rollTarget.z *= -1
-      rollTarget.w *= -1
-    }
-    rollTarget.normalize()
-    interpolatedRoll.slerp(rollTarget, eased)
-
-    camera.quaternion
-      .copy(baseQuaternion)
-      .multiply(interpolatedRoll)
-      .normalize()
-
-    const upVector = tempUp.current
-    upVector.set(0, 1, 0).applyQuaternion(camera.quaternion).normalize()
-    camera.up.copy(upVector)
+    camera.quaternion.copy(interpolatedQuaternion)
 
     controlsRef.current?.target.copy(nextTarget)
     camera.updateMatrixWorld()
@@ -193,8 +176,8 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
 
     if (progress >= 1) {
       camera.position.copy(toPosition)
-      camera.quaternion.copy(toQuaternion)
-      camera.up.set(0, 0, 1)
+      camera.quaternion.copy(finalQuaternion)
+      camera.up.copy(finalUp)
       camera.updateMatrixWorld()
       controlsRef.current?.target.copy(toTarget)
       controlsRef.current?.update()
