@@ -61,20 +61,6 @@ const silkscreenRectCircuit = [
   },
   {
     type: "pcb_silkscreen_rect",
-    pcb_silkscreen_rect_id: "pcb_silkscreen_rect_dashed",
-    pcb_component_id: "pcb_component_1",
-    center: { x: 2.5, y: 1.5 },
-    width: "3.5mm",
-    height: "1.5mm",
-    layer: "top",
-    stroke_width: "0.2mm",
-    corner_radius: "0.3mm",
-    is_filled: false,
-    has_stroke: true,
-    is_stroke_dashed: true,
-  },
-  {
-    type: "pcb_silkscreen_rect",
     pcb_silkscreen_rect_id: "pcb_silkscreen_rect_bottom",
     pcb_component_id: "pcb_component_bottom",
     center: { x: 0, y: 0 },
@@ -85,7 +71,6 @@ const silkscreenRectCircuit = [
     is_filled: true,
     has_stroke: true,
     corner_radius: "0.6mm",
-    ccw_rotation: 30,
   },
 ]
 

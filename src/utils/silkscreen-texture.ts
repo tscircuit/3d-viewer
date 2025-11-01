@@ -117,23 +117,15 @@ export function createSilkscreenTextureForLayer({
 
     const rawRadius = extractRectBorderRadius(rect)
     const borderRadiusInput =
-      typeof rawRadius === "string"
-        ? parseDimensionToMm(rawRadius)
-        : rawRadius
+      typeof rawRadius === "string" ? parseDimensionToMm(rawRadius) : rawRadius
     const borderRadiusMm = clampRectBorderRadius(
       width,
       height,
       borderRadiusInput,
     )
 
-    const rotationDeg = rect.ccw_rotation ?? rect.rotation ?? 0
-    const rotationRad = (rotationDeg * Math.PI) / 180
-
     ctx.save()
     ctx.translate(canvasCenterX, canvasCenterY)
-    if (rotationRad) {
-      ctx.rotate(layer === "bottom" ? -rotationRad : rotationRad)
-    }
 
     const halfWidthPx = (width / 2) * traceTextureResolution
     const halfHeightPx = (height / 2) * traceTextureResolution

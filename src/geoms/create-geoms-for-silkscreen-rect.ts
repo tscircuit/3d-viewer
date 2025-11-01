@@ -7,7 +7,10 @@ import { colorize } from "@jscad/modeling/src/colors"
 import { subtract, union } from "@jscad/modeling/src/operations/booleans"
 import type { GeomContext } from "../GeomContext"
 import { coerceDimensionToMm, parseDimensionToMm } from "../utils/units"
-import { clampRectBorderRadius, extractRectBorderRadius } from "../utils/rect-border-radius"
+import {
+  clampRectBorderRadius,
+  extractRectBorderRadius,
+} from "../utils/rect-border-radius"
 import { M } from "./constants"
 
 const RECT_SEGMENTS = 64
@@ -32,7 +35,11 @@ export function createSilkscreenRectGeom(
       : rawBorderRadius,
   )
 
-  const createRectGeom = (rectWidth: number, rectHeight: number, radius: number) =>
+  const createRectGeom = (
+    rectWidth: number,
+    rectHeight: number,
+    radius: number,
+  ) =>
     extrudeLinear(
       { height: 0.012 },
       roundedRectangle({
@@ -79,15 +86,8 @@ export function createSilkscreenRectGeom(
 
   if (!rectGeom) return undefined
 
-  const rotationDeg = rect.ccw_rotation ?? rect.rotation ?? 0
-  if (rotationDeg) {
-    const rotationRad = (rotationDeg * Math.PI) / 180
-    rectGeom = rotateZ(rotationRad, rectGeom)
-  }
-
   const layerSign = rect.layer === "bottom" ? -1 : 1
-  const zPos =
-    (layerSign * ctx.pcbThickness) / 2 + layerSign * M * 1.5
+  const zPos = (layerSign * ctx.pcbThickness) / 2 + layerSign * M * 1.5
 
   rectGeom = translate([centerX, centerY, zPos], rectGeom)
 
