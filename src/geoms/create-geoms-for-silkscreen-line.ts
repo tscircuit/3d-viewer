@@ -8,10 +8,7 @@ import { translate } from "@jscad/modeling/src/operations/transforms"
 import { colorize } from "@jscad/modeling/src/colors"
 import type { GeomContext } from "../GeomContext"
 import { M } from "./constants"
-import {
-  coerceDimensionToMm,
-  parseDimensionToMm,
-} from "../utils/units"
+import { coerceDimensionToMm, parseDimensionToMm } from "../utils/units"
 
 export function createSilkscreenLineGeom(
   sl: PcbSilkscreenLine,

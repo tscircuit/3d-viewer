@@ -3,8 +3,7 @@ const MM_PER_MIL = MM_PER_INCH / 1000
 
 export type DimensionValue = number | string | null | undefined
 
-const dimensionRegex =
-  /^\s*(-?\d*(?:\.\d+)?)(?:\s*(mm|mil|inch|in|"))?\s*$/i
+const dimensionRegex = /^\s*(-?\d*(?:\.\d+)?)(?:\s*(mm|mil|inch|in|"))?\s*$/i
 
 function normalizeUnit(unit?: string | null): string | undefined {
   if (!unit) return undefined
@@ -14,9 +13,7 @@ function normalizeUnit(unit?: string | null): string | undefined {
   return normalized
 }
 
-export function parseDimensionToMm(
-  value: DimensionValue,
-): number | undefined {
+export function parseDimensionToMm(value: DimensionValue): number | undefined {
   if (value === null || value === undefined) return undefined
   if (typeof value === "number") {
     return Number.isFinite(value) ? value : undefined

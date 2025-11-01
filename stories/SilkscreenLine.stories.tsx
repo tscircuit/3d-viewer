@@ -41,7 +41,7 @@ const silkscreenLineCircuit = [
     x1: "1mm",
     y1: "1mm",
     x2: "1mm",
-    y2: "4mm",
+    y2: "2mm",
     layer: "bottom",
   },
 ]
