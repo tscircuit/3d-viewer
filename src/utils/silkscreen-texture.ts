@@ -25,10 +25,18 @@ export function createSilkscreenTextureForLayer({
 }): THREE.CanvasTexture | null {
   const pcbSilkscreenTexts = su(circuitJson).pcb_silkscreen_text.list()
   const pcbSilkscreenPaths = su(circuitJson).pcb_silkscreen_path.list()
+  const pcbSilkscreenLines = su(circuitJson).pcb_silkscreen_line.list()
 
   const textsOnLayer = pcbSilkscreenTexts.filter((t) => t.layer === layer)
   const pathsOnLayer = pcbSilkscreenPaths.filter((p) => p.layer === layer)
-  if (textsOnLayer.length === 0 && pathsOnLayer.length === 0) return null
+  const linesOnLayer = pcbSilkscreenLines.filter((l) => l.layer === layer)
+  if (
+    textsOnLayer.length === 0 &&
+    pathsOnLayer.length === 0 &&
+    linesOnLayer.length === 0
+  ) {
+    return null
+  }
 
   const canvas = document.createElement("canvas")
   const canvasWidth = Math.floor(boardData.width * traceTextureResolution)
@@ -45,6 +53,28 @@ export function createSilkscreenTextureForLayer({
 
   ctx.strokeStyle = silkscreenColor
   ctx.fillStyle = silkscreenColor
+
+  // Draw Silkscreen Lines
+  linesOnLayer.forEach((lineEl: any) => {
+    ctx.beginPath()
+    ctx.lineWidth = (lineEl.stroke_width || 0.1) * traceTextureResolution
+    ctx.lineCap = "round"
+    const startX =
+      (lineEl.x1 - boardData.center.x + boardData.width / 2) *
+      traceTextureResolution
+    const startY =
+      (-(lineEl.y1 - boardData.center.y) + boardData.height / 2) *
+      traceTextureResolution
+    const endX =
+      (lineEl.x2 - boardData.center.x + boardData.width / 2) *
+      traceTextureResolution
+    const endY =
+      (-(lineEl.y2 - boardData.center.y) + boardData.height / 2) *
+      traceTextureResolution
+    ctx.moveTo(startX, startY)
+    ctx.lineTo(endX, endY)
+    ctx.stroke()
+  })
 
   // Draw Silkscreen Paths
   pathsOnLayer.forEach((path: any) => {
