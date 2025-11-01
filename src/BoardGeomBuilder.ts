@@ -10,6 +10,7 @@ import type {
   PcbSilkscreenText,
   PcbSilkscreenPath,
   PcbSilkscreenLine,
+  PcbSilkscreenRect,
   Point,
   PcbCutout,
   PcbCopperPour,
@@ -47,6 +48,7 @@ import type { Vec2 } from "@jscad/modeling/src/maths/types"
 import { createSilkscreenTextGeoms } from "./geoms/create-geoms-for-silkscreen-text"
 import { createSilkscreenPathGeom } from "./geoms/create-geoms-for-silkscreen-path"
 import { createSilkscreenLineGeom } from "./geoms/create-geoms-for-silkscreen-line"
+import { createSilkscreenRectGeom } from "./geoms/create-geoms-for-silkscreen-rect"
 import { createGeom2FromBRep } from "./geoms/brep-converter"
 import type { GeomContext } from "./GeomContext"
 import {
@@ -88,6 +90,7 @@ type BuilderState =
   | "processing_vias"
   | "processing_silkscreen_text"
   | "processing_silkscreen_lines"
+  | "processing_silkscreen_rects"
   | "processing_silkscreen_paths"
   | "processing_cutouts"
   | "processing_copper_pours"
@@ -107,6 +110,7 @@ const buildStateOrder: BuilderState[] = [
   "processing_vias",
   "processing_silkscreen_text",
   "processing_silkscreen_lines",
+  "processing_silkscreen_rects",
   "processing_silkscreen_paths",
   "finalizing",
   "done",
@@ -123,6 +127,7 @@ export class BoardGeomBuilder {
   private silkscreenTexts: PcbSilkscreenText[]
   private silkscreenPaths: PcbSilkscreenPath[]
   private silkscreenLines: PcbSilkscreenLine[]
+  private silkscreenRects: PcbSilkscreenRect[]
   private pcb_cutouts: PcbCutout[]
   private pcb_copper_pours: PcbCopperPour[]
 
@@ -135,6 +140,7 @@ export class BoardGeomBuilder {
   private silkscreenTextGeoms: Geom3[] = []
   private silkscreenPathGeoms: Geom3[] = []
   private silkscreenLineGeoms: Geom3[] = []
+  private silkscreenRectGeoms: Geom3[] = []
   private copperPourGeoms: Geom3[] = []
   private boardClipGeom: Geom3 | null = null
 
@@ -185,6 +191,7 @@ export class BoardGeomBuilder {
     this.silkscreenTexts = su(circuitJson).pcb_silkscreen_text.list()
     this.silkscreenPaths = su(circuitJson).pcb_silkscreen_path.list()
     this.silkscreenLines = su(circuitJson).pcb_silkscreen_line.list()
+    this.silkscreenRects = su(circuitJson).pcb_silkscreen_rect.list()
     this.pcb_cutouts = su(circuitJson).pcb_cutout.list()
     this.pcb_copper_pours = circuitJson.filter(
       (e) => e.type === "pcb_copper_pour",
@@ -304,6 +311,15 @@ export class BoardGeomBuilder {
         case "processing_silkscreen_lines":
           if (this.currentIndex < this.silkscreenLines.length) {
             this.processSilkscreenLine(this.silkscreenLines[this.currentIndex]!)
+            this.currentIndex++
+          } else {
+            this.goToNextState()
+          }
+          break
+
+        case "processing_silkscreen_rects":
+          if (this.currentIndex < this.silkscreenRects.length) {
+            this.processSilkscreenRect(this.silkscreenRects[this.currentIndex]!)
             this.currentIndex++
           } else {
             this.goToNextState()
@@ -913,6 +929,13 @@ export class BoardGeomBuilder {
     }
   }
 
+  private processSilkscreenRect(sr: PcbSilkscreenRect) {
+    const rectGeom = createSilkscreenRectGeom(sr, this.ctx)
+    if (rectGeom) {
+      this.silkscreenRectGeoms.push(rectGeom)
+    }
+  }
+
   private finalize() {
     if (!this.boardGeom) return
     // Colorize the final board geometry
@@ -929,6 +952,7 @@ export class BoardGeomBuilder {
       ...this.copperPourGeoms,
       ...this.silkscreenTextGeoms,
       ...this.silkscreenLineGeoms,
+      ...this.silkscreenRectGeoms,
       ...this.silkscreenPathGeoms,
     ]
 
