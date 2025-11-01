@@ -8,17 +8,28 @@ import { translate } from "@jscad/modeling/src/operations/transforms"
 import { colorize } from "@jscad/modeling/src/colors"
 import type { GeomContext } from "../GeomContext"
 import { M } from "./constants"
+import {
+  coerceDimensionToMm,
+  parseDimensionToMm,
+} from "../utils/units"
 
 export function createSilkscreenLineGeom(
   sl: PcbSilkscreenLine,
   ctx: GeomContext,
-): Geom3 {
+): Geom3 | undefined {
+  const x1 = parseDimensionToMm(sl.x1) ?? 0
+  const y1 = parseDimensionToMm(sl.y1) ?? 0
+  const x2 = parseDimensionToMm(sl.x2) ?? 0
+  const y2 = parseDimensionToMm(sl.y2) ?? 0
+
+  if (x1 === x2 && y1 === y2) return undefined
+
   const routePoints: Vec2[] = [
-    [sl.x1, sl.y1],
-    [sl.x2, sl.y2],
+    [x1, y1],
+    [x2, y2],
   ]
   const baseLine = line(routePoints)
-  const strokeWidth = sl.stroke_width || 0.1
+  const strokeWidth = coerceDimensionToMm(sl.stroke_width, 0.1)
 
   const expandedLine = expand(
     { delta: strokeWidth / 2, corners: "round" },

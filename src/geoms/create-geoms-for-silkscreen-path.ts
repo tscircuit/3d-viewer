@@ -8,6 +8,10 @@ import { translate } from "@jscad/modeling/src/operations/transforms"
 import { colorize } from "@jscad/modeling/src/colors"
 import type { GeomContext } from "../GeomContext"
 import { M } from "./constants"
+import {
+  coerceDimensionToMm,
+  parseDimensionToMm,
+} from "../utils/units"
 
 export function createSilkscreenPathGeom(
   sp: PcbSilkscreenPath,
@@ -15,10 +19,13 @@ export function createSilkscreenPathGeom(
 ): Geom3 | undefined {
   if (sp.route.length < 2) return undefined
 
-  const routePoints: Vec2[] = sp.route.map((p) => [p.x, p.y])
+  const routePoints: Vec2[] = sp.route.map((p) => [
+    parseDimensionToMm(p.x) ?? 0,
+    parseDimensionToMm(p.y) ?? 0,
+  ])
   const pathLine = line(routePoints)
 
-  const strokeWidth = sp.stroke_width || 0.1 // Default stroke width if not specified
+  const strokeWidth = coerceDimensionToMm(sp.stroke_width, 0.1)
   const expandedPath = expand(
     { delta: strokeWidth / 2, corners: "round" },
     pathLine,

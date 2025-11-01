@@ -9,6 +9,7 @@ import {
 } from "transformation-matrix"
 import type { AnyCircuitElement } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
+import { coerceDimensionToMm, parseDimensionToMm } from "./units"
 
 export function createSilkscreenTextureForLayer({
   layer,
@@ -54,25 +55,27 @@ export function createSilkscreenTextureForLayer({
   ctx.strokeStyle = silkscreenColor
   ctx.fillStyle = silkscreenColor
 
+  const canvasXFromPcb = (pcbX: number) =>
+    (pcbX - boardData.center.x + boardData.width / 2) * traceTextureResolution
+  const canvasYFromPcb = (pcbY: number) =>
+    (-(pcbY - boardData.center.y) + boardData.height / 2) *
+    traceTextureResolution
+
   // Draw Silkscreen Lines
   linesOnLayer.forEach((lineEl: any) => {
+    const startXmm = parseDimensionToMm(lineEl.x1) ?? 0
+    const startYmm = parseDimensionToMm(lineEl.y1) ?? 0
+    const endXmm = parseDimensionToMm(lineEl.x2) ?? 0
+    const endYmm = parseDimensionToMm(lineEl.y2) ?? 0
+
+    if (startXmm === endXmm && startYmm === endYmm) return
+
     ctx.beginPath()
-    ctx.lineWidth = (lineEl.stroke_width || 0.1) * traceTextureResolution
+    ctx.lineWidth =
+      coerceDimensionToMm(lineEl.stroke_width, 0.1) * traceTextureResolution
     ctx.lineCap = "round"
-    const startX =
-      (lineEl.x1 - boardData.center.x + boardData.width / 2) *
-      traceTextureResolution
-    const startY =
-      (-(lineEl.y1 - boardData.center.y) + boardData.height / 2) *
-      traceTextureResolution
-    const endX =
-      (lineEl.x2 - boardData.center.x + boardData.width / 2) *
-      traceTextureResolution
-    const endY =
-      (-(lineEl.y2 - boardData.center.y) + boardData.height / 2) *
-      traceTextureResolution
-    ctx.moveTo(startX, startY)
-    ctx.lineTo(endX, endY)
+    ctx.moveTo(canvasXFromPcb(startXmm), canvasYFromPcb(startYmm))
+    ctx.lineTo(canvasXFromPcb(endXmm), canvasYFromPcb(endYmm))
     ctx.stroke()
   })
 
@@ -80,16 +83,13 @@ export function createSilkscreenTextureForLayer({
   pathsOnLayer.forEach((path: any) => {
     if (path.route.length < 2) return
     ctx.beginPath()
-    ctx.lineWidth = (path.stroke_width || 0.1) * traceTextureResolution
+    ctx.lineWidth =
+      coerceDimensionToMm(path.stroke_width, 0.1) * traceTextureResolution
     ctx.lineCap = "round"
     ctx.lineJoin = "round"
     path.route.forEach((point: any, index: number) => {
-      const canvasX =
-        (point.x - boardData.center.x + boardData.width / 2) *
-        traceTextureResolution
-      const canvasY =
-        (-(point.y - boardData.center.y) + boardData.height / 2) *
-        traceTextureResolution
+      const canvasX = canvasXFromPcb(parseDimensionToMm(point.x) ?? 0)
+      const canvasY = canvasYFromPcb(parseDimensionToMm(point.y) ?? 0)
       if (index === 0) ctx.moveTo(canvasX, canvasY)
       else ctx.lineTo(canvasX, canvasY)
     })
@@ -187,12 +187,8 @@ export function createSilkscreenTextureForLayer({
         }
         const pcbX = transformedP.x + xOff + textS.anchor_position.x
         const pcbY = transformedP.y + yOff + textS.anchor_position.y
-        const canvasX =
-          (pcbX - boardData.center.x + boardData.width / 2) *
-          traceTextureResolution
-        const canvasY =
-          (-(pcbY - boardData.center.y) + boardData.height / 2) *
-          traceTextureResolution
+        const canvasX = canvasXFromPcb(pcbX)
+        const canvasY = canvasYFromPcb(pcbY)
         if (index === 0) ctx.moveTo(canvasX, canvasY)
         else ctx.lineTo(canvasX, canvasY)
       })
