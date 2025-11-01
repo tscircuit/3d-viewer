@@ -10,6 +10,10 @@ import {
 import type { AnyCircuitElement } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import { coerceDimensionToMm, parseDimensionToMm } from "./units"
+import {
+  clampRectBorderRadius,
+  extractRectBorderRadius,
+} from "./rect-border-radius"
 
 export function createSilkscreenTextureForLayer({
   layer,
@@ -27,14 +31,17 @@ export function createSilkscreenTextureForLayer({
   const pcbSilkscreenTexts = su(circuitJson).pcb_silkscreen_text.list()
   const pcbSilkscreenPaths = su(circuitJson).pcb_silkscreen_path.list()
   const pcbSilkscreenLines = su(circuitJson).pcb_silkscreen_line.list()
+  const pcbSilkscreenRects = su(circuitJson).pcb_silkscreen_rect.list()
 
   const textsOnLayer = pcbSilkscreenTexts.filter((t) => t.layer === layer)
   const pathsOnLayer = pcbSilkscreenPaths.filter((p) => p.layer === layer)
   const linesOnLayer = pcbSilkscreenLines.filter((l) => l.layer === layer)
+  const rectsOnLayer = pcbSilkscreenRects.filter((r) => r.layer === layer)
   if (
     textsOnLayer.length === 0 &&
     pathsOnLayer.length === 0 &&
-    linesOnLayer.length === 0
+    linesOnLayer.length === 0 &&
+    rectsOnLayer.length === 0
   ) {
     return null
   }
@@ -94,6 +101,85 @@ export function createSilkscreenTextureForLayer({
       else ctx.lineTo(canvasX, canvasY)
     })
     ctx.stroke()
+  })
+
+  // Draw Silkscreen Rectangles
+  rectsOnLayer.forEach((rect: any) => {
+    const width = coerceDimensionToMm(rect.width, 0)
+    const height = coerceDimensionToMm(rect.height, 0)
+    if (width <= 0 || height <= 0) return
+
+    const centerXmm = parseDimensionToMm(rect.center?.x) ?? 0
+    const centerYmm = parseDimensionToMm(rect.center?.y) ?? 0
+
+    const canvasCenterX = canvasXFromPcb(centerXmm)
+    const canvasCenterY = canvasYFromPcb(centerYmm)
+
+    const rawRadius = extractRectBorderRadius(rect)
+    const borderRadiusInput =
+      typeof rawRadius === "string"
+        ? parseDimensionToMm(rawRadius)
+        : rawRadius
+    const borderRadiusMm = clampRectBorderRadius(
+      width,
+      height,
+      borderRadiusInput,
+    )
+
+    const rotationDeg = rect.ccw_rotation ?? rect.rotation ?? 0
+    const rotationRad = (rotationDeg * Math.PI) / 180
+
+    ctx.save()
+    ctx.translate(canvasCenterX, canvasCenterY)
+    if (rotationRad) {
+      ctx.rotate(layer === "bottom" ? -rotationRad : rotationRad)
+    }
+
+    const halfWidthPx = (width / 2) * traceTextureResolution
+    const halfHeightPx = (height / 2) * traceTextureResolution
+    const borderRadiusPx = Math.min(
+      borderRadiusMm * traceTextureResolution,
+      halfWidthPx,
+      halfHeightPx,
+    )
+
+    const drawRoundedRect = (
+      x: number,
+      y: number,
+      rectWidth: number,
+      rectHeight: number,
+      radius: number,
+    ) => {
+      ctx.beginPath()
+      if (radius <= 0) {
+        ctx.rect(x, y, rectWidth, rectHeight)
+      } else {
+        const r = radius
+        const right = x + rectWidth
+        const bottom = y + rectHeight
+        ctx.moveTo(x + r, y)
+        ctx.lineTo(right - r, y)
+        ctx.quadraticCurveTo(right, y, right, y + r)
+        ctx.lineTo(right, bottom - r)
+        ctx.quadraticCurveTo(right, bottom, right - r, bottom)
+        ctx.lineTo(x + r, bottom)
+        ctx.quadraticCurveTo(x, bottom, x, bottom - r)
+        ctx.lineTo(x, y + r)
+        ctx.quadraticCurveTo(x, y, x + r, y)
+        ctx.closePath()
+      }
+      ctx.fill()
+    }
+
+    drawRoundedRect(
+      -halfWidthPx,
+      -halfHeightPx,
+      halfWidthPx * 2,
+      halfHeightPx * 2,
+      borderRadiusPx,
+    )
+
+    ctx.restore()
   })
 
   // Draw Silkscreen Text
