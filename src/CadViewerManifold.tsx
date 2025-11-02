@@ -230,7 +230,15 @@ try {
     boardData,
   } = useManifoldBoardBuilder(manifoldJSModule, circuitJson)
 
-  const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
+  const [geometryMeshes, setGeometryMeshes] = useState<THREE.Mesh[]>([])
+
+  useEffect(() => {
+    if (geoms) {
+      createGeometryMeshes(geoms, circuitJson, true).then(setGeometryMeshes)
+    } else {
+      setGeometryMeshes([])
+    }
+  }, [geoms, circuitJson])
   const textureMeshes = useMemo(
     () => createTextureMeshes(textures, boardData, pcbThickness),
     [textures, boardData, pcbThickness],
