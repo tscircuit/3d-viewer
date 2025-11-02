@@ -318,6 +318,7 @@ export const useManifoldBoardBuilder = (
         circuitJson,
         currentPcbThickness,
         manifoldInstancesForCleanup.current,
+        boardData.material,
         holeUnion,
         boardClipVolume,
       )
