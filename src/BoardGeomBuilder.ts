@@ -441,7 +441,12 @@ export class BoardGeomBuilder {
       if (this.boardClipGeom) {
         pourGeom = intersect(this.boardClipGeom, pourGeom)
       }
-      const coloredPourGeom = colorize(colors.copper, pourGeom)
+      const covered = (pour as any).covered_with_solder_mask !== false
+      const pourMaterialColor = covered
+        ? (tracesMaterialColors[this.board.material] ??
+          colors.fr4GreenSolderWithMask)
+        : colors.copper
+      const coloredPourGeom = colorize(pourMaterialColor, pourGeom)
       this.copperPourGeoms.push(coloredPourGeom)
     }
   }
