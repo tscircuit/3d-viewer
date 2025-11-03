@@ -127,8 +127,22 @@ export const useManifoldBoardBuilder = (
     const Manifold = manifoldJSModule.Manifold
     const CrossSection = manifoldJSModule.CrossSection
 
+    const safeDelete = (inst: any) => {
+      if (!inst || typeof inst.delete !== "function") return
+      try {
+        inst.delete()
+      } catch (error) {
+        if (
+          !(error instanceof Error) ||
+          !error.message?.includes("Manifold instance already deleted")
+        ) {
+          console.warn("Failed to delete Manifold instance", error)
+        }
+      }
+    }
+
     // Cleanup previous Manifold objects
-    manifoldInstancesForCleanup.current.forEach((inst) => inst.delete())
+    manifoldInstancesForCleanup.current.forEach(safeDelete)
     manifoldInstancesForCleanup.current = []
 
     let boardManifold: any = null
@@ -377,7 +391,7 @@ export const useManifoldBoardBuilder = (
 
     return () => {
       // Cleanup all Manifold instances created during this effect
-      manifoldInstancesForCleanup.current.forEach((inst) => inst.delete())
+      manifoldInstancesForCleanup.current.forEach(safeDelete)
       manifoldInstancesForCleanup.current = []
       // boardManifold is part of manifoldInstancesForCleanup if it was assigned
     }
