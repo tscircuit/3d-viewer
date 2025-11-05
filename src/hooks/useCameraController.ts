@@ -52,6 +52,8 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
     toQuaternion: THREE.Quaternion
     finalQuaternion: THREE.Quaternion
     finalUp: THREE.Vector3
+    fromZoom?: number
+    toZoom?: number
     startTime: number
     duration: number
   } | null>(null)
@@ -116,6 +118,18 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
         slerpTarget.w *= -1
       }
 
+      // Calculate zoom for orthographic cameras
+      let fromZoom: number | undefined
+      let toZoom: number | undefined
+      
+      if (camera instanceof THREE.OrthographicCamera) {
+        fromZoom = camera.zoom
+        const fromDistance = fromPosition.distanceTo(fromTarget)
+        const toDistance = toPosition.distanceTo(resolvedTarget)
+        // Calculate zoom to maintain visual scale based on distance ratio
+        toZoom = fromZoom * (fromDistance / Math.max(toDistance, 0.1))
+      }
+
       animationRef.current = {
         fromPosition,
         toPosition,
@@ -125,6 +139,8 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
         toQuaternion: slerpTarget,
         finalQuaternion: toQuaternion,
         finalUp: resolvedUp.clone(),
+        fromZoom,
+        toZoom,
         startTime: performance.now(),
         duration: durationMs,
       }
@@ -152,6 +168,8 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
       toQuaternion,
       finalQuaternion,
       finalUp,
+      fromZoom,
+      toZoom,
       startTime,
       duration,
     } = animationRef.current
@@ -170,6 +188,12 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
 
     camera.quaternion.copy(interpolatedQuaternion)
 
+    // Interpolate zoom for orthographic cameras
+    if (camera instanceof THREE.OrthographicCamera && fromZoom !== undefined && toZoom !== undefined) {
+      camera.zoom = fromZoom + (toZoom - fromZoom) * eased
+      camera.updateProjectionMatrix()
+    }
+
     controlsRef.current?.target.copy(nextTarget)
     camera.updateMatrixWorld()
     controlsRef.current?.update()
@@ -178,6 +202,13 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
       camera.position.copy(toPosition)
       camera.quaternion.copy(finalQuaternion)
       camera.up.copy(finalUp)
+      
+      // Set final zoom for orthographic camera
+      if (camera instanceof THREE.OrthographicCamera && toZoom !== undefined) {
+        camera.zoom = toZoom
+        camera.updateProjectionMatrix()
+      }
+      
       camera.updateMatrixWorld()
       controlsRef.current?.target.copy(toTarget)
       controlsRef.current?.update()
