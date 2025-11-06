@@ -260,7 +260,11 @@ try {
     const safeWidth = Math.max(width, 1)
     const safeHeight = Math.max(height, 1)
     const largestDim = Math.max(safeWidth, safeHeight, 5)
-    return [largestDim * 0.75, -largestDim * 0.75, largestDim * 0.75] as const
+    return [
+      largestDim * 0.4, // Move right
+      -largestDim * 0.7, // Move back (negative Y)
+      largestDim * 0.9, // Keep height but slightly lower than top-down
+    ] as const
   }, [boardData])
 
   if (manifoldLoadingError) {

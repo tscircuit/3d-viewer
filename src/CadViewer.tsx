@@ -3,6 +3,7 @@ import { useState, useCallback, useRef, useEffect } from "react"
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
+import { useCameraPreset } from "./hooks/useCameraPreset"
 import { useGlobalDownloadGltf } from "./hooks/useGlobalDownloadGltf"
 import {
   LayerVisibilityProvider,
@@ -44,12 +45,29 @@ const CadViewerInner = (props: any) => {
   const autoRotateUserToggledRef = useRef(autoRotateUserToggled)
   autoRotateUserToggledRef.current = autoRotateUserToggled
 
+  const isAnimatingRef = useRef(false)
+  const lastPresetSelectTime = useRef(0)
+  const PRESET_COOLDOWN = 1000 // 1 second cooldown after selecting a preset
+
   const handleUserInteraction = useCallback(() => {
+    // Don't update if we're in the middle of an animation or just selected a preset
+    if (
+      isAnimatingRef.current ||
+      Date.now() - lastPresetSelectTime.current < PRESET_COOLDOWN
+    ) {
+      return
+    }
+
     if (!autoRotateUserToggledRef.current) {
       setAutoRotate(false)
     }
-    setCameraPreset("Custom")
-  }, [])
+
+    // Only set to Custom if the user is actually interacting with the camera
+    // and not just clicking on the preset menu
+    if (!menuVisible) {
+      setCameraPreset("Custom")
+    }
+  }, [menuVisible])
 
   const toggleAutoRotate = useCallback(() => {
     setAutoRotate((prev) => !prev)
@@ -73,15 +91,15 @@ const CadViewerInner = (props: any) => {
     [cameraPreset, externalCameraControllerReady],
   )
 
-  const handleCameraPresetSelect = useCallback(
-    (preset: CameraPreset) => {
-      setCameraPreset(preset)
-      closeMenu()
-      if (preset === "Custom") return
-      cameraControllerRef.current?.animateToPreset(preset)
-    },
-    [closeMenu],
-  )
+  const { handleCameraPresetSelect } = useCameraPreset({
+    setAutoRotate,
+    setAutoRotateUserToggled,
+    setCameraPreset,
+    closeMenu,
+    cameraControllerRef,
+    isAnimatingRef,
+    lastPresetSelectTime,
+  })
 
   useEffect(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
