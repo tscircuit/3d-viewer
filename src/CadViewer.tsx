@@ -44,12 +44,29 @@ const CadViewerInner = (props: any) => {
   const autoRotateUserToggledRef = useRef(autoRotateUserToggled)
   autoRotateUserToggledRef.current = autoRotateUserToggled
 
+  const isAnimatingRef = useRef(false)
+  const lastPresetSelectTime = useRef(0)
+  const PRESET_COOLDOWN = 1000 // 1 second cooldown after selecting a preset
+
   const handleUserInteraction = useCallback(() => {
+    // Don't update if we're in the middle of an animation or just selected a preset
+    if (
+      isAnimatingRef.current ||
+      Date.now() - lastPresetSelectTime.current < PRESET_COOLDOWN
+    ) {
+      return
+    }
+
     if (!autoRotateUserToggledRef.current) {
       setAutoRotate(false)
     }
-    setCameraPreset("Custom")
-  }, [])
+
+    // Only set to Custom if the user is actually interacting with the camera
+    // and not just clicking on the preset menu
+    if (!menuVisible) {
+      setCameraPreset("Custom")
+    }
+  }, [menuVisible])
 
   const toggleAutoRotate = useCallback(() => {
     setAutoRotate((prev) => !prev)
@@ -75,10 +92,23 @@ const CadViewerInner = (props: any) => {
 
   const handleCameraPresetSelect = useCallback(
     (preset: CameraPreset) => {
+      // Stop auto-rotate when a preset is selected
+      setAutoRotate(false)
+      setAutoRotateUserToggled(true)
+
       setCameraPreset(preset)
       closeMenu()
+      lastPresetSelectTime.current = Date.now()
+
       if (preset === "Custom") return
+
+      isAnimatingRef.current = true
       cameraControllerRef.current?.animateToPreset(preset)
+
+      // Reset the animation flag after the animation would be complete
+      setTimeout(() => {
+        isAnimatingRef.current = false
+      }, 600) // Match this with the animation duration in useCameraController
     },
     [closeMenu],
   )

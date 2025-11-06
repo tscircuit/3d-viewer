@@ -72,7 +72,12 @@ export const CadViewerJscad = forwardRef<
         const adjustedBoardWidth = Math.max(width, minCameraDistance)
         const adjustedBoardHeight = Math.max(height, minCameraDistance)
         const largestDim = Math.max(adjustedBoardWidth, adjustedBoardHeight)
-        return [largestDim / 2, -largestDim / 2, largestDim] as const
+        // Position the camera for a top-front-right view
+        return [
+          largestDim * 0.4, // Move right
+          -largestDim * 0.7, // Move back (negative Y)
+          largestDim * 0.9, // Keep height but slightly lower than top-down
+        ] as const
       } catch (e) {
         console.error(e)
         return [5, -5, 5] as const
