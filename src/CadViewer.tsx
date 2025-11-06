@@ -3,6 +3,7 @@ import { useState, useCallback, useRef, useEffect } from "react"
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
+import { useCameraPreset } from "./hooks/useCameraPreset"
 import { useGlobalDownloadGltf } from "./hooks/useGlobalDownloadGltf"
 import {
   LayerVisibilityProvider,
@@ -90,28 +91,15 @@ const CadViewerInner = (props: any) => {
     [cameraPreset, externalCameraControllerReady],
   )
 
-  const handleCameraPresetSelect = useCallback(
-    (preset: CameraPreset) => {
-      // Stop auto-rotate when a preset is selected
-      setAutoRotate(false)
-      setAutoRotateUserToggled(true)
-
-      setCameraPreset(preset)
-      closeMenu()
-      lastPresetSelectTime.current = Date.now()
-
-      if (preset === "Custom") return
-
-      isAnimatingRef.current = true
-      cameraControllerRef.current?.animateToPreset(preset)
-
-      // Reset the animation flag after the animation would be complete
-      setTimeout(() => {
-        isAnimatingRef.current = false
-      }, 600) // Match this with the animation duration in useCameraController
-    },
-    [closeMenu],
-  )
+  const { handleCameraPresetSelect } = useCameraPreset({
+    setAutoRotate,
+    setAutoRotateUserToggled,
+    setCameraPreset,
+    closeMenu,
+    cameraControllerRef,
+    isAnimatingRef,
+    lastPresetSelectTime,
+  })
 
   useEffect(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
