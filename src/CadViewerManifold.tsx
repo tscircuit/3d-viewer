@@ -255,12 +255,12 @@ try {
   }, [boardData])
 
   const initialCameraPosition = useMemo(() => {
-    if (!boardData) return [5, 5, 5] as const
+    if (!boardData) return [5, -5, 5] as const
     const { width = 0, height = 0 } = boardData
     const safeWidth = Math.max(width, 1)
     const safeHeight = Math.max(height, 1)
     const largestDim = Math.max(safeWidth, safeHeight, 5)
-    return [largestDim * 0.75, largestDim * 0.75, largestDim * 0.75] as const
+    return [largestDim * 0.75, -largestDim * 0.75, largestDim * 0.75] as const
   }, [boardData])
 
   if (manifoldLoadingError) {
