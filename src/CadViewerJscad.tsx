@@ -58,24 +58,24 @@ export const CadViewerJscad = forwardRef<
     const boardGeom = useBoardGeomBuilder(internalCircuitJson)
 
     const initialCameraPosition = useMemo(() => {
-      if (!internalCircuitJson) return [5, 5, 5] as const
+      if (!internalCircuitJson) return [5, -5, 5] as const
       try {
         const board = su(internalCircuitJson as any).pcb_board.list()[0]
-        if (!board) return [5, 5, 5] as const
+        if (!board) return [5, -5, 5] as const
         const { width, height } = board
 
         if (!width && !height) {
-          return [5, 5, 5] as const
+          return [5, -5, 5] as const
         }
 
         const minCameraDistance = 5
         const adjustedBoardWidth = Math.max(width, minCameraDistance)
         const adjustedBoardHeight = Math.max(height, minCameraDistance)
         const largestDim = Math.max(adjustedBoardWidth, adjustedBoardHeight)
-        return [largestDim / 2, largestDim / 2, largestDim] as const
+        return [largestDim / 2, -largestDim / 2, largestDim] as const
       } catch (e) {
         console.error(e)
-        return [5, 5, 5] as const
+        return [5, -5, 5] as const
       }
     }, [internalCircuitJson])
 

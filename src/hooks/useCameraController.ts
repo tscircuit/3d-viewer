@@ -224,7 +224,7 @@ export const useCameraController = ({
   const controlsRef = useRef<ThreeOrbitControls | null>(null)
 
   const baseDistance = useMemo(() => {
-    const [x, y, z] = initialCameraPosition ?? [5, 5, 5]
+    const [x, y, z] = initialCameraPosition ?? [5, -5, 5]
     const distance = Math.hypot(
       x - defaultTarget.x,
       y - defaultTarget.y,
