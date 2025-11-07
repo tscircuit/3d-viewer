@@ -35,11 +35,17 @@ export function createSilkscreenCircleGeom(
     const outerRadius = radius + strokeWidth / 2
     const innerRadius = radius - strokeWidth / 2
 
-    const outerCircle2d = circle({ radius: outerRadius, segments: CIRCLE_SEGMENTS })
+    const outerCircle2d = circle({
+      radius: outerRadius,
+      segments: CIRCLE_SEGMENTS,
+    })
     let ring3d = extrudeLinear({ height: baseHeight }, outerCircle2d)
 
     if (innerRadius > 0) {
-      const innerCircle2d = circle({ radius: innerRadius, segments: CIRCLE_SEGMENTS })
+      const innerCircle2d = circle({
+        radius: innerRadius,
+        segments: CIRCLE_SEGMENTS,
+      })
       const inner3d = extrudeLinear({ height: baseHeight }, innerCircle2d)
       ring3d = subtract(ring3d, inner3d)
     }
@@ -54,4 +60,3 @@ export function createSilkscreenCircleGeom(
 
   return colorize([1, 1, 1], translatedGeom)
 }
-
