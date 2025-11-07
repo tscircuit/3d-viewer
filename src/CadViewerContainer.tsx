@@ -30,15 +30,14 @@ import {
   saveCameraToSession,
 } from "./hooks/useSessionCamera"
 
+const CAMERA_SESSION_SAVE_MIN_INTERVAL_MS = 75
+
 export const RotationTracker = () => {
   const { camera } = useThree()
+
   useFrame(() => {
-    if (
-      camera &&
-      typeof window !== "undefined" &&
-      window.TSCI_MAIN_CAMERA_ROTATION
-    ) {
-      window.TSCI_MAIN_CAMERA_ROTATION.copy(camera.rotation)
+    if (camera && typeof window !== "undefined") {
+      window.TSCI_MAIN_CAMERA_ROTATION = camera.rotation
     }
   })
 
@@ -79,39 +78,99 @@ export const CadViewerContainer = forwardRef<
     const controlsRef = useRef<ThreeOrbitControls | null>(null)
     const cameraRef = useRef<THREE.Camera | null>(null)
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-    const hasRestoredFromSession = useRef(false)
+    const lastSaveTimeRef = useRef(0)
+    const hasAttemptedSessionRestore = useRef(false)
+
+    const flushCameraToSession = useCallback(() => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+        saveTimeoutRef.current = null
+      }
+
+      if (!cameraRef.current || !controlsRef.current) {
+        return
+      }
+
+      const now =
+        typeof performance !== "undefined" ? performance.now() : Date.now()
+      lastSaveTimeRef.current = now
+      saveCameraToSession(cameraRef.current, controlsRef.current)
+    }, [saveCameraToSession])
+
+    const scheduleSessionSave = useCallback(() => {
+      if (!cameraRef.current || !controlsRef.current) {
+        return
+      }
+
+      const now =
+        typeof performance !== "undefined" ? performance.now() : Date.now()
+      const elapsed = now - lastSaveTimeRef.current
+
+      if (elapsed >= CAMERA_SESSION_SAVE_MIN_INTERVAL_MS) {
+        lastSaveTimeRef.current = now
+        saveCameraToSession(cameraRef.current, controlsRef.current)
+        return
+      }
+
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+
+      const delay = Math.max(0, CAMERA_SESSION_SAVE_MIN_INTERVAL_MS - elapsed)
+      saveTimeoutRef.current = setTimeout(() => {
+        flushCameraToSession()
+      }, delay)
+    }, [flushCameraToSession, saveCameraToSession])
+
+    useEffect(() => {
+      const handleVisibilityChange = () => {
+        if (
+          typeof document !== "undefined" &&
+          document.visibilityState === "hidden"
+        ) {
+          flushCameraToSession()
+        }
+      }
+
+      if (typeof document !== "undefined") {
+        document.addEventListener("visibilitychange", handleVisibilityChange)
+      }
+
+      return () => {
+        if (typeof document !== "undefined") {
+          document.removeEventListener(
+            "visibilitychange",
+            handleVisibilityChange,
+          )
+        }
+      }
+    }, [flushCameraToSession])
 
     useEffect(() => {
       return () => {
-        if (saveTimeoutRef.current) {
-          clearTimeout(saveTimeoutRef.current)
-        }
+        flushCameraToSession()
       }
-    }, [])
+    }, [flushCameraToSession])
 
     const tryRestoreCamera = useCallback(() => {
       if (
-        hasRestoredFromSession.current ||
+        hasAttemptedSessionRestore.current ||
         !cameraRef.current ||
         !controlsRef.current
       ) {
         return
       }
 
-      hasRestoredFromSession.current = true
+      hasAttemptedSessionRestore.current = true
       const restored = loadCameraFromSession(
         cameraRef.current,
         controlsRef.current,
       )
 
-      if (
-        restored &&
-        typeof window !== "undefined" &&
-        window.TSCI_MAIN_CAMERA_ROTATION
-      ) {
-        window.TSCI_MAIN_CAMERA_ROTATION.copy(cameraRef.current.rotation)
+      if (restored && typeof window !== "undefined") {
+        window.TSCI_MAIN_CAMERA_ROTATION = cameraRef.current.rotation
       }
-    }, [])
+    }, [loadCameraFromSession])
 
     const gridSectionSize = useMemo(() => {
       if (!boardDimensions) return 10
@@ -187,6 +246,7 @@ export const CadViewerContainer = forwardRef<
                 handleControlsChange(controls)
 
                 if (!controls) {
+                  flushCameraToSession()
                   controlsRef.current = null
                   return
                 }
@@ -197,21 +257,7 @@ export const CadViewerContainer = forwardRef<
                 if (!cameraRef.current) {
                   return
                 }
-
-                if (saveTimeoutRef.current) {
-                  clearTimeout(saveTimeoutRef.current)
-                }
-
-                saveTimeoutRef.current = setTimeout(() => {
-                  const camera = cameraRef.current
-                  const activeControls = controlsRef.current
-
-                  if (!camera || !activeControls) {
-                    return
-                  }
-
-                  saveCameraToSession(camera, activeControls)
-                }, 150)
+                scheduleSessionSave()
               }}
             />
           )}

@@ -2,6 +2,24 @@ import * as THREE from "three"
 
 const CAMERA_KEY = "cadViewerCameraStateSession"
 
+let hasWarnedSessionStorage = false
+
+const getSessionStorage = (): Storage | null => {
+  if (typeof window === "undefined") {
+    return null
+  }
+
+  try {
+    return window.sessionStorage
+  } catch (error) {
+    if (!hasWarnedSessionStorage) {
+      console.warn("Session storage is unavailable:", error)
+      hasWarnedSessionStorage = true
+    }
+    return null
+  }
+}
+
 type OrbitControlsLike = {
   target: THREE.Vector3
   update: () => void
@@ -11,6 +29,9 @@ export const saveCameraToSession = (
   camera: THREE.Camera,
   controls: OrbitControlsLike,
 ) => {
+  const storage = getSessionStorage()
+  if (!storage) return
+
   try {
     const data = {
       position: camera.position.toArray(),
@@ -20,7 +41,7 @@ export const saveCameraToSession = (
       target: controls.target.toArray(),
     }
 
-    sessionStorage.setItem(CAMERA_KEY, JSON.stringify(data))
+    storage.setItem(CAMERA_KEY, JSON.stringify(data))
   } catch (error) {
     console.warn("Failed to save camera:", error)
   }
@@ -30,8 +51,11 @@ export const loadCameraFromSession = (
   camera: THREE.Camera,
   controls: OrbitControlsLike,
 ): boolean => {
+  const storage = getSessionStorage()
+  if (!storage) return false
+
   try {
-    const raw = sessionStorage.getItem(CAMERA_KEY)
+    const raw = storage.getItem(CAMERA_KEY)
     if (!raw) return false
 
     const state = JSON.parse(raw)
