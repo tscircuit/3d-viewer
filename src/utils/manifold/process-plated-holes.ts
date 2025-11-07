@@ -301,6 +301,142 @@ export function processPlatedHolesForManifold(
         geometry: threeGeom,
         color: COPPER_COLOR,
       })
+    } else if (ph.shape === "rotated_pill_hole_with_rect_pad") {
+      const holeW = ph.hole_width!
+      const holeH = ph.hole_height!
+      const holeOffsetX = ph.hole_offset_x || 0
+      const holeOffsetY = ph.hole_offset_y || 0
+      const holeRotation = ph.hole_ccw_rotation || 0
+      const padWidth = ph.rect_pad_width!
+      const padHeight = ph.rect_pad_height!
+      const padRotation = ph.rect_ccw_rotation || 0
+      const rectBorderRadius = extractRectBorderRadius(ph)
+      const padThickness = DEFAULT_SMT_PAD_THICKNESS
+
+      // Board Drill with hole offset and rotation
+      const drillW = holeW + 2 * MANIFOLD_Z_OFFSET
+      const drillH = holeH + 2 * MANIFOLD_Z_OFFSET
+      const drillDepth = pcbThickness * 1.2
+
+      let boardPillDrillOp = createPillOp(drillW, drillH, drillDepth)
+      if (holeRotation) {
+        boardPillDrillOp = boardPillDrillOp.rotate([0, 0, holeRotation])
+        manifoldInstancesForCleanup.push(boardPillDrillOp)
+      }
+      boardPillDrillOp = boardPillDrillOp
+        .translate([holeOffsetX, holeOffsetY, 0])
+        .translate([ph.x, ph.y, 0])
+      manifoldInstancesForCleanup.push(boardPillDrillOp)
+      platedHoleBoardDrills.push(boardPillDrillOp)
+
+      // Create the main fill between pads (centered on the pad, not the hole)
+      let mainFill = createRoundedRectPrism({
+        Manifold,
+        width: padWidth,
+        height: padHeight,
+        thickness:
+          pcbThickness -
+          2 * padThickness -
+          2 * BOARD_SURFACE_OFFSET.copper +
+          0.1, // Fill between pads
+        borderRadius: rectBorderRadius,
+      })
+      if (padRotation) {
+        mainFill = mainFill.rotate([0, 0, padRotation])
+        manifoldInstancesForCleanup.push(mainFill)
+      }
+      manifoldInstancesForCleanup.push(mainFill)
+
+      // Create and position the top pad with rotation
+      let topPad = createRoundedRectPrism({
+        Manifold,
+        width: padWidth,
+        height: padHeight,
+        thickness: padThickness,
+        borderRadius: rectBorderRadius,
+      }).translate([0, 0, pcbThickness / 2 / 2 + BOARD_SURFACE_OFFSET.copper])
+      if (padRotation) {
+        topPad = topPad.rotate([0, 0, padRotation])
+        manifoldInstancesForCleanup.push(topPad)
+      }
+      manifoldInstancesForCleanup.push(topPad)
+
+      // Create and position the bottom pad with rotation
+      let bottomPad = createRoundedRectPrism({
+        Manifold,
+        width: padWidth,
+        height: padHeight,
+        thickness: padThickness,
+        borderRadius: rectBorderRadius,
+      }).translate([0, 0, -pcbThickness / 2 / 2 - BOARD_SURFACE_OFFSET.copper])
+      if (padRotation) {
+        bottomPad = bottomPad.rotate([0, 0, padRotation])
+        manifoldInstancesForCleanup.push(bottomPad)
+      }
+      manifoldInstancesForCleanup.push(bottomPad)
+
+      // Create the plated barrel at the offset position with rotation
+      let barrelPill = createPillOp(
+        holeW,
+        holeH,
+        pcbThickness * 1.02, // Slightly taller than board
+      )
+      if (holeRotation) {
+        barrelPill = barrelPill.rotate([0, 0, holeRotation])
+        manifoldInstancesForCleanup.push(barrelPill)
+      }
+      barrelPill = barrelPill.translate([holeOffsetX, holeOffsetY, 0])
+      manifoldInstancesForCleanup.push(barrelPill)
+
+      // Combine all copper parts
+      const copperUnion = Manifold.union([
+        mainFill,
+        topPad,
+        bottomPad,
+        barrelPill,
+      ])
+      manifoldInstancesForCleanup.push(copperUnion)
+
+      // Create hole for drilling at the offset position with rotation
+      let holeCutOp = createPillOp(
+        Math.max(holeW - 2 * PLATED_HOLE_LIP_HEIGHT, 0.01),
+        Math.max(holeH - 2 * PLATED_HOLE_LIP_HEIGHT, 0.01),
+        pcbThickness * 1.2, // Ensure it cuts through
+      )
+      if (holeRotation) {
+        holeCutOp = holeCutOp.rotate([0, 0, holeRotation])
+        manifoldInstancesForCleanup.push(holeCutOp)
+      }
+      holeCutOp = holeCutOp.translate([holeOffsetX, holeOffsetY, 0])
+      manifoldInstancesForCleanup.push(holeCutOp)
+
+      // Final copper with hole
+      const finalCopper = copperUnion.subtract(holeCutOp)
+      manifoldInstancesForCleanup.push(finalCopper)
+
+      // Translate the entire assembly to the final position
+      const translatedCopper = finalCopper.translate([ph.x, ph.y, 0])
+      manifoldInstancesForCleanup.push(translatedCopper)
+
+      let finalCopperOp: any = translatedCopper
+      if (boardClipVolume) {
+        const clipped = Manifold.intersection([
+          translatedCopper,
+          boardClipVolume,
+        ])
+        manifoldInstancesForCleanup.push(clipped)
+        finalCopperOp = clipped
+      }
+
+      // NEW: retain manifold op for upstream subtraction
+      platedHoleCopperOpsForSubtract.push(finalCopperOp)
+
+      const threeGeom = manifoldMeshToThreeGeometry(finalCopperOp.getMesh())
+      platedHoleCopperGeoms.push({
+        key: `ph-${ph.pcb_plated_hole_id || index}`,
+        geometry: threeGeom,
+        color: COPPER_COLOR,
+      })
     } else if (ph.shape === "circular_hole_with_rect_pad") {
       // Get hole offsets (default to 0 if not specified)
       const holeOffsetX = ph.hole_offset_x || 0
