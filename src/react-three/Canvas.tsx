@@ -24,10 +24,17 @@ interface CanvasProps {
   scene?: Record<string, any>
   camera?: Record<string, any>
   style?: React.CSSProperties
+  onCreated?: (state: {
+    camera: THREE.Camera
+    renderer: THREE.WebGLRenderer
+  }) => void
 }
 
 export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
-  ({ children, scene: sceneProps, camera: cameraProps, style }, ref) => {
+  (
+    { children, scene: sceneProps, camera: cameraProps, style, onCreated },
+    ref,
+  ) => {
     const mountRef = useRef<HTMLDivElement>(null)
     const [contextState, setContextState] = useState<ThreeContextState | null>(
       null,
@@ -103,7 +110,7 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
         addFrameListener,
         removeFrameListener,
       })
-
+      onCreated?.({ camera, renderer })
       let animationFrameId: number
       const clock = new THREE.Clock()
 
@@ -141,7 +148,7 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
           window.__TSCIRCUIT_THREE_OBJECT = undefined
         }
       }
-    }, [scene, addFrameListener, removeFrameListener])
+    }, [scene, addFrameListener, removeFrameListener, onCreated])
 
     return (
       <div ref={mountRef} style={{ width: "100%", height: "100%", ...style }}>

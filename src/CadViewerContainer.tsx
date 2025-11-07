@@ -1,5 +1,5 @@
 import type * as React from "react"
-import { forwardRef, useMemo, useState } from "react"
+import { forwardRef, useMemo, useRef, useState } from "react"
 import * as THREE from "three"
 import packageJson from "../package.json"
 import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
@@ -8,6 +8,10 @@ import { OrbitControls } from "./react-three/OrbitControls"
 import { Grid } from "./react-three/Grid"
 import { useFrame, useThree } from "./react-three/ThreeContext"
 import { Lights } from "./react-three/Lights"
+import {
+  saveCameraToSession,
+  loadCameraFromSession,
+} from "./hooks/useSessionCamera"
 import {
   CameraAnimator,
   useCameraController,
@@ -59,6 +63,10 @@ export const CadViewerContainer = forwardRef<
     const [isInteractionEnabled, setIsInteractionEnabled] = useState(
       !clickToInteractEnabled,
     )
+
+    const saveTimeoutRef = useRef<any>(null)
+    const controlsRef = useRef<any>(null)
+    const cameraRef = useRef<THREE.Camera | null>(null)
 
     const gridSectionSize = useMemo(() => {
       if (!boardDimensions) return 10
@@ -112,6 +120,13 @@ export const CadViewerContainer = forwardRef<
           ref={ref}
           scene={{ up: new THREE.Vector3(0, 0, 1) }}
           camera={{ up: [0, 0, 1], position: initialCameraPosition }}
+          onCreated={({ camera }) => {
+            cameraRef.current = camera
+            if (controlsRef.current) {
+              // Restore BEFORE first frame
+              loadCameraFromSession(cameraRef.current, controlsRef.current)
+            }
+          }}
         >
           <CameraAnimator {...cameraAnimatorProps} />
           <RotationTracker />
@@ -126,7 +141,17 @@ export const CadViewerContainer = forwardRef<
               enableDamping={true}
               dampingFactor={0.1}
               target={orbitTarget}
-              onControlsChange={handleControlsChange}
+              onControlsChange={(controls) => {
+                handleControlsChange(controls)
+                controlsRef.current = controls
+
+                if (!cameraRef.current || !controlsRef.current) return
+
+                clearTimeout(saveTimeoutRef.current)
+                saveTimeoutRef.current = setTimeout(() => {
+                  saveCameraToSession(cameraRef.current!, controlsRef.current!)
+                }, 150)
+              }}
             />
           )}
           <Lights />
