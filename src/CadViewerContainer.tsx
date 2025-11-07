@@ -1,5 +1,12 @@
 import type * as React from "react"
-import { forwardRef, useMemo, useState } from "react"
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import * as THREE from "three"
 import packageJson from "../package.json"
 import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
@@ -17,12 +24,21 @@ export type {
   CameraController,
   CameraPreset,
 } from "./hooks/useCameraController"
+import type { OrbitControls as ThreeOrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
+import {
+  loadCameraFromSession,
+  saveCameraToSession,
+} from "./hooks/useSessionCamera"
 
 export const RotationTracker = () => {
   const { camera } = useThree()
   useFrame(() => {
-    if (camera) {
-      window.TSCI_MAIN_CAMERA_ROTATION = camera.rotation
+    if (
+      camera &&
+      typeof window !== "undefined" &&
+      window.TSCI_MAIN_CAMERA_ROTATION
+    ) {
+      window.TSCI_MAIN_CAMERA_ROTATION.copy(camera.rotation)
     }
   })
 
@@ -59,6 +75,43 @@ export const CadViewerContainer = forwardRef<
     const [isInteractionEnabled, setIsInteractionEnabled] = useState(
       !clickToInteractEnabled,
     )
+
+    const controlsRef = useRef<ThreeOrbitControls | null>(null)
+    const cameraRef = useRef<THREE.Camera | null>(null)
+    const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const hasRestoredFromSession = useRef(false)
+
+    useEffect(() => {
+      return () => {
+        if (saveTimeoutRef.current) {
+          clearTimeout(saveTimeoutRef.current)
+        }
+      }
+    }, [])
+
+    const tryRestoreCamera = useCallback(() => {
+      if (
+        hasRestoredFromSession.current ||
+        !cameraRef.current ||
+        !controlsRef.current
+      ) {
+        return
+      }
+
+      hasRestoredFromSession.current = true
+      const restored = loadCameraFromSession(
+        cameraRef.current,
+        controlsRef.current,
+      )
+
+      if (
+        restored &&
+        typeof window !== "undefined" &&
+        window.TSCI_MAIN_CAMERA_ROTATION
+      ) {
+        window.TSCI_MAIN_CAMERA_ROTATION.copy(cameraRef.current.rotation)
+      }
+    }, [])
 
     const gridSectionSize = useMemo(() => {
       if (!boardDimensions) return 10
@@ -112,6 +165,10 @@ export const CadViewerContainer = forwardRef<
           ref={ref}
           scene={{ up: new THREE.Vector3(0, 0, 1) }}
           camera={{ up: [0, 0, 1], position: initialCameraPosition }}
+          onCreated={({ camera }) => {
+            cameraRef.current = camera
+            tryRestoreCamera()
+          }}
         >
           <CameraAnimator {...cameraAnimatorProps} />
           <RotationTracker />
@@ -126,7 +183,36 @@ export const CadViewerContainer = forwardRef<
               enableDamping={true}
               dampingFactor={0.1}
               target={orbitTarget}
-              onControlsChange={handleControlsChange}
+              onControlsChange={(controls) => {
+                handleControlsChange(controls)
+
+                if (!controls) {
+                  controlsRef.current = null
+                  return
+                }
+
+                controlsRef.current = controls
+                tryRestoreCamera()
+
+                if (!cameraRef.current) {
+                  return
+                }
+
+                if (saveTimeoutRef.current) {
+                  clearTimeout(saveTimeoutRef.current)
+                }
+
+                saveTimeoutRef.current = setTimeout(() => {
+                  const camera = cameraRef.current
+                  const activeControls = controlsRef.current
+
+                  if (!camera || !activeControls) {
+                    return
+                  }
+
+                  saveCameraToSession(camera, activeControls)
+                }, 150)
+              }}
             />
           )}
           <Lights />

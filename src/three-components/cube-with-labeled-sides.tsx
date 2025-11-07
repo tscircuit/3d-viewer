@@ -43,9 +43,11 @@ export const CubeWithLabeledSides = ({}: any) => {
   }, [scene])
 
   useFrame(() => {
-    if (!camera) return
+    if (!camera || typeof window === "undefined") return
 
-    const mainRot = window.TSCI_MAIN_CAMERA_ROTATION
+    const mainRot =
+      window.TSCI_MAIN_CAMERA_ROTATION ??
+      (window.TSCI_MAIN_CAMERA_ROTATION = new THREE.Euler(0, 0, 0))
     const cameraPosition = computePointInFront(mainRot, 2)
 
     camera.position.copy(cameraPosition)

@@ -35,10 +35,23 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
   }, [camera, renderer])
 
   useEffect(() => {
-    if (!onControlsChange) return
-    onControlsChange(controls ?? null)
+    onControlsChange?.(controls ?? null)
     return () => {
-      onControlsChange(null)
+      onControlsChange?.(null)
+    }
+  }, [controls, onControlsChange])
+
+  useEffect(() => {
+    if (!controls) return
+
+    const handleChange = () => {
+      onControlsChange?.(controls)
+    }
+
+    controls.addEventListener("change", handleChange)
+
+    return () => {
+      controls.removeEventListener("change", handleChange)
     }
   }, [controls, onControlsChange])
 
