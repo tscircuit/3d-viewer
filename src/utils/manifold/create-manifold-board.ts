@@ -64,7 +64,7 @@ export function createManifoldBoard(
     }
     // Fallback to cuboid if no outline or invalid outline
     boardOp = Manifold.cube(
-      [boardData.width, boardData.height, pcbThickness],
+      [boardData.width!, boardData.height!, pcbThickness],
       true, // center (for all axes)
     )
     manifoldInstancesForCleanup.push(boardOp)

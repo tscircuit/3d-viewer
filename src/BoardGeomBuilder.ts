@@ -222,13 +222,13 @@ export class BoardGeomBuilder {
       )
     } else {
       this.boardGeom = cuboid({
-        size: [this.board.width, this.board.height, this.ctx.pcbThickness],
+        size: [this.board.width!, this.board.height!, this.ctx.pcbThickness],
         center: [this.board.center.x, this.board.center.y, 0],
       })
       this.boardClipGeom = cuboid({
         size: [
-          this.board.width + 2 * BOARD_CLIP_XY_OUTSET,
-          this.board.height + 2 * BOARD_CLIP_XY_OUTSET,
+          this.board.width! + 2 * BOARD_CLIP_XY_OUTSET,
+          this.board.height! + 2 * BOARD_CLIP_XY_OUTSET,
           clipDepth,
         ],
         center: [this.board.center.x, this.board.center.y, 0],
