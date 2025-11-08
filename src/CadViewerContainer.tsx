@@ -32,12 +32,26 @@ import {
 
 const CAMERA_SESSION_SAVE_MIN_INTERVAL_MS = 75
 
+declare global {
+  interface Window {
+    TSCI_MAIN_CAMERA_STATE?: {
+      quaternion: THREE.Quaternion
+    }
+  }
+}
+
 export const RotationTracker = () => {
   const { camera } = useThree()
 
   useFrame(() => {
     if (camera && typeof window !== "undefined") {
       window.TSCI_MAIN_CAMERA_ROTATION = camera.rotation
+      const state =
+        window.TSCI_MAIN_CAMERA_STATE ??
+        (window.TSCI_MAIN_CAMERA_STATE = {
+          quaternion: new THREE.Quaternion(),
+        })
+      state.quaternion.copy(camera.quaternion)
     }
   })
 
@@ -169,6 +183,12 @@ export const CadViewerContainer = forwardRef<
 
       if (restored && typeof window !== "undefined") {
         window.TSCI_MAIN_CAMERA_ROTATION = cameraRef.current.rotation
+        const state =
+          window.TSCI_MAIN_CAMERA_STATE ??
+          (window.TSCI_MAIN_CAMERA_STATE = {
+            quaternion: new THREE.Quaternion(),
+          })
+        state.quaternion.copy(cameraRef.current.quaternion)
       }
     }, [loadCameraFromSession])
 

@@ -190,6 +190,7 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
     controlsRef.current?.target.copy(nextTarget)
     camera.updateMatrixWorld()
     controlsRef.current?.update()
+    controlsRef.current?.dispatchEvent?.({ type: "change" })
 
     if (progress >= 1) {
       camera.position.copy(toPosition)
@@ -198,6 +199,7 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
       camera.updateMatrixWorld()
       controlsRef.current?.target.copy(toTarget)
       controlsRef.current?.update()
+      controlsRef.current?.dispatchEvent?.({ type: "change" })
       animationRef.current = null
     }
   })
