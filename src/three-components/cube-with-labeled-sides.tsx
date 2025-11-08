@@ -23,7 +23,6 @@ if (typeof window !== "undefined") {
 export const CubeWithLabeledSides = ({}: any) => {
   const { camera, scene } = useThree()
   const tempQuaternion = useRef(new THREE.Quaternion())
-  const tempVector = useRef(new THREE.Vector3())
 
   useEffect(() => {
     if (!scene) return
@@ -33,6 +32,29 @@ export const CubeWithLabeledSides = ({}: any) => {
       scene.remove(ambientLight)
     }
   }, [scene])
+
+  const alignmentQuaternion = useMemo(
+    () =>
+      new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)),
+    [],
+  )
+
+  const group = useMemo(() => {
+    const g = new THREE.Group()
+
+    const box = new THREE.Mesh(
+      new THREE.BoxGeometry(1, 1, 1),
+      new THREE.MeshStandardMaterial({ color: "white" }),
+    )
+    g.add(box)
+
+    const edges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)),
+      new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 }),
+    )
+    g.add(edges)
+    return g
+  }, [])
 
   useFrame(() => {
     if (!camera || typeof window === "undefined") return
@@ -48,31 +70,12 @@ export const CubeWithLabeledSides = ({}: any) => {
       quaternion.identity()
     }
 
-    const forwardVector = tempVector.current
-    forwardVector.set(0, 0, 1).applyQuaternion(quaternion).normalize()
+    group.quaternion.copy(quaternion).invert().multiply(alignmentQuaternion)
 
-    camera.position.copy(forwardVector.multiplyScalar(2))
+    camera.position.set(0, 0, 2)
     camera.up.set(0, 0, 1)
     camera.lookAt(0, 0, 0)
   })
-
-  const group = useMemo(() => {
-    const g = new THREE.Group()
-    g.rotation.fromArray([Math.PI / 2, 0, 0])
-
-    const box = new THREE.Mesh(
-      new THREE.BoxGeometry(1, 1, 1),
-      new THREE.MeshStandardMaterial({ color: "white" }),
-    )
-    g.add(box)
-
-    const edges = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)),
-      new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 }),
-    )
-    g.add(edges)
-    return g
-  }, [])
 
   useEffect(() => {
     if (!scene) return
