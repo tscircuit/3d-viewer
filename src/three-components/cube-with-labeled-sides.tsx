@@ -23,6 +23,8 @@ if (typeof window !== "undefined") {
 export const CubeWithLabeledSides = ({}: any) => {
   const { camera, scene } = useThree()
   const tempQuaternion = useRef(new THREE.Quaternion())
+  const tempPosition = useRef(new THREE.Vector3())
+  const tempUp = useRef(new THREE.Vector3())
 
   useEffect(() => {
     if (!scene) return
@@ -33,14 +35,9 @@ export const CubeWithLabeledSides = ({}: any) => {
     }
   }, [scene])
 
-  const alignmentQuaternion = useMemo(
-    () =>
-      new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)),
-    [],
-  )
-
   const group = useMemo(() => {
     const g = new THREE.Group()
+    g.rotation.fromArray([Math.PI / 2, 0, 0])
 
     const box = new THREE.Mesh(
       new THREE.BoxGeometry(1, 1, 1),
@@ -70,10 +67,18 @@ export const CubeWithLabeledSides = ({}: any) => {
       quaternion.identity()
     }
 
-    group.quaternion.copy(quaternion).invert().multiply(alignmentQuaternion)
+    const position = tempPosition.current
+    position
+      .set(0, 0, 1)
+      .applyQuaternion(quaternion)
+      .normalize()
+      .multiplyScalar(2)
+    camera.position.copy(position)
 
-    camera.position.set(0, 0, 2)
-    camera.up.set(0, 0, 1)
+    const upVector = tempUp.current
+    upVector.set(0, 1, 0).applyQuaternion(quaternion).normalize()
+    camera.up.copy(upVector)
+
     camera.lookAt(0, 0, 0)
   })
 

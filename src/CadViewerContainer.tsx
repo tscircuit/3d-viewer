@@ -161,6 +161,24 @@ export const CadViewerContainer = forwardRef<
     }, [flushCameraToSession])
 
     useEffect(() => {
+      const handlePageHide = () => {
+        flushCameraToSession()
+      }
+
+      if (typeof window !== "undefined") {
+        window.addEventListener("pagehide", handlePageHide)
+        window.addEventListener("beforeunload", handlePageHide)
+      }
+
+      return () => {
+        if (typeof window !== "undefined") {
+          window.removeEventListener("pagehide", handlePageHide)
+          window.removeEventListener("beforeunload", handlePageHide)
+        }
+      }
+    }, [flushCameraToSession])
+
+    useEffect(() => {
       return () => {
         flushCameraToSession()
       }
