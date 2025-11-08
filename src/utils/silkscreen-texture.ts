@@ -32,16 +32,19 @@ export function createSilkscreenTextureForLayer({
   const pcbSilkscreenPaths = su(circuitJson).pcb_silkscreen_path.list()
   const pcbSilkscreenLines = su(circuitJson).pcb_silkscreen_line.list()
   const pcbSilkscreenRects = su(circuitJson).pcb_silkscreen_rect.list()
+  const pcbSilkscreenCircles = su(circuitJson).pcb_silkscreen_circle.list()
 
   const textsOnLayer = pcbSilkscreenTexts.filter((t) => t.layer === layer)
   const pathsOnLayer = pcbSilkscreenPaths.filter((p) => p.layer === layer)
   const linesOnLayer = pcbSilkscreenLines.filter((l) => l.layer === layer)
   const rectsOnLayer = pcbSilkscreenRects.filter((r) => r.layer === layer)
+  const circlesOnLayer = pcbSilkscreenCircles.filter((c) => c.layer === layer)
   if (
     textsOnLayer.length === 0 &&
     pathsOnLayer.length === 0 &&
     linesOnLayer.length === 0 &&
-    rectsOnLayer.length === 0
+    rectsOnLayer.length === 0 &&
+    circlesOnLayer.length === 0
   ) {
     return null
   }
@@ -101,6 +104,55 @@ export function createSilkscreenTextureForLayer({
       else ctx.lineTo(canvasX, canvasY)
     })
     ctx.stroke()
+  })
+
+  // Draw Silkscreen Circles
+  circlesOnLayer.forEach((circleEl: any) => {
+    const radius = coerceDimensionToMm(circleEl.radius, 0)
+    if (radius <= 0) return
+
+    const strokeWidth = coerceDimensionToMm(circleEl.stroke_width, 0.12)
+    const hasStroke = strokeWidth > 0
+
+    const centerXmm = parseDimensionToMm(circleEl.center?.x) ?? 0
+    const centerYmm = parseDimensionToMm(circleEl.center?.y) ?? 0
+
+    const canvasCenterX = canvasXFromPcb(centerXmm)
+    const canvasCenterY = canvasYFromPcb(centerYmm)
+    const radiusPx = radius * traceTextureResolution
+
+    ctx.save()
+    ctx.translate(canvasCenterX, canvasCenterY)
+
+    if (hasStroke) {
+      // Draw a ring (stroke only)
+      const outerRadiusPx =
+        radiusPx + (strokeWidth / 2) * traceTextureResolution
+      const innerRadiusPx = Math.max(
+        0,
+        radiusPx - (strokeWidth / 2) * traceTextureResolution,
+      )
+
+      if (innerRadiusPx > 0) {
+        // Draw ring using even-odd fill rule
+        ctx.beginPath()
+        ctx.arc(0, 0, outerRadiusPx, 0, 2 * Math.PI)
+        ctx.arc(0, 0, innerRadiusPx, 0, 2 * Math.PI, true) // counterclockwise to create hole
+        ctx.fill("evenodd")
+      } else {
+        // If inner radius is 0 or negative, just draw a filled circle
+        ctx.beginPath()
+        ctx.arc(0, 0, outerRadiusPx, 0, 2 * Math.PI)
+        ctx.fill()
+      }
+    } else {
+      // Draw filled circle
+      ctx.beginPath()
+      ctx.arc(0, 0, radiusPx, 0, 2 * Math.PI)
+      ctx.fill()
+    }
+
+    ctx.restore()
   })
 
   // Draw Silkscreen Rectangles
