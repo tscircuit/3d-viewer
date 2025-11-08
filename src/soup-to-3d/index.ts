@@ -35,7 +35,7 @@ export const createSimplifiedBoardGeom = (
     )
   } else {
     boardGeom = cuboid({
-      size: [board.width, board.height, pcbThickness],
+      size: [board.width!, board.height!, pcbThickness],
       center: [board.center.x, board.center.y, 0],
     })
   }
