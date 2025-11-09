@@ -39,16 +39,25 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
     const [contextState, setContextState] = useState<ThreeContextState | null>(
       null,
     )
-    const frameListeners = useRef<Array<(time: number, delta: number) => void>>(
-      [],
-    )
-    const lastCameraStateRef = useRef<{
-      position: THREE.Vector3
-      quaternion: THREE.Quaternion
-      up: THREE.Vector3
-    } | null>(null)
+  const frameListeners = useRef<Array<(time: number, delta: number) => void>>(
+    [],
+  )
+  const lastOrthographicStateRef = useRef<{
+    position: THREE.Vector3
+    quaternion: THREE.Quaternion
+    up: THREE.Vector3
+    zoom: number
+    target?: THREE.Vector3
+  } | null>(null)
+  const lastPerspectiveStateRef = useRef<{
+    position: THREE.Vector3
+    quaternion: THREE.Quaternion
+    up: THREE.Vector3
+    target?: THREE.Vector3
+  } | null>(null)
+  const currentCameraRef = useRef<THREE.Camera | null>(null)
 
-    const addFrameListener = useCallback(
+  const addFrameListener = useCallback(
       (listener: (time: number, delta: number) => void) => {
         frameListeners.current.push(listener)
       },
@@ -75,6 +84,35 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
     useEffect(() => {
       if (!mountRef.current) return
 
+      const isOrthographic = cameraProps?.type === "orthographic"
+
+      const existingCamera = currentCameraRef.current
+      const wasSwitchingCameraType = existingCamera && (
+        (isOrthographic && existingCamera instanceof THREE.PerspectiveCamera) ||
+        (!isOrthographic && existingCamera instanceof THREE.OrthographicCamera)
+      )
+
+      if (existingCamera) {
+        const wasOrthographic =
+          existingCamera instanceof THREE.OrthographicCamera
+
+        if (wasOrthographic) {
+          const zoom = (existingCamera as THREE.OrthographicCamera).zoom
+          lastOrthographicStateRef.current = {
+            position: existingCamera.position.clone(),
+            quaternion: existingCamera.quaternion.clone(),
+            up: existingCamera.up.clone(),
+            zoom,
+          }
+        } else {
+          lastPerspectiveStateRef.current = {
+            position: existingCamera.position.clone(),
+            quaternion: existingCamera.quaternion.clone(),
+            up: existingCamera.up.clone(),
+          }
+        }
+      }
+
       removeExistingCanvases(mountRef.current)
 
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
@@ -85,7 +123,6 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
       renderer.setPixelRatio(window.devicePixelRatio)
       mountRef.current.appendChild(renderer.domElement)
 
-      const isOrthographic = cameraProps?.type === "orthographic"
       const frustumSize = cameraProps?.frustumSize ?? 20
       const aspect = width / height || 1
 
@@ -100,15 +137,83 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
           )
         : new THREE.PerspectiveCamera(75, aspect, 0.1, 1000)
 
-      const previousState = lastCameraStateRef.current
-      if (previousState) {
-        camera.position.copy(previousState.position)
-        camera.quaternion.copy(previousState.quaternion)
-        camera.up.copy(previousState.up)
-        camera.updateMatrixWorld()
+      currentCameraRef.current = camera
+
+      // Only restore state when explicitly switching camera types
+      // Don't restore on circuit changes or first load
+      const stateToRestore = wasSwitchingCameraType
+        ? isOrthographic
+          ? lastPerspectiveStateRef.current
+          : lastOrthographicStateRef.current
+        : null
+
+      const isRestoringFromOtherType = wasSwitchingCameraType && !!stateToRestore
+
+      if (stateToRestore) {
+        camera.position.copy(stateToRestore.position)
+        camera.quaternion.copy(stateToRestore.quaternion)
+        camera.up.copy(stateToRestore.up)
+
+        if (
+          isOrthographic &&
+          "zoom" in stateToRestore &&
+          typeof stateToRestore.zoom === "number"
+        ) {
+          ;(camera as THREE.OrthographicCamera).zoom = stateToRestore.zoom
+        }
+
+        if (isRestoringFromOtherType) {
+          let target: THREE.Vector3
+          if (stateToRestore.target) {
+            target = stateToRestore.target.clone()
+          } else {
+            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(
+              camera.quaternion,
+            )
+            const estimatedDistance = camera.position.length()
+            const toOrigin = new THREE.Vector3()
+              .sub(camera.position)
+              .normalize()
+            const dotWithForward = forward.dot(toOrigin)
+            if (dotWithForward > 0.5) {
+              target = new THREE.Vector3(0, 0, 0)
+            } else {
+              target = camera.position
+                .clone()
+                .add(forward.multiplyScalar(estimatedDistance))
+            }
+          }
+
+          const distance = camera.position.distanceTo(target)
+
+          if (isOrthographic) {
+            const perspectiveFOV = 75
+            const fovRadians = (perspectiveFOV * Math.PI) / 180
+            const visibleHeight =
+              2 * Math.tan(fovRadians / 2) * Math.max(distance, 0.1)
+            const orthoCameraHeight = frustumSize
+            const matchingZoom = Math.max(
+              0.1,
+              Math.min(10, orthoCameraHeight / visibleHeight),
+            )
+            ;(camera as THREE.OrthographicCamera).zoom = matchingZoom
+            camera.updateProjectionMatrix()
+          } else {
+            camera.updateProjectionMatrix()
+          }
+
+          camera.updateMatrixWorld()
+        } else {
+          camera.updateProjectionMatrix()
+          camera.updateMatrixWorld()
+        }
       } else {
         if (cameraProps?.up) {
-          camera.up.set(cameraProps.up[0], cameraProps.up[1], cameraProps.up[2])
+          camera.up.set(
+            cameraProps.up[0],
+            cameraProps.up[1],
+            cameraProps.up[2],
+          )
         }
         if (cameraProps?.position) {
           camera.position.set(
@@ -118,8 +223,8 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
           )
         }
         camera.lookAt(0, 0, 0)
+        camera.updateProjectionMatrix()
       }
-      camera.updateProjectionMatrix()
 
       scene.add(rootObject.current)
       window.__TSCIRCUIT_THREE_OBJECT = rootObject.current
@@ -169,11 +274,7 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
       return () => {
         window.removeEventListener("resize", handleResize)
         cancelAnimationFrame(animationFrameId)
-        lastCameraStateRef.current = {
-          position: camera.position.clone(),
-          quaternion: camera.quaternion.clone(),
-          up: camera.up.clone(),
-        }
+
         if (mountRef.current && renderer.domElement) {
           mountRef.current.removeChild(renderer.domElement)
         }

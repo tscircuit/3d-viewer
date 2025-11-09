@@ -78,10 +78,16 @@ const CadViewerInner = (props: any) => {
 
   const handleCameraControllerReady = useCallback(
     (controller: CameraController | null) => {
+      const wasNull = cameraControllerRef.current === null
       cameraControllerRef.current = controller
       externalCameraControllerReady?.(controller)
       if (controller) {
+        // Always increment version when we get a controller
+        // This ensures preset re-application works after camera type toggle
         setCameraControllerReadyVersion((version) => version + 1)
+      } else if (wasNull) {
+        // If we had a controller and now it's null, don't increment
+        // This prevents unnecessary re-renders
       }
     },
     [externalCameraControllerReady],
@@ -100,9 +106,14 @@ const CadViewerInner = (props: any) => {
   )
 
   useEffect(() => {
-    if (!cameraControllerRef.current) return
+    if (!cameraControllerRef.current) {
+      // If controller becomes null (e.g., during camera type toggle), reset tracking
+      lastAppliedControllerVersionRef.current = -1
+      return
+    }
     if (cameraPreset === "Custom") return
 
+    // Only skip if we've already applied this preset for this controller version
     if (
       lastAppliedControllerVersionRef.current === cameraControllerReadyVersion
     ) {
@@ -142,9 +153,9 @@ const CadViewerInner = (props: any) => {
     )
   }, [shouldUseOrthographicCamera])
 
-  const viewerKey = props.circuitJson
-    ? JSON.stringify(props.circuitJson)
-    : undefined
+  // Don't use viewerKey - it causes performance issues with JSON.stringify
+  // and the component already handles circuit changes properly
+  const viewerKey = undefined
 
   return (
     <div

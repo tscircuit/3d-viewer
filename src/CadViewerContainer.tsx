@@ -96,17 +96,28 @@ export const CadViewerContainer = forwardRef<
       return new THREE.Vector3(0, 0, 0)
     }, [orbitTarget])
 
+    const cameraModeKey = shouldUseOrthographicCamera
+      ? "orthographic"
+      : "perspective"
+
     const { cameraAnimatorProps, handleControlsChange } = useCameraController({
+      key: cameraModeKey,
       defaultTarget,
       initialCameraPosition,
       onCameraControllerReady,
     })
 
     const orthographicFrustumSize = useMemo(() => {
+      if (boardDimensions) {
+        const width = boardDimensions.width ?? 0
+        const height = boardDimensions.height ?? 0
+        const maxDimension = Math.max(width, height)
+        return Math.max(maxDimension * 1.5, 10)
+      }
       const [x, y, z] = initialCameraPosition
       const maxComponent = Math.max(Math.abs(x), Math.abs(y), Math.abs(z))
       return Math.max(maxComponent * 2, 10)
-    }, [initialCameraPosition])
+    }, [initialCameraPosition, boardDimensions])
 
     const mutableInitialCameraPosition = useMemo(
       () =>
@@ -149,10 +160,14 @@ export const CadViewerContainer = forwardRef<
             frustumSize: orthographicFrustumSize,
           }}
         >
-          <CameraAnimator {...cameraAnimatorProps} />
+          <CameraAnimator
+            key={`camera-animator-${shouldUseOrthographicCamera ? "orthographic" : "perspective"}`}
+            {...cameraAnimatorProps}
+          />
           <RotationTracker />
           {isInteractionEnabled && (
             <OrbitControls
+              key={shouldUseOrthographicCamera ? "orthographic" : "perspective"}
               autoRotate={!autoRotateDisabled}
               autoRotateSpeed={1}
               onStart={onUserInteraction}

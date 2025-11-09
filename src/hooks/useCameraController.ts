@@ -1,5 +1,5 @@
 import type * as React from "react"
-import { useCallback, useEffect, useMemo, useRef } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three"
 import type { OrbitControls as ThreeOrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
 import { useFrame, useThree } from "../react-three/ThreeContext"
@@ -32,6 +32,7 @@ export interface CameraController {
 export interface CameraAnimatorProps {
   defaultTarget: THREE.Vector3
   controlsRef: React.MutableRefObject<ThreeOrbitControls | null>
+  controlsVersion: number
   onReady?: (
     controller: { animateTo: CameraController["animateTo"] } | null,
   ) => void
@@ -40,9 +41,13 @@ export interface CameraAnimatorProps {
 export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
   defaultTarget,
   controlsRef,
+  controlsVersion,
   onReady,
 }) => {
   const { camera } = useThree()
+  const cameraRef = useRef(camera)
+  cameraRef.current = camera
+
   const animationRef = useRef<{
     fromPosition: THREE.Vector3
     toPosition: THREE.Vector3
@@ -63,7 +68,15 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
 
   const animateTo = useCallback<CameraController["animateTo"]>(
     ({ position, target, up, durationMs = 600 }) => {
-      if (!camera) return
+      const currentCamera = cameraRef.current
+
+      if (!currentCamera) {
+        return
+      }
+
+      if (!controlsRef.current) {
+        return
+      }
 
       const currentTarget = controlsRef.current?.target ?? defaultTarget
 
@@ -106,8 +119,8 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
       toOrientationHelper.lookAt(resolvedTarget)
 
       const toQuaternion = toOrientationHelper.quaternion.clone().normalize()
-      const fromQuaternion = camera.quaternion.clone().normalize()
-      const fromPosition = camera.position.clone()
+      const fromQuaternion = currentCamera.quaternion.clone().normalize()
+      const fromPosition = currentCamera.position.clone()
       const fromTarget = currentTarget.clone()
 
       const slerpTarget = toQuaternion.clone()
@@ -118,16 +131,23 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
         slerpTarget.w *= -1
       }
 
-      // Calculate zoom for orthographic cameras
       let fromZoom: number | undefined
       let toZoom: number | undefined
-      
-      if (camera instanceof THREE.OrthographicCamera) {
-        fromZoom = camera.zoom
-        const fromDistance = fromPosition.distanceTo(fromTarget)
+
+      if (currentCamera instanceof THREE.OrthographicCamera) {
+        fromZoom = currentCamera.zoom
+
         const toDistance = toPosition.distanceTo(resolvedTarget)
-        // Calculate zoom to maintain visual scale based on distance ratio
-        toZoom = fromZoom * (fromDistance / Math.max(toDistance, 0.1))
+        const baseFrustumHeight = currentCamera.top - currentCamera.bottom
+        const targetFOV = 45 * (Math.PI / 180)
+        const idealVisibleHeight = 2 * Math.tan(targetFOV / 2) * toDistance
+        const calculatedZoom = baseFrustumHeight / idealVisibleHeight
+
+        toZoom = Math.max(0.1, Math.min(10, calculatedZoom))
+      }
+
+      if (controlsRef.current) {
+        controlsRef.current.enabled = false
       }
 
       animationRef.current = {
@@ -145,19 +165,59 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
         duration: durationMs,
       }
     },
-    [camera, controlsRef, defaultTarget],
+    [controlsRef, defaultTarget],
   )
 
   useEffect(() => {
-    if (!onReady || !camera) return
-    onReady({ animateTo })
+    if (!onReady || !cameraRef.current) {
+      if (onReady) onReady(null)
+      return
+    }
+
+    const hasControls = controlsRef.current !== null
+    if (hasControls) {
+      onReady({ animateTo })
+    } else {
+      onReady(null)
+    }
+
     return () => {
       onReady(null)
     }
-  }, [animateTo, camera, onReady])
+  }, [animateTo, onReady, controlsVersion])
+
+  useEffect(() => {
+    const currentCamera = cameraRef.current
+    if (!currentCamera || !controlsRef.current) return
+
+    const controls = controlsRef.current
+    const savedPosition = currentCamera.position.clone()
+    const savedQuaternion = currentCamera.quaternion.clone()
+    const savedTarget = controls.target.clone()
+
+    const wasEnabled = controls.enabled
+    const wasDamping = controls.enableDamping
+    controls.enabled = false
+    controls.enableDamping = false
+
+    controls.update()
+
+    if (!currentCamera.position.equals(savedPosition)) {
+      currentCamera.position.copy(savedPosition)
+      currentCamera.quaternion.copy(savedQuaternion)
+      controls.target.copy(savedTarget)
+      currentCamera.updateMatrixWorld()
+    }
+
+    controls.enableDamping = wasDamping
+    controls.enabled = wasEnabled
+  }, [camera])
 
   useFrame(() => {
-    if (!camera || !animationRef.current) return
+    if (!animationRef.current) return
+    
+    const currentCamera = cameraRef.current
+    if (!currentCamera) return
 
     const {
       fromPosition,
@@ -178,7 +238,7 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
     const progress = duration <= 0 ? 1 : Math.min(elapsed / duration, 1)
     const eased = easeInOutCubic(progress)
 
-    camera.position.lerpVectors(fromPosition, toPosition, eased)
+    currentCamera.position.lerpVectors(fromPosition, toPosition, eased)
 
     const nextTarget = tempTarget.current
     nextTarget.copy(fromTarget).lerp(toTarget, eased)
@@ -186,32 +246,48 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
     const interpolatedQuaternion = tempQuaternion.current
     interpolatedQuaternion.copy(fromQuaternion).slerp(toQuaternion, eased)
 
-    camera.quaternion.copy(interpolatedQuaternion)
+    currentCamera.quaternion.copy(interpolatedQuaternion)
 
-    // Interpolate zoom for orthographic cameras
-    if (camera instanceof THREE.OrthographicCamera && fromZoom !== undefined && toZoom !== undefined) {
-      camera.zoom = fromZoom + (toZoom - fromZoom) * eased
-      camera.updateProjectionMatrix()
+    if (
+      currentCamera instanceof THREE.OrthographicCamera &&
+      fromZoom !== undefined &&
+      toZoom !== undefined
+    ) {
+      currentCamera.zoom = fromZoom + (toZoom - fromZoom) * eased
+      currentCamera.updateProjectionMatrix()
     }
 
     controlsRef.current?.target.copy(nextTarget)
-    camera.updateMatrixWorld()
+    currentCamera.updateMatrixWorld()
     controlsRef.current?.update()
 
     if (progress >= 1) {
-      camera.position.copy(toPosition)
-      camera.quaternion.copy(finalQuaternion)
-      camera.up.copy(finalUp)
-      
-      // Set final zoom for orthographic camera
-      if (camera instanceof THREE.OrthographicCamera && toZoom !== undefined) {
-        camera.zoom = toZoom
-        camera.updateProjectionMatrix()
+      currentCamera.position.copy(toPosition)
+      currentCamera.quaternion.copy(finalQuaternion)
+      currentCamera.up.copy(finalUp)
+
+      if (
+        currentCamera instanceof THREE.OrthographicCamera &&
+        toZoom !== undefined
+      ) {
+        currentCamera.zoom = toZoom
+        currentCamera.updateProjectionMatrix()
       }
-      
-      camera.updateMatrixWorld()
+
+      currentCamera.updateMatrixWorld()
       controlsRef.current?.target.copy(toTarget)
-      controlsRef.current?.update()
+
+      if (controlsRef.current) {
+        controlsRef.current.enabled = true
+        controlsRef.current.update()
+        if (
+          "saveState" in controlsRef.current &&
+          typeof controlsRef.current.saveState === "function"
+        ) {
+          controlsRef.current.saveState()
+        }
+      }
+
       animationRef.current = null
     }
   })
@@ -220,6 +296,7 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
 }
 
 interface UseCameraControllerOptions {
+  key: string
   defaultTarget: THREE.Vector3
   initialCameraPosition?: readonly [number, number, number]
   onCameraControllerReady?: (controller: CameraController | null) => void
@@ -231,11 +308,13 @@ interface UseCameraControllerResult {
 }
 
 export const useCameraController = ({
+  key,
   defaultTarget,
   initialCameraPosition,
   onCameraControllerReady,
 }: UseCameraControllerOptions): UseCameraControllerResult => {
   const controlsRef = useRef<ThreeOrbitControls | null>(null)
+  const [controlsVersion, setControlsVersion] = useState(0)
 
   const baseDistance = useMemo(() => {
     const [x, y, z] = initialCameraPosition ?? [5, 5, 5]
@@ -245,7 +324,8 @@ export const useCameraController = ({
       z - defaultTarget.z,
     )
     return distance > 0 ? distance : 5
-  }, [initialCameraPosition, defaultTarget])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCameraPosition, defaultTarget, key])
 
   const getPresetConfig = useCallback(
     (preset: CameraPreset): CameraAnimationConfig | null => {
@@ -357,24 +437,36 @@ export const useCameraController = ({
       }
 
       onCameraControllerReady(enhancedController)
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [getPresetConfig, onCameraControllerReady],
+    [getPresetConfig, onCameraControllerReady, key],
   )
+
+  useEffect(() => {
+    controlsRef.current = null
+    setControlsVersion(0)
+  }, [key])
 
   const handleControlsChange = useCallback(
     (controls: ThreeOrbitControls | null) => {
       controlsRef.current = controls
+      if (controls !== null) {
+        setControlsVersion((v) => v + 1)
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [],
+    [key],
   )
 
   const cameraAnimatorProps = useMemo<CameraAnimatorProps>(
     () => ({
       defaultTarget,
       controlsRef,
+      controlsVersion,
       onReady: handleControllerReady,
     }),
-    [defaultTarget, handleControllerReady],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [defaultTarget, handleControllerReady, controlsVersion, key],
   )
 
   return { cameraAnimatorProps, handleControlsChange }
