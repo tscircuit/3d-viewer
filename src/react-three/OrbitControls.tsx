@@ -76,9 +76,16 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
 
   useEffect(() => {
     if (!controls || !onStart) return
-    controls.addEventListener("start", onStart)
+    
+    const handleStart = () => {
+      // Don't fire callback if controls are disabled (during camera animation)
+      if (!controls.enabled) return
+      onStart()
+    }
+    
+    controls.addEventListener("start", handleStart)
     return () => {
-      controls.removeEventListener("start", onStart)
+      controls.removeEventListener("start", handleStart)
     }
   }, [controls, onStart])
 

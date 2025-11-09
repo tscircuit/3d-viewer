@@ -296,7 +296,7 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
 }
 
 interface UseCameraControllerOptions {
-  key: string
+  isOrthographic: boolean
   defaultTarget: THREE.Vector3
   initialCameraPosition?: readonly [number, number, number]
   onCameraControllerReady?: (controller: CameraController | null) => void
@@ -308,7 +308,7 @@ interface UseCameraControllerResult {
 }
 
 export const useCameraController = ({
-  key,
+  isOrthographic,
   defaultTarget,
   initialCameraPosition,
   onCameraControllerReady,
@@ -325,7 +325,7 @@ export const useCameraController = ({
     )
     return distance > 0 ? distance : 5
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialCameraPosition, defaultTarget, key])
+  }, [initialCameraPosition, defaultTarget, isOrthographic])
 
   const getPresetConfig = useCallback(
     (preset: CameraPreset): CameraAnimationConfig | null => {
@@ -439,13 +439,13 @@ export const useCameraController = ({
       onCameraControllerReady(enhancedController)
       // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [getPresetConfig, onCameraControllerReady, key],
+    [getPresetConfig, onCameraControllerReady, isOrthographic],
   )
 
   useEffect(() => {
     controlsRef.current = null
     setControlsVersion(0)
-  }, [key])
+  }, [isOrthographic])
 
   const handleControlsChange = useCallback(
     (controls: ThreeOrbitControls | null) => {
@@ -455,7 +455,7 @@ export const useCameraController = ({
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [key],
+    [isOrthographic],
   )
 
   const cameraAnimatorProps = useMemo<CameraAnimatorProps>(
@@ -466,7 +466,7 @@ export const useCameraController = ({
       onReady: handleControllerReady,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [defaultTarget, handleControllerReady, controlsVersion, key],
+    [defaultTarget, handleControllerReady, controlsVersion, isOrthographic],
   )
 
   return { cameraAnimatorProps, handleControlsChange }

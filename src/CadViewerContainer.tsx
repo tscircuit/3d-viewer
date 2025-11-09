@@ -96,12 +96,8 @@ export const CadViewerContainer = forwardRef<
       return new THREE.Vector3(0, 0, 0)
     }, [orbitTarget])
 
-    const cameraModeKey = shouldUseOrthographicCamera
-      ? "orthographic"
-      : "perspective"
-
     const { cameraAnimatorProps, handleControlsChange } = useCameraController({
-      key: cameraModeKey,
+      isOrthographic: shouldUseOrthographicCamera ?? false,
       defaultTarget,
       initialCameraPosition,
       onCameraControllerReady,
@@ -161,7 +157,7 @@ export const CadViewerContainer = forwardRef<
           }}
         >
           <CameraAnimator
-            key={`camera-animator-${shouldUseOrthographicCamera ? "orthographic" : "perspective"}`}
+            key={shouldUseOrthographicCamera ? "orthographic" : "perspective"}
             {...cameraAnimatorProps}
           />
           <RotationTracker />

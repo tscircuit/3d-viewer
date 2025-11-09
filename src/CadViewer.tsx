@@ -33,12 +33,7 @@ const CadViewerInner = (props: any) => {
       )
       return stored === "true"
     })
-  const { visibility, toggleLayer } = useLayerVisibility()
-
   const cameraControllerRef = useRef<CameraController | null>(null)
-  const [cameraControllerReadyVersion, setCameraControllerReadyVersion] =
-    useState(0)
-  const lastAppliedControllerVersionRef = useRef(cameraControllerReadyVersion)
   const externalCameraControllerReady = props.onCameraControllerReady as
     | ((controller: CameraController | null) => void)
     | undefined
@@ -78,17 +73,8 @@ const CadViewerInner = (props: any) => {
 
   const handleCameraControllerReady = useCallback(
     (controller: CameraController | null) => {
-      const wasNull = cameraControllerRef.current === null
       cameraControllerRef.current = controller
       externalCameraControllerReady?.(controller)
-      if (controller) {
-        // Always increment version when we get a controller
-        // This ensures preset re-application works after camera type toggle
-        setCameraControllerReadyVersion((version) => version + 1)
-      } else if (wasNull) {
-        // If we had a controller and now it's null, don't increment
-        // This prevents unnecessary re-renders
-      }
     },
     [externalCameraControllerReady],
   )
@@ -97,32 +83,12 @@ const CadViewerInner = (props: any) => {
     (preset: CameraPreset) => {
       setCameraPreset(preset)
       if (preset !== "Custom") {
-        lastAppliedControllerVersionRef.current = cameraControllerReadyVersion
         cameraControllerRef.current?.animateToPreset(preset)
       }
       closeMenu()
     },
-    [cameraControllerReadyVersion, closeMenu],
+    [closeMenu],
   )
-
-  useEffect(() => {
-    if (!cameraControllerRef.current) {
-      // If controller becomes null (e.g., during camera type toggle), reset tracking
-      lastAppliedControllerVersionRef.current = -1
-      return
-    }
-    if (cameraPreset === "Custom") return
-
-    // Only skip if we've already applied this preset for this controller version
-    if (
-      lastAppliedControllerVersionRef.current === cameraControllerReadyVersion
-    ) {
-      return
-    }
-
-    lastAppliedControllerVersionRef.current = cameraControllerReadyVersion
-    cameraControllerRef.current.animateToPreset(cameraPreset)
-  }, [cameraPreset, cameraControllerReadyVersion])
 
   useEffect(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
@@ -153,13 +119,8 @@ const CadViewerInner = (props: any) => {
     )
   }, [shouldUseOrthographicCamera])
 
-  // Don't use viewerKey - it causes performance issues with JSON.stringify
-  // and the component already handles circuit changes properly
-  const viewerKey = undefined
-
   return (
     <div
-      key={viewerKey}
       ref={containerRef}
       style={{
         width: "100%",
