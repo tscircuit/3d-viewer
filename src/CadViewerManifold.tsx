@@ -228,6 +228,7 @@ try {
     error: builderError,
     isLoading: builderIsLoading,
     boardData,
+    isFauxBoard,
   } = useManifoldBoardBuilder(manifoldJSModule, circuitJson)
 
   const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
@@ -303,33 +304,55 @@ try {
   }
 
   return (
-    <CadViewerContainer
-      initialCameraPosition={initialCameraPosition}
-      autoRotateDisabled={autoRotateDisabled}
-      clickToInteractEnabled={clickToInteractEnabled}
-      boardDimensions={boardDimensions}
-      boardCenter={boardCenter}
-      onUserInteraction={onUserInteraction}
-      onCameraControllerReady={onCameraControllerReady}
-    >
-      <BoardMeshes
-        geometryMeshes={geometryMeshes}
-        textureMeshes={textureMeshes}
-      />
-      {cadComponents.map((cad_component: CadComponent) => (
-        <ThreeErrorBoundary
-          key={cad_component.cad_component_id}
-          fallback={({ error }) => (
-            <Error3d cad_component={cad_component} error={error} />
-          )}
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <CadViewerContainer
+        initialCameraPosition={initialCameraPosition}
+        autoRotateDisabled={autoRotateDisabled}
+        clickToInteractEnabled={clickToInteractEnabled}
+        boardDimensions={boardDimensions}
+        boardCenter={boardCenter}
+        onUserInteraction={onUserInteraction}
+        onCameraControllerReady={onCameraControllerReady}
+      >
+        <BoardMeshes
+          geometryMeshes={geometryMeshes}
+          textureMeshes={textureMeshes}
+        />
+        {cadComponents.map((cad_component: CadComponent) => (
+          <ThreeErrorBoundary
+            key={cad_component.cad_component_id}
+            fallback={({ error }) => (
+              <Error3d cad_component={cad_component} error={error} />
+            )}
+          >
+            <AnyCadComponent
+              cad_component={cad_component}
+              circuitJson={circuitJson}
+              isFauxBoard={isFauxBoard}
+            />
+          </ThreeErrorBoundary>
+        ))}
+      </CadViewerContainer>
+      {isFauxBoard && (
+        <div
+          style={{
+            position: "absolute",
+            right: 8,
+            top: 8,
+            background: "#222",
+            color: "#ffa500",
+            padding: "2px 8px",
+            borderRadius: 4,
+            fontSize: 12,
+            opacity: 0.8,
+            userSelect: "none",
+            border: "1px solid #ffa500",
+          }}
         >
-          <AnyCadComponent
-            cad_component={cad_component}
-            circuitJson={circuitJson}
-          />
-        </ThreeErrorBoundary>
-      ))}
-    </CadViewerContainer>
+          Faux Board
+        </div>
+      )}
+    </div>
   )
 }
 
