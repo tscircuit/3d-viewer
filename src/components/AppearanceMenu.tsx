@@ -79,6 +79,8 @@ export const AppearanceMenu = () => {
           }}
           onMouseEnter={() => setHoveredItem("appearance")}
           onMouseLeave={() => setHoveredItem(null)}
+          onTouchStart={() => setHoveredItem("appearance")}
+          onTouchEnd={() => setHoveredItem(null)}
         >
           <span style={{ flex: 1, display: "flex", alignItems: "center" }}>
             Appearance
@@ -114,6 +116,8 @@ export const AppearanceMenu = () => {
               }}
               onMouseEnter={() => setHoveredItem("boardBody")}
               onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("boardBody")}
+              onTouchEnd={() => setHoveredItem(null)}
             >
               <span style={iconContainerStyles}>
                 {visibility.boardBody && <CheckIcon />}
@@ -136,6 +140,8 @@ export const AppearanceMenu = () => {
               }}
               onMouseEnter={() => setHoveredItem("topCopper")}
               onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("topCopper")}
+              onTouchEnd={() => setHoveredItem(null)}
             >
               <span style={iconContainerStyles}>
                 {visibility.topCopper && <CheckIcon />}
@@ -158,6 +164,8 @@ export const AppearanceMenu = () => {
               }}
               onMouseEnter={() => setHoveredItem("bottomCopper")}
               onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("bottomCopper")}
+              onTouchEnd={() => setHoveredItem(null)}
             >
               <span style={iconContainerStyles}>
                 {visibility.bottomCopper && <CheckIcon />}
@@ -180,6 +188,8 @@ export const AppearanceMenu = () => {
               }}
               onMouseEnter={() => setHoveredItem("topSilkscreen")}
               onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("topSilkscreen")}
+              onTouchEnd={() => setHoveredItem(null)}
             >
               <span style={iconContainerStyles}>
                 {visibility.topSilkscreen && <CheckIcon />}
@@ -204,6 +214,8 @@ export const AppearanceMenu = () => {
               }}
               onMouseEnter={() => setHoveredItem("bottomSilkscreen")}
               onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("bottomSilkscreen")}
+              onTouchEnd={() => setHoveredItem(null)}
             >
               <span style={iconContainerStyles}>
                 {visibility.bottomSilkscreen && <CheckIcon />}
@@ -226,6 +238,8 @@ export const AppearanceMenu = () => {
               }}
               onMouseEnter={() => setHoveredItem("smtModels")}
               onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("smtModels")}
+              onTouchEnd={() => setHoveredItem(null)}
             >
               <span style={iconContainerStyles}>
                 {visibility.smtModels && <CheckIcon />}
