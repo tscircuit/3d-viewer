@@ -5,14 +5,14 @@ const CAMERA_KEY = "cadViewerCameraStateSession"
 // ✅ Save camera
 export const saveCameraToSession = (camera: THREE.Camera, controls: any) => {
   try {
-    const data = {
+    const savedCameraSession = {
       position: camera.position.toArray(),
       quaternion: camera.quaternion.toArray(),
       up: camera.up.toArray(),
       fov: (camera as any).fov ?? 50,
       target: controls.target.toArray(),
     }
-    sessionStorage.setItem(CAMERA_KEY, JSON.stringify(data))
+    sessionStorage.setItem(CAMERA_KEY, JSON.stringify(savedCameraSession))
   } catch (err) {
     console.warn("Failed to save camera:", err)
   }
