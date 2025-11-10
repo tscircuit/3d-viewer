@@ -40,7 +40,7 @@ export const createBoardMaterial = ({
     flatShading: true,
     metalness: 0.1,
     roughness: 0.8,
-    transparent: isFaux,
-    opacity: isFaux ? 0.8 : 0.9,
+    transparent: true,
+    opacity: isFaux ? 0.6 : 0.9,
   })
 }
