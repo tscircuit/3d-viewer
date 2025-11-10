@@ -42,6 +42,8 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
     const frameListeners = useRef<Array<(time: number, delta: number) => void>>(
       [],
     )
+    const onCreatedRef = useRef<typeof onCreated>(undefined)
+    onCreatedRef.current = onCreated
 
     const addFrameListener = useCallback(
       (listener: (time: number, delta: number) => void) => {
@@ -110,7 +112,7 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
         addFrameListener,
         removeFrameListener,
       })
-      onCreated?.({ camera, renderer })
+      onCreatedRef.current?.({ camera, renderer })
       let animationFrameId: number
       const clock = new THREE.Clock()
 
@@ -148,7 +150,7 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
           window.__TSCIRCUIT_THREE_OBJECT = undefined
         }
       }
-    }, [scene, addFrameListener, removeFrameListener, onCreated])
+    }, [scene, addFrameListener, removeFrameListener])
 
     return (
       <div ref={mountRef} style={{ width: "100%", height: "100%", ...style }}>

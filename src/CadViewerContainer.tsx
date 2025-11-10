@@ -67,6 +67,7 @@ export const CadViewerContainer = forwardRef<
     const saveTimeoutRef = useRef<any>(null)
     const controlsRef = useRef<any>(null)
     const cameraRef = useRef<THREE.Camera | null>(null)
+    const restoredOnceRef = useRef(false)
 
     const gridSectionSize = useMemo(() => {
       if (!boardDimensions) return 10
@@ -122,9 +123,20 @@ export const CadViewerContainer = forwardRef<
           camera={{ up: [0, 0, 1], position: initialCameraPosition }}
           onCreated={({ camera }) => {
             cameraRef.current = camera
-            if (controlsRef.current) {
-              // Restore BEFORE first frame
-              loadCameraFromSession(cameraRef.current, controlsRef.current)
+            if (!restoredOnceRef.current && controlsRef.current) {
+              const restored = loadCameraFromSession(
+                cameraRef.current,
+                controlsRef.current,
+              )
+              if (restored) restoredOnceRef.current = true
+            }
+            // If nothing to restore, persist the initial state once controls exist
+            if (controlsRef.current && !restoredOnceRef.current) {
+              setTimeout(() => {
+                if (cameraRef.current && controlsRef.current) {
+                  saveCameraToSession(cameraRef.current, controlsRef.current)
+                }
+              }, 0)
             }
           }}
         >
@@ -145,11 +157,27 @@ export const CadViewerContainer = forwardRef<
                 handleControlsChange(controls)
                 controlsRef.current = controls
 
-                if (!cameraRef.current || !controlsRef.current) return
+                // Attempt a one-time restore the first time controls are available
+                if (
+                  cameraRef.current &&
+                  controlsRef.current &&
+                  !restoredOnceRef.current
+                ) {
+                  const restored = loadCameraFromSession(
+                    cameraRef.current,
+                    controlsRef.current,
+                  )
+                  if (restored) {
+                    restoredOnceRef.current = true
+                    return
+                  }
+                }
 
                 clearTimeout(saveTimeoutRef.current)
                 saveTimeoutRef.current = setTimeout(() => {
-                  saveCameraToSession(cameraRef.current!, controlsRef.current!)
+                  if (cameraRef.current && controlsRef.current) {
+                    saveCameraToSession(cameraRef.current, controlsRef.current)
+                  }
                 }, 150)
               }}
             />
