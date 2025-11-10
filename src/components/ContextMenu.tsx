@@ -110,14 +110,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   const [cameraSubOpen, setCameraSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
-  const handleItemEnter = (item: string) => {
-    setHoveredItem(item)
-  }
-
-  const handleItemLeave = () => {
-    setHoveredItem(null)
-  }
-
   return (
     <div
       ref={menuRef}
@@ -153,9 +145,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                       ? "#404040"
                       : "transparent",
                 }}
-                onPointerEnter={() => handleItemEnter("camera")}
-                onPointerLeave={handleItemLeave}
-                onTouchStart={() => handleItemEnter("camera")}
+                onMouseEnter={() => setHoveredItem("camera")}
+                onMouseLeave={() => setHoveredItem(null)}
+                onTouchStart={() => setHoveredItem("camera")}
               >
                 <span
                   style={{ flex: 1, display: "flex", alignItems: "center" }}
@@ -196,9 +188,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                         e.preventDefault()
                         onCameraPresetSelect(option)
                       }}
-                      onPointerEnter={() => handleItemEnter(option)}
-                      onPointerLeave={handleItemLeave}
-                      onTouchStart={() => handleItemEnter(option)}
+                      onMouseEnter={() => setHoveredItem(option)}
+                      onMouseLeave={() => setHoveredItem(null)}
+                      onTouchStart={() => setHoveredItem(option)}
                     >
                       <span style={iconContainerStyles}>
                         {cameraPreset === option && <DotIcon />}
@@ -225,9 +217,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 e.preventDefault()
                 onAutoRotateToggle()
               }}
-              onPointerEnter={() => handleItemEnter("autorotate")}
-              onPointerLeave={handleItemLeave}
-              onTouchStart={() => handleItemEnter("autorotate")}
+              onMouseEnter={() => setHoveredItem("autorotate")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("autorotate")}
             >
               <span style={iconContainerStyles}>
                 {autoRotate && <CheckIcon />}
@@ -251,9 +243,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                   hoveredItem === "download" ? "#404040" : "transparent",
               }}
               onSelect={onDownloadGltf}
-              onPointerEnter={() => handleItemEnter("download")}
-              onPointerLeave={handleItemLeave}
-              onTouchStart={() => handleItemEnter("download")}
+              onMouseEnter={() => setHoveredItem("download")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("download")}
             >
               <span style={{ display: "flex", alignItems: "center" }}>
                 Download GLTF
@@ -275,9 +267,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 e.preventDefault()
                 onEngineSwitch(engine === "jscad" ? "manifold" : "jscad")
               }}
-              onPointerEnter={() => handleItemEnter("engine")}
-              onPointerLeave={handleItemLeave}
-              onTouchStart={() => handleItemEnter("engine")}
+              onMouseEnter={() => setHoveredItem("engine")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("engine")}
             >
               <span style={{ flex: 1, display: "flex", alignItems: "center" }}>
                 Switch to {engine === "jscad" ? "Manifold" : "JSCAD"} Engine
