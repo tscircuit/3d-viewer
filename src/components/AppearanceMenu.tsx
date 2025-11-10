@@ -63,6 +63,14 @@ export const AppearanceMenu = () => {
   const [appearanceSubOpen, setAppearanceSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
+  const handleItemEnter = (item: string) => {
+    setHoveredItem(item)
+  }
+
+  const handleItemLeave = () => {
+    setHoveredItem(null)
+  }
+
   return (
     <>
       <DropdownMenu.Separator style={separatorStyles} />
@@ -77,8 +85,9 @@ export const AppearanceMenu = () => {
                 ? "#404040"
                 : "transparent",
           }}
-          onMouseEnter={() => setHoveredItem("appearance")}
-          onMouseLeave={() => setHoveredItem(null)}
+          onPointerEnter={() => handleItemEnter("appearance")}
+          onPointerLeave={handleItemLeave}
+          onTouchStart={() => handleItemEnter("appearance")}
         >
           <span style={{ flex: 1, display: "flex", alignItems: "center" }}>
             Appearance
@@ -112,8 +121,9 @@ export const AppearanceMenu = () => {
                 e.preventDefault()
                 toggleLayer("boardBody")
               }}
-              onMouseEnter={() => setHoveredItem("boardBody")}
-              onMouseLeave={() => setHoveredItem(null)}
+              onPointerEnter={() => handleItemEnter("boardBody")}
+              onPointerLeave={handleItemLeave}
+              onTouchStart={() => handleItemEnter("boardBody")}
             >
               <span style={iconContainerStyles}>
                 {visibility.boardBody && <CheckIcon />}
@@ -134,8 +144,9 @@ export const AppearanceMenu = () => {
                 e.preventDefault()
                 toggleLayer("topCopper")
               }}
-              onMouseEnter={() => setHoveredItem("topCopper")}
-              onMouseLeave={() => setHoveredItem(null)}
+              onPointerEnter={() => handleItemEnter("topCopper")}
+              onPointerLeave={handleItemLeave}
+              onTouchStart={() => handleItemEnter("topCopper")}
             >
               <span style={iconContainerStyles}>
                 {visibility.topCopper && <CheckIcon />}
@@ -156,8 +167,9 @@ export const AppearanceMenu = () => {
                 e.preventDefault()
                 toggleLayer("bottomCopper")
               }}
-              onMouseEnter={() => setHoveredItem("bottomCopper")}
-              onMouseLeave={() => setHoveredItem(null)}
+              onPointerEnter={() => handleItemEnter("bottomCopper")}
+              onPointerLeave={handleItemLeave}
+              onTouchStart={() => handleItemEnter("bottomCopper")}
             >
               <span style={iconContainerStyles}>
                 {visibility.bottomCopper && <CheckIcon />}
@@ -178,8 +190,9 @@ export const AppearanceMenu = () => {
                 e.preventDefault()
                 toggleLayer("topSilkscreen")
               }}
-              onMouseEnter={() => setHoveredItem("topSilkscreen")}
-              onMouseLeave={() => setHoveredItem(null)}
+              onPointerEnter={() => handleItemEnter("topSilkscreen")}
+              onPointerLeave={handleItemLeave}
+              onTouchStart={() => handleItemEnter("topSilkscreen")}
             >
               <span style={iconContainerStyles}>
                 {visibility.topSilkscreen && <CheckIcon />}
@@ -202,8 +215,9 @@ export const AppearanceMenu = () => {
                 e.preventDefault()
                 toggleLayer("bottomSilkscreen")
               }}
-              onMouseEnter={() => setHoveredItem("bottomSilkscreen")}
-              onMouseLeave={() => setHoveredItem(null)}
+              onPointerEnter={() => handleItemEnter("bottomSilkscreen")}
+              onPointerLeave={handleItemLeave}
+              onTouchStart={() => handleItemEnter("bottomSilkscreen")}
             >
               <span style={iconContainerStyles}>
                 {visibility.bottomSilkscreen && <CheckIcon />}
@@ -224,8 +238,9 @@ export const AppearanceMenu = () => {
                 e.preventDefault()
                 toggleLayer("smtModels")
               }}
-              onMouseEnter={() => setHoveredItem("smtModels")}
-              onMouseLeave={() => setHoveredItem(null)}
+              onPointerEnter={() => handleItemEnter("smtModels")}
+              onPointerLeave={handleItemLeave}
+              onTouchStart={() => handleItemEnter("smtModels")}
             >
               <span style={iconContainerStyles}>
                 {visibility.smtModels && <CheckIcon />}
