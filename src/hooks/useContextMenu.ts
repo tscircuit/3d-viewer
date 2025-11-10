@@ -125,10 +125,23 @@ export const useContextMenu = ({ containerRef }: ContextMenuProps) => {
 
   const handleClickAway = useCallback((e: MouseEvent | TouchEvent) => {
     const target = e.target as Node
-    // If the menu is visible and the click is outside the menu, hide it.
-    if (menuRef.current && !menuRef.current.contains(target)) {
-      setMenuVisible(false)
+
+    // Check if the target is inside the menu
+    if (menuRef.current && menuRef.current.contains(target)) {
+      return
     }
+
+    // Check if the target is inside any Radix UI Portal (for submenus)
+    const isInRadixPortal = (target as Element).closest?.(
+      "[data-radix-popper-content-wrapper], [data-radix-dropdown-menu-content], [data-radix-dropdown-menu-sub-content]",
+    )
+
+    if (isInRadixPortal) {
+      return
+    }
+
+    // If the click is outside the menu and any portals, hide the menu
+    setMenuVisible(false)
   }, []) // setMenuVisible is stable, menuRef is a ref
 
   useEffect(() => {
