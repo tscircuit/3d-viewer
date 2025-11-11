@@ -324,7 +324,6 @@ export const useCameraController = ({
       z - defaultTarget.z,
     )
     return distance > 0 ? distance : 5
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialCameraPosition, defaultTarget, isOrthographic])
 
   const getPresetConfig = useCallback(
@@ -437,7 +436,6 @@ export const useCameraController = ({
       }
 
       onCameraControllerReady(enhancedController)
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
     [getPresetConfig, onCameraControllerReady, isOrthographic],
   )
@@ -453,7 +451,6 @@ export const useCameraController = ({
       if (controls !== null) {
         setControlsVersion((v) => v + 1)
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
     [isOrthographic],
   )
@@ -465,7 +462,6 @@ export const useCameraController = ({
       controlsVersion,
       onReady: handleControllerReady,
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [defaultTarget, handleControllerReady, controlsVersion, isOrthographic],
   )
 
