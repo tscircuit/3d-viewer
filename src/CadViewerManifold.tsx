@@ -230,7 +230,6 @@ try {
     error: builderError,
     isLoading: builderIsLoading,
     boardData,
-    isFauxBoard,
   } = useManifoldBoardBuilder(manifoldJSModule, circuitJson)
 
   const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
