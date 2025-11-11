@@ -1,11 +1,25 @@
 import { useState, useEffect, useMemo, useRef } from "react"
-import type { AnyCircuitElement, PcbBoard } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  PcbBoard,
+  PcbPlatedHole,
+  PcbSmtPad,
+  PcbHole,
+  PcbTrace,
+  PcbSilkscreenText,
+  PcbSilkscreenPath,
+  Point as CircuitPoint,
+  PcbVia,
+} from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import * as THREE from "three"
 import {
   boardMaterialColors,
   colors as defaultColors,
   tracesMaterialColors,
+  MANIFOLD_Z_OFFSET,
+  SMOOTH_CIRCLE_SEGMENTS,
+  DEFAULT_SMT_PAD_THICKNESS,
   TRACE_TEXTURE_RESOLUTION,
 } from "../geoms/constants"
 import { manifoldMeshToThreeGeometry } from "../utils/manifold-mesh-to-three-geometry"
