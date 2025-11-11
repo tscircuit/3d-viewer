@@ -15,6 +15,7 @@ import type {
   Point,
   PcbCutout,
   PcbCopperPour,
+  PcbPanel,
 } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import { translate, rotateZ } from "@jscad/modeling/src/operations/transforms"
@@ -57,6 +58,7 @@ import {
   clampRectBorderRadius,
   extractRectBorderRadius,
 } from "./utils/rect-border-radius"
+import { createBoardCutoutGeom } from "./geoms/create-board-cutout"
 
 const PAD_ROUNDED_SEGMENTS = 64
 const BOARD_CLIP_Z_MARGIN = 1
@@ -135,6 +137,7 @@ export class BoardGeomBuilder {
   private silkscreenRects: PcbSilkscreenRect[]
   private pcb_cutouts: PcbCutout[]
   private pcb_copper_pours: PcbCopperPour[]
+  private panels: PcbPanel[]
 
   private boardGeom: Geom3 | null = null
   private platedHoleGeoms: Geom3[] = []
@@ -149,6 +152,7 @@ export class BoardGeomBuilder {
   private silkscreenRectGeoms: Geom3[] = []
   private copperPourGeoms: Geom3[] = []
   private boardClipGeom: Geom3 | null = null
+  private panelGeoms: Geom3[] = []
 
   private state: BuilderState = "initializing"
   private currentIndex = 0
@@ -188,7 +192,8 @@ export class BoardGeomBuilder {
     this.onCompleteCallback = onComplete
 
     // Extract elements
-    this.board = su(circuitJson).pcb_board.list()[0]!
+    const boards = su(circuitJson).pcb_board.list()
+    this.board = boards[0]!
     this.plated_holes = su(circuitJson).pcb_plated_hole.list()
     this.holes = su(circuitJson).pcb_hole.list()
     this.pads = su(circuitJson).pcb_smtpad.list()
@@ -203,8 +208,30 @@ export class BoardGeomBuilder {
     this.pcb_copper_pours = circuitJson.filter(
       (e) => e.type === "pcb_copper_pour",
     ) as any
+    this.panels = su(circuitJson).pcb_panel?.list?.() ?? []
 
     this.ctx = { pcbThickness: this.board.thickness ?? 1.2 }
+
+    const boardCutoutGeoms = boards
+      .map((pcbBoard) => createBoardCutoutGeom(pcbBoard, this.ctx.pcbThickness))
+      .filter((geom): geom is Geom3 => geom !== null)
+
+    this.panelGeoms = this.panels
+      .map((panel) => {
+        if (panel.width == null || panel.height == null) return null
+        let panelGeom = cuboid({
+          size: [panel.width, panel.height, this.ctx.pcbThickness],
+          center: [0, 0, 0],
+        })
+        if (boardCutoutGeoms.length > 0) {
+          panelGeom = subtract(panelGeom, ...boardCutoutGeoms)
+        }
+        const panelColor = panel.covered_with_solder_mask
+          ? colors.fr4GreenSolderWithMask
+          : colors.fr4Green
+        return colorize(panelColor, panelGeom) as unknown as Geom3
+      })
+      .filter((geom): geom is Geom3 => geom !== null)
 
     // Start processing
     this.initializeBoard()
@@ -974,6 +1001,7 @@ export class BoardGeomBuilder {
     this.boardGeom = colorize(boardMaterialColor, this.boardGeom)
 
     this.finalGeoms = [
+      ...this.panelGeoms,
       this.boardGeom,
       ...this.platedHoleGeoms,
       ...this.padGeoms,
