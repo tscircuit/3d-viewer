@@ -31,6 +31,7 @@ interface Props {
   clickToInteractEnabled?: boolean
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
+  shouldUseOrthographicCamera?: boolean
 }
 
 export const CadViewerJscad = forwardRef<
@@ -46,6 +47,7 @@ export const CadViewerJscad = forwardRef<
       clickToInteractEnabled,
       onUserInteraction,
       onCameraControllerReady,
+      shouldUseOrthographicCamera,
     },
     ref,
   ) => {
@@ -134,6 +136,7 @@ export const CadViewerJscad = forwardRef<
         boardCenter={boardCenter}
         onUserInteraction={onUserInteraction}
         onCameraControllerReady={onCameraControllerReady}
+        shouldUseOrthographicCamera={shouldUseOrthographicCamera}
       >
         {boardStls.map(({ stlData, color, layerType }, index) => (
           <VisibleSTLModel

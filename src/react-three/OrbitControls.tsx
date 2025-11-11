@@ -3,6 +3,7 @@ import { OrbitControls as ThreeOrbitControls } from "three/examples/jsm/controls
 import { useFrame, useThree } from "./ThreeContext"
 
 interface OrbitControlsProps {
+  key?: React.Key
   autoRotate?: boolean
   autoRotateSpeed?: number
   onStart?: () => void
@@ -16,6 +17,7 @@ interface OrbitControlsProps {
 }
 
 export const OrbitControls: React.FC<OrbitControlsProps> = ({
+  key, // key is used by React and not passed down
   autoRotate,
   autoRotateSpeed,
   onStart,
@@ -72,6 +74,7 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
     }
   }, [
     controls,
+    camera,
     autoRotate,
     autoRotateSpeed,
     panSpeed,
@@ -84,9 +87,16 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
 
   useEffect(() => {
     if (!controls || !onStart) return
-    controls.addEventListener("start", onStart)
+    
+    const handleStart = () => {
+      // Don't fire callback if controls are disabled (during camera animation)
+      if (!controls.enabled) return
+      onStart()
+    }
+    
+    controls.addEventListener("start", handleStart)
     return () => {
-      controls.removeEventListener("start", onStart)
+      controls.removeEventListener("start", handleStart)
     }
   }, [controls, onStart])
 

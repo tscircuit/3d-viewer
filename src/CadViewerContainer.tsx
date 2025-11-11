@@ -22,11 +22,24 @@ export type {
   CameraPreset,
 } from "./hooks/useCameraController"
 
+declare global {
+  interface Window {
+    TSCI_MAIN_CAMERA_ROTATION: THREE.Euler
+    TSCI_MAIN_CAMERA_QUATERNION: THREE.Quaternion
+  }
+}
+
+if (typeof window !== "undefined") {
+  window.TSCI_MAIN_CAMERA_ROTATION ??= new THREE.Euler(0, 0, 0)
+  window.TSCI_MAIN_CAMERA_QUATERNION ??= new THREE.Quaternion()
+}
+
 export const RotationTracker = () => {
   const { camera } = useThree()
   useFrame(() => {
     if (camera) {
-      window.TSCI_MAIN_CAMERA_ROTATION = camera.rotation
+      window.TSCI_MAIN_CAMERA_ROTATION.copy(camera.rotation)
+      window.TSCI_MAIN_CAMERA_QUATERNION.copy(camera.quaternion)
     }
   })
 
@@ -41,6 +54,7 @@ interface Props {
   boardCenter?: { x: number; y: number }
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
+  shouldUseOrthographicCamera?: boolean
 }
 
 export const CadViewerContainer = forwardRef<
@@ -57,6 +71,7 @@ export const CadViewerContainer = forwardRef<
       boardCenter,
       onUserInteraction,
       onCameraControllerReady,
+      shouldUseOrthographicCamera,
     },
     ref,
   ) => {
@@ -91,10 +106,33 @@ export const CadViewerContainer = forwardRef<
     }, [orbitTarget])
 
     const { cameraAnimatorProps, handleControlsChange } = useCameraController({
+      isOrthographic: shouldUseOrthographicCamera ?? false,
       defaultTarget,
       initialCameraPosition,
       onCameraControllerReady,
     })
+
+    const orthographicFrustumSize = useMemo(() => {
+      if (boardDimensions) {
+        const width = boardDimensions.width ?? 0
+        const height = boardDimensions.height ?? 0
+        const maxDimension = Math.max(width, height)
+        return Math.max(maxDimension * 1.5, 10)
+      }
+      const [x, y, z] = initialCameraPosition
+      const maxComponent = Math.max(Math.abs(x), Math.abs(y), Math.abs(z))
+      return Math.max(maxComponent * 2, 10)
+    }, [initialCameraPosition, boardDimensions])
+
+    const mutableInitialCameraPosition = useMemo(
+      () =>
+        [
+          initialCameraPosition[0],
+          initialCameraPosition[1],
+          initialCameraPosition[2],
+        ] as [number, number, number],
+      [initialCameraPosition],
+    )
 
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -120,7 +158,13 @@ export const CadViewerContainer = forwardRef<
         <Canvas
           ref={ref}
           scene={{ up: new THREE.Vector3(0, 0, 1) }}
-          camera={{ up: [0, 0, 1], position: initialCameraPosition }}
+          camera={{
+    up: [0, 0, 1],
+    position: mutableInitialCameraPosition,
+    type: shouldUseOrthographicCamera ? "orthographic" : "perspective",
+    frustumSize: orthographicFrustumSize,
+  }}
+  // The new prop from main:
           onCreated={({ camera }) => {
             cameraRef.current = camera
             if (!restoredOnceRef.current && controlsRef.current) {
@@ -130,7 +174,7 @@ export const CadViewerContainer = forwardRef<
               )
               if (restored) restoredOnceRef.current = true
             }
-            // If nothing to restore, persist the initial state once controls exist
+             // If nothing to restore, persist the initial state once controls exist
             if (controlsRef.current && !restoredOnceRef.current) {
               setTimeout(() => {
                 if (cameraRef.current && controlsRef.current) {
@@ -140,10 +184,14 @@ export const CadViewerContainer = forwardRef<
             }
           }}
         >
-          <CameraAnimator {...cameraAnimatorProps} />
+          <CameraAnimator
+            key={shouldUseOrthographicCamera ? "orthographic" : "perspective"}
+            {...cameraAnimatorProps}
+          />
           <RotationTracker />
           {isInteractionEnabled && (
             <OrbitControls
+              key={shouldUseOrthographicCamera ? "orthographic" : "perspective"}
               autoRotate={!autoRotateDisabled}
               autoRotateSpeed={1}
               onStart={onUserInteraction}
