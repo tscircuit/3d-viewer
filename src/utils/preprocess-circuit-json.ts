@@ -29,7 +29,7 @@ export function preprocessCircuitJsonWithFauxBoard(
   const boardThickness = fauxBoard.thickness
   const componentZ = boardThickness / 2
 
-  const processedCircuitJson = circuitJson.map((element) => {
+  const circuitJsonWithOffsetCadElements = circuitJson.map((element) => {
     if (element.type === "cad_component") {
       const cadComponent = element as CadComponent
       if (cadComponent.position) {
