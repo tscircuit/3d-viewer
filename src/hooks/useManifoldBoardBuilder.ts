@@ -2,25 +2,14 @@ import { useState, useEffect, useMemo, useRef } from "react"
 import type {
   AnyCircuitElement,
   PcbBoard,
-  PcbPlatedHole,
-  PcbSmtPad,
-  PcbHole,
-  PcbTrace,
-  PcbSilkscreenText,
-  PcbSilkscreenPath,
-  Point as CircuitPoint,
-  PcbVia,
-  CadComponent,
 } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
+import { createFauxBoard } from "../utils/create-faux-board"
 import * as THREE from "three"
 import {
   boardMaterialColors,
   colors as defaultColors,
   tracesMaterialColors,
-  MANIFOLD_Z_OFFSET,
-  SMOOTH_CIRCLE_SEGMENTS,
-  DEFAULT_SMT_PAD_THICKNESS,
   TRACE_TEXTURE_RESOLUTION,
 } from "../geoms/constants"
 import { manifoldMeshToThreeGeometry } from "../utils/manifold-mesh-to-three-geometry"
@@ -95,12 +84,7 @@ export const useManifoldBoardBuilder = (
 
   const isFauxBoard = useMemo(() => {
     const boards = su(circuitJson).pcb_board.list()
-    const hasComponents = su(circuitJson).cad_component.list().length > 0
-    const hasHoles =
-      su(circuitJson).pcb_hole.list().length > 0 ||
-      su(circuitJson).pcb_plated_hole.list().length > 0 ||
-      su(circuitJson).pcb_via.list().length > 0
-    return boards.length === 0 && (hasComponents || hasHoles)
+    return boards.length === 0 && createFauxBoard(circuitJson) !== null
   }, [circuitJson])
 
   const boardData = useMemo(() => {
@@ -109,113 +93,7 @@ export const useManifoldBoardBuilder = (
       return boards[0]!
     }
 
-    // Check if there are components or holes that need a faux board
-    const cadComponents = su(circuitJson).cad_component.list()
-    const holes = su(circuitJson).pcb_hole.list()
-    const platedHoles = su(circuitJson).pcb_plated_hole.list()
-    const vias = su(circuitJson).pcb_via.list()
-
-    if (
-      cadComponents.length > 0 ||
-      holes.length > 0 ||
-      platedHoles.length > 0 ||
-      vias.length > 0
-    ) {
-      // Calculate bounding box of components and holes
-      let minX = Infinity
-      let maxX = -Infinity
-      let minY = Infinity
-      let maxY = -Infinity
-
-      cadComponents.forEach((component: CadComponent) => {
-        if (component.position) {
-          const x = component.position.x
-          const y = component.position.y
-          minX = Math.min(minX, x)
-          maxX = Math.max(maxX, x)
-          minY = Math.min(minY, y)
-          maxY = Math.max(maxY, y)
-        }
-      })
-
-      // Include holes in bounding box
-      holes.forEach((hole) => {
-        const x = hole.x
-        const y = hole.y
-        const radius =
-          hole.hole_shape === "circle"
-            ? hole.hole_diameter / 2
-            : hole.hole_shape === "pill"
-              ? Math.max(hole.hole_width, hole.hole_height) / 2
-              : hole.hole_shape === "rotated_pill"
-                ? Math.max(hole.hole_width, hole.hole_height) / 2
-                : 0
-        minX = Math.min(minX, x - radius)
-        maxX = Math.max(maxX, x + radius)
-        minY = Math.min(minY, y - radius)
-        maxY = Math.max(maxY, y + radius)
-      })
-
-      // Include plated holes
-      platedHoles.forEach((hole) => {
-        const x = hole.x
-        const y = hole.y
-        let radius = 0
-        if (hole.shape === "circle") {
-          radius = hole.hole_diameter / 2
-        } else if (hole.shape === "oval" || hole.shape === "pill") {
-          radius = Math.max(hole.hole_width, hole.hole_height) / 2
-        }
-        minX = Math.min(minX, x - radius)
-        maxX = Math.max(maxX, x + radius)
-        minY = Math.min(minY, y - radius)
-        maxY = Math.max(maxY, y + radius)
-      })
-
-      // Include vias
-      vias.forEach((via) => {
-        const x = via.x
-        const y = via.y
-        const radius = via.outer_diameter / 2
-        minX = Math.min(minX, x - radius)
-        maxX = Math.max(maxX, x + radius)
-        minY = Math.min(minY, y - radius)
-        maxY = Math.max(maxY, y + radius)
-      })
-
-      // If no valid positions found, use default
-      if (minX === Infinity) {
-        minX = -10
-        maxX = 10
-        minY = -10
-        maxY = 10
-      }
-
-      // For faux boards, behave like real boards centered at (0,0)
-      // Make the board large enough to encompass all components/holes
-      const padding = 2 // mm
-      const halfWidth = Math.max(Math.abs(minX), Math.abs(maxX)) + padding
-      const halfHeight = Math.max(Math.abs(minY), Math.abs(maxY)) + padding
-      const width = Math.max(2 * halfWidth, 10) // minimum 10mm
-      const height = Math.max(2 * halfHeight, 10) // minimum 10mm
-
-      // Create faux board data like real boards
-      const fauxBoard: PcbBoard = {
-        type: "pcb_board",
-        pcb_board_id: "faux-board",
-        center: { x: 0, y: 0 }, // Always center at origin like real boards
-        width,
-        height,
-        thickness: 1.6, // standard thickness
-        material: "fr4",
-        num_layers: 2,
-        // No outline - will use rectangular shape
-      }
-
-      return fauxBoard
-    }
-
-    return null
+    return createFauxBoard(circuitJson)
   }, [circuitJson])
 
   useEffect(() => {
