@@ -111,12 +111,14 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
             quaternion: existingCamera.quaternion.clone(),
             up: existingCamera.up.clone(),
             zoom,
+            target: contextState?.controls?.target?.clone() ?? new THREE.Vector3(),
           }
         } else {
           lastPerspectiveStateRef.current = {
             position: existingCamera.position.clone(),
             quaternion: existingCamera.quaternion.clone(),
             up: existingCamera.up.clone(),
+            target: contextState?.controls?.target?.clone() ?? new THREE.Vector3(),
           }
         }
       }
