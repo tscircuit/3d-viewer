@@ -332,25 +332,6 @@ try {
           />
         </ThreeErrorBoundary>
       ))}
-      {isFauxBoard && (
-        <div
-          style={{
-            position: "absolute",
-            right: 8,
-            top: 8,
-            background: "#222",
-            color: "#ffa500",
-            padding: "2px 8px",
-            borderRadius: 4,
-            fontSize: 12,
-            opacity: 0.8,
-            userSelect: "none",
-            border: "1px solid #ffa500",
-          }}
-        >
-          Faux Board
-        </div>
-      )}
     </CadViewerContainer>
   )
 }
