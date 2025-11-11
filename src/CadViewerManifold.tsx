@@ -304,7 +304,6 @@ try {
   }
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%" }}>
       <CadViewerContainer
         initialCameraPosition={initialCameraPosition}
         autoRotateDisabled={autoRotateDisabled}
@@ -332,8 +331,7 @@ try {
             />
           </ThreeErrorBoundary>
         ))}
-      </CadViewerContainer>
-      {isFauxBoard && (
+        {isFauxBoard && (
         <div
           style={{
             position: "absolute",
@@ -352,7 +350,8 @@ try {
           Faux Board
         </div>
       )}
-    </div>
+      </CadViewerContainer>
+  
   )
 }
 
