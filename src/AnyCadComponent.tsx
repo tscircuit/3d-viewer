@@ -15,11 +15,9 @@ import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
 export const AnyCadComponent = ({
   cad_component,
   circuitJson,
-  isFauxBoard,
 }: {
   cad_component: CadComponent
   circuitJson: AnyCircuitElement[]
-  isFauxBoard?: boolean
 }) => {
   const [isHovered, setIsHovered] = useState(false)
   const { visibility } = useLayerVisibility()
@@ -65,24 +63,20 @@ export const AnyCadComponent = ({
 
   let modelComponent: React.ReactNode = null
 
-  // If this component is being rendered on a faux board, add 0.5mm to the Z
-  // position so models sit slightly above the faux board (matches other
-  // rendering paths that offset components above the board).
-  const computePositionWithFauxOffset = (
-    pos?: { x: number; y: number; z?: number } | null,
-  ) => {
-    if (!pos) return undefined
-    const baseZ = typeof pos.z === "number" ? pos.z : 0
-    const adjustedZ = isFauxBoard ? baseZ + 0.8 : baseZ
-    return [pos.x, pos.y, adjustedZ] as [number, number, number]
-  }
-
   if (url) {
     modelComponent = (
       <MixedStlModel
         key={cad_component.cad_component_id}
         url={url}
-        position={computePositionWithFauxOffset(cad_component.position)}
+        position={
+          cad_component.position
+            ? [
+                cad_component.position.x,
+                cad_component.position.y,
+                cad_component.position.z,
+              ]
+            : undefined
+        }
         rotation={rotationOffset}
         scale={cad_component.model_unit_to_mm_scale_factor}
         onHover={handleHover}
@@ -95,7 +89,15 @@ export const AnyCadComponent = ({
       <GltfModel
         key={cad_component.cad_component_id}
         gltfUrl={gltfUrl}
-        position={computePositionWithFauxOffset(cad_component.position)}
+        position={
+          cad_component.position
+            ? [
+                cad_component.position.x,
+                cad_component.position.y,
+                cad_component.position.z,
+              ]
+            : undefined
+        }
         rotation={rotationOffset}
         scale={cad_component.model_unit_to_mm_scale_factor}
         onHover={handleHover}
@@ -118,7 +120,15 @@ export const AnyCadComponent = ({
   } else if (cad_component.footprinter_string) {
     modelComponent = (
       <FootprinterModel
-        positionOffset={computePositionWithFauxOffset(cad_component.position)}
+        positionOffset={
+          cad_component.position
+            ? [
+                cad_component.position.x,
+                cad_component.position.y,
+                cad_component.position.z,
+              ]
+            : undefined
+        }
         rotationOffset={rotationOffset}
         footprint={cad_component.footprinter_string}
         scale={cad_component.model_unit_to_mm_scale_factor}

@@ -10,6 +10,7 @@ import { CadViewerContainer } from "./CadViewerContainer"
 import type { CameraController } from "./hooks/useCameraController"
 import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
 import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
+import { preprocessCircuitJsonWithFauxBoard } from "./utils/preprocess-circuit-json"
 import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
@@ -136,7 +137,8 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
 }) => {
   const childrenCircuitJson = useConvertChildrenToCircuitJson(children)
   const circuitJson = useMemo(() => {
-    return circuitJsonProp ?? childrenCircuitJson
+    const rawCircuitJson = circuitJsonProp ?? childrenCircuitJson
+    return preprocessCircuitJsonWithFauxBoard(rawCircuitJson)
   }, [circuitJsonProp, childrenCircuitJson])
 
   const [manifoldJSModule, setManifoldJSModule] = useState<any | null>(null)
@@ -304,34 +306,33 @@ try {
   }
 
   return (
-      <CadViewerContainer
-        initialCameraPosition={initialCameraPosition}
-        autoRotateDisabled={autoRotateDisabled}
-        clickToInteractEnabled={clickToInteractEnabled}
-        boardDimensions={boardDimensions}
-        boardCenter={boardCenter}
-        onUserInteraction={onUserInteraction}
-        onCameraControllerReady={onCameraControllerReady}
-      >
-        <BoardMeshes
-          geometryMeshes={geometryMeshes}
-          textureMeshes={textureMeshes}
-        />
-        {cadComponents.map((cad_component: CadComponent) => (
-          <ThreeErrorBoundary
-            key={cad_component.cad_component_id}
-            fallback={({ error }) => (
-              <Error3d cad_component={cad_component} error={error} />
-            )}
-          >
-            <AnyCadComponent
-              cad_component={cad_component}
-              circuitJson={circuitJson}
-              isFauxBoard={isFauxBoard}
-            />
-          </ThreeErrorBoundary>
-        ))}
-        {isFauxBoard && (
+    <CadViewerContainer
+      initialCameraPosition={initialCameraPosition}
+      autoRotateDisabled={autoRotateDisabled}
+      clickToInteractEnabled={clickToInteractEnabled}
+      boardDimensions={boardDimensions}
+      boardCenter={boardCenter}
+      onUserInteraction={onUserInteraction}
+      onCameraControllerReady={onCameraControllerReady}
+    >
+      <BoardMeshes
+        geometryMeshes={geometryMeshes}
+        textureMeshes={textureMeshes}
+      />
+      {cadComponents.map((cad_component: CadComponent) => (
+        <ThreeErrorBoundary
+          key={cad_component.cad_component_id}
+          fallback={({ error }) => (
+            <Error3d cad_component={cad_component} error={error} />
+          )}
+        >
+          <AnyCadComponent
+            cad_component={cad_component}
+            circuitJson={circuitJson}
+          />
+        </ThreeErrorBoundary>
+      ))}
+      {isFauxBoard && (
         <div
           style={{
             position: "absolute",
@@ -350,8 +351,7 @@ try {
           Faux Board
         </div>
       )}
-      </CadViewerContainer>
-  
+    </CadViewerContainer>
   )
 }
 

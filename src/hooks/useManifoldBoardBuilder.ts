@@ -1,10 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react"
-import type {
-  AnyCircuitElement,
-  PcbBoard,
-} from "circuit-json"
+import type { AnyCircuitElement, PcbBoard } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
-import { createFauxBoard } from "../utils/create-faux-board"
 import * as THREE from "three"
 import {
   boardMaterialColors,
@@ -82,18 +78,16 @@ export const useManifoldBoardBuilder = (
 
   const manifoldInstancesForCleanup = useRef<any[]>([])
 
-  const isFauxBoard = useMemo(() => {
-    const boards = su(circuitJson).pcb_board.list()
-    return boards.length === 0 && createFauxBoard(circuitJson) !== null
-  }, [circuitJson])
-
   const boardData = useMemo(() => {
     const boards = su(circuitJson).pcb_board.list()
-    if (boards.length > 0) {
-      return boards[0]!
-    }
+    return boards.length > 0 ? boards[0]! : null
+  }, [circuitJson])
 
-    return createFauxBoard(circuitJson)
+  const isFauxBoard = useMemo(() => {
+    const boards = su(circuitJson).pcb_board.list()
+    // A faux board is one that was added during preprocessing
+    // We can identify it by checking if it has the faux board ID
+    return boards.length > 0 && boards[0]!.pcb_board_id === "faux-board"
   }, [circuitJson])
 
   useEffect(() => {

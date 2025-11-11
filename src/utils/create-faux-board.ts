@@ -4,7 +4,9 @@ import { su, getBoundsOfPcbElements } from "@tscircuit/circuit-json-util"
 /**
  * Creates a faux PCB board when no board is defined but PCB elements exist
  */
-export function createFauxBoard(circuitJson: AnyCircuitElement[]): PcbBoard | null {
+export function createFauxBoard(
+  circuitJson: AnyCircuitElement[],
+): PcbBoard | null {
   const cadComponents = su(circuitJson).cad_component.list()
   const pads = su(circuitJson).pcb_smtpad.list()
   const holes = su(circuitJson).pcb_hole.list()
