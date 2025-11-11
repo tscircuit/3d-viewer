@@ -10,6 +10,7 @@ import { CadViewerContainer } from "./CadViewerContainer"
 import type { CameraController } from "./hooks/useCameraController"
 import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
 import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
+import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
@@ -138,7 +139,8 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
 }) => {
   const childrenCircuitJson = useConvertChildrenToCircuitJson(children)
   const circuitJson = useMemo(() => {
-    return circuitJsonProp ?? childrenCircuitJson
+    const rawCircuitJson = circuitJsonProp ?? childrenCircuitJson
+    return addFauxBoardIfNeeded(rawCircuitJson)
   }, [circuitJsonProp, childrenCircuitJson])
 
   const [manifoldJSModule, setManifoldJSModule] = useState<any | null>(null)
@@ -257,12 +259,16 @@ try {
   }, [boardData])
 
   const initialCameraPosition = useMemo(() => {
-    if (!boardData) return [5, 5, 5] as const
+    if (!boardData) return [5, -5, 5] as const
     const { width = 0, height = 0 } = boardData
     const safeWidth = Math.max(width, 1)
     const safeHeight = Math.max(height, 1)
     const largestDim = Math.max(safeWidth, safeHeight, 5)
-    return [largestDim * 0.75, largestDim * 0.75, largestDim * 0.75] as const
+    return [
+      largestDim * 0.4, // Move right
+      -largestDim * 0.7, // Move back (negative Y)
+      largestDim * 0.9, // Keep height but slightly lower than top-down
+    ] as const
   }, [boardData])
 
   if (manifoldLoadingError) {

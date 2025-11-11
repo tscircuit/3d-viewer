@@ -31,33 +31,41 @@ interface CanvasProps {
   scene?: Record<string, any>
   camera?: CanvasCameraProps
   style?: React.CSSProperties
+  onCreated?: (state: {
+    camera: THREE.Camera
+    renderer: THREE.WebGLRenderer
+  }) => void
 }
 
 export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
-  ({ children, scene: sceneProps, camera: cameraProps, style }, ref) => {
+  (
+    { children, scene: sceneProps, camera: cameraProps, style, onCreated },
+    ref,
+  ) => {
     const mountRef = useRef<HTMLDivElement>(null)
     const [contextState, setContextState] = useState<ThreeContextState | null>(
       null,
     )
-  const frameListeners = useRef<Array<(time: number, delta: number) => void>>(
-    [],
-  )
-  const lastOrthographicStateRef = useRef<{
-    position: THREE.Vector3
-    quaternion: THREE.Quaternion
-    up: THREE.Vector3
-    zoom: number
-    target?: THREE.Vector3
-  } | null>(null)
-  const lastPerspectiveStateRef = useRef<{
-    position: THREE.Vector3
-    quaternion: THREE.Quaternion
-    up: THREE.Vector3
-    target?: THREE.Vector3
-  } | null>(null)
-  const currentCameraRef = useRef<THREE.Camera | null>(null)
+    const frameListeners = useRef<Array<(time: number, delta: number) => void>>([])
+    const lastOrthographicStateRef = useRef<{
+      position: THREE.Vector3
+      quaternion: THREE.Quaternion
+      up: THREE.Vector3
+      zoom: number
+      target: THREE.Vector3
+    } | null>(null)
+    const lastPerspectiveStateRef = useRef<{
+      position: THREE.Vector3
+      quaternion: THREE.Quaternion
+      up: THREE.Vector3
+      target: THREE.Vector3
+    } | null>(null)
+    const currentCameraRef = useRef<THREE.Camera | null>(null)
+    const onCreatedRef = useRef<typeof onCreated>(undefined)
+    onCreatedRef.current = onCreated
 
-  const addFrameListener = useCallback(
+
+    const addFrameListener = useCallback(
       (listener: (time: number, delta: number) => void) => {
         frameListeners.current.push(listener)
       },
@@ -237,7 +245,7 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
         addFrameListener,
         removeFrameListener,
       })
-
+      onCreatedRef.current?.({ camera, renderer })
       let animationFrameId: number
       const clock = new THREE.Clock()
 

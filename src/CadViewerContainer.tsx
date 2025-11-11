@@ -1,5 +1,5 @@
 import type * as React from "react"
-import { forwardRef, useMemo, useState } from "react"
+import { forwardRef, useMemo, useRef, useState } from "react"
 import * as THREE from "three"
 import packageJson from "../package.json"
 import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
@@ -8,6 +8,10 @@ import { OrbitControls } from "./react-three/OrbitControls"
 import { Grid } from "./react-three/Grid"
 import { useFrame, useThree } from "./react-three/ThreeContext"
 import { Lights } from "./react-three/Lights"
+import {
+  saveCameraToSession,
+  loadCameraFromSession,
+} from "./hooks/useSessionCamera"
 import {
   CameraAnimator,
   useCameraController,
@@ -60,7 +64,7 @@ export const CadViewerContainer = forwardRef<
   (
     {
       children,
-      initialCameraPosition = [5, 5, 5],
+      initialCameraPosition = [5, -5, 5],
       autoRotateDisabled,
       clickToInteractEnabled = false,
       boardDimensions,
@@ -74,6 +78,11 @@ export const CadViewerContainer = forwardRef<
     const [isInteractionEnabled, setIsInteractionEnabled] = useState(
       !clickToInteractEnabled,
     )
+
+    const saveTimeoutRef = useRef<any>(null)
+    const controlsRef = useRef<any>(null)
+    const cameraRef = useRef<THREE.Camera | null>(null)
+    const restoredOnceRef = useRef(false)
 
     const gridSectionSize = useMemo(() => {
       if (!boardDimensions) return 10
@@ -150,10 +159,29 @@ export const CadViewerContainer = forwardRef<
           ref={ref}
           scene={{ up: new THREE.Vector3(0, 0, 1) }}
           camera={{
-            up: [0, 0, 1],
-            position: mutableInitialCameraPosition,
-            type: shouldUseOrthographicCamera ? "orthographic" : "perspective",
-            frustumSize: orthographicFrustumSize,
+    up: [0, 0, 1],
+    position: mutableInitialCameraPosition,
+    type: shouldUseOrthographicCamera ? "orthographic" : "perspective",
+    frustumSize: orthographicFrustumSize,
+  }}
+  // The new prop from main:
+          onCreated={({ camera }) => {
+            cameraRef.current = camera
+            if (!restoredOnceRef.current && controlsRef.current) {
+              const restored = loadCameraFromSession(
+                cameraRef.current,
+                controlsRef.current,
+              )
+              if (restored) restoredOnceRef.current = true
+            }
+             // If nothing to restore, persist the initial state once controls exist
+            if (controlsRef.current && !restoredOnceRef.current) {
+              setTimeout(() => {
+                if (cameraRef.current && controlsRef.current) {
+                  saveCameraToSession(cameraRef.current, controlsRef.current)
+                }
+              }, 0)
+            }
           }}
         >
           <CameraAnimator
@@ -173,7 +201,33 @@ export const CadViewerContainer = forwardRef<
               enableDamping={true}
               dampingFactor={0.1}
               target={orbitTarget}
-              onControlsChange={handleControlsChange}
+              onControlsChange={(controls) => {
+                handleControlsChange(controls)
+                controlsRef.current = controls
+
+                // Attempt a one-time restore the first time controls are available
+                if (
+                  cameraRef.current &&
+                  controlsRef.current &&
+                  !restoredOnceRef.current
+                ) {
+                  const restored = loadCameraFromSession(
+                    cameraRef.current,
+                    controlsRef.current,
+                  )
+                  if (restored) {
+                    restoredOnceRef.current = true
+                    return
+                  }
+                }
+
+                clearTimeout(saveTimeoutRef.current)
+                saveTimeoutRef.current = setTimeout(() => {
+                  if (cameraRef.current && controlsRef.current) {
+                    saveCameraToSession(cameraRef.current, controlsRef.current)
+                  }
+                }, 150)
+              }}
             />
           )}
           <Lights />

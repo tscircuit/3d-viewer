@@ -151,6 +151,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 }}
                 onMouseEnter={() => setHoveredItem("camera")}
                 onMouseLeave={() => setHoveredItem(null)}
+                onTouchStart={() => setHoveredItem("camera")}
               >
                 <span
                   style={{ flex: 1, display: "flex", alignItems: "center" }}
@@ -193,6 +194,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                       }}
                       onMouseEnter={() => setHoveredItem(option)}
                       onMouseLeave={() => setHoveredItem(null)}
+                      onTouchStart={() => setHoveredItem(option)}
                     >
                       <span style={iconContainerStyles}>
                         {cameraPreset === option && <DotIcon />}
@@ -221,6 +223,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               }}
               onMouseEnter={() => setHoveredItem("autorotate")}
               onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("autorotate")}
             >
               <span style={iconContainerStyles}>
                 {autoRotate && <CheckIcon />}
@@ -269,6 +272,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               onSelect={onDownloadGltf}
               onMouseEnter={() => setHoveredItem("download")}
               onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("download")}
             >
               <span style={{ display: "flex", alignItems: "center" }}>
                 Download GLTF
@@ -292,6 +296,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               }}
               onMouseEnter={() => setHoveredItem("engine")}
               onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("engine")}
             >
               <span style={{ flex: 1, display: "flex", alignItems: "center" }}>
                 Switch to {engine === "jscad" ? "Manifold" : "JSCAD"} Engine

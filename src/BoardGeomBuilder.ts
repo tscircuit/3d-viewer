@@ -9,6 +9,9 @@ import type {
   PcbVia,
   PcbSilkscreenText,
   PcbSilkscreenPath,
+  PcbSilkscreenLine,
+  PcbSilkscreenRect,
+  PcbSilkscreenCircle,
   Point,
   PcbCutout,
   PcbCopperPour,
@@ -45,6 +48,9 @@ import {
 import type { Vec2 } from "@jscad/modeling/src/maths/types"
 import { createSilkscreenTextGeoms } from "./geoms/create-geoms-for-silkscreen-text"
 import { createSilkscreenPathGeom } from "./geoms/create-geoms-for-silkscreen-path"
+import { createSilkscreenLineGeom } from "./geoms/create-geoms-for-silkscreen-line"
+import { createSilkscreenRectGeom } from "./geoms/create-geoms-for-silkscreen-rect"
+import { createSilkscreenCircleGeom } from "./geoms/create-geoms-for-silkscreen-circle"
 import { createGeom2FromBRep } from "./geoms/brep-converter"
 import type { GeomContext } from "./GeomContext"
 import {
@@ -85,6 +91,9 @@ type BuilderState =
   | "processing_traces"
   | "processing_vias"
   | "processing_silkscreen_text"
+  | "processing_silkscreen_lines"
+  | "processing_silkscreen_circles"
+  | "processing_silkscreen_rects"
   | "processing_silkscreen_paths"
   | "processing_cutouts"
   | "processing_copper_pours"
@@ -103,6 +112,9 @@ const buildStateOrder: BuilderState[] = [
   "processing_traces",
   "processing_vias",
   "processing_silkscreen_text",
+  "processing_silkscreen_lines",
+  "processing_silkscreen_circles",
+  "processing_silkscreen_rects",
   "processing_silkscreen_paths",
   "finalizing",
   "done",
@@ -118,6 +130,9 @@ export class BoardGeomBuilder {
   private pcb_vias: PcbVia[]
   private silkscreenTexts: PcbSilkscreenText[]
   private silkscreenPaths: PcbSilkscreenPath[]
+  private silkscreenLines: PcbSilkscreenLine[]
+  private silkscreenCircles: PcbSilkscreenCircle[]
+  private silkscreenRects: PcbSilkscreenRect[]
   private pcb_cutouts: PcbCutout[]
   private pcb_copper_pours: PcbCopperPour[]
 
@@ -129,6 +144,9 @@ export class BoardGeomBuilder {
   private viaGeoms: Geom3[] = [] // Combined with platedHoleGeoms
   private silkscreenTextGeoms: Geom3[] = []
   private silkscreenPathGeoms: Geom3[] = []
+  private silkscreenLineGeoms: Geom3[] = []
+  private silkscreenCircleGeoms: Geom3[] = []
+  private silkscreenRectGeoms: Geom3[] = []
   private copperPourGeoms: Geom3[] = []
   private boardClipGeom: Geom3 | null = null
 
@@ -178,6 +196,9 @@ export class BoardGeomBuilder {
     this.pcb_vias = su(circuitJson).pcb_via.list()
     this.silkscreenTexts = su(circuitJson).pcb_silkscreen_text.list()
     this.silkscreenPaths = su(circuitJson).pcb_silkscreen_path.list()
+    this.silkscreenLines = su(circuitJson).pcb_silkscreen_line.list()
+    this.silkscreenCircles = su(circuitJson).pcb_silkscreen_circle.list()
+    this.silkscreenRects = su(circuitJson).pcb_silkscreen_rect.list()
     this.pcb_cutouts = su(circuitJson).pcb_cutout.list()
     this.pcb_copper_pours = circuitJson.filter(
       (e) => e.type === "pcb_copper_pour",
@@ -208,13 +229,13 @@ export class BoardGeomBuilder {
       )
     } else {
       this.boardGeom = cuboid({
-        size: [this.board.width, this.board.height, this.ctx.pcbThickness],
+        size: [this.board.width!, this.board.height!, this.ctx.pcbThickness],
         center: [this.board.center.x, this.board.center.y, 0],
       })
       this.boardClipGeom = cuboid({
         size: [
-          this.board.width + 2 * BOARD_CLIP_XY_OUTSET,
-          this.board.height + 2 * BOARD_CLIP_XY_OUTSET,
+          this.board.width! + 2 * BOARD_CLIP_XY_OUTSET,
+          this.board.height! + 2 * BOARD_CLIP_XY_OUTSET,
           clipDepth,
         ],
         center: [this.board.center.x, this.board.center.y, 0],
@@ -288,6 +309,35 @@ export class BoardGeomBuilder {
         case "processing_silkscreen_text":
           if (this.currentIndex < this.silkscreenTexts.length) {
             this.processSilkscreenText(this.silkscreenTexts[this.currentIndex]!)
+            this.currentIndex++
+          } else {
+            this.goToNextState()
+          }
+          break
+
+        case "processing_silkscreen_lines":
+          if (this.currentIndex < this.silkscreenLines.length) {
+            this.processSilkscreenLine(this.silkscreenLines[this.currentIndex]!)
+            this.currentIndex++
+          } else {
+            this.goToNextState()
+          }
+          break
+
+        case "processing_silkscreen_circles":
+          if (this.currentIndex < this.silkscreenCircles.length) {
+            this.processSilkscreenCircle(
+              this.silkscreenCircles[this.currentIndex]!,
+            )
+            this.currentIndex++
+          } else {
+            this.goToNextState()
+          }
+          break
+
+        case "processing_silkscreen_rects":
+          if (this.currentIndex < this.silkscreenRects.length) {
+            this.processSilkscreenRect(this.silkscreenRects[this.currentIndex]!)
             this.currentIndex++
           } else {
             this.goToNextState()
@@ -425,7 +475,12 @@ export class BoardGeomBuilder {
       if (this.boardClipGeom) {
         pourGeom = intersect(this.boardClipGeom, pourGeom)
       }
-      const coloredPourGeom = colorize(colors.copper, pourGeom)
+      const covered = (pour as any).covered_with_solder_mask !== false
+      const pourMaterialColor = covered
+        ? (tracesMaterialColors[this.board.material] ??
+          colors.fr4GreenSolderWithMask)
+        : colors.copper
+      const coloredPourGeom = colorize(pourMaterialColor, pourGeom)
       this.copperPourGeoms.push(coloredPourGeom)
     }
   }
@@ -890,6 +945,27 @@ export class BoardGeomBuilder {
     }
   }
 
+  private processSilkscreenLine(sl: PcbSilkscreenLine) {
+    const lineGeom = createSilkscreenLineGeom(sl, this.ctx)
+    if (lineGeom) {
+      this.silkscreenLineGeoms.push(lineGeom)
+    }
+  }
+
+  private processSilkscreenCircle(sc: PcbSilkscreenCircle) {
+    const circleGeom = createSilkscreenCircleGeom(sc, this.ctx)
+    if (circleGeom) {
+      this.silkscreenCircleGeoms.push(circleGeom)
+    }
+  }
+
+  private processSilkscreenRect(sr: PcbSilkscreenRect) {
+    const rectGeom = createSilkscreenRectGeom(sr, this.ctx)
+    if (rectGeom) {
+      this.silkscreenRectGeoms.push(rectGeom)
+    }
+  }
+
   private finalize() {
     if (!this.boardGeom) return
     // Colorize the final board geometry
@@ -905,6 +981,9 @@ export class BoardGeomBuilder {
       ...this.viaGeoms,
       ...this.copperPourGeoms,
       ...this.silkscreenTextGeoms,
+      ...this.silkscreenLineGeoms,
+      ...this.silkscreenCircleGeoms,
+      ...this.silkscreenRectGeoms,
       ...this.silkscreenPathGeoms,
     ]
 

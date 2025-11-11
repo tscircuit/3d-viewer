@@ -147,6 +147,28 @@ const soup: AnyCircuitElement[] = [
       { x: 30, y: -30 },
     ],
   } as PcbCopperPour,
+  // pour_rect_2: A rect pour without solder mask
+  {
+    type: "pcb_copper_pour",
+    pcb_copper_pour_id: "pour_rect_2",
+    layer: "top",
+    shape: "rect",
+    source_net_id: "net7",
+    center: { x: 70, y: 0 },
+    width: 20,
+    height: 10,
+    covered_with_solder_mask: false,
+  } as PcbCopperPour,
+  {
+    type: "pcb_copper_pour",
+    pcb_copper_pour_id: "pour_full_bottom",
+    layer: "bottom",
+    shape: "rect",
+    source_net_id: "gnd",
+    center: { x: 0, y: 0 },
+    width: 198,
+    height: 98,
+  } as PcbCopperPour,
 ]
 export const Default = () => <CadViewer circuitJson={soup} />
 

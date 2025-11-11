@@ -317,7 +317,7 @@ export const useCameraController = ({
   const [controlsVersion, setControlsVersion] = useState(0)
 
   const baseDistance = useMemo(() => {
-    const [x, y, z] = initialCameraPosition ?? [5, 5, 5]
+    const [x, y, z] = initialCameraPosition ?? [5, -5, 5]
     const distance = Math.hypot(
       x - defaultTarget.x,
       y - defaultTarget.y,

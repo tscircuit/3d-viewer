@@ -39,6 +39,7 @@ export interface ManifoldGeoms {
     geometry: THREE.BufferGeometry
     color: THREE.Color
     material: PcbBoard["material"]
+    isFaux?: boolean
   }
   platedHoles?: Array<{
     key: string
@@ -76,6 +77,7 @@ interface UseManifoldBoardBuilderResult {
   error: string | null
   isLoading: boolean
   boardData: PcbBoard | null
+  isFauxBoard: boolean
 }
 
 export const useManifoldBoardBuilder = (
@@ -92,11 +94,14 @@ export const useManifoldBoardBuilder = (
 
   const boardData = useMemo(() => {
     const boards = su(circuitJson).pcb_board.list()
-    if (boards.length === 0) {
-      // Error will be set in effect
-      return null
-    }
-    return boards[0]!
+    return boards.length > 0 ? boards[0]! : null
+  }, [circuitJson])
+
+  const isFauxBoard = useMemo(() => {
+    const boards = su(circuitJson).pcb_board.list()
+    // A faux board is one that was added during preprocessing
+    // We can identify it by checking if it has the faux board ID
+    return boards.length > 0 && boards[0]!.pcb_board_id === "faux-board"
   }, [circuitJson])
 
   useEffect(() => {
@@ -127,8 +132,22 @@ export const useManifoldBoardBuilder = (
     const Manifold = manifoldJSModule.Manifold
     const CrossSection = manifoldJSModule.CrossSection
 
+    const safeDelete = (inst: any) => {
+      if (!inst || typeof inst.delete !== "function") return
+      try {
+        inst.delete()
+      } catch (error) {
+        if (
+          !(error instanceof Error) ||
+          !error.message?.includes("Manifold instance already deleted")
+        ) {
+          console.warn("Failed to delete Manifold instance", error)
+        }
+      }
+    }
+
     // Cleanup previous Manifold objects
-    manifoldInstancesForCleanup.current.forEach((inst) => inst.delete())
+    manifoldInstancesForCleanup.current.forEach(safeDelete)
     manifoldInstancesForCleanup.current = []
 
     let boardManifold: any = null
@@ -297,6 +316,7 @@ export const useManifoldBoardBuilder = (
             matColorArray[2],
           ),
           material: boardData.material,
+          isFaux: isFauxBoard,
         }
       }
 
@@ -318,6 +338,7 @@ export const useManifoldBoardBuilder = (
         circuitJson,
         currentPcbThickness,
         manifoldInstancesForCleanup.current,
+        boardData.material,
         holeUnion,
         boardClipVolume,
       )
@@ -376,7 +397,7 @@ export const useManifoldBoardBuilder = (
 
     return () => {
       // Cleanup all Manifold instances created during this effect
-      manifoldInstancesForCleanup.current.forEach((inst) => inst.delete())
+      manifoldInstancesForCleanup.current.forEach(safeDelete)
       manifoldInstancesForCleanup.current = []
       // boardManifold is part of manifoldInstancesForCleanup if it was assigned
     }
@@ -389,5 +410,6 @@ export const useManifoldBoardBuilder = (
     error,
     isLoading,
     boardData,
+    isFauxBoard,
   }
 }

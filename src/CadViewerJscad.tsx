@@ -18,6 +18,7 @@ import { MixedStlModel } from "./three-components/MixedStlModel"
 import { STLModel } from "./three-components/STLModel"
 import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
+import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 import { tuple } from "./utils/tuple"
 
 interface Props {
@@ -53,31 +54,46 @@ export const CadViewerJscad = forwardRef<
     const childrenSoup = useConvertChildrenToCircuitJson(children)
     const internalCircuitJson = useMemo(() => {
       const cj = soup ?? circuitJson
-      return (cj ?? childrenSoup) as AnyCircuitElement[]
+      return addFauxBoardIfNeeded(cj ?? childrenSoup) as AnyCircuitElement[]
     }, [soup, circuitJson, childrenSoup])
 
     // Use the new hook to manage board geometry building
     const boardGeom = useBoardGeomBuilder(internalCircuitJson)
 
     const initialCameraPosition = useMemo(() => {
-      if (!internalCircuitJson) return [5, 5, 5] as const
+      if (!internalCircuitJson) return [5, -5, 5] as const
       try {
         const board = su(internalCircuitJson as any).pcb_board.list()[0]
-        if (!board) return [5, 5, 5] as const
+        if (!board) return [5, -5, 5] as const
         const { width, height } = board
 
         if (!width && !height) {
-          return [5, 5, 5] as const
+          return [5, -5, 5] as const
         }
 
         const minCameraDistance = 5
-        const adjustedBoardWidth = Math.max(width, minCameraDistance)
-        const adjustedBoardHeight = Math.max(height, minCameraDistance)
+        const adjustedBoardWidth = Math.max(width!, minCameraDistance)
+        const adjustedBoardHeight = Math.max(height!, minCameraDistance)
         const largestDim = Math.max(adjustedBoardWidth, adjustedBoardHeight)
-        return [largestDim / 2, largestDim / 2, largestDim] as const
+        // Position the camera for a top-front-right view
+        return [
+          largestDim * 0.4, // Move right
+          -largestDim * 0.7, // Move back (negative Y)
+          largestDim * 0.9, // Keep height but slightly lower than top-down
+        ] as const
       } catch (e) {
         console.error(e)
-        return [5, 5, 5] as const
+        return [5, -5, 5] as const
+      }
+    }, [internalCircuitJson])
+
+    const isFauxBoard = useMemo(() => {
+      if (!internalCircuitJson) return false
+      try {
+        const board = su(internalCircuitJson as any).pcb_board.list()[0]
+        return !!board && board.pcb_board_id === "faux-board"
+      } catch (e) {
+        return false
       }
     }, [internalCircuitJson])
 
@@ -127,7 +143,7 @@ export const CadViewerJscad = forwardRef<
             key={`board-${index}`}
             stlData={stlData}
             color={color}
-            opacity={index === 0 ? 0.95 : 1}
+            opacity={index === 0 ? (isFauxBoard ? 0.8 : 0.95) : 1}
             layerType={layerType}
           />
         ))}
