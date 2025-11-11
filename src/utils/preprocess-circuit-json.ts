@@ -6,7 +6,7 @@ import { createFauxBoard } from "./create-faux-board"
  * Preprocesses circuit JSON to add a faux board if needed
  * This ensures consistent board processing for both real and faux boards
  */
-export function preprocessCircuitJsonWithFauxBoard(
+export function addFauxBoardIfNeeded(
   circuitJson: AnyCircuitElement[],
 ): AnyCircuitElement[] {
   const boards = su(circuitJson).pcb_board.list()
@@ -29,7 +29,7 @@ export function preprocessCircuitJsonWithFauxBoard(
   const boardThickness = fauxBoard.thickness
   const componentZ = boardThickness / 2
 
-  const circuitJsonWithOffsetCadElements = circuitJson.map((element) => {
+  const processedCircuitJson = circuitJson.map((element) => {
     if (element.type === "cad_component") {
       const cadComponent = element as CadComponent
       if (cadComponent.position) {
