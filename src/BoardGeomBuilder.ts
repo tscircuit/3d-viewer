@@ -437,7 +437,7 @@ export class BoardGeomBuilder {
 
     if (pour.shape === "rect") {
       let baseGeom = cuboid({
-        center: [0, 0, 0], // Create at origin for rotation
+        center: [0, 0, 0], // Create at origin for rotation.
         size: [pour.width, pour.height, M],
       })
 
