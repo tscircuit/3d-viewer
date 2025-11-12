@@ -95,7 +95,7 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
               10 * aspect,
               10,
               -10,
-              0.1,
+              -1000,
               1000,
             )
 

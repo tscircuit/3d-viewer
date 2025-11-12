@@ -13,7 +13,7 @@ import type {
   CameraAnimationConfig,
   CameraController,
   CameraPreset,
-} from "../hooks/useCameraController"
+} from "../hooks/cameraAnimation"
 
 const CAMERA_KEY = "cadViewerCameraStateSession"
 
@@ -130,7 +130,7 @@ export const CameraControllerProvider: React.FC<
       const heightOffset = distance * 0.3
 
       switch (preset) {
-        case "Top Centered": {
+        case "Top Center Angled": {
           const angledOffset = distance / Math.sqrt(2)
           return {
             position: [
@@ -177,7 +177,7 @@ export const CameraControllerProvider: React.FC<
             position: [
               defaultTarget.x - distance,
               defaultTarget.y,
-              defaultTarget.z + heightOffset,
+              defaultTarget.z,
             ],
             target: targetVector,
             up: [0, 0, 1],
@@ -187,7 +187,7 @@ export const CameraControllerProvider: React.FC<
             position: [
               defaultTarget.x + distance,
               defaultTarget.y,
-              defaultTarget.z + heightOffset,
+              defaultTarget.z,
             ],
             target: targetVector,
             up: [0, 0, 1],
@@ -197,7 +197,7 @@ export const CameraControllerProvider: React.FC<
             position: [
               defaultTarget.x,
               defaultTarget.y - distance,
-              defaultTarget.z + heightOffset,
+              defaultTarget.z,
             ],
             target: targetVector,
             up: [0, 0, 1],

@@ -8,5 +8,5 @@ export {
   saveCameraToSession,
   loadCameraFromSession,
 } from "./contexts/CameraControllerContext"
-export { CameraAnimatorWithContext } from "./hooks/useCameraController"
+export { CameraAnimatorWithContext } from "./hooks/cameraAnimation"
 export { useCameraSession } from "./hooks/useCameraSession"

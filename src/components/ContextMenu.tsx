@@ -2,7 +2,7 @@ import type React from "react"
 import { useState } from "react"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { AppearanceMenu } from "./AppearanceMenu"
-import type { CameraPreset } from "../hooks/useCameraController"
+import type { CameraPreset } from "../hooks/cameraAnimation"
 import { useCameraController } from "../contexts/CameraControllerContext"
 import packageJson from "../../package.json"
 import { CheckIcon, ChevronRightIcon, DotIcon } from "./Icons"
@@ -21,7 +21,7 @@ interface ContextMenuProps {
 
 const cameraOptions: CameraPreset[] = [
   "Custom",
-  "Top Centered",
+  "Top Center Angled",
   "Top Down",
   "Top Left Corner",
   "Top Right Corner",

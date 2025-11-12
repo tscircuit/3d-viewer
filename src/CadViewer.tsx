@@ -18,7 +18,7 @@ import { ContextMenu } from "./components/ContextMenu"
 import type {
   CameraController,
   CameraPreset,
-} from "./hooks/useCameraController"
+} from "./hooks/cameraAnimation"
 
 const CadViewerInner = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")

@@ -8,15 +8,15 @@ import { OrbitControls } from "./react-three/OrbitControls"
 import { Grid } from "./react-three/Grid"
 import { useFrame, useThree } from "./react-three/ThreeContext"
 import { Lights } from "./react-three/Lights"
-import { CameraAnimatorWithContext } from "./hooks/useCameraController"
+import { CameraAnimatorWithContext } from "./hooks/cameraAnimation"
 import { useCameraController } from "./contexts/CameraControllerContext"
 import { useCameraSession } from "./hooks/useCameraSession"
-import type { CameraController } from "./hooks/useCameraController"
+import type { CameraController } from "./hooks/cameraAnimation"
 import { OrientationCubeCanvas } from "./three-components/OrientationCubeCanvas"
 export type {
   CameraController,
   CameraPreset,
-} from "./hooks/useCameraController"
+} from "./hooks/cameraAnimation"
 
 export const RotationTracker = () => {
   const { camera } = useThree()
