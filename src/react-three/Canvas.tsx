@@ -12,6 +12,7 @@ import { ThreeContext, ThreeContextState } from "./ThreeContext"
 import { HoverProvider } from "./HoverContext"
 import { removeExistingCanvases } from "./remove-existing-canvases"
 import { configureRenderer } from "./configure-renderer"
+import { useCameraController } from "../contexts/CameraControllerContext"
 
 declare global {
   interface Window {
@@ -35,6 +36,7 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
     { children, scene: sceneProps, camera: cameraProps, style, onCreated },
     ref,
   ) => {
+    const { cameraType } = useCameraController()
     const mountRef = useRef<HTMLDivElement>(null)
     const [contextState, setContextState] = useState<ThreeContextState | null>(
       null,
@@ -83,12 +85,20 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
       renderer.setPixelRatio(window.devicePixelRatio)
       mountRef.current.appendChild(renderer.domElement)
 
-      const camera = new THREE.PerspectiveCamera(
-        75,
-        mountRef.current.clientWidth / mountRef.current.clientHeight,
-        0.1,
-        1000,
-      )
+      const aspect =
+        mountRef.current.clientWidth / mountRef.current.clientHeight
+      const camera =
+        cameraType === "perspective"
+          ? new THREE.PerspectiveCamera(75, aspect, 0.1, 1000)
+          : new THREE.OrthographicCamera(
+              -10 * aspect,
+              10 * aspect,
+              10,
+              -10,
+              0.1,
+              1000,
+            )
+
       if (cameraProps?.up) {
         camera.up.set(cameraProps.up[0], cameraProps.up[1], cameraProps.up[2])
       }
@@ -127,8 +137,16 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
 
       const handleResize = () => {
         if (mountRef.current) {
-          camera.aspect =
+          const newAspect =
             mountRef.current.clientWidth / mountRef.current.clientHeight
+          if (camera instanceof THREE.PerspectiveCamera) {
+            camera.aspect = newAspect
+          } else if (camera instanceof THREE.OrthographicCamera) {
+            camera.left = -10 * newAspect
+            camera.right = 10 * newAspect
+            camera.top = 10
+            camera.bottom = -10
+          }
           camera.updateProjectionMatrix()
           renderer.setSize(
             mountRef.current.clientWidth,
@@ -150,7 +168,7 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
           window.__TSCIRCUIT_THREE_OBJECT = undefined
         }
       }
-    }, [scene, addFrameListener, removeFrameListener])
+    }, [scene, addFrameListener, removeFrameListener, cameraType])
 
     return (
       <div ref={mountRef} style={{ width: "100%", height: "100%", ...style }}>

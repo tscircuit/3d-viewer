@@ -3,6 +3,7 @@ import { useState } from "react"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { AppearanceMenu } from "./AppearanceMenu"
 import type { CameraPreset } from "../hooks/useCameraController"
+import { useCameraController } from "../contexts/CameraControllerContext"
 import packageJson from "../../package.json"
 import { CheckIcon, ChevronRightIcon, DotIcon } from "./Icons"
 
@@ -107,6 +108,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onAutoRotateToggle,
   onDownloadGltf,
 }) => {
+  const { cameraType, setCameraType } = useCameraController()
   const [cameraSubOpen, setCameraSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
@@ -226,6 +228,33 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               </span>
               <span style={{ display: "flex", alignItems: "center" }}>
                 Auto rotate
+              </span>
+            </DropdownMenu.Item>
+
+            {/* Orthographic Camera Toggle */}
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                ...itemPaddingStyles,
+                backgroundColor:
+                  hoveredItem === "cameratype" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                setCameraType(
+                  cameraType === "perspective" ? "orthographic" : "perspective",
+                )
+              }}
+              onMouseEnter={() => setHoveredItem("cameratype")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("cameratype")}
+            >
+              <span style={iconContainerStyles}>
+                {cameraType === "orthographic" && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Orthographic Camera
               </span>
             </DropdownMenu.Item>
 

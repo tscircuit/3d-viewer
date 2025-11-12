@@ -1,5 +1,5 @@
 import type * as React from "react"
-import { forwardRef, useMemo, useRef, useState } from "react"
+import { forwardRef, useMemo, useState } from "react"
 import * as THREE from "three"
 import packageJson from "../package.json"
 import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
@@ -9,13 +9,10 @@ import { Grid } from "./react-three/Grid"
 import { useFrame, useThree } from "./react-three/ThreeContext"
 import { Lights } from "./react-three/Lights"
 import {
-  saveCameraToSession,
-  loadCameraFromSession,
-} from "./hooks/useSessionCamera"
-import {
   CameraAnimator,
   useCameraController,
 } from "./hooks/useCameraController"
+import { useCameraSession } from "./hooks/useCameraSession"
 import type { CameraController } from "./hooks/useCameraController"
 export type {
   CameraController,
@@ -64,10 +61,8 @@ export const CadViewerContainer = forwardRef<
       !clickToInteractEnabled,
     )
 
-    const saveTimeoutRef = useRef<any>(null)
-    const controlsRef = useRef<any>(null)
-    const cameraRef = useRef<THREE.Camera | null>(null)
-    const restoredOnceRef = useRef(false)
+    const { handleCameraCreated, handleControlsChange: handleSessionControlsChange } =
+      useCameraSession()
 
     const gridSectionSize = useMemo(() => {
       if (!boardDimensions) return 10
@@ -122,22 +117,7 @@ export const CadViewerContainer = forwardRef<
           scene={{ up: new THREE.Vector3(0, 0, 1) }}
           camera={{ up: [0, 0, 1], position: initialCameraPosition }}
           onCreated={({ camera }) => {
-            cameraRef.current = camera
-            if (!restoredOnceRef.current && controlsRef.current) {
-              const restored = loadCameraFromSession(
-                cameraRef.current,
-                controlsRef.current,
-              )
-              if (restored) restoredOnceRef.current = true
-            }
-            // If nothing to restore, persist the initial state once controls exist
-            if (controlsRef.current && !restoredOnceRef.current) {
-              setTimeout(() => {
-                if (cameraRef.current && controlsRef.current) {
-                  saveCameraToSession(cameraRef.current, controlsRef.current)
-                }
-              }, 0)
-            }
+            handleCameraCreated(camera)
           }}
         >
           <CameraAnimator {...cameraAnimatorProps} />
@@ -155,30 +135,7 @@ export const CadViewerContainer = forwardRef<
               target={orbitTarget}
               onControlsChange={(controls) => {
                 handleControlsChange(controls)
-                controlsRef.current = controls
-
-                // Attempt a one-time restore the first time controls are available
-                if (
-                  cameraRef.current &&
-                  controlsRef.current &&
-                  !restoredOnceRef.current
-                ) {
-                  const restored = loadCameraFromSession(
-                    cameraRef.current,
-                    controlsRef.current,
-                  )
-                  if (restored) {
-                    restoredOnceRef.current = true
-                    return
-                  }
-                }
-
-                clearTimeout(saveTimeoutRef.current)
-                saveTimeoutRef.current = setTimeout(() => {
-                  if (cameraRef.current && controlsRef.current) {
-                    saveCameraToSession(cameraRef.current, controlsRef.current)
-                  }
-                }, 150)
+                handleSessionControlsChange()
               }}
             />
           )}

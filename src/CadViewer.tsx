@@ -1,5 +1,6 @@
 import type React from "react"
-import { useState, useCallback, useRef, useEffect } from "react"
+import { useState, useCallback, useRef, useEffect, useMemo } from "react"
+import * as THREE from "three"
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
@@ -9,6 +10,10 @@ import {
   LayerVisibilityProvider,
   useLayerVisibility,
 } from "./contexts/LayerVisibilityContext"
+import {
+  CameraControllerProvider,
+  useCameraController,
+} from "./contexts/CameraControllerContext"
 import { ContextMenu } from "./components/ContextMenu"
 import type {
   CameraController,
@@ -27,6 +32,7 @@ const CadViewerInner = (props: any) => {
     return stored === "true"
   })
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>("Custom")
+  const { cameraType, setCameraType } = useCameraController()
   const { visibility, toggleLayer } = useLayerVisibility()
 
   const cameraControllerRef = useRef<CameraController | null>(null)
@@ -123,6 +129,19 @@ const CadViewerInner = (props: any) => {
     )
   }, [autoRotateUserToggled])
 
+  // Initialize camera type from localStorage
+  useEffect(() => {
+    const stored = window.localStorage.getItem("cadViewerCameraType")
+    if (stored === "orthographic" || stored === "perspective") {
+      setCameraType(stored)
+    }
+  }, [setCameraType])
+
+  // Sync camera type to localStorage
+  useEffect(() => {
+    window.localStorage.setItem("cadViewerCameraType", cameraType)
+  }, [cameraType])
+
   const viewerKey = props.circuitJson
     ? JSON.stringify(props.circuitJson)
     : undefined
@@ -147,6 +166,7 @@ const CadViewerInner = (props: any) => {
         <CadViewerJscad
           {...props}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+          cameraType={cameraType}
           onUserInteraction={handleUserInteraction}
           onCameraControllerReady={handleCameraControllerReady}
         />
@@ -154,6 +174,7 @@ const CadViewerInner = (props: any) => {
         <CadViewerManifold
           {...props}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+          cameraType={cameraType}
           onUserInteraction={handleUserInteraction}
           onCameraControllerReady={handleCameraControllerReady}
         />
@@ -201,9 +222,20 @@ const CadViewerInner = (props: any) => {
 }
 
 export const CadViewer = (props: any) => {
+  // Default camera target and position - these will be overridden by CadViewerContainer
+  const defaultTarget = useMemo(() => new THREE.Vector3(0, 0, 0), [])
+  const initialCameraPosition = useMemo<
+    readonly [number, number, number]
+  >(() => [5, -5, 5] as const, [])
+
   return (
-    <LayerVisibilityProvider>
-      <CadViewerInner {...props} />
-    </LayerVisibilityProvider>
+    <CameraControllerProvider
+      defaultTarget={defaultTarget}
+      initialCameraPosition={initialCameraPosition}
+    >
+      <LayerVisibilityProvider>
+        <CadViewerInner {...props} />
+      </LayerVisibilityProvider>
+    </CameraControllerProvider>
   )
 }
