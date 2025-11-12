@@ -11,6 +11,7 @@ import type { CameraController } from "./hooks/useCameraController"
 import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
 import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { useBoardGeomBuilder } from "./hooks/useBoardGeomBuilder"
+import { usePanelGeomBuilderJscad } from "./hooks/usePanelGeomBuilderJscad"
 import { Error3d } from "./three-components/Error3d"
 import { FootprinterModel } from "./three-components/FootprinterModel"
 import { JscadModel } from "./three-components/JscadModel"
@@ -55,24 +56,53 @@ export const CadViewerJscad = forwardRef<
       return addFauxBoardIfNeeded(cj ?? childrenSoup) as AnyCircuitElement[]
     }, [soup, circuitJson, childrenSoup])
 
-    // Use the new hook to manage board geometry building
-    const boardGeom = useBoardGeomBuilder(internalCircuitJson)
+    // Check if we have a panel
+    const hasPanel = useMemo(
+      () => internalCircuitJson?.some((e) => e.type === "pcb_panel") ?? false,
+      [internalCircuitJson],
+    )
+
+    // Use panel builder if panel exists, otherwise use board builder
+    const panelGeom = usePanelGeomBuilderJscad(
+      hasPanel ? internalCircuitJson : undefined,
+    )
+    const boardGeom = useBoardGeomBuilder(
+      !hasPanel ? internalCircuitJson : undefined,
+    )
+
+    // Use panel or board geometry
+    const activeGeom = hasPanel ? panelGeom : boardGeom
 
     const initialCameraPosition = useMemo(() => {
       if (!internalCircuitJson) return [5, -5, 5] as const
       try {
-        const board = su(internalCircuitJson as any).pcb_board.list()[0]
-        if (!board) return [5, -5, 5] as const
-        const { width, height } = board
+        let width = 0
+        let height = 0
+
+        if (hasPanel) {
+          const panel = internalCircuitJson.find(
+            (e) => e.type === "pcb_panel",
+          ) as any
+          if (panel) {
+            width = panel.width || 0
+            height = panel.height || 0
+          }
+        } else {
+          const board = su(internalCircuitJson as any).pcb_board.list()[0]
+          if (board) {
+            width = board.width || 0
+            height = board.height || 0
+          }
+        }
 
         if (!width && !height) {
           return [5, -5, 5] as const
         }
 
         const minCameraDistance = 5
-        const adjustedBoardWidth = Math.max(width!, minCameraDistance)
-        const adjustedBoardHeight = Math.max(height!, minCameraDistance)
-        const largestDim = Math.max(adjustedBoardWidth, adjustedBoardHeight)
+        const adjustedWidth = Math.max(width, minCameraDistance)
+        const adjustedHeight = Math.max(height, minCameraDistance)
+        const largestDim = Math.max(adjustedWidth, adjustedHeight)
         // Position the camera for a top-front-right view
         return [
           largestDim * 0.4, // Move right
@@ -83,7 +113,7 @@ export const CadViewerJscad = forwardRef<
         console.error(e)
         return [5, -5, 5] as const
       }
-    }, [internalCircuitJson])
+    }, [internalCircuitJson, hasPanel])
 
     const isFauxBoard = useMemo(() => {
       if (!internalCircuitJson) return false
@@ -98,6 +128,14 @@ export const CadViewerJscad = forwardRef<
     const boardDimensions = useMemo(() => {
       if (!internalCircuitJson) return undefined
       try {
+        if (hasPanel) {
+          const panel = internalCircuitJson.find(
+            (e) => e.type === "pcb_panel",
+          ) as any
+          if (panel) {
+            return { width: panel.width ?? 0, height: panel.height ?? 0 }
+          }
+        }
         const board = su(internalCircuitJson as any).pcb_board.list()[0]
         if (!board) return undefined
         return { width: board.width ?? 0, height: board.height ?? 0 }
@@ -105,11 +143,19 @@ export const CadViewerJscad = forwardRef<
         console.error(e)
         return undefined
       }
-    }, [internalCircuitJson])
+    }, [internalCircuitJson, hasPanel])
 
     const boardCenter = useMemo(() => {
       if (!internalCircuitJson) return undefined
       try {
+        if (hasPanel) {
+          const panel = internalCircuitJson.find(
+            (e) => e.type === "pcb_panel",
+          ) as any
+          if (panel?.center) {
+            return { x: panel.center.x, y: panel.center.y }
+          }
+        }
         const board = su(internalCircuitJson as any).pcb_board.list()[0]
         if (!board || !board.center) return undefined
         return { x: board.center.x, y: board.center.y }
@@ -117,10 +163,10 @@ export const CadViewerJscad = forwardRef<
         console.error(e)
         return undefined
       }
-    }, [internalCircuitJson])
+    }, [internalCircuitJson, hasPanel])
 
-    // Use the state `boardGeom` which starts simplified and gets updated
-    const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
+    // Use the state `boardGeom` or `panelGeom` which starts simplified and gets updated
+    const { stls: boardStls, loading } = useStlsFromGeom(activeGeom)
 
     const cad_components = su(internalCircuitJson).cad_component.list()
 
