@@ -3,13 +3,14 @@ import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import { ManifoldToplevel } from "manifold-3d"
 import type React from "react"
 import { useEffect, useMemo, useState } from "react"
-import type * as THREE from "three"
+import * as THREE from "three"
 import { useThree } from "./react-three/ThreeContext"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
 import type { CameraController } from "./hooks/useCameraController"
 import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
 import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
+import { usePanelGeomBuilder } from "./hooks/usePanelGeomBuilder"
 import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
@@ -221,6 +222,21 @@ try {
     }
   }, [])
 
+  // Check if we have a panel
+  const hasPanel = useMemo(
+    () => circuitJson.some((e) => e.type === "pcb_panel"),
+    [circuitJson],
+  )
+
+  // Use panel builder if panel exists, otherwise use board builder
+  const {
+    geoms: panelGeoms,
+    pcbThickness: panelThickness,
+    error: panelError,
+    isLoading: panelIsLoading,
+    panelData,
+  } = usePanelGeomBuilder(hasPanel ? manifoldJSModule : null, circuitJson)
+
   const {
     geoms,
     textures,
@@ -228,13 +244,28 @@ try {
     error: builderError,
     isLoading: builderIsLoading,
     boardData,
-  } = useManifoldBoardBuilder(manifoldJSModule, circuitJson)
+  } = useManifoldBoardBuilder(!hasPanel ? manifoldJSModule : null, circuitJson)
 
-  const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
-  const textureMeshes = useMemo(
-    () => createTextureMeshes(textures, boardData, pcbThickness),
-    [textures, boardData, pcbThickness],
-  )
+  // Create meshes from panel or board geometry
+  const geometryMeshes = useMemo(() => {
+    if (hasPanel && panelGeoms?.panel) {
+      const mesh = new THREE.Mesh(
+        panelGeoms.panel.geometry,
+        new THREE.MeshStandardMaterial({
+          color: panelGeoms.panel.color,
+          roughness: 0.7,
+          metalness: 0.1,
+        }),
+      )
+      mesh.name = "panel-geom"
+      return [mesh]
+    }
+    return createGeometryMeshes(geoms)
+  }, [hasPanel, panelGeoms, geoms])
+  const textureMeshes = useMemo(() => {
+    if (hasPanel) return []
+    return createTextureMeshes(textures, boardData, pcbThickness)
+  }, [hasPanel, textures, boardData, pcbThickness])
 
   const cadComponents = useMemo(
     () => su(circuitJson).cad_component.list(),
@@ -242,21 +273,38 @@ try {
   )
 
   const boardDimensions = useMemo(() => {
+    if (hasPanel && panelData) {
+      return { width: panelData.width || 0, height: panelData.height || 0 }
+    }
     if (!boardData) return undefined
     const { width = 0, height = 0 } = boardData
     return { width, height }
-  }, [boardData])
+  }, [hasPanel, panelData, boardData])
 
   const boardCenter = useMemo(() => {
+    if (hasPanel && panelData?.center) {
+      return { x: panelData.center.x, y: panelData.center.y }
+    }
     if (!boardData) return undefined
     const { center } = boardData
     if (!center) return undefined
     return { x: center.x, y: center.y }
-  }, [boardData])
+  }, [hasPanel, panelData, boardData])
 
   const initialCameraPosition = useMemo(() => {
-    if (!boardData) return [5, -5, 5] as const
-    const { width = 0, height = 0 } = boardData
+    let width = 0
+    let height = 0
+
+    if (hasPanel && panelData) {
+      width = panelData.width || 0
+      height = panelData.height || 0
+    } else if (boardData) {
+      width = boardData.width || 0
+      height = boardData.height || 0
+    }
+
+    if (width === 0 && height === 0) return [5, -5, 5] as const
+
     const safeWidth = Math.max(width, 1)
     const safeHeight = Math.max(height, 1)
     const largestDim = Math.max(safeWidth, safeHeight, 5)
@@ -265,7 +313,7 @@ try {
       -largestDim * 0.7, // Move back (negative Y)
       largestDim * 0.9, // Keep height but slightly lower than top-down
     ] as const
-  }, [boardData])
+  }, [hasPanel, panelData, boardData])
 
   if (manifoldLoadingError) {
     return (
@@ -284,7 +332,7 @@ try {
   if (!manifoldJSModule) {
     return <div style={{ padding: "1em" }}>Loading Manifold module...</div>
   }
-  if (builderError) {
+  if (panelError || builderError) {
     return (
       <div
         style={{
@@ -294,12 +342,16 @@ try {
           margin: "1em",
         }}
       >
-        Error: {builderError}
+        Error: {panelError || builderError}
       </div>
     )
   }
-  if (builderIsLoading) {
-    return <div style={{ padding: "1em" }}>Processing board geometry...</div>
+  if (panelIsLoading || builderIsLoading) {
+    return (
+      <div style={{ padding: "1em" }}>
+        Processing {hasPanel ? "panel" : "board"} geometry...
+      </div>
+    )
   }
 
   return (

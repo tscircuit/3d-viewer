@@ -2,19 +2,7 @@ import type { ManifoldToplevel, CrossSection } from "manifold-3d/manifold.d.ts"
 import type { AnyCircuitElement, PcbCutout } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import { SMOOTH_CIRCLE_SEGMENTS } from "../../geoms/constants"
-
-const arePointsClockwise = (points: Array<[number, number]>): boolean => {
-  let area = 0
-  for (let i = 0; i < points.length; i++) {
-    const j = (i + 1) % points.length
-    if (points[i] && points[j]) {
-      area += points[i]![0] * points[j]![1]
-      area -= points[j]![0] * points[i]![1]
-    }
-  }
-  const signedArea = area / 2
-  return signedArea <= 0
-}
+import { arePointsClockwise } from "./geometry-utils"
 
 export interface ProcessCutoutsResult {
   cutoutOps: any[]
