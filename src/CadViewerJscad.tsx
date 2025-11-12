@@ -18,6 +18,7 @@ import { MixedStlModel } from "./three-components/MixedStlModel"
 import { STLModel } from "./three-components/STLModel"
 import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
+import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 import { tuple } from "./utils/tuple"
 
 interface Props {
@@ -51,7 +52,7 @@ export const CadViewerJscad = forwardRef<
     const childrenSoup = useConvertChildrenToCircuitJson(children)
     const internalCircuitJson = useMemo(() => {
       const cj = soup ?? circuitJson
-      return (cj ?? childrenSoup) as AnyCircuitElement[]
+      return addFauxBoardIfNeeded(cj ?? childrenSoup) as AnyCircuitElement[]
     }, [soup, circuitJson, childrenSoup])
 
     // Use the new hook to manage board geometry building
@@ -81,6 +82,16 @@ export const CadViewerJscad = forwardRef<
       } catch (e) {
         console.error(e)
         return [5, -5, 5] as const
+      }
+    }, [internalCircuitJson])
+
+    const isFauxBoard = useMemo(() => {
+      if (!internalCircuitJson) return false
+      try {
+        const board = su(internalCircuitJson as any).pcb_board.list()[0]
+        return !!board && board.pcb_board_id === "faux-board"
+      } catch (e) {
+        return false
       }
     }, [internalCircuitJson])
 
@@ -129,7 +140,7 @@ export const CadViewerJscad = forwardRef<
             key={`board-${index}`}
             stlData={stlData}
             color={color}
-            opacity={index === 0 ? 0.95 : 1}
+            opacity={index === 0 ? (isFauxBoard ? 0.8 : 0.95) : 1}
             layerType={layerType}
           />
         ))}

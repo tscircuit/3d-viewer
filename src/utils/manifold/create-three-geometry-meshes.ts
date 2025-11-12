@@ -15,6 +15,7 @@ export function createGeometryMeshes(
         material: geoms.board.material,
         color: geoms.board.color,
         side: THREE.DoubleSide,
+        isFaux: geoms.board.isFaux,
       }),
     )
     mesh.name = "board-geom"

@@ -11,6 +11,7 @@ import type { CameraController } from "./hooks/useCameraController"
 import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
 import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
 import { usePanelGeomBuilder } from "./hooks/usePanelGeomBuilder"
+import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
@@ -137,7 +138,8 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
 }) => {
   const childrenCircuitJson = useConvertChildrenToCircuitJson(children)
   const circuitJson = useMemo(() => {
-    return circuitJsonProp ?? childrenCircuitJson
+    const rawCircuitJson = circuitJsonProp ?? childrenCircuitJson
+    return addFauxBoardIfNeeded(rawCircuitJson)
   }, [circuitJsonProp, childrenCircuitJson])
 
   const [manifoldJSModule, setManifoldJSModule] = useState<any | null>(null)
