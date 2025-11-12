@@ -12,6 +12,7 @@ import { CameraAnimatorWithContext } from "./hooks/useCameraController"
 import { useCameraController } from "./contexts/CameraControllerContext"
 import { useCameraSession } from "./hooks/useCameraSession"
 import type { CameraController } from "./hooks/useCameraController"
+import { OrientationCubeCanvas } from "./three-components/OrientationCubeCanvas"
 export type {
   CameraController,
   CameraPreset,
@@ -61,9 +62,12 @@ export const CadViewerContainer = forwardRef<
       !clickToInteractEnabled,
     )
 
-    const { mainCameraRef, handleControlsChange, controller } = useCameraController()
-    const { handleCameraCreated, handleControlsChange: handleSessionControlsChange } =
-      useCameraSession()
+    const { mainCameraRef, handleControlsChange, controller } =
+      useCameraController()
+    const {
+      handleCameraCreated,
+      handleControlsChange: handleSessionControlsChange,
+    } = useCameraSession()
 
     useEffect(() => {
       if (onCameraControllerReady) {
@@ -87,25 +91,7 @@ export const CadViewerContainer = forwardRef<
 
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: 120,
-            height: 120,
-          }}
-        >
-          <Canvas
-            camera={{
-              up: [0, 0, 1],
-              position: [1, 1, 1],
-            }}
-            style={{ zIndex: 10 }}
-          >
-            <CubeWithLabeledSides />
-          </Canvas>
-        </div>
+        <OrientationCubeCanvas />
         <Canvas
           ref={ref}
           scene={{ up: new THREE.Vector3(0, 0, 1) }}

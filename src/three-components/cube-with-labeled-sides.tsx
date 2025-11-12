@@ -1,33 +1,12 @@
-import { useEffect, useMemo, useRef } from "react"
+import { useEffect, useMemo } from "react"
 import * as THREE from "three"
 import { Text } from "src/react-three/Text"
-import { useFrame, useThree } from "src/react-three/ThreeContext"
+import { useThree } from "src/react-three/ThreeContext"
 import { useCameraController } from "../contexts/CameraControllerContext"
 
-function computePointInFront(
-  rotationVector: THREE.Euler,
-  distance: number,
-): THREE.Vector3 {
-  // Create a quaternion from the rotation vector
-  const quaternion = new THREE.Quaternion().setFromEuler(
-    new THREE.Euler(rotationVector.x, rotationVector.y, rotationVector.z),
-  )
-
-  // Create a vector pointing forward (along the negative z-axis)
-  const forwardVector = new THREE.Vector3(0, 0, 1)
-
-  // Apply the rotation to the forward vector
-  forwardVector.applyQuaternion(quaternion)
-
-  // Scale the rotated vector by the distance
-  const result = forwardVector.multiplyScalar(distance)
-
-  return result
-}
-
 export const CubeWithLabeledSides = () => {
-  const { camera: orientationCubeCamera, scene } = useThree()
-  const { cameraType, mainCameraRef } = useCameraController()
+  const { scene } = useThree()
+  const { cameraType } = useCameraController()
 
   useEffect(() => {
     if (!scene) return
@@ -37,20 +16,6 @@ export const CubeWithLabeledSides = () => {
       scene.remove(ambientLight)
     }
   }, [scene])
-
-  useFrame(() => {
-    if (!orientationCubeCamera) return
-
-    const cameraPosition = computePointInFront(
-      mainCameraRef.current?.rotation ?? new THREE.Euler(0, 0, 0),
-      2,
-    )
-    if (cameraPosition?.equals(orientationCubeCamera?.position)) return
-    console.log({ cameraPosition })
-
-    orientationCubeCamera.position.copy(cameraPosition)
-    orientationCubeCamera.lookAt(0, 0, 0)
-  })
 
   const group = useMemo(() => {
     const g = new THREE.Group()
