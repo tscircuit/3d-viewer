@@ -57,6 +57,7 @@ export const OrientationCubeCanvas = () => {
 
     // Create camera
     const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000)
+    camera.up.set(0, 0, 1)
     cameraRef.current = camera
 
     // Add ambient light
@@ -78,7 +79,9 @@ export const OrientationCubeCanvas = () => {
 
     // Create cube edges
     const edges = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize)),
+      new THREE.EdgesGeometry(
+        new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize),
+      ),
       new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 }),
     )
     group.add(edges)
@@ -108,11 +111,31 @@ export const OrientationCubeCanvas = () => {
     }
 
     const frontText = createTextMesh("Front", [0, 0, distanceFromCenter])
-    const backText = createTextMesh("Back", [0, 0, -distanceFromCenter], [0, Math.PI, 0])
-    const rightText = createTextMesh("Right", [distanceFromCenter, 0, 0], [0, Math.PI / 2, 0])
-    const leftText = createTextMesh("Left", [-distanceFromCenter, 0, 0], [0, -Math.PI / 2, 0])
-    const topText = createTextMesh("Top", [0, distanceFromCenter, 0], [-Math.PI / 2, 0, 0])
-    const bottomText = createTextMesh("Bottom", [0, -distanceFromCenter, 0], [Math.PI / 2, 0, 0])
+    const backText = createTextMesh(
+      "Back",
+      [0, 0, -distanceFromCenter],
+      [0, Math.PI, 0],
+    )
+    const rightText = createTextMesh(
+      "Right",
+      [distanceFromCenter, 0, 0],
+      [0, Math.PI / 2, 0],
+    )
+    const leftText = createTextMesh(
+      "Left",
+      [-distanceFromCenter, 0, 0],
+      [0, -Math.PI / 2, 0],
+    )
+    const topText = createTextMesh(
+      "Top",
+      [0, distanceFromCenter, 0],
+      [-Math.PI / 2, 0, 0],
+    )
+    const bottomText = createTextMesh(
+      "Bottom",
+      [0, -distanceFromCenter, 0],
+      [Math.PI / 2, 0, 0],
+    )
 
     group.add(frontText)
     group.add(backText)
