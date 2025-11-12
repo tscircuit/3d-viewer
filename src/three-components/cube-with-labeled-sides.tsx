@@ -2,17 +2,12 @@ import { useEffect, useMemo, useRef } from "react"
 import * as THREE from "three"
 import { Text } from "src/react-three/Text"
 import { useFrame, useThree } from "src/react-three/ThreeContext"
+import { useCameraController } from "../contexts/CameraControllerContext"
 
-declare global {
-  interface Window {
-    TSCI_MAIN_CAMERA_ROTATION: THREE.Euler
-  }
-}
-if (typeof window !== "undefined") {
-  window.TSCI_MAIN_CAMERA_ROTATION = new THREE.Euler(0, 0, 0)
-}
-
-function computePointInFront(rotationVector, distance) {
+function computePointInFront(
+  rotationVector: THREE.Euler,
+  distance: number,
+): THREE.Vector3 {
   // Create a quaternion from the rotation vector
   const quaternion = new THREE.Quaternion().setFromEuler(
     new THREE.Euler(rotationVector.x, rotationVector.y, rotationVector.z),
@@ -30,8 +25,9 @@ function computePointInFront(rotationVector, distance) {
   return result
 }
 
-export const CubeWithLabeledSides = ({}: any) => {
-  const { camera, scene } = useThree()
+export const CubeWithLabeledSides = () => {
+  const { camera: orientationCubeCamera, scene } = useThree()
+  const { cameraRotation, cameraType } = useCameraController()
 
   useEffect(() => {
     if (!scene) return
@@ -43,32 +39,37 @@ export const CubeWithLabeledSides = ({}: any) => {
   }, [scene])
 
   useFrame(() => {
-    if (!camera) return
+    if (!orientationCubeCamera) return
 
-    const mainRot = window.TSCI_MAIN_CAMERA_ROTATION
-    const cameraPosition = computePointInFront(mainRot, 2)
+    const cameraPosition = computePointInFront(cameraRotation, 2)
+    if (cameraPosition?.equals(orientationCubeCamera?.position)) return
+    console.log({ cameraPosition })
 
-    camera.position.copy(cameraPosition)
-    camera.lookAt(0, 0, 0)
+    orientationCubeCamera.position.copy(cameraPosition)
+    orientationCubeCamera.lookAt(0, 0, 0)
   })
 
   const group = useMemo(() => {
     const g = new THREE.Group()
     g.rotation.fromArray([Math.PI / 2, 0, 0])
 
+    const cubeSize = cameraType === "perspective" ? 1 : 5
+
     const box = new THREE.Mesh(
-      new THREE.BoxGeometry(1, 1, 1),
+      new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize),
       new THREE.MeshStandardMaterial({ color: "white" }),
     )
     g.add(box)
 
     const edges = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)),
+      new THREE.EdgesGeometry(
+        new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize),
+      ),
       new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 }),
     )
     g.add(edges)
     return g
-  }, [])
+  }, [cameraType])
 
   useEffect(() => {
     if (!scene) return
@@ -78,11 +79,13 @@ export const CubeWithLabeledSides = ({}: any) => {
     }
   }, [scene, group])
 
+  const distanceFromCenter = cameraType === "perspective" ? 0.51 : 0.51 * 5
+
   return (
     <>
       <Text
         parent={group}
-        position={[0, 0, 0.51]}
+        position={[0, 0, distanceFromCenter]}
         fontSize={0.25}
         color="black"
       >
@@ -90,7 +93,7 @@ export const CubeWithLabeledSides = ({}: any) => {
       </Text>
       <Text
         parent={group}
-        position={[0, 0, -0.51]}
+        position={[0, 0, -distanceFromCenter]}
         fontSize={0.25}
         color="black"
         rotation={[0, Math.PI, 0]}
@@ -99,7 +102,7 @@ export const CubeWithLabeledSides = ({}: any) => {
       </Text>
       <Text
         parent={group}
-        position={[0.51, 0, 0]}
+        position={[distanceFromCenter, 0, 0]}
         fontSize={0.25}
         color="black"
         rotation={[0, Math.PI / 2, 0]}
@@ -108,7 +111,7 @@ export const CubeWithLabeledSides = ({}: any) => {
       </Text>
       <Text
         parent={group}
-        position={[-0.51, 0, 0]}
+        position={[-distanceFromCenter, 0, 0]}
         fontSize={0.25}
         color="black"
         rotation={[0, -Math.PI / 2, 0]}
@@ -117,7 +120,7 @@ export const CubeWithLabeledSides = ({}: any) => {
       </Text>
       <Text
         parent={group}
-        position={[0, 0.51, 0]}
+        position={[0, distanceFromCenter, 0]}
         fontSize={0.25}
         color="black"
         rotation={[-Math.PI / 2, 0, 0]}
@@ -126,7 +129,7 @@ export const CubeWithLabeledSides = ({}: any) => {
       </Text>
       <Text
         parent={group}
-        position={[0, -0.51, 0]}
+        position={[0, -distanceFromCenter, 0]}
         fontSize={0.25}
         color="black"
         rotation={[Math.PI / 2, 0, 0]}

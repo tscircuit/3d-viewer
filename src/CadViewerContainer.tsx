@@ -10,8 +10,9 @@ import { useFrame, useThree } from "./react-three/ThreeContext"
 import { Lights } from "./react-three/Lights"
 import {
   CameraAnimator,
-  useCameraController,
+  useCameraController as useCameraControllerHook,
 } from "./hooks/useCameraController"
+import { useCameraController } from "./contexts/CameraControllerContext"
 import { useCameraSession } from "./hooks/useCameraSession"
 import type { CameraController } from "./hooks/useCameraController"
 export type {
@@ -21,9 +22,11 @@ export type {
 
 export const RotationTracker = () => {
   const { camera } = useThree()
+  const { setCameraRotation } = useCameraController()
+
   useFrame(() => {
     if (camera) {
-      window.TSCI_MAIN_CAMERA_ROTATION = camera.rotation
+      setCameraRotation(camera.rotation)
     }
   })
 
@@ -85,11 +88,12 @@ export const CadViewerContainer = forwardRef<
       return new THREE.Vector3(0, 0, 0)
     }, [orbitTarget])
 
-    const { cameraAnimatorProps, handleControlsChange } = useCameraController({
-      defaultTarget,
-      initialCameraPosition,
-      onCameraControllerReady,
-    })
+    const { cameraAnimatorProps, handleControlsChange } =
+      useCameraControllerHook({
+        defaultTarget,
+        initialCameraPosition,
+        onCameraControllerReady,
+      })
 
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>

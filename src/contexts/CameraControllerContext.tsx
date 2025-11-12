@@ -76,6 +76,8 @@ interface CameraControllerContextValue {
   setCameraType: (type: "perspective" | "orthographic") => void
   cameraPosition: readonly [number, number, number] | null
   setCameraPosition: (position: readonly [number, number, number]) => void
+  cameraRotation: THREE.Euler
+  setCameraRotation: (rotation: THREE.Euler) => void
   saveCameraToSession: (camera: THREE.Camera, controls: any) => void
   loadCameraFromSession: (camera: THREE.Camera, controls: any) => boolean
 }
@@ -101,6 +103,9 @@ export const CameraControllerProvider: React.FC<
   const [cameraPosition, setCameraPosition] = useState<
     readonly [number, number, number] | null
   >(initialCameraPosition ?? null)
+  const [cameraRotation, setCameraRotation] = useState<THREE.Euler>(
+    new THREE.Euler(0, 0, 0),
+  )
 
   const baseDistance = useMemo(() => {
     const [x, y, z] = initialCameraPosition ?? [5, -5, 5]
@@ -223,6 +228,8 @@ export const CameraControllerProvider: React.FC<
       setCameraType,
       cameraPosition,
       setCameraPosition,
+      cameraRotation,
+      setCameraRotation,
       saveCameraToSession,
       loadCameraFromSession,
     }),
@@ -234,6 +241,7 @@ export const CameraControllerProvider: React.FC<
       handleControlsChange,
       cameraType,
       cameraPosition,
+      cameraRotation,
     ],
   )
 
