@@ -66,6 +66,7 @@ export const loadCameraFromSession = (
 
 interface CameraControllerContextValue {
   controlsRef: React.MutableRefObject<ThreeOrbitControls | null>
+  mainCameraRef: React.MutableRefObject<THREE.Camera | null>
   defaultTarget: THREE.Vector3
   baseDistance: number
   controller: CameraController | null
@@ -96,6 +97,7 @@ export const CameraControllerProvider: React.FC<
   CameraControllerProviderProps
 > = ({ children, defaultTarget, initialCameraPosition }) => {
   const controlsRef = useRef<ThreeOrbitControls | null>(null)
+  const mainCameraRef = useRef<THREE.Camera | null>(null)
   const [controller, setController] = useState<CameraController | null>(null)
   const [cameraType, setCameraType] = useState<"perspective" | "orthographic">(
     "perspective",
@@ -218,6 +220,7 @@ export const CameraControllerProvider: React.FC<
   const cameraControllerContextValue = useMemo<CameraControllerContextValue>(
     () => ({
       controlsRef,
+      mainCameraRef,
       defaultTarget,
       baseDistance,
       controller,

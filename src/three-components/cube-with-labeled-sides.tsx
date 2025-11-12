@@ -27,7 +27,7 @@ function computePointInFront(
 
 export const CubeWithLabeledSides = () => {
   const { camera: orientationCubeCamera, scene } = useThree()
-  const { cameraRotation, cameraType } = useCameraController()
+  const { cameraType, mainCameraRef } = useCameraController()
 
   useEffect(() => {
     if (!scene) return
@@ -41,7 +41,10 @@ export const CubeWithLabeledSides = () => {
   useFrame(() => {
     if (!orientationCubeCamera) return
 
-    const cameraPosition = computePointInFront(cameraRotation, 2)
+    const cameraPosition = computePointInFront(
+      mainCameraRef.current?.rotation ?? new THREE.Euler(0, 0, 0),
+      2,
+    )
     if (cameraPosition?.equals(orientationCubeCamera?.position)) return
     console.log({ cameraPosition })
 

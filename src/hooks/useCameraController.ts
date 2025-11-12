@@ -210,11 +210,11 @@ export const CameraAnimator: React.FC<CameraAnimatorProps> = ({
 export const CameraAnimatorWithContext: React.FC = () => {
   const {
     controlsRef,
+    mainCameraRef,
     defaultTarget,
     setController,
     getPresetConfig,
   } = useCameraControllerContext()
-  const { camera } = useThree()
   const animationRef = useRef<{
     fromPosition: THREE.Vector3
     toPosition: THREE.Vector3
@@ -236,7 +236,7 @@ export const CameraAnimatorWithContext: React.FC = () => {
 
   const animateTo = useCallback<CameraController["animateTo"]>(
     ({ position, target, up, durationMs = 600 }) => {
-      if (!camera) return
+      if (!mainCameraRef.current) return
 
       const currentTarget = controlsRef.current?.target ?? defaultTarget
 
@@ -256,8 +256,8 @@ export const CameraAnimatorWithContext: React.FC = () => {
       toOrientationHelper.lookAt(resolvedTarget)
 
       const toQuaternion = toOrientationHelper.quaternion.clone()
-      const fromQuaternion = camera.quaternion.clone()
-      const fromPosition = camera.position.clone()
+      const fromQuaternion = mainCameraRef.current.quaternion.clone()
+      const fromPosition = mainCameraRef.current.position.clone()
       const fromTarget = currentTarget.clone()
 
       const baseHelper = baseOrientationHelper.current
@@ -294,7 +294,7 @@ export const CameraAnimatorWithContext: React.FC = () => {
         duration: durationMs,
       }
     },
-    [camera, controlsRef, defaultTarget],
+    [mainCameraRef, controlsRef, defaultTarget],
   )
 
   const animateToPreset = useCallback(
@@ -308,7 +308,7 @@ export const CameraAnimatorWithContext: React.FC = () => {
   )
 
   useEffect(() => {
-    if (!camera) return
+    if (!mainCameraRef.current) return
     const controller: CameraController = {
       animateTo,
       animateToPreset,
@@ -317,10 +317,10 @@ export const CameraAnimatorWithContext: React.FC = () => {
     return () => {
       setController(null)
     }
-  }, [animateTo, animateToPreset, camera, setController])
+  }, [animateTo, animateToPreset, mainCameraRef, setController])
 
   useFrame(() => {
-    if (!camera || !animationRef.current) return
+    if (!mainCameraRef.current || !animationRef.current) return
 
     const {
       fromPosition,
@@ -338,14 +338,14 @@ export const CameraAnimatorWithContext: React.FC = () => {
     const progress = duration <= 0 ? 1 : Math.min(elapsed / duration, 1)
     const eased = easeInOutCubic(progress)
 
-    camera.position.lerpVectors(fromPosition, toPosition, eased)
+    mainCameraRef.current.position.lerpVectors(fromPosition, toPosition, eased)
 
     const nextTarget = tempTarget.current
     nextTarget.copy(fromTarget).lerp(toTarget, eased)
 
     const baseHelper = baseOrientationHelper.current
     baseHelper.up.set(0, 0, 1)
-    baseHelper.position.copy(camera.position)
+    baseHelper.position.copy(mainCameraRef.current.position)
     baseHelper.lookAt(nextTarget)
 
     const baseQuaternion = tempQuaternion.current
@@ -364,24 +364,27 @@ export const CameraAnimatorWithContext: React.FC = () => {
     rollTarget.normalize()
     interpolatedRoll.slerp(rollTarget, eased)
 
-    camera.quaternion
+    mainCameraRef.current.quaternion
       .copy(baseQuaternion)
       .multiply(interpolatedRoll)
       .normalize()
 
     const upVector = tempUp.current
-    upVector.set(0, 1, 0).applyQuaternion(camera.quaternion).normalize()
-    camera.up.copy(upVector)
+    upVector
+      .set(0, 1, 0)
+      .applyQuaternion(mainCameraRef.current.quaternion)
+      .normalize()
+    mainCameraRef.current.up.copy(upVector)
 
     controlsRef.current?.target.copy(nextTarget)
-    camera.updateMatrixWorld()
+    mainCameraRef.current.updateMatrixWorld()
     controlsRef.current?.update()
 
     if (progress >= 1) {
-      camera.position.copy(toPosition)
-      camera.quaternion.copy(toQuaternion)
-      camera.up.set(0, 0, 1)
-      camera.updateMatrixWorld()
+      mainCameraRef.current.position.copy(toPosition)
+      mainCameraRef.current.quaternion.copy(toQuaternion)
+      mainCameraRef.current.up.set(0, 0, 1)
+      mainCameraRef.current.updateMatrixWorld()
       controlsRef.current?.target.copy(toTarget)
       controlsRef.current?.update()
       animationRef.current = null

@@ -1,5 +1,5 @@
 import type * as React from "react"
-import { forwardRef, useMemo, useState } from "react"
+import { forwardRef, useEffect, useMemo, useState } from "react"
 import * as THREE from "three"
 import packageJson from "../package.json"
 import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
@@ -8,10 +8,7 @@ import { OrbitControls } from "./react-three/OrbitControls"
 import { Grid } from "./react-three/Grid"
 import { useFrame, useThree } from "./react-three/ThreeContext"
 import { Lights } from "./react-three/Lights"
-import {
-  CameraAnimator,
-  useCameraController as useCameraControllerHook,
-} from "./hooks/useCameraController"
+import { CameraAnimatorWithContext } from "./hooks/useCameraController"
 import { useCameraController } from "./contexts/CameraControllerContext"
 import { useCameraSession } from "./hooks/useCameraSession"
 import type { CameraController } from "./hooks/useCameraController"
@@ -64,8 +61,15 @@ export const CadViewerContainer = forwardRef<
       !clickToInteractEnabled,
     )
 
+    const { mainCameraRef, handleControlsChange, controller } = useCameraController()
     const { handleCameraCreated, handleControlsChange: handleSessionControlsChange } =
       useCameraSession()
+
+    useEffect(() => {
+      if (onCameraControllerReady) {
+        onCameraControllerReady(controller)
+      }
+    }, [controller, onCameraControllerReady])
 
     const gridSectionSize = useMemo(() => {
       if (!boardDimensions) return 10
@@ -80,20 +84,6 @@ export const CadViewerContainer = forwardRef<
       if (!boardCenter) return undefined
       return [boardCenter.x, boardCenter.y, 0] as [number, number, number]
     }, [boardCenter])
-
-    const defaultTarget = useMemo(() => {
-      if (orbitTarget) {
-        return new THREE.Vector3(orbitTarget[0], orbitTarget[1], orbitTarget[2])
-      }
-      return new THREE.Vector3(0, 0, 0)
-    }, [orbitTarget])
-
-    const { cameraAnimatorProps, handleControlsChange } =
-      useCameraControllerHook({
-        defaultTarget,
-        initialCameraPosition,
-        onCameraControllerReady,
-      })
 
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -121,10 +111,11 @@ export const CadViewerContainer = forwardRef<
           scene={{ up: new THREE.Vector3(0, 0, 1) }}
           camera={{ up: [0, 0, 1], position: initialCameraPosition }}
           onCreated={({ camera }) => {
+            mainCameraRef.current = camera
             handleCameraCreated(camera)
           }}
         >
-          <CameraAnimator {...cameraAnimatorProps} />
+          <CameraAnimatorWithContext />
           <RotationTracker />
           {isInteractionEnabled && (
             <OrbitControls
