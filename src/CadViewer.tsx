@@ -15,10 +15,7 @@ import {
   useCameraController,
 } from "./contexts/CameraControllerContext"
 import { ContextMenu } from "./components/ContextMenu"
-import type {
-  CameraController,
-  CameraPreset,
-} from "./hooks/cameraAnimation"
+import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
 
 const CadViewerInner = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
@@ -224,9 +221,10 @@ const CadViewerInner = (props: any) => {
 export const CadViewer = (props: any) => {
   // Default camera target and position - these will be overridden by CadViewerContainer
   const defaultTarget = useMemo(() => new THREE.Vector3(0, 0, 0), [])
-  const initialCameraPosition = useMemo<
-    readonly [number, number, number]
-  >(() => [5, -5, 5] as const, [])
+  const initialCameraPosition = useMemo<readonly [number, number, number]>(
+    () => [5, -5, 5] as const,
+    [],
+  )
 
   return (
     <CameraControllerProvider
