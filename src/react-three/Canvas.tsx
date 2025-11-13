@@ -47,6 +47,13 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
     const onCreatedRef = useRef<typeof onCreated>(undefined)
     onCreatedRef.current = onCreated
 
+    // Store camera state to preserve position when switching camera types
+    const savedCameraStateRef = useRef<{
+      position: THREE.Vector3
+      quaternion: THREE.Quaternion
+      up: THREE.Vector3
+    } | null>(null)
+
     const addFrameListener = useCallback(
       (listener: (time: number, delta: number) => void) => {
         frameListeners.current.push(listener)
@@ -99,17 +106,24 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
               1000,
             )
 
-      if (cameraProps?.up) {
-        camera.up.set(cameraProps.up[0], cameraProps.up[1], cameraProps.up[2])
+      // Restore saved camera state if switching camera types, otherwise use props
+      if (savedCameraStateRef.current) {
+        camera.position.copy(savedCameraStateRef.current.position)
+        camera.quaternion.copy(savedCameraStateRef.current.quaternion)
+        camera.up.copy(savedCameraStateRef.current.up)
+      } else {
+        if (cameraProps?.up) {
+          camera.up.set(cameraProps.up[0], cameraProps.up[1], cameraProps.up[2])
+        }
+        if (cameraProps?.position) {
+          camera.position.set(
+            cameraProps.position[0],
+            cameraProps.position[1],
+            cameraProps.position[2],
+          )
+        }
+        camera.lookAt(0, 0, 0)
       }
-      if (cameraProps?.position) {
-        camera.position.set(
-          cameraProps.position[0],
-          cameraProps.position[1],
-          cameraProps.position[2],
-        )
-      }
-      camera.lookAt(0, 0, 0)
 
       scene.add(rootObject.current)
       window.__TSCIRCUIT_THREE_OBJECT = rootObject.current
@@ -157,6 +171,13 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
       window.addEventListener("resize", handleResize)
 
       return () => {
+        // Save camera state before cleanup so it can be restored when switching camera types
+        savedCameraStateRef.current = {
+          position: camera.position.clone(),
+          quaternion: camera.quaternion.clone(),
+          up: camera.up.clone(),
+        }
+
         window.removeEventListener("resize", handleResize)
         cancelAnimationFrame(animationFrameId)
         if (mountRef.current && renderer.domElement) {
