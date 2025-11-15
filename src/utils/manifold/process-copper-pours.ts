@@ -1,4 +1,4 @@
-import type { ManifoldToplevel, CrossSection } from "manifold-3d/manifold.d.ts"
+import type { ManifoldToplevel, CrossSection } from "manifold-3d"
 import type { AnyCircuitElement, PcbBoard, PcbCopperPour } from "circuit-json"
 import * as THREE from "three"
 import { manifoldMeshToThreeGeometry } from "../manifold-mesh-to-three-geometry"

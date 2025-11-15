@@ -1,4 +1,4 @@
-import type { ManifoldToplevel } from "manifold-3d/manifold.d.ts"
+import type { ManifoldToplevel } from "manifold-3d"
 import type { AnyCircuitElement, PcbPlatedHole } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import * as THREE from "three"
