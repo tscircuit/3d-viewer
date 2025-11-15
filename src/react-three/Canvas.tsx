@@ -12,6 +12,7 @@ import { ThreeContext, ThreeContextState } from "./ThreeContext"
 import { HoverProvider } from "./HoverContext"
 import { removeExistingCanvases } from "./remove-existing-canvases"
 import { configureRenderer } from "./configure-renderer"
+import { useCameraController } from "../contexts/CameraControllerContext"
 
 declare global {
   interface Window {
@@ -35,6 +36,7 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
     { children, scene: sceneProps, camera: cameraProps, style, onCreated },
     ref,
   ) => {
+    const { cameraType } = useCameraController()
     const mountRef = useRef<HTMLDivElement>(null)
     const [contextState, setContextState] = useState<ThreeContextState | null>(
       null,
@@ -44,6 +46,13 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
     )
     const onCreatedRef = useRef<typeof onCreated>(undefined)
     onCreatedRef.current = onCreated
+
+    // Store camera state to preserve position when switching camera types
+    const savedCameraStateRef = useRef<{
+      position: THREE.Vector3
+      quaternion: THREE.Quaternion
+      up: THREE.Vector3
+    } | null>(null)
 
     const addFrameListener = useCallback(
       (listener: (time: number, delta: number) => void) => {
@@ -83,23 +92,38 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
       renderer.setPixelRatio(window.devicePixelRatio)
       mountRef.current.appendChild(renderer.domElement)
 
-      const camera = new THREE.PerspectiveCamera(
-        75,
-        mountRef.current.clientWidth / mountRef.current.clientHeight,
-        0.1,
-        1000,
-      )
-      if (cameraProps?.up) {
-        camera.up.set(cameraProps.up[0], cameraProps.up[1], cameraProps.up[2])
+      const aspect =
+        mountRef.current.clientWidth / mountRef.current.clientHeight
+      const camera =
+        cameraType === "perspective"
+          ? new THREE.PerspectiveCamera(75, aspect, 0.1, 1000)
+          : new THREE.OrthographicCamera(
+              -10 * aspect,
+              10 * aspect,
+              10,
+              -10,
+              -1000,
+              1000,
+            )
+
+      // Restore saved camera state if switching camera types, otherwise use props
+      if (savedCameraStateRef.current) {
+        camera.position.copy(savedCameraStateRef.current.position)
+        camera.quaternion.copy(savedCameraStateRef.current.quaternion)
+        camera.up.copy(savedCameraStateRef.current.up)
+      } else {
+        if (cameraProps?.up) {
+          camera.up.set(cameraProps.up[0], cameraProps.up[1], cameraProps.up[2])
+        }
+        if (cameraProps?.position) {
+          camera.position.set(
+            cameraProps.position[0],
+            cameraProps.position[1],
+            cameraProps.position[2],
+          )
+        }
+        camera.lookAt(0, 0, 0)
       }
-      if (cameraProps?.position) {
-        camera.position.set(
-          cameraProps.position[0],
-          cameraProps.position[1],
-          cameraProps.position[2],
-        )
-      }
-      camera.lookAt(0, 0, 0)
 
       scene.add(rootObject.current)
       window.__TSCIRCUIT_THREE_OBJECT = rootObject.current
@@ -127,8 +151,16 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
 
       const handleResize = () => {
         if (mountRef.current) {
-          camera.aspect =
+          const newAspect =
             mountRef.current.clientWidth / mountRef.current.clientHeight
+          if (camera instanceof THREE.PerspectiveCamera) {
+            camera.aspect = newAspect
+          } else if (camera instanceof THREE.OrthographicCamera) {
+            camera.left = -10 * newAspect
+            camera.right = 10 * newAspect
+            camera.top = 10
+            camera.bottom = -10
+          }
           camera.updateProjectionMatrix()
           renderer.setSize(
             mountRef.current.clientWidth,
@@ -139,6 +171,13 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
       window.addEventListener("resize", handleResize)
 
       return () => {
+        // Save camera state before cleanup so it can be restored when switching camera types
+        savedCameraStateRef.current = {
+          position: camera.position.clone(),
+          quaternion: camera.quaternion.clone(),
+          up: camera.up.clone(),
+        }
+
         window.removeEventListener("resize", handleResize)
         cancelAnimationFrame(animationFrameId)
         if (mountRef.current && renderer.domElement) {
@@ -150,7 +189,7 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
           window.__TSCIRCUIT_THREE_OBJECT = undefined
         }
       }
-    }, [scene, addFrameListener, removeFrameListener])
+    }, [scene, addFrameListener, removeFrameListener, cameraType])
 
     return (
       <div ref={mountRef} style={{ width: "100%", height: "100%", ...style }}>
