@@ -15,6 +15,7 @@ import type {
   Point,
   PcbCutout,
   PcbCopperPour,
+  PcbPanel,
 } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import { translate, rotateZ } from "@jscad/modeling/src/operations/transforms"
@@ -187,8 +188,32 @@ export class BoardGeomBuilder {
     this.circuitJson = circuitJson
     this.onCompleteCallback = onComplete
 
-    // Extract elements
-    this.board = su(circuitJson).pcb_board.list()[0]!
+    // Extract elements - check for panel first, then board
+    const panels = circuitJson.filter(
+      (e) => e.type === "pcb_panel",
+    ) as PcbPanel[]
+    const boards = su(circuitJson).pcb_board.list()
+
+    // If we have a panel, use it as the board outline
+    if (panels.length > 0) {
+      const panel = panels[0]!
+      // Create a board-like object from the panel
+      this.board = {
+        type: "pcb_board",
+        pcb_board_id: panel.pcb_panel_id,
+        center: panel.center,
+        width: panel.width,
+        height: panel.height,
+        thickness: 1.6, // Default thickness
+        material: "fr4",
+        num_layers: 2,
+      } as PcbBoard
+    } else {
+      // Skip boards that are inside a panel - only render the panel outline
+      const boardsNotInPanel = boards.filter((b) => !b.pcb_panel_id)
+      this.board = boardsNotInPanel[0]!
+    }
+
     this.plated_holes = su(circuitJson).pcb_plated_hole.list()
     this.holes = su(circuitJson).pcb_hole.list()
     this.pads = su(circuitJson).pcb_smtpad.list()

@@ -1,0 +1,399 @@
+import { AnyCircuitElement } from "circuit-json"
+import { CadViewer } from "src/CadViewer"
+
+export const PanelWithTwoBoards = () => {
+  const circuitJson: AnyCircuitElement[] = [
+    // Panel outline
+    {
+      type: "pcb_panel",
+      pcb_panel_id: "panel1",
+      width: 100,
+      height: 60,
+      center: { x: 0, y: 0 },
+      covered_with_solder_mask: true,
+    },
+    // First board inside panel
+    {
+      type: "pcb_board",
+      pcb_board_id: "board1",
+      pcb_panel_id: "panel1",
+      width: 40,
+      height: 25,
+      center: { x: -25, y: 0 },
+      thickness: 1.6,
+      num_layers: 2,
+      material: "fr4",
+    },
+    // Add a simple pad on first board to create solder mask
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pad1",
+      pcb_component_id: "comp1",
+      pcb_port_id: "port1",
+      shape: "rect",
+      x: -25,
+      y: 5,
+      width: 1,
+      height: 1,
+      layer: "top",
+    },
+    // Silkscreen outline for first board (top) - inset 0.5mm from edge
+    {
+      type: "pcb_silkscreen_path",
+      pcb_silkscreen_path_id: "outline1_top",
+      pcb_component_id: "comp1",
+      layer: "top",
+      route: [
+        { x: -44.5, y: -12 },
+        { x: -5.5, y: -12 },
+        { x: -5.5, y: 12 },
+        { x: -44.5, y: 12 },
+        { x: -44.5, y: -12 },
+      ],
+      stroke_width: 0.15,
+    },
+    // Silkscreen text on first board
+    {
+      type: "pcb_silkscreen_text",
+      pcb_silkscreen_text_id: "text1",
+      pcb_component_id: "comp1",
+      text: "BOARD 1",
+      layer: "top",
+      anchor_position: { x: -25, y: 0 },
+      anchor_alignment: "center",
+      font_size: 2,
+      font: "tscircuit2024",
+    },
+    // Second board inside panel
+    {
+      type: "pcb_board",
+      pcb_board_id: "board2",
+      pcb_panel_id: "panel1",
+      width: 40,
+      height: 25,
+      center: { x: 25, y: 0 },
+      thickness: 1.6,
+      num_layers: 2,
+      material: "fr4",
+    },
+    // Add a simple pad on second board to create solder mask
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pad2",
+      pcb_component_id: "comp2",
+      pcb_port_id: "port2",
+      shape: "rect",
+      x: 25,
+      y: 5,
+      width: 1,
+      height: 1,
+      layer: "top",
+    },
+    // Silkscreen outline for second board (top) - inset 0.5mm from edge
+    {
+      type: "pcb_silkscreen_path",
+      pcb_silkscreen_path_id: "outline2_top",
+      pcb_component_id: "comp2",
+      layer: "top",
+      route: [
+        { x: 5.5, y: -12 },
+        { x: 44.5, y: -12 },
+        { x: 44.5, y: 12 },
+        { x: 5.5, y: 12 },
+        { x: 5.5, y: -12 },
+      ],
+      stroke_width: 0.15,
+    },
+    // Silkscreen text on second board
+    {
+      type: "pcb_silkscreen_text",
+      pcb_silkscreen_text_id: "text2",
+      pcb_component_id: "comp2",
+      text: "BOARD 2",
+      layer: "top",
+      anchor_position: { x: 25, y: 0 },
+      anchor_alignment: "center",
+      font_size: 2,
+      font: "tscircuit2024",
+    },
+    // Add a simple pad on first board bottom to create solder mask
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pad3",
+      pcb_component_id: "comp3",
+      pcb_port_id: "port3",
+      shape: "rect",
+      x: -25,
+      y: -5,
+      width: 1,
+      height: 1,
+      layer: "bottom",
+    },
+    // Silkscreen outline for first board (bottom) - inset 0.5mm from edge
+    {
+      type: "pcb_silkscreen_path",
+      pcb_silkscreen_path_id: "outline1_bottom",
+      pcb_component_id: "comp3",
+      layer: "bottom",
+      route: [
+        { x: -44.5, y: -12 },
+        { x: -5.5, y: -12 },
+        { x: -5.5, y: 12 },
+        { x: -44.5, y: 12 },
+        { x: -44.5, y: -12 },
+      ],
+      stroke_width: 0.15,
+    },
+    // Add some silkscreen text on bottom layer for board 1
+    {
+      type: "pcb_silkscreen_text",
+      pcb_silkscreen_text_id: "text3",
+      pcb_component_id: "comp3",
+      text: "B1-BOTTOM",
+      layer: "bottom",
+      anchor_position: { x: -25, y: -8 },
+      anchor_alignment: "center",
+      font_size: 1.5,
+      font: "tscircuit2024",
+    },
+    // Add a simple pad on second board bottom to create solder mask
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pad4",
+      pcb_component_id: "comp4",
+      pcb_port_id: "port4",
+      shape: "rect",
+      x: 25,
+      y: -5,
+      width: 1,
+      height: 1,
+      layer: "bottom",
+    },
+    // Silkscreen outline for second board (bottom) - inset 0.5mm from edge
+    {
+      type: "pcb_silkscreen_path",
+      pcb_silkscreen_path_id: "outline2_bottom",
+      pcb_component_id: "comp4",
+      layer: "bottom",
+      route: [
+        { x: 5.5, y: -12 },
+        { x: 44.5, y: -12 },
+        { x: 44.5, y: 12 },
+        { x: 5.5, y: 12 },
+        { x: 5.5, y: -12 },
+      ],
+      stroke_width: 0.15,
+    },
+    // Add some silkscreen text on bottom layer for board 2
+    {
+      type: "pcb_silkscreen_text",
+      pcb_silkscreen_text_id: "text4",
+      pcb_component_id: "comp4",
+      text: "B2-BOTTOM",
+      layer: "bottom",
+      anchor_position: { x: 25, y: -8 },
+      anchor_alignment: "center",
+      font_size: 1.5,
+      font: "tscircuit2024",
+    },
+    // Cutouts around first board (with tabs to keep it connected)
+    // Board 1: x=-45 to -5, y=-12.5 to 12.5
+    // Left side cutout segments (at x=-45)
+    {
+      type: "pcb_cutout",
+      pcb_cutout_id: "cutout1_left_top",
+      shape: "rect",
+      center: { x: -45, y: 6.25 },
+      width: 0.5,
+      height: 7.5,
+    },
+    {
+      type: "pcb_cutout",
+      pcb_cutout_id: "cutout1_left_bottom",
+      shape: "rect",
+      center: { x: -45, y: -6.25 },
+      width: 0.5,
+      height: 7.5,
+    },
+    // Right side cutout segments (at x=-5)
+    {
+      type: "pcb_cutout",
+      pcb_cutout_id: "cutout1_right_top",
+      shape: "rect",
+      center: { x: -5, y: 6.25 },
+      width: 0.5,
+      height: 7.5,
+    },
+    {
+      type: "pcb_cutout",
+      pcb_cutout_id: "cutout1_right_bottom",
+      shape: "rect",
+      center: { x: -5, y: -6.25 },
+      width: 0.5,
+      height: 7.5,
+    },
+    // Top side cutout segments (at y=12.5)
+    {
+      type: "pcb_cutout",
+      pcb_cutout_id: "cutout1_top_left",
+      shape: "rect",
+      center: { x: -35, y: 12.5 },
+      width: 10,
+      height: 0.5,
+    },
+    {
+      type: "pcb_cutout",
+      pcb_cutout_id: "cutout1_top_right",
+      shape: "rect",
+      center: { x: -15, y: 12.5 },
+      width: 10,
+      height: 0.5,
+    },
+    // Bottom side cutout segments (at y=-12.5)
+    {
+      type: "pcb_cutout",
+      pcb_cutout_id: "cutout1_bottom_left",
+      shape: "rect",
+      center: { x: -35, y: -12.5 },
+      width: 10,
+      height: 0.5,
+    },
+    {
+      type: "pcb_cutout",
+      pcb_cutout_id: "cutout1_bottom_right",
+      shape: "rect",
+      center: { x: -15, y: -12.5 },
+      width: 10,
+      height: 0.5,
+    },
+    // Cutouts around second board (with tabs to keep it connected)
+    // Board 2: x=5 to 45, y=-12.5 to 12.5
+    // Left side cutout segments (at x=5)
+    {
+      type: "pcb_cutout",
+      pcb_cutout_id: "cutout2_left_top",
+      shape: "rect",
+      center: { x: 5, y: 6.25 },
+      width: 0.5,
+      height: 7.5,
+    },
+    {
+      type: "pcb_cutout",
+      pcb_cutout_id: "cutout2_left_bottom",
+      shape: "rect",
+      center: { x: 5, y: -6.25 },
+      width: 0.5,
+      height: 7.5,
+    },
+    // Right side cutout segments (at x=45)
+    {
+      type: "pcb_cutout",
+      pcb_cutout_id: "cutout2_right_top",
+      shape: "rect",
+      center: { x: 45, y: 6.25 },
+      width: 0.5,
+      height: 7.5,
+    },
+    {
+      type: "pcb_cutout",
+      pcb_cutout_id: "cutout2_right_bottom",
+      shape: "rect",
+      center: { x: 45, y: -6.25 },
+      width: 0.5,
+      height: 7.5,
+    },
+    // Top side cutout segments (at y=12.5)
+    {
+      type: "pcb_cutout",
+      pcb_cutout_id: "cutout2_top_left",
+      shape: "rect",
+      center: { x: 15, y: 12.5 },
+      width: 10,
+      height: 0.5,
+    },
+    {
+      type: "pcb_cutout",
+      pcb_cutout_id: "cutout2_top_right",
+      shape: "rect",
+      center: { x: 35, y: 12.5 },
+      width: 10,
+      height: 0.5,
+    },
+    // Bottom side cutout segments (at y=-12.5)
+    {
+      type: "pcb_cutout",
+      pcb_cutout_id: "cutout2_bottom_left",
+      shape: "rect",
+      center: { x: 15, y: -12.5 },
+      width: 10,
+      height: 0.5,
+    },
+    {
+      type: "pcb_cutout",
+      pcb_cutout_id: "cutout2_bottom_right",
+      shape: "rect",
+      center: { x: 35, y: -12.5 },
+      width: 10,
+      height: 0.5,
+    },
+  ]
+
+  return <CadViewer circuitJson={circuitJson} />
+}
+
+export const SimplePanelWithOneBoard = () => {
+  const circuitJson: any[] = [
+    // Panel outline
+    {
+      type: "pcb_panel",
+      pcb_panel_id: "panel1",
+      width: 60,
+      height: 40,
+      center: { x: 0, y: 0 },
+    },
+    // Board inside panel
+    {
+      type: "pcb_board",
+      pcb_board_id: "board1",
+      pcb_panel_id: "panel1",
+      width: 30,
+      height: 20,
+      center: { x: 0, y: 0 },
+      thickness: 1.6,
+      num_layers: 2,
+      material: "fr4",
+    },
+    // Add a simple pad
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pad1",
+      pcb_component_id: "comp1",
+      pcb_port_id: "port1",
+      shape: "rect",
+      x: 0,
+      y: 0,
+      width: 2,
+      height: 2,
+      layer: "top",
+    },
+    // Silkscreen text
+    {
+      type: "pcb_silkscreen_text",
+      pcb_silkscreen_text_id: "text1",
+      pcb_component_id: "comp1",
+      text: "PANEL TEST",
+      layer: "top",
+      anchor_position: { x: 0, y: 5 },
+      anchor_alignment: "center",
+      font_size: 2,
+      font: "tscircuit2024",
+    },
+  ]
+
+  return <CadViewer circuitJson={circuitJson} />
+}
+
+export default {
+  title: "PcbPanel",
+  component: PanelWithTwoBoards,
+}
