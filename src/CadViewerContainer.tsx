@@ -12,6 +12,7 @@ import { useCameraController } from "./contexts/CameraControllerContext"
 import { useCameraSession } from "./hooks/useCameraSession"
 import type { CameraController } from "./hooks/cameraAnimation"
 import { OrientationCubeCanvas } from "./three-components/OrientationCubeCanvas"
+import { zIndexMap } from "../lib/utils/z-index-map"
 export type {
   CameraController,
   CameraPreset,
@@ -155,7 +156,7 @@ export const CadViewerContainer = forwardRef<
               position: "absolute",
               inset: 0,
               cursor: "pointer",
-              zIndex: 10,
+              zIndex: zIndexMap.clickToInteractOverlay,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",

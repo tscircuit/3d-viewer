@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react"
 import * as THREE from "three"
 import { Text as TroikaText } from "troika-three-text"
 import { useCameraController } from "../contexts/CameraControllerContext"
+import { zIndexMap } from "../../lib/utils/z-index-map"
 
 function computePointInFront(
   rotationVector: THREE.Euler,
@@ -200,7 +201,7 @@ export const OrientationCubeCanvas = () => {
         left: 0,
         width: 120,
         height: 120,
-        zIndex: 1000,
+        zIndex: zIndexMap.orientationCube,
       }}
     />
   )
