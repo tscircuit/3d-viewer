@@ -239,7 +239,55 @@ export const AppearanceMenu = () => {
                 {visibility.smtModels && <CheckIcon />}
               </span>
               <span style={{ display: "flex", alignItems: "center" }}>
-                CAD Models
+                SMD Components
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "throughHoleModels"
+                    ? "#404040"
+                    : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                toggleLayer("throughHoleModels")
+              }}
+              onMouseEnter={() => setHoveredItem("throughHoleModels")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("throughHoleModels")}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.throughHoleModels && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Through-hole Components
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "virtualModels" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                toggleLayer("virtualModels")
+              }}
+              onMouseEnter={() => setHoveredItem("virtualModels")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("virtualModels")}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.virtualModels && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Virtual Components
               </span>
             </DropdownMenu.Item>
           </DropdownMenu.SubContent>

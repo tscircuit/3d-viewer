@@ -1,5 +1,4 @@
-import { su } from "@tscircuit/circuit-json-util"
-import type { AnyCircuitElement, CadComponent } from "circuit-json"
+import type { AnyCircuitElement } from "circuit-json"
 import { ManifoldToplevel } from "manifold-3d"
 import type React from "react"
 import { useEffect, useMemo, useState } from "react"
@@ -16,6 +15,10 @@ import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
 import { createTextureMeshes } from "./utils/manifold/create-three-texture-meshes"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
+import {
+  classifyCadComponents,
+  isComponentTypeVisible,
+} from "./utils/component-type"
 
 declare global {
   interface Window {
@@ -140,6 +143,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
     const rawCircuitJson = circuitJsonProp ?? childrenCircuitJson
     return addFauxBoardIfNeeded(rawCircuitJson)
   }, [circuitJsonProp, childrenCircuitJson])
+  const { visibility } = useLayerVisibility()
 
   const [manifoldJSModule, setManifoldJSModule] = useState<any | null>(null)
   const [manifoldLoadingError, setManifoldLoadingError] = useState<
@@ -239,8 +243,16 @@ try {
   )
 
   const cadComponents = useMemo(
-    () => su(circuitJson).cad_component.list(),
+    () => classifyCadComponents(circuitJson),
     [circuitJson],
+  )
+
+  const visibleCadComponents = useMemo(
+    () =>
+      cadComponents.filter((cadComponent) =>
+        isComponentTypeVisible(cadComponent, visibility),
+      ),
+    [cadComponents, visibility],
   )
 
   const boardDimensions = useMemo(() => {
@@ -318,7 +330,7 @@ try {
         geometryMeshes={geometryMeshes}
         textureMeshes={textureMeshes}
       />
-      {cadComponents.map((cad_component: CadComponent) => (
+      {visibleCadComponents.map((cad_component) => (
         <ThreeErrorBoundary
           key={cad_component.cad_component_id}
           fallback={({ error }) => (

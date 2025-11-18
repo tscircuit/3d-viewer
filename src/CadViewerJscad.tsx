@@ -20,6 +20,11 @@ import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 import { tuple } from "./utils/tuple"
+import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
+import {
+  classifyCadComponents,
+  isComponentTypeVisible,
+} from "./utils/component-type"
 
 interface Props {
   /**
@@ -57,6 +62,7 @@ export const CadViewerJscad = forwardRef<
 
     // Use the new hook to manage board geometry building
     const boardGeom = useBoardGeomBuilder(internalCircuitJson)
+    const { visibility } = useLayerVisibility()
 
     const initialCameraPosition = useMemo(() => {
       if (!internalCircuitJson) return [5, -5, 5] as const
@@ -122,7 +128,18 @@ export const CadViewerJscad = forwardRef<
     // Use the state `boardGeom` which starts simplified and gets updated
     const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
 
-    const cad_components = su(internalCircuitJson).cad_component.list()
+    const cad_components = useMemo(
+      () => classifyCadComponents(internalCircuitJson),
+      [internalCircuitJson],
+    )
+
+    const visibleCadComponents = useMemo(
+      () =>
+        cad_components.filter((component) =>
+          isComponentTypeVisible(component, visibility),
+        ),
+      [cad_components, visibility],
+    )
 
     return (
       <CadViewerContainer
@@ -144,7 +161,7 @@ export const CadViewerJscad = forwardRef<
             layerType={layerType}
           />
         ))}
-        {cad_components.map((cad_component) => (
+        {visibleCadComponents.map((cad_component) => (
           <ThreeErrorBoundary
             key={cad_component.cad_component_id}
             fallback={({ error }) => (

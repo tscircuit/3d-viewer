@@ -10,7 +10,6 @@ import { JscadModel } from "./three-components/JscadModel"
 import { FootprinterModel } from "./three-components/FootprinterModel"
 import { tuple } from "./utils/tuple"
 import { Html } from "./react-three/Html"
-import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
 
 export const AnyCadComponent = ({
   cad_component,
@@ -20,7 +19,6 @@ export const AnyCadComponent = ({
   circuitJson: AnyCircuitElement[]
 }) => {
   const [isHovered, setIsHovered] = useState(false)
-  const { visibility } = useLayerVisibility()
   const [hoverPosition, setHoverPosition] = useState<
     [number, number, number] | null
   >(null)
@@ -137,11 +135,6 @@ export const AnyCadComponent = ({
         isHovered={isHovered}
       />
     )
-  }
-
-  // Check if models should be visible
-  if (!visibility.smtModels) {
-    return null
   }
 
   // Render the model and the tooltip if hovered
