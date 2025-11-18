@@ -6,6 +6,7 @@ import type { CameraPreset } from "../hooks/cameraAnimation"
 import { useCameraController } from "../contexts/CameraControllerContext"
 import packageJson from "../../package.json"
 import { CheckIcon, ChevronRightIcon, DotIcon } from "./Icons"
+import { zIndexMap } from "../../lib/utils/z-index-map"
 
 interface ContextMenuProps {
   menuRef: React.RefObject<HTMLDivElement | null>
@@ -39,7 +40,7 @@ const contentStyles: React.CSSProperties = {
   border: "1px solid #333333",
   padding: "4px",
   minWidth: 160,
-  zIndex: 10000,
+  zIndex: zIndexMap.contextMenu,
   fontSize: 14,
   fontWeight: 400,
   fontFamily:

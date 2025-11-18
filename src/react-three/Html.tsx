@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from "react"
 import ReactDOM from "react-dom"
 import * as THREE from "three"
 import { useFrame, useThree } from "./ThreeContext"
+import { zIndexMap } from "../../lib/utils/z-index-map"
 
 interface HtmlProps {
   children: React.ReactNode
@@ -53,7 +54,7 @@ export const Html: React.FC<HtmlProps> = ({ children, position, style }) => {
     el.current.style.left = `${x}px`
     el.current.style.top = `${y}px`
     el.current.style.pointerEvents = "none"
-    el.current.style.zIndex = "1000"
+    el.current.style.zIndex = zIndexMap.htmlElements.toString()
 
     if (style) {
       Object.assign(el.current.style, style)
