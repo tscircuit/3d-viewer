@@ -10,6 +10,7 @@ import type {
   PcbSilkscreenPath,
   Point as CircuitPoint,
   PcbVia,
+  PcbPanel,
 } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import * as THREE from "three"
@@ -23,7 +24,7 @@ import {
   TRACE_TEXTURE_RESOLUTION,
 } from "../geoms/constants"
 import { manifoldMeshToThreeGeometry } from "../utils/manifold-mesh-to-three-geometry"
-import type { ManifoldToplevel } from "manifold-3d/manifold.d.ts"
+import type { ManifoldToplevel } from "manifold-3d"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
 import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
 import { processNonPlatedHolesForManifold } from "../utils/manifold/process-non-plated-holes"
@@ -93,8 +94,30 @@ export const useManifoldBoardBuilder = (
   const manifoldInstancesForCleanup = useRef<any[]>([])
 
   const boardData = useMemo(() => {
+    // Check for panel first
+    const panels = circuitJson.filter(
+      (e) => e.type === "pcb_panel",
+    ) as PcbPanel[]
     const boards = su(circuitJson).pcb_board.list()
-    return boards.length > 0 ? boards[0]! : null
+
+    if (panels.length > 0) {
+      // Use the panel as the board
+      const panel = panels[0]!
+      return {
+        type: "pcb_board",
+        pcb_board_id: panel.pcb_panel_id,
+        center: panel.center,
+        width: panel.width,
+        height: panel.height,
+        thickness: 1.6, // Default thickness
+        material: "fr4",
+        num_layers: 2,
+      } as PcbBoard
+    }
+
+    // Skip boards that are inside a panel - only render the panel outline
+    const boardsNotInPanel = boards.filter((b) => !b.pcb_panel_id)
+    return boardsNotInPanel.length > 0 ? boardsNotInPanel[0]! : null
   }, [circuitJson])
 
   const isFauxBoard = useMemo(() => {

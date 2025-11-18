@@ -3,6 +3,7 @@ import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import type React from "react"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { CheckIcon, ChevronRightIcon } from "./Icons"
+import { zIndexMap } from "../../lib/utils/z-index-map"
 
 const itemStyles: React.CSSProperties = {
   padding: "6px 8px",
@@ -43,7 +44,7 @@ const contentStyles: React.CSSProperties = {
   border: "1px solid #333333",
   padding: "4px",
   minWidth: 160,
-  zIndex: 10001,
+  zIndex: zIndexMap.appearanceMenu,
   fontSize: 14,
   fontFamily:
     'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
