@@ -11,7 +11,8 @@ const DEFAULT_COMPONENT_TYPE: ComponentType = "through_hole"
 
 const getComponentIdFromElement = (element: AnyCircuitElement) => {
   if (!element || typeof element !== "object") return undefined
-  const maybeComponentId = (element as any).pcb_component_id
+  const maybeComponentId =
+    "pcb_component_id" in element ? element.pcb_component_id : undefined
   if (typeof maybeComponentId !== "string") return undefined
   return maybeComponentId
 }
@@ -25,14 +26,11 @@ const collectComponentFootprintInfo = (circuitJson: AnyCircuitElement[]) => {
     const componentId = getComponentIdFromElement(element)
     if (!componentId) continue
 
-    if ((element as any).type === "pcb_smtpad") {
+    if (element.type === "pcb_smtpad") {
       smtComponentIds.add(componentId)
     }
 
-    if (
-      (element as any).type === "pcb_plated_hole" ||
-      (element as any).type === "pcb_hole"
-    ) {
+    if (element.type === "pcb_plated_hole" || element.type === "pcb_hole") {
       throughHoleComponentIds.add(componentId)
     }
   }
