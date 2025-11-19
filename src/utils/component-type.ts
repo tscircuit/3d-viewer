@@ -7,8 +7,6 @@ export type ClassifiedCadComponent = CadComponent & {
   componentType: ComponentType
 }
 
-const DEFAULT_COMPONENT_TYPE: ComponentType = "through_hole"
-
 const getComponentIdFromElement = (element: AnyCircuitElement) => {
   if (!element || typeof element !== "object") return undefined
   const maybeComponentId =
@@ -44,7 +42,7 @@ const inferComponentType = (
 ): ComponentType => {
   const pcbComponentId = component.pcb_component_id
   if (!pcbComponentId) {
-    return DEFAULT_COMPONENT_TYPE
+    return "virtual"
   }
 
   const hasSmt = footprintInfo.smtComponentIds.has(pcbComponentId)
@@ -59,7 +57,7 @@ const inferComponentType = (
     return "through_hole"
   }
 
-  return DEFAULT_COMPONENT_TYPE
+  return "virtual"
 }
 
 export const classifyCadComponents = (
