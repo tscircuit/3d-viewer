@@ -28,14 +28,15 @@ const arePointsClockwise = (points: Array<[number, number]>): boolean => {
   return signedArea <= 0
 }
 
-const createEllipsePoints = (width: number, height: number, segments: number) => {
+const createEllipsePoints = (
+  width: number,
+  height: number,
+  segments: number,
+) => {
   const points: Array<[number, number]> = []
   for (let i = 0; i < segments; i++) {
     const theta = (2 * Math.PI * i) / segments
-    points.push([
-      (width / 2) * Math.cos(theta),
-      (height / 2) * Math.sin(theta),
-    ])
+    points.push([(width / 2) * Math.cos(theta), (height / 2) * Math.sin(theta)])
   }
   return points
 }
@@ -102,14 +103,7 @@ export function processPlatedHolesForManifold(
     }
     const crossSection = CrossSection.ofPolygons([points])
     manifoldInstancesForCleanup.push(crossSection)
-    const padOp = Manifold.extrude(
-      crossSection,
-      thickness,
-      0,
-      0,
-      [1, 1],
-      true,
-    )
+    const padOp = Manifold.extrude(crossSection, thickness, 0, 0, [1, 1], true)
     manifoldInstancesForCleanup.push(padOp)
     return padOp
   }
@@ -123,7 +117,15 @@ export function processPlatedHolesForManifold(
     depth: number
     sizeDelta?: number
   }) => {
-    const holeShape = (ph as any).hole_shape || "circle"
+    const shape = ph.shape
+    if (shape !== "hole_with_polygon_pad") {
+      return null
+    }
+    const padOutline = (ph as any).pad_outline
+    if (!Array.isArray(padOutline) || padOutline.length < 3) {
+      return null
+    }
+    const holeShape = ph.hole_shape || "circle"
     const holeOffsetX = ph.hole_offset_x || 0
     const holeOffsetY = ph.hole_offset_y || 0
     let holeOp: any = null
@@ -153,14 +155,7 @@ export function processPlatedHolesForManifold(
         }
         const crossSection = CrossSection.ofPolygons([points])
         manifoldInstancesForCleanup.push(crossSection)
-        holeOp = Manifold.extrude(
-          crossSection,
-          depth,
-          0,
-          0,
-          [1, 1],
-          true,
-        )
+        holeOp = Manifold.extrude(crossSection, depth, 0, 0, [1, 1], true)
         manifoldInstancesForCleanup.push(holeOp)
       } else if (holeShape === "pill" || holeShape === "rotated_pill") {
         holeOp = createRoundedRectPrism({
@@ -171,12 +166,6 @@ export function processPlatedHolesForManifold(
           borderRadius: Math.min(width, height) / 2,
         })
         manifoldInstancesForCleanup.push(holeOp)
-
-        if (holeShape === "rotated_pill" && ph.ccw_rotation) {
-          const rotated = holeOp.rotate([0, 0, ph.ccw_rotation])
-          manifoldInstancesForCleanup.push(rotated)
-          holeOp = rotated
-        }
       }
     }
 
@@ -451,16 +440,19 @@ export function processPlatedHolesForManifold(
 
       const padThickness = DEFAULT_SMT_PAD_THICKNESS
       const fillThickness = Math.max(
-        pcbThickness -
-          2 * padThickness -
-          2 * BOARD_SURFACE_OFFSET.copper +
-          0.1,
+        pcbThickness - 2 * padThickness - 2 * BOARD_SURFACE_OFFSET.copper + 0.1,
         M,
       )
 
-      const mainFill = createPolygonPadOp({ padOutline, thickness: fillThickness })
+      const mainFill = createPolygonPadOp({
+        padOutline,
+        thickness: fillThickness,
+      })
       const topPad = createPolygonPadOp({ padOutline, thickness: padThickness })
-      const bottomPad = createPolygonPadOp({ padOutline, thickness: padThickness })
+      const bottomPad = createPolygonPadOp({
+        padOutline,
+        thickness: padThickness,
+      })
       if (!mainFill || !topPad || !bottomPad) return
 
       const topTranslated = topPad.translate([

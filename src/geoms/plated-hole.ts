@@ -485,15 +485,16 @@ export const platedHole = (
   } else if (plated_hole.shape === "hole_with_polygon_pad") {
     const padOutline = (plated_hole as any).pad_outline
     if (!Array.isArray(padOutline) || padOutline.length < 3) {
-      const fallback = { ...plated_hole, shape: "circle" } as PCBPlatedHole
-      return platedHole(fallback, ctx, options)
+      throw new Error(
+        `Invalid pad_outline for plated hole at (${plated_hole.x}, ${plated_hole.y})`,
+      )
     }
 
     const polygonPoints = padOutline.map((point: { x: number; y: number }) => [
       point.x,
       point.y,
     ])
-    const polygon2d = jscadPolygon({ points: polygonPoints })
+    const polygon2d = jscadPolygon({ points: polygonPoints as any })
     const centerZ = (topSurfaceZ + bottomSurfaceZ) / 2
 
     const createPolygonPad = (thickness: number, zCenter: number) => {
@@ -513,7 +514,10 @@ export const platedHole = (
     const bottomPad = createPolygonPad(platedHoleLipHeight, bottomSurfaceZ)
 
     const copperSolid = maybeClip(union(mainFill, topPad, bottomPad), clipGeom)
-    const barrel = createHoleWithPolygonPadHoleGeom(plated_hole as any, copperSpan)
+    const barrel = createHoleWithPolygonPadHoleGeom(
+      plated_hole as any,
+      copperSpan,
+    )
     if (!barrel) return colorize(colors.copper, copperSolid)
 
     const drill =

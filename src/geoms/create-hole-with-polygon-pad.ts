@@ -34,7 +34,11 @@ const createPillPrism = (width: number, height: number, depth: number) => {
   const clampedHeight = Math.max(height, M)
 
   if (Math.abs(clampedWidth - clampedHeight) < 1e-6) {
-    return cylinder({ center: [0, 0, 0], radius: clampedWidth / 2, height: depth })
+    return cylinder({
+      center: [0, 0, 0],
+      radius: clampedWidth / 2,
+      height: depth,
+    })
   }
 
   const isHorizontal = clampedWidth >= clampedHeight
@@ -77,7 +81,11 @@ export const createHoleWithPolygonPadHoleGeom = (
   const sizeDelta = options.sizeDelta ?? 0
   const offsetX = hole.hole_offset_x || 0
   const offsetY = hole.hole_offset_y || 0
-  const center: [number, number, number] = [hole.x + offsetX, hole.y + offsetY, 0]
+  const center: [number, number, number] = [
+    hole.x + offsetX,
+    hole.y + offsetY,
+    0,
+  ]
 
   if (holeShape === "circle") {
     const diameter = Math.max((hole.hole_diameter ?? 0) + sizeDelta, M)

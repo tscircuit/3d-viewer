@@ -648,9 +648,13 @@ export class BoardGeomBuilder {
       const boardHole = createHoleWithPolygonPadHoleGeom(ph as any, holeDepth, {
         sizeDelta: 2 * M,
       })
-      const copperHole = createHoleWithPolygonPadHoleGeom(ph as any, holeDepth, {
-        sizeDelta: -2 * M,
-      })
+      const copperHole = createHoleWithPolygonPadHoleGeom(
+        ph as any,
+        holeDepth,
+        {
+          sizeDelta: -2 * M,
+        },
+      )
 
       if (!boardHole || !copperHole) return
 
