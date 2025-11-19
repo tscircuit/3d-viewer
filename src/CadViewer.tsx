@@ -40,7 +40,7 @@ const CadViewerInner = (props: any) => {
   const [isShortcutsDialogOpen, setIsShortcutsDialogOpen] = useState(false)
   const [visibilityToast, setVisibilityToast] = useState<string | null>(null)
   const visibilityToastTimeoutRef = useRef<number | null>(null)
-  const [toastBottom, setToastBottom] = useState(32)
+  const toastBottom = 32 //px
 
   const cameraControllerRef = useRef<CameraController | null>(null)
   const externalCameraControllerReady = props.onCameraControllerReady as
