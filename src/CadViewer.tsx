@@ -115,23 +115,31 @@ const CadViewerInner = (props: any) => {
     }
   }, [])
 
-  const toggleSmdVisibility = useCallback(() => {
-    const nextVisible = !visibility.smtModels
-    toggleLayer("smtModels")
-    showVisibilityFeedback("smd", nextVisible)
-  }, [toggleLayer, visibility.smtModels, showVisibilityFeedback])
+  const createToggleVisibility = useCallback(
+    (layerKey: keyof typeof visibility, componentType: ComponentType) => {
+      return () => {
+        const nextVisible = !visibility[layerKey]
+        toggleLayer(layerKey)
+        showVisibilityFeedback(componentType, nextVisible)
+      }
+    },
+    [toggleLayer, visibility, showVisibilityFeedback],
+  )
 
-  const toggleThroughHoleVisibility = useCallback(() => {
-    const nextVisible = !visibility.throughHoleModels
-    toggleLayer("throughHoleModels")
-    showVisibilityFeedback("through_hole", nextVisible)
-  }, [toggleLayer, visibility.throughHoleModels, showVisibilityFeedback])
+  const toggleSmdVisibility = useMemo(
+    () => createToggleVisibility("smtModels", "smd"),
+    [createToggleVisibility],
+  )
 
-  const toggleVirtualVisibility = useCallback(() => {
-    const nextVisible = !visibility.virtualModels
-    toggleLayer("virtualModels")
-    showVisibilityFeedback("virtual", nextVisible)
-  }, [toggleLayer, visibility.virtualModels, showVisibilityFeedback])
+  const toggleThroughHoleVisibility = useMemo(
+    () => createToggleVisibility("throughHoleModels", "through_hole"),
+    [createToggleVisibility],
+  )
+
+  const toggleVirtualVisibility = useMemo(
+    () => createToggleVisibility("virtualModels", "virtual"),
+    [createToggleVisibility],
+  )
 
   const openShortcutsDialog = useCallback(() => {
     setIsShortcutsDialogOpen(true)
