@@ -42,10 +42,6 @@ const inferComponentType = (
   component: CadComponent,
   footprintInfo: ReturnType<typeof collectComponentFootprintInfo>,
 ): ComponentType => {
-  if (component.componentType) {
-    return component.componentType
-  }
-
   const pcbComponentId = component.pcb_component_id
   if (!pcbComponentId) {
     return DEFAULT_COMPONENT_TYPE

@@ -141,10 +141,6 @@ const CadViewerInner = (props: any) => {
     [createToggleVisibility],
   )
 
-  const openShortcutsDialog = useCallback(() => {
-    setIsShortcutsDialogOpen(true)
-  }, [])
-
   useRegisteredHotkey("toggle_smd_components", toggleSmdVisibility, {
     key: "s",
     description: "Toggle SMD components",
@@ -167,11 +163,15 @@ const CadViewerInner = (props: any) => {
     category: "3D Viewer",
   })
 
-  useRegisteredHotkey("open_keyboard_shortcuts_dialog", openShortcutsDialog, {
-    key: "?",
-    description: "Show keyboard shortcuts",
-    category: "General",
-  })
+  useRegisteredHotkey(
+    "open_keyboard_shortcuts_dialog",
+    () => setIsShortcutsDialogOpen(true),
+    {
+      key: "?",
+      description: "Show keyboard shortcuts",
+      category: "General",
+    },
+  )
 
   const handleCameraControllerReady = useCallback(
     (controller: CameraController | null) => {
