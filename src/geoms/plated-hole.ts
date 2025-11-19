@@ -483,7 +483,7 @@ export const platedHole = (
 
     return colorize(colors.copper, finalCopper)
   } else if (plated_hole.shape === "hole_with_polygon_pad") {
-    const padOutline = (plated_hole as any).pad_outline
+    const padOutline = plated_hole.pad_outline
     if (!Array.isArray(padOutline) || padOutline.length < 3) {
       throw new Error(
         `Invalid pad_outline for plated hole at (${plated_hole.x}, ${plated_hole.y})`,
@@ -514,14 +514,11 @@ export const platedHole = (
     const bottomPad = createPolygonPad(platedHoleLipHeight, bottomSurfaceZ)
 
     const copperSolid = maybeClip(union(mainFill, topPad, bottomPad), clipGeom)
-    const barrel = createHoleWithPolygonPadHoleGeom(
-      plated_hole as any,
-      copperSpan,
-    )
+    const barrel = createHoleWithPolygonPadHoleGeom(plated_hole, copperSpan)
     if (!barrel) return colorize(colors.copper, copperSolid)
 
     const drill =
-      createHoleWithPolygonPadHoleGeom(plated_hole as any, throughDrillHeight, {
+      createHoleWithPolygonPadHoleGeom(plated_hole, throughDrillHeight, {
         sizeDelta: -2 * M,
       }) || barrel
 

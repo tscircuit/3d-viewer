@@ -121,7 +121,7 @@ export function processPlatedHolesForManifold(
     if (shape !== "hole_with_polygon_pad") {
       return null
     }
-    const padOutline = (ph as any).pad_outline
+    const padOutline = ph.pad_outline
     if (!Array.isArray(padOutline) || padOutline.length < 3) {
       return null
     }
@@ -423,7 +423,7 @@ export function processPlatedHolesForManifold(
         color: COPPER_COLOR,
       })
     } else if (ph.shape === "hole_with_polygon_pad") {
-      const padOutline = (ph as any).pad_outline
+      const padOutline = ph.pad_outline
       if (!Array.isArray(padOutline) || padOutline.length < 3) {
         return
       }
