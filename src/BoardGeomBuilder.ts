@@ -58,6 +58,7 @@ import {
   clampRectBorderRadius,
   extractRectBorderRadius,
 } from "./utils/rect-border-radius"
+import { createHoleWithPolygonPadHoleGeom } from "./geoms/create-hole-with-polygon-pad"
 
 const PAD_ROUNDED_SEGMENTS = 64
 const BOARD_CLIP_Z_MARGIN = 1
@@ -631,6 +632,38 @@ export class BoardGeomBuilder {
 
       this.padGeoms = this.padGeoms.map((pg) =>
         colorize(colors.copper, subtract(pg, pillHole)),
+      )
+
+      const platedHoleGeom = platedHole(ph, this.ctx, {
+        clipGeom: this.boardClipGeom,
+      })
+      this.platedHoleGeoms.push(platedHoleGeom)
+    } else if (ph.shape === "hole_with_polygon_pad") {
+      const padOutline = ph.pad_outline
+      if (!Array.isArray(padOutline) || padOutline.length < 3) {
+        return
+      }
+
+      const holeDepth = this.ctx.pcbThickness * 1.5
+      const boardHole = createHoleWithPolygonPadHoleGeom(ph, holeDepth, {
+        sizeDelta: 2 * M,
+      })
+      const copperHole = createHoleWithPolygonPadHoleGeom(ph, holeDepth, {
+        sizeDelta: -2 * M,
+      })
+
+      if (!boardHole || !copperHole) return
+
+      if (!opts.dontCutBoard) {
+        this.boardGeom = subtract(this.boardGeom, boardHole)
+      }
+
+      this.padGeoms = this.padGeoms.map((pg) =>
+        colorize(colors.copper, subtract(pg, boardHole)),
+      )
+
+      this.platedHoleGeoms = this.platedHoleGeoms.map((phg) =>
+        colorize(colors.copper, subtract(phg, copperHole)),
       )
 
       const platedHoleGeom = platedHole(ph, this.ctx, {
