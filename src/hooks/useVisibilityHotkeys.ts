@@ -7,7 +7,7 @@ import {
 } from "../utils/component-type"
 
 interface UseVisibilityHotkeysProps {
-  onVisibilityChange?: (message: string) => void
+  onVisibilityChange?: (message: string | null) => void
 }
 
 export const useVisibilityHotkeys = ({
@@ -25,7 +25,7 @@ export const useVisibilityHotkeys = ({
       const message = `${label} ${isVisible ? "visible" : "hidden"}`
       onVisibilityChange?.(message)
       visibilityToastTimeoutRef.current = window.setTimeout(() => {
-        onVisibilityChange?.(null as any)
+        onVisibilityChange?.(null)
       }, 2000)
     },
     [onVisibilityChange],
