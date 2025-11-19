@@ -6,10 +6,7 @@ import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
 import { useCameraPreset } from "./hooks/useCameraPreset"
 import { useGlobalDownloadGltf } from "./hooks/useGlobalDownloadGltf"
-import {
-  LayerVisibilityProvider,
-  useLayerVisibility,
-} from "./contexts/LayerVisibilityContext"
+import { LayerVisibilityProvider } from "./contexts/LayerVisibilityContext"
 import {
   CameraControllerProvider,
   useCameraController,
@@ -17,11 +14,8 @@ import {
 import { ContextMenu } from "./components/ContextMenu"
 import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
 import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
+import { useVisibilityHotkeys } from "./hooks/useVisibilityHotkeys"
 import { useRegisteredHotkey } from "./hooks/useRegisteredHotkey"
-import {
-  getComponentTypeLabel,
-  type ComponentType,
-} from "./utils/component-type"
 
 const CadViewerInner = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
@@ -36,10 +30,8 @@ const CadViewerInner = (props: any) => {
   })
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>("Custom")
   const { cameraType, setCameraType } = useCameraController()
-  const { visibility, toggleLayer } = useLayerVisibility()
   const [isShortcutsDialogOpen, setIsShortcutsDialogOpen] = useState(false)
   const [visibilityToast, setVisibilityToast] = useState<string | null>(null)
-  const visibilityToastTimeoutRef = useRef<number | null>(null)
   const toastBottomOffset = 32 //px
 
   const cameraControllerRef = useRef<CameraController | null>(null)
@@ -93,71 +85,9 @@ const CadViewerInner = (props: any) => {
     setMenuVisible(false)
   }, [setMenuVisible])
 
-  const showVisibilityFeedback = useCallback(
-    (componentType: ComponentType, isVisible: boolean) => {
-      if (visibilityToastTimeoutRef.current) {
-        window.clearTimeout(visibilityToastTimeoutRef.current)
-      }
-      const label = getComponentTypeLabel(componentType)
-      setVisibilityToast(`${label} ${isVisible ? "visible" : "hidden"}`)
-      visibilityToastTimeoutRef.current = window.setTimeout(() => {
-        setVisibilityToast(null)
-      }, 2000)
-    },
-    [],
-  )
-
-  useEffect(() => {
-    return () => {
-      if (visibilityToastTimeoutRef.current) {
-        window.clearTimeout(visibilityToastTimeoutRef.current)
-      }
-    }
-  }, [])
-
-  const createToggleVisibility = useCallback(
-    (layerKey: keyof typeof visibility, componentType: ComponentType) => {
-      return () => {
-        const nextVisible = !visibility[layerKey]
-        toggleLayer(layerKey)
-        showVisibilityFeedback(componentType, nextVisible)
-      }
-    },
-    [toggleLayer, visibility, showVisibilityFeedback],
-  )
-
-  const toggleSmdVisibility = useMemo(
-    () => createToggleVisibility("smtModels", "smd"),
-    [createToggleVisibility],
-  )
-
-  const toggleThroughHoleVisibility = useMemo(
-    () => createToggleVisibility("throughHoleModels", "through_hole"),
-    [createToggleVisibility],
-  )
-
-  const toggleVirtualVisibility = useMemo(
-    () => createToggleVisibility("virtualModels", "virtual"),
-    [createToggleVisibility],
-  )
-
-  useRegisteredHotkey("toggle_smd_components", toggleSmdVisibility, {
-    key: "s",
-    description: "Toggle SMD components",
-  })
-
-  useRegisteredHotkey(
-    "toggle_through_hole_components",
-    toggleThroughHoleVisibility,
-    {
-      key: "t",
-      description: "Toggle through-hole components",
-    },
-  )
-
-  useRegisteredHotkey("toggle_virtual_components", toggleVirtualVisibility, {
-    key: "v",
-    description: "Toggle virtual components",
+  // Register visibility hotkeys (s, t, v)
+  useVisibilityHotkeys({
+    onVisibilityChange: setVisibilityToast,
   })
 
   useRegisteredHotkey(
