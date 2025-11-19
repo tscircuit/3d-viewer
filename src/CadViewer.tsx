@@ -144,7 +144,6 @@ const CadViewerInner = (props: any) => {
   useRegisteredHotkey("toggle_smd_components", toggleSmdVisibility, {
     key: "s",
     description: "Toggle SMD components",
-    category: "3D Viewer",
   })
 
   useRegisteredHotkey(
@@ -153,14 +152,12 @@ const CadViewerInner = (props: any) => {
     {
       key: "t",
       description: "Toggle through-hole components",
-      category: "3D Viewer",
     },
   )
 
   useRegisteredHotkey("toggle_virtual_components", toggleVirtualVisibility, {
     key: "v",
     description: "Toggle virtual components",
-    category: "3D Viewer",
   })
 
   useRegisteredHotkey(
@@ -169,7 +166,6 @@ const CadViewerInner = (props: any) => {
     {
       key: "?",
       description: "Show keyboard shortcuts",
-      category: "General",
     },
   )
 

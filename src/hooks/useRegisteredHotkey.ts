@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 
-type HotkeyCategory = string
-
 export type HotkeyMetadata = {
   key: string
   description: string
-  category?: HotkeyCategory
 }
 
 type HotkeyRegistration = HotkeyMetadata & {
@@ -93,9 +90,8 @@ export const useRegisteredHotkey = (
     () => ({
       key: metadata.key,
       description: metadata.description,
-      category: metadata.category ?? "General",
     }),
-    [metadata.key, metadata.description, metadata.category],
+    [metadata.key, metadata.description],
   )
 
   useEffect(() => {

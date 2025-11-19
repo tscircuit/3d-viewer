@@ -42,7 +42,7 @@ export const KeyboardShortcutsDialog = ({
       return hotkeys
     }
     return hotkeys.filter((hotkey) => {
-      const haystack = `${hotkey.key} ${hotkey.description} ${hotkey.category}`
+      const haystack = `${hotkey.key} ${hotkey.description}`
       return haystack.toLowerCase().includes(normalizedQuery)
     })
   }, [hotkeys, query])
@@ -142,15 +142,14 @@ export const KeyboardShortcutsDialog = ({
             <thead>
               <tr style={{ textAlign: "left", color: "#a1a1b5" }}>
                 <th style={{ padding: "12px 24px", width: "25%" }}>Key</th>
-                <th style={{ padding: "12px 0" }}>Description</th>
-                <th style={{ padding: "12px 24px", width: "25%" }}>Category</th>
+                <th style={{ padding: "12px 24px" }}>Description</th>
               </tr>
             </thead>
             <tbody>
               {filteredHotkeys.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={3}
+                    colSpan={2}
                     style={{ padding: "24px", textAlign: "center" }}
                   >
                     No shortcuts found
@@ -179,8 +178,9 @@ export const KeyboardShortcutsDialog = ({
                         {hotkey.key.toUpperCase()}
                       </span>
                     </td>
-                    <td style={{ padding: "12px 0" }}>{hotkey.description}</td>
-                    <td style={{ padding: "12px 24px" }}>{hotkey.category}</td>
+                    <td style={{ padding: "12px 24px" }}>
+                      {hotkey.description}
+                    </td>
                   </tr>
                 ))
               )}
