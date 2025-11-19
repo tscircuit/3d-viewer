@@ -4,6 +4,7 @@ import {
   cuboid,
   cylinder,
   roundedRectangle,
+  polygon as jscadPolygon,
 } from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
 import {
@@ -19,6 +20,7 @@ import {
   clampRectBorderRadius,
   extractRectBorderRadius,
 } from "../utils/rect-border-radius"
+import { createHoleWithPolygonPadHoleGeom } from "./create-hole-with-polygon-pad"
 
 const platedHoleLipHeight = 0.02
 const RECT_PAD_SEGMENTS = 64
@@ -480,6 +482,54 @@ export const platedHole = (
     )
 
     return colorize(colors.copper, finalCopper)
+  } else if (plated_hole.shape === "hole_with_polygon_pad") {
+    const padOutline = (plated_hole as any).pad_outline
+    if (!Array.isArray(padOutline) || padOutline.length < 3) {
+      const fallback = { ...plated_hole, shape: "circle" } as PCBPlatedHole
+      return platedHole(fallback, ctx, options)
+    }
+
+    const polygonPoints = padOutline.map((point: { x: number; y: number }) => [
+      point.x,
+      point.y,
+    ])
+    const polygon2d = jscadPolygon({ points: polygonPoints })
+    const centerZ = (topSurfaceZ + bottomSurfaceZ) / 2
+
+    const createPolygonPad = (thickness: number, zCenter: number) => {
+      const safeThickness = Math.max(thickness, M)
+      const extruded = extrudeLinear({ height: safeThickness }, polygon2d)
+      return translate(
+        [plated_hole.x, plated_hole.y, zCenter - safeThickness / 2],
+        extruded,
+      )
+    }
+
+    const mainFill = createPolygonPad(
+      Math.max(copperSpan - platedHoleLipHeight * 2, M),
+      centerZ,
+    )
+    const topPad = createPolygonPad(platedHoleLipHeight, topSurfaceZ)
+    const bottomPad = createPolygonPad(platedHoleLipHeight, bottomSurfaceZ)
+
+    const copperSolid = maybeClip(union(mainFill, topPad, bottomPad), clipGeom)
+    const barrel = createHoleWithPolygonPadHoleGeom(plated_hole as any, copperSpan)
+    if (!barrel) return colorize(colors.copper, copperSolid)
+
+    const drill =
+      createHoleWithPolygonPadHoleGeom(plated_hole as any, throughDrillHeight, {
+        sizeDelta: -2 * M,
+      }) || barrel
+
+    let finalCopper = union(subtract(copperSolid, barrel), barrel)
+
+    if (options.clipGeom) {
+      finalCopper = subtract(finalCopper, drill)
+      finalCopper = intersect(finalCopper, options.clipGeom)
+      return colorize(colors.copper, finalCopper)
+    }
+
+    return colorize(colors.copper, subtract(finalCopper, drill))
   } else {
     throw new Error(`Unsupported plated hole shape: ${plated_hole.shape}`)
   }
