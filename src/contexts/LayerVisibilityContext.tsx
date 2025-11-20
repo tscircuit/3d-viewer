@@ -69,17 +69,17 @@ export const LayerVisibilityProvider: React.FC<{
   const [visibility, setVisibility] =
     useState<LayerVisibilityState>(defaultVisibility)
 
-  const toggleLayer = useCallback((layer: keyof LayerVisibilityState) => {
-    let newState = false
-    setVisibility((prev) => {
-      newState = !prev[layer]
-      return {
+  const toggleLayer = useCallback(
+    (layer: keyof LayerVisibilityState) => {
+      const newState = !visibility[layer]
+      setVisibility((prev) => ({
         ...prev,
         [layer]: newState,
-      }
-    })
-    return newState
-  }, [])
+      }))
+      return newState
+    },
+    [visibility],
+  )
 
   const setLayerVisibility = useCallback(
     (layer: keyof LayerVisibilityState, visible: boolean) => {
