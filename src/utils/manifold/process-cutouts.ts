@@ -2,6 +2,8 @@ import type { ManifoldToplevel, CrossSection } from "manifold-3d"
 import type { AnyCircuitElement, PcbCutout } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import { SMOOTH_CIRCLE_SEGMENTS } from "../../geoms/constants"
+import { extractRectBorderRadius } from "../rect-border-radius"
+import { createRoundedRectPrism } from "../pad-geoms"
 
 const arePointsClockwise = (points: Array<[number, number]>): boolean => {
   let area = 0
@@ -35,14 +37,24 @@ export function processCutoutsForManifold(
     const cutoutHeight = pcbThickness * 1.5
 
     switch (cutout.shape) {
-      case "rect":
-        cutoutOp = Manifold.cube(
-          [cutout.width, cutout.height, cutoutHeight],
-          true, // centered
-        )
+      case "rect": {
+        const rectCornerRadius = extractRectBorderRadius(cutout)
+        if (typeof rectCornerRadius === "number" && rectCornerRadius > 0) {
+          cutoutOp = createRoundedRectPrism({
+            Manifold,
+            width: cutout.width,
+            height: cutout.height,
+            thickness: cutoutHeight,
+            borderRadius: rectCornerRadius,
+          })
+        } else {
+          cutoutOp = Manifold.cube(
+            [cutout.width, cutout.height, cutoutHeight],
+            true, // centered
+          )
+        }
         manifoldInstancesForCleanup.push(cutoutOp)
         if (cutout.rotation) {
-          const rotationRadians = (cutout.rotation * Math.PI) / 180
           const rotatedOp = cutoutOp.rotate([0, 0, cutout.rotation])
           manifoldInstancesForCleanup.push(rotatedOp)
           cutoutOp = rotatedOp
@@ -54,6 +66,7 @@ export function processCutoutsForManifold(
         ])
         manifoldInstancesForCleanup.push(cutoutOp)
         break
+      }
       case "circle":
         cutoutOp = Manifold.cylinder(
           cutoutHeight,
