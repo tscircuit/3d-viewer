@@ -23,6 +23,24 @@ const matchesKey = (eventKey: string, targetKey: string) => {
   return eventKey.toLowerCase() === targetKey.toLowerCase()
 }
 
+const matchesModifiers = (event: KeyboardEvent, modifiers?: string) => {
+  if (!modifiers) {
+    return !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey
+  }
+
+  const hasCtrl = modifiers.includes("Ctrl")
+  const hasCmd = modifiers.includes("Cmd")
+  const hasShift = modifiers.includes("Shift")
+  const hasAlt = modifiers.includes("Alt")
+
+  if (hasCtrl && !event.ctrlKey) return false
+  if (hasCmd && !event.metaKey) return false
+  if (hasShift && !event.shiftKey) return false
+  if (hasAlt && !event.altKey) return false
+
+  return true
+}
+
 const isEditableTarget = (target: EventTarget | null) => {
   if (!target || typeof target !== "object") return false
   const element = target as HTMLElement
@@ -40,7 +58,10 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 
   hotkeyRegistry.forEach((entry) => {
-    if (matchesKey(event.key, entry.key)) {
+    if (
+      matchesKey(event.key, entry.key) &&
+      matchesModifiers(event, entry.modifiers)
+    ) {
       event.preventDefault()
       entry.invoke()
     }

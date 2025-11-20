@@ -1,4 +1,5 @@
 import type { AnyCircuitElement, CadComponent } from "circuit-json"
+import { su } from "@tscircuit/circuit-json-util"
 import type { LayerVisibilityState } from "../contexts/LayerVisibilityContext"
 
 export type ComponentType = "smd" | "through_hole" | "virtual"
@@ -66,11 +67,9 @@ export const classifyCadComponents = (
   if (!circuitJson) return []
   const footprintInfo = collectComponentFootprintInfo(circuitJson)
 
-  return (
-    circuitJson.filter(
-      (element): element is CadComponent => element.type === "cad_component",
-    ) as CadComponent[]
-  ).map((component) => ({
+  const cadComponents = su(circuitJson).cad_component.list()
+
+  return cadComponents.map((component) => ({
     ...component,
     componentType: inferComponentType(component, footprintInfo),
   }))
