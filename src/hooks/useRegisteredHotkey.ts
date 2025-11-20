@@ -18,6 +18,8 @@ const subscribers = new Set<HotkeySubscriber>()
 
 let isListenerAttached = false
 
+const MAX_PARENT_DEPTH = 20 // Reasonable limit for DOM traversal; real-world nesting is typically 3-5 levels
+
 const matchesKey = (eventKey: string, targetKey: string) => {
   if (!eventKey || !targetKey) return false
   return eventKey.toLowerCase() === targetKey.toLowerCase()
@@ -27,21 +29,18 @@ const matchesModifiers = (
   event: KeyboardEvent,
   modifiers?: ("Ctrl" | "Cmd" | "Shift" | "Alt")[],
 ) => {
-  if (!modifiers || modifiers.length === 0) {
-    return !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey
-  }
+  const lowerModifiers = modifiers?.map((m) => m.toLowerCase()) ?? []
+  const hasCtrl = lowerModifiers.includes("ctrl")
+  const hasCmd = lowerModifiers.includes("cmd")
+  const hasShift = lowerModifiers.includes("shift")
+  const hasAlt = lowerModifiers.includes("alt")
 
-  const hasCtrl = modifiers.includes("Ctrl")
-  const hasCmd = modifiers.includes("Cmd")
-  const hasShift = modifiers.includes("Shift")
-  const hasAlt = modifiers.includes("Alt")
-
-  if (hasCtrl && !event.ctrlKey) return false
-  if (hasCmd && !event.metaKey) return false
-  if (hasShift && !event.shiftKey) return false
-  if (hasAlt && !event.altKey) return false
-
-  return true
+  return (
+    hasCtrl === event.ctrlKey &&
+    hasCmd === event.metaKey &&
+    hasShift === event.shiftKey &&
+    hasAlt === event.altKey
+  )
 }
 
 const isEditableTarget = (target: EventTarget | null) => {
@@ -52,7 +51,30 @@ const isEditableTarget = (target: EventTarget | null) => {
   if (editableTags.includes(tagName)) {
     return true
   }
-  return Boolean(element.getAttribute?.("contenteditable"))
+
+  // Check contenteditable attribute - only true/"" means editable, not "false"
+  const contentEditable = element.getAttribute?.("contenteditable")
+  if (contentEditable === "true" || contentEditable === "") {
+    return true
+  }
+
+  // Check for any parent elements that are editable
+  let current = element.parentElement
+  for (let depth = 0; depth < MAX_PARENT_DEPTH && current; depth++) {
+    const tagName = current.tagName
+    if (editableTags.includes(tagName)) {
+      return true
+    }
+
+    const contentEditable = current.getAttribute?.("contenteditable")
+    if (contentEditable === "true" || contentEditable === "") {
+      return true
+    }
+
+    current = current.parentElement
+  }
+
+  return false
 }
 
 const handleKeydown = (event: KeyboardEvent) => {
