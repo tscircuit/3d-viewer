@@ -239,7 +239,32 @@ export const AppearanceMenu = () => {
                 {visibility.smtModels && <CheckIcon />}
               </span>
               <span style={{ display: "flex", alignItems: "center" }}>
-                CAD Models
+                Surface Mount Components
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "throughHoleModels"
+                    ? "#404040"
+                    : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                toggleLayer("throughHoleModels")
+              }}
+              onMouseEnter={() => setHoveredItem("throughHoleModels")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("throughHoleModels")}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.throughHoleModels && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Through-Hole Components
               </span>
             </DropdownMenu.Item>
           </DropdownMenu.SubContent>

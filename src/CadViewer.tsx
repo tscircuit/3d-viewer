@@ -15,6 +15,7 @@ import {
   CameraControllerProvider,
   useCameraController,
 } from "./contexts/CameraControllerContext"
+import { ToastProvider, useToast } from "./contexts/ToastContext"
 import { ContextMenu } from "./components/ContextMenu"
 import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
 import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
@@ -35,6 +36,7 @@ const CadViewerInner = (props: any) => {
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>("Custom")
   const { cameraType, setCameraType } = useCameraController()
   const { visibility, toggleLayer } = useLayerVisibility()
+  const { showToast } = useToast()
 
   const cameraControllerRef = useRef<CameraController | null>(null)
   const externalCameraControllerReady = props.onCameraControllerReady as
@@ -116,6 +118,40 @@ const CadViewerInner = (props: any) => {
     {
       key: "?",
       description: "Open keyboard shortcuts",
+      modifiers: ["Shift"],
+    },
+  )
+
+  useRegisteredHotkey(
+    "toggle_smt_models",
+    () => {
+      const newState = toggleLayer("smtModels")
+      showToast(
+        newState ? "SMT components visible" : "SMT components hidden",
+        1500,
+      )
+    },
+    {
+      key: "S",
+      description: "Toggle surface mount components",
+      modifiers: ["Shift"],
+    },
+  )
+
+  useRegisteredHotkey(
+    "toggle_through_hole_models",
+    () => {
+      const newState = toggleLayer("throughHoleModels")
+      showToast(
+        newState
+          ? "Through-hole components visible"
+          : "Through-hole components hidden",
+        1500,
+      )
+    },
+    {
+      key: "T",
+      description: "Toggle through-hole components",
       modifiers: ["Shift"],
     },
   )
@@ -256,7 +292,9 @@ export const CadViewer = (props: any) => {
       initialCameraPosition={initialCameraPosition}
     >
       <LayerVisibilityProvider>
-        <CadViewerInner {...props} />
+        <ToastProvider>
+          <CadViewerInner {...props} />
+        </ToastProvider>
       </LayerVisibilityProvider>
     </CameraControllerProvider>
   )
