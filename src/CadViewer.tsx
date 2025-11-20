@@ -32,7 +32,7 @@ const CadViewerInner = (props: any) => {
   const { cameraType, setCameraType } = useCameraController()
   const [isShortcutsDialogOpen, setIsShortcutsDialogOpen] = useState(false)
   const [visibilityToast, setVisibilityToast] = useState<string | null>(null)
-  const toastBottomOffset = 32 //px
+  const TOAST_BOTTOM_OFFSET = 32 //px
 
   const cameraControllerRef = useRef<CameraController | null>(null)
   const externalCameraControllerReady = props.onCameraControllerReady as
@@ -239,7 +239,7 @@ const CadViewerInner = (props: any) => {
           style={{
             position: "absolute",
             left: 16,
-            bottom: toastBottomOffset,
+            bottom: TOAST_BOTTOM_OFFSET,
             backgroundColor: "rgba(0, 0, 0, 0.75)",
             color: "white",
             padding: "8px 12px",
