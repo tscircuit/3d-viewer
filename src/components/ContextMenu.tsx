@@ -113,7 +113,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
 }) => {
   const { cameraType, setCameraType } = useCameraController()
   const [cameraSubOpen, setCameraSubOpen] = useState(false)
-  const [fileSubOpen, setFileSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
   return (
@@ -140,65 +139,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             sideOffset={0}
             align="start"
           >
-            {/* File Menu */}
-            <DropdownMenu.Sub onOpenChange={setFileSubOpen}>
-              <DropdownMenu.SubTrigger
-                style={{
-                  ...itemStyles,
-                  ...itemPaddingStyles,
-                  backgroundColor:
-                    fileSubOpen || hoveredItem === "file"
-                      ? "#404040"
-                      : "transparent",
-                }}
-                onMouseEnter={() => setHoveredItem("file")}
-                onMouseLeave={() => setHoveredItem(null)}
-                onTouchStart={() => setHoveredItem("file")}
-              >
-                <span
-                  style={{ flex: 1, display: "flex", alignItems: "center" }}
-                >
-                  File
-                </span>
-                <ChevronRightIcon isOpen={fileSubOpen} />
-              </DropdownMenu.SubTrigger>
-
-              <DropdownMenu.Portal>
-                <DropdownMenu.SubContent
-                  style={{ ...contentStyles, marginLeft: -2 }}
-                  collisionPadding={10}
-                  avoidCollisions={true}
-                >
-                  <DropdownMenu.Item
-                    style={{
-                      ...itemStyles,
-                      backgroundColor:
-                        hoveredItem === "keyboardShortcuts"
-                          ? "#404040"
-                          : "transparent",
-                    }}
-                    onSelect={(e) => e.preventDefault()}
-                    onPointerDown={(e) => {
-                      e.preventDefault()
-                      onOpenKeyboardShortcuts()
-                    }}
-                    onMouseEnter={() => setHoveredItem("keyboardShortcuts")}
-                    onMouseLeave={() => setHoveredItem(null)}
-                    onTouchStart={() => setHoveredItem("keyboardShortcuts")}
-                  >
-                    <span
-                      style={{ flex: 1, display: "flex", alignItems: "center" }}
-                    >
-                      Keyboard Shortcuts
-                    </span>
-                    <div style={{ ...badgeStyles, marginLeft: 8 }}>?</div>
-                  </DropdownMenu.Item>
-                </DropdownMenu.SubContent>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Sub>
-
-            <DropdownMenu.Separator style={separatorStyles} />
-
             {/* Camera Position Submenu */}
             <DropdownMenu.Sub onOpenChange={setCameraSubOpen}>
               <DropdownMenu.SubTrigger
@@ -375,6 +315,33 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               >
                 {engine === "jscad" ? "experimental" : "default"}
               </div>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Separator style={separatorStyles} />
+
+            {/* Keyboard Shortcuts */}
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                ...itemPaddingStyles,
+                backgroundColor:
+                  hoveredItem === "keyboardShortcuts"
+                    ? "#404040"
+                    : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                onOpenKeyboardShortcuts()
+              }}
+              onMouseEnter={() => setHoveredItem("keyboardShortcuts")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("keyboardShortcuts")}
+            >
+              <span style={{ flex: 1, display: "flex", alignItems: "center" }}>
+                Keyboard Shortcuts
+              </span>
+              <div style={{ ...badgeStyles, marginLeft: 8 }}>?</div>
             </DropdownMenu.Item>
 
             <DropdownMenu.Separator style={separatorStyles} />

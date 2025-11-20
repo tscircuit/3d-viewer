@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 export type HotkeyMetadata = {
   key: string
   description: string
+  modifiers?: string
 }
 
 type HotkeyRegistration = HotkeyMetadata & {
@@ -90,8 +91,9 @@ export const useRegisteredHotkey = (
     () => ({
       key: metadata.key,
       description: metadata.description,
+      modifiers: metadata.modifiers,
     }),
-    [metadata.key, metadata.description],
+    [metadata.key, metadata.description, metadata.modifiers],
   )
 
   useEffect(() => {

@@ -96,6 +96,7 @@ const CadViewerInner = (props: any) => {
     {
       key: "?",
       description: "Show keyboard shortcuts",
+      modifiers: "Shift+",
     },
   )
 

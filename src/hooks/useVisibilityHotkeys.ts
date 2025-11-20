@@ -69,6 +69,7 @@ export const useVisibilityHotkeys = ({
   useRegisteredHotkey("toggle_smd_components", toggleSmdVisibility, {
     key: "s",
     description: "Toggle SMD components",
+    modifiers: "Shift+",
   })
 
   useRegisteredHotkey(
@@ -77,11 +78,13 @@ export const useVisibilityHotkeys = ({
     {
       key: "t",
       description: "Toggle through-hole components",
+      modifiers: "Shift+",
     },
   )
 
   useRegisteredHotkey("toggle_virtual_components", toggleVirtualVisibility, {
     key: "v",
     description: "Toggle virtual components",
+    modifiers: "Shift+",
   })
 }

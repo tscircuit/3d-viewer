@@ -175,6 +175,7 @@ export const KeyboardShortcutsDialog = ({
                           fontSize: "0.95rem",
                         }}
                       >
+                        {hotkey.modifiers}
                         {hotkey.key.toUpperCase()}
                       </span>
                     </td>
