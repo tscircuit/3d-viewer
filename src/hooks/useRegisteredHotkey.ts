@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 
 export type HotkeyMetadata = {
-  key: string
+  shortcut: string
   description: string
-  modifiers?: ("Ctrl" | "Cmd" | "Shift" | "Alt")[]
 }
 
 type HotkeyRegistration = HotkeyMetadata & {
@@ -20,31 +19,30 @@ let isListenerAttached = false
 
 const MAX_PARENT_DEPTH = 20 // Reasonable limit for DOM traversal; real-world nesting is typically 3-5 levels
 
-const matchesKey = (eventKey: string, targetKey: string) => {
-  if (!eventKey || !targetKey) return false
-  return eventKey.toLowerCase() === targetKey.toLowerCase()
+const parseShortcut = (shortcut: string) => {
+  const parts = shortcut.toLowerCase().split("+")
+  const key = parts[parts.length - 1]
+  const modifierParts = parts.slice(0, -1)
+
+  return {
+    key,
+    ctrl: modifierParts.includes("ctrl"),
+    cmd: modifierParts.includes("cmd"),
+    shift: modifierParts.includes("shift"),
+    alt: modifierParts.includes("alt"),
+  }
 }
 
-const matchesModifiers = (
-  event: KeyboardEvent,
-  modifiers?: ("Ctrl" | "Cmd" | "Shift" | "Alt")[],
-) => {
-  if (!modifiers || modifiers.length === 0) {
-    return !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey
-  }
+const matchesShortcut = (event: KeyboardEvent, shortcut: string) => {
+  const parsed = parseShortcut(shortcut)
 
-  const lowerModifiers = modifiers.map((m) => m.toLowerCase())
-  const hasCtrl = lowerModifiers.includes("ctrl")
-  const hasCmd = lowerModifiers.includes("cmd")
-  const hasShift = lowerModifiers.includes("shift")
-  const hasAlt = lowerModifiers.includes("alt")
+  const keyMatches = event.key.toLowerCase() === parsed.key
+  const ctrlMatches = parsed.ctrl === event.ctrlKey
+  const cmdMatches = parsed.cmd === event.metaKey
+  const shiftMatches = parsed.shift === event.shiftKey
+  const altMatches = parsed.alt === event.altKey
 
-  return (
-    hasCtrl === event.ctrlKey &&
-    hasCmd === event.metaKey &&
-    hasShift === event.shiftKey &&
-    hasAlt === event.altKey
-  )
+  return keyMatches && ctrlMatches && cmdMatches && shiftMatches && altMatches
 }
 
 const isEditableTarget = (target: EventTarget | null) => {
@@ -81,16 +79,28 @@ const isEditableTarget = (target: EventTarget | null) => {
   return false
 }
 
+const isInputFocused = () => {
+  if (typeof document === "undefined") return false
+  const activeElement = document.activeElement
+  if (!activeElement) return false
+
+  const tagName = activeElement.tagName
+  if (tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT") {
+    return true
+  }
+
+  const contentEditable = activeElement.getAttribute("contenteditable")
+  return contentEditable === "true" || contentEditable === ""
+}
+
 const handleKeydown = (event: KeyboardEvent) => {
-  if (isEditableTarget(event.target)) {
+  // Double protection: check both event target and focused element
+  if (isEditableTarget(event.target) || isInputFocused()) {
     return
   }
 
   hotkeyRegistry.forEach((entry) => {
-    if (
-      matchesKey(event.key, entry.key) &&
-      matchesModifiers(event, entry.modifiers)
-    ) {
+    if (matchesShortcut(event, entry.shortcut)) {
       event.preventDefault()
       entry.invoke()
     }
@@ -139,11 +149,10 @@ export const useRegisteredHotkey = (
 
   const normalizedMetadata = useMemo(
     () => ({
-      key: metadata.key,
+      shortcut: metadata.shortcut,
       description: metadata.description,
-      modifiers: metadata.modifiers,
     }),
-    [metadata.key, metadata.description, metadata.modifiers],
+    [metadata.shortcut, metadata.description],
   )
 
   useEffect(() => {

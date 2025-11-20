@@ -116,9 +116,8 @@ const CadViewerInner = (props: any) => {
       setIsKeyboardShortcutsDialogOpen(true)
     },
     {
-      key: "?",
+      shortcut: "shift+?",
       description: "Open keyboard shortcuts",
-      modifiers: ["Shift"],
     },
   )
 
@@ -132,9 +131,8 @@ const CadViewerInner = (props: any) => {
       )
     },
     {
-      key: "S",
+      shortcut: "shift+s",
       description: "Toggle surface mount components",
-      modifiers: ["Shift"],
     },
   )
 
@@ -150,9 +148,8 @@ const CadViewerInner = (props: any) => {
       )
     },
     {
-      key: "T",
+      shortcut: "shift+t",
       description: "Toggle through-hole components",
-      modifiers: ["Shift"],
     },
   )
 
