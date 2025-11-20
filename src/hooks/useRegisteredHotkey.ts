@@ -29,7 +29,11 @@ const matchesModifiers = (
   event: KeyboardEvent,
   modifiers?: ("Ctrl" | "Cmd" | "Shift" | "Alt")[],
 ) => {
-  const lowerModifiers = modifiers?.map((m) => m.toLowerCase()) ?? []
+  if (!modifiers || modifiers.length === 0) {
+    return !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey
+  }
+
+  const lowerModifiers = modifiers.map((m) => m.toLowerCase())
   const hasCtrl = lowerModifiers.includes("ctrl")
   const hasCmd = lowerModifiers.includes("cmd")
   const hasShift = lowerModifiers.includes("shift")
