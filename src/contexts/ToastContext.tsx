@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from "react"
 import { Toast } from "../components/Toast"
+import type { ToastProps } from "../types/Toast"
 
 interface ToastContextType {
   showToast: (message: string, duration?: number) => void
@@ -15,10 +16,8 @@ export const useToast = () => {
   return context
 }
 
-interface ToastItem {
+interface ToastItem extends ToastProps {
   id: number
-  message: string
-  duration?: number
 }
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({

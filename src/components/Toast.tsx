@@ -1,11 +1,6 @@
 import type React from "react"
 import { useEffect, useState } from "react"
-
-export interface ToastProps {
-  message: string
-  duration?: number
-  onDismiss: () => void
-}
+import type { ToastProps } from "../types/Toast"
 
 export const Toast: React.FC<ToastProps> = ({
   message,
@@ -23,7 +18,9 @@ export const Toast: React.FC<ToastProps> = ({
     // Auto dismiss
     const timer = setTimeout(() => {
       setIsVisible(false)
-      setTimeout(onDismiss, 300) // Wait for fade out animation
+      if (onDismiss) {
+        setTimeout(onDismiss, 300) // Wait for fade out animation
+      }
     }, duration)
 
     return () => clearTimeout(timer)
