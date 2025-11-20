@@ -6,6 +6,7 @@ import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
 import { useCameraPreset } from "./hooks/useCameraPreset"
 import { useGlobalDownloadGltf } from "./hooks/useGlobalDownloadGltf"
+import { useRegisteredHotkey } from "./hooks/useRegisteredHotkey"
 import {
   LayerVisibilityProvider,
   useLayerVisibility,
@@ -15,11 +16,14 @@ import {
   useCameraController,
 } from "./contexts/CameraControllerContext"
 import { ContextMenu } from "./components/ContextMenu"
+import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
 import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
 
 const CadViewerInner = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const [isKeyboardShortcutsDialogOpen, setIsKeyboardShortcutsDialogOpen] =
+    useState(false)
   const [autoRotate, setAutoRotate] = useState(() => {
     const stored = window.localStorage.getItem("cadViewerAutoRotate")
     return stored === "false" ? false : true
@@ -103,6 +107,18 @@ const CadViewerInner = (props: any) => {
     isAnimatingRef,
     lastPresetSelectTime,
   })
+
+  useRegisteredHotkey(
+    "open_keyboard_shortcuts_dialog",
+    () => {
+      setIsKeyboardShortcutsDialogOpen(true)
+    },
+    {
+      key: "?",
+      description: "Open keyboard shortcuts",
+      modifiers: ["Shift"],
+    },
+  )
 
   useEffect(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
@@ -212,8 +228,16 @@ const CadViewerInner = (props: any) => {
             downloadGltf()
             closeMenu()
           }}
+          onOpenKeyboardShortcuts={() => {
+            setIsKeyboardShortcutsDialogOpen(true)
+            closeMenu()
+          }}
         />
       )}
+      <KeyboardShortcutsDialog
+        open={isKeyboardShortcutsDialogOpen}
+        onClose={() => setIsKeyboardShortcutsDialogOpen(false)}
+      />
     </div>
   )
 }
