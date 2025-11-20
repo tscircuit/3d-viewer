@@ -415,10 +415,34 @@ export class BoardGeomBuilder {
 
     switch (cutout.shape) {
       case "rect":
-        cutoutGeom = cuboid({
-          center: [cutout.center.x, cutout.center.y, 0],
-          size: [cutout.width, cutout.height, cutoutHeight],
-        })
+        const rectCornerRadius = clampRectBorderRadius(
+          cutout.width,
+          cutout.height,
+          extractRectBorderRadius(cutout),
+        )
+
+        if (rectCornerRadius > 0) {
+          const rect2d = roundedRectangle({
+            size: [cutout.width, cutout.height],
+            roundRadius: rectCornerRadius,
+            segments: PAD_ROUNDED_SEGMENTS,
+          })
+          cutoutGeom = extrudeLinear({ height: cutoutHeight }, rect2d)
+          cutoutGeom = translate([0, 0, -cutoutHeight / 2], cutoutGeom)
+          cutoutGeom = translate(
+            [cutout.center.x, cutout.center.y, 0],
+            cutoutGeom,
+          )
+        } else {
+          const baseCutoutGeom = cuboid({
+            center: [0, 0, 0],
+            size: [cutout.width, cutout.height, cutoutHeight],
+          })
+          cutoutGeom = translate(
+            [cutout.center.x, cutout.center.y, 0],
+            baseCutoutGeom,
+          )
+        }
         if (cutout.rotation) {
           const rotationRadians = (cutout.rotation * Math.PI) / 180
           cutoutGeom = rotateZ(rotationRadians, cutoutGeom)
