@@ -257,7 +257,10 @@ export const AppearanceMenu = () => {
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
                 e.preventDefault()
-                toggleLayer("throughHoleModels")
+                setLayerVisibility(
+                  "throughHoleModels",
+                  !visibility.throughHoleModels,
+                )
               }}
               onMouseEnter={() => setHoveredItem("throughHoleModels")}
               onMouseLeave={() => setHoveredItem(null)}
