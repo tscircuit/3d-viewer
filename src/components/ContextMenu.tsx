@@ -2,9 +2,11 @@ import type React from "react"
 import { useState } from "react"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { AppearanceMenu } from "./AppearanceMenu"
-import type { CameraPreset } from "../hooks/useCameraController"
+import type { CameraPreset } from "../hooks/cameraAnimation"
+import { useCameraController } from "../contexts/CameraControllerContext"
 import packageJson from "../../package.json"
 import { CheckIcon, ChevronRightIcon, DotIcon } from "./Icons"
+import { zIndexMap } from "../../lib/utils/z-index-map"
 
 interface ContextMenuProps {
   menuRef: React.RefObject<HTMLDivElement | null>
@@ -16,11 +18,12 @@ interface ContextMenuProps {
   onCameraPresetSelect: (preset: CameraPreset) => void
   onAutoRotateToggle: () => void
   onDownloadGltf: () => void
+  onOpenKeyboardShortcuts: () => void
 }
 
 const cameraOptions: CameraPreset[] = [
   "Custom",
-  "Top Centered",
+  "Top Center Angled",
   "Top Down",
   "Top Left Corner",
   "Top Right Corner",
@@ -38,7 +41,7 @@ const contentStyles: React.CSSProperties = {
   border: "1px solid #333333",
   padding: "4px",
   minWidth: 160,
-  zIndex: 10000,
+  zIndex: zIndexMap.contextMenu,
   fontSize: 14,
   fontWeight: 400,
   fontFamily:
@@ -106,7 +109,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onCameraPresetSelect,
   onAutoRotateToggle,
   onDownloadGltf,
+  onOpenKeyboardShortcuts,
 }) => {
+  const { cameraType, setCameraType } = useCameraController()
   const [cameraSubOpen, setCameraSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
@@ -147,6 +152,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 }}
                 onMouseEnter={() => setHoveredItem("camera")}
                 onMouseLeave={() => setHoveredItem(null)}
+                onTouchStart={() => setHoveredItem("camera")}
               >
                 <span
                   style={{ flex: 1, display: "flex", alignItems: "center" }}
@@ -189,6 +195,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                       }}
                       onMouseEnter={() => setHoveredItem(option)}
                       onMouseLeave={() => setHoveredItem(null)}
+                      onTouchStart={() => setHoveredItem(option)}
                     >
                       <span style={iconContainerStyles}>
                         {cameraPreset === option && <DotIcon />}
@@ -217,12 +224,40 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               }}
               onMouseEnter={() => setHoveredItem("autorotate")}
               onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("autorotate")}
             >
               <span style={iconContainerStyles}>
                 {autoRotate && <CheckIcon />}
               </span>
               <span style={{ display: "flex", alignItems: "center" }}>
                 Auto rotate
+              </span>
+            </DropdownMenu.Item>
+
+            {/* Orthographic Camera Toggle */}
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                ...itemPaddingStyles,
+                backgroundColor:
+                  hoveredItem === "cameratype" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                setCameraType(
+                  cameraType === "perspective" ? "orthographic" : "perspective",
+                )
+              }}
+              onMouseEnter={() => setHoveredItem("cameratype")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("cameratype")}
+            >
+              <span style={iconContainerStyles}>
+                {cameraType === "orthographic" && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Orthographic Camera
               </span>
             </DropdownMenu.Item>
 
@@ -242,6 +277,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               onSelect={onDownloadGltf}
               onMouseEnter={() => setHoveredItem("download")}
               onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("download")}
             >
               <span style={{ display: "flex", alignItems: "center" }}>
                 Download GLTF
@@ -265,6 +301,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               }}
               onMouseEnter={() => setHoveredItem("engine")}
               onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("engine")}
             >
               <span style={{ flex: 1, display: "flex", alignItems: "center" }}>
                 Switch to {engine === "jscad" ? "Manifold" : "JSCAD"} Engine
@@ -277,6 +314,35 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 }}
               >
                 {engine === "jscad" ? "experimental" : "default"}
+              </div>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Separator style={separatorStyles} />
+
+            {/* Keyboard Shortcuts */}
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                ...itemPaddingStyles,
+                backgroundColor:
+                  hoveredItem === "shortcuts" ? "#404040" : "transparent",
+              }}
+              onSelect={onOpenKeyboardShortcuts}
+              onMouseEnter={() => setHoveredItem("shortcuts")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("shortcuts")}
+            >
+              <span style={{ flex: 1, display: "flex", alignItems: "center" }}>
+                Keyboard Shortcuts
+              </span>
+              <div
+                style={{
+                  ...badgeStyles,
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                Shift+?
               </div>
             </DropdownMenu.Item>
 

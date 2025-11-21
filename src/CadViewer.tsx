@@ -1,23 +1,29 @@
 import type React from "react"
-import { useState, useCallback, useRef, useEffect } from "react"
+import { useState, useCallback, useRef, useEffect, useMemo } from "react"
+import * as THREE from "three"
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
 import { useCameraPreset } from "./hooks/useCameraPreset"
 import { useGlobalDownloadGltf } from "./hooks/useGlobalDownloadGltf"
+import { useRegisteredHotkey } from "./hooks/useRegisteredHotkey"
 import {
   LayerVisibilityProvider,
   useLayerVisibility,
 } from "./contexts/LayerVisibilityContext"
+import {
+  CameraControllerProvider,
+  useCameraController,
+} from "./contexts/CameraControllerContext"
 import { ContextMenu } from "./components/ContextMenu"
-import type {
-  CameraController,
-  CameraPreset,
-} from "./hooks/useCameraController"
+import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
+import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
 
 const CadViewerInner = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const [isKeyboardShortcutsDialogOpen, setIsKeyboardShortcutsDialogOpen] =
+    useState(false)
   const [autoRotate, setAutoRotate] = useState(() => {
     const stored = window.localStorage.getItem("cadViewerAutoRotate")
     return stored === "false" ? false : true
@@ -27,6 +33,7 @@ const CadViewerInner = (props: any) => {
     return stored === "true"
   })
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>("Custom")
+  const { cameraType, setCameraType } = useCameraController()
   const { visibility, toggleLayer } = useLayerVisibility()
 
   const cameraControllerRef = useRef<CameraController | null>(null)
@@ -101,6 +108,18 @@ const CadViewerInner = (props: any) => {
     lastPresetSelectTime,
   })
 
+  useRegisteredHotkey(
+    "open_keyboard_shortcuts_dialog",
+    () => {
+      setIsKeyboardShortcutsDialogOpen(true)
+    },
+    {
+      key: "?",
+      description: "Open keyboard shortcuts",
+      modifiers: ["Shift"],
+    },
+  )
+
   useEffect(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
     if (stored === "jscad" || stored === "manifold") {
@@ -122,6 +141,19 @@ const CadViewerInner = (props: any) => {
       String(autoRotateUserToggled),
     )
   }, [autoRotateUserToggled])
+
+  // Initialize camera type from localStorage
+  useEffect(() => {
+    const stored = window.localStorage.getItem("cadViewerCameraType")
+    if (stored === "orthographic" || stored === "perspective") {
+      setCameraType(stored)
+    }
+  }, [setCameraType])
+
+  // Sync camera type to localStorage
+  useEffect(() => {
+    window.localStorage.setItem("cadViewerCameraType", cameraType)
+  }, [cameraType])
 
   const viewerKey = props.circuitJson
     ? JSON.stringify(props.circuitJson)
@@ -147,6 +179,7 @@ const CadViewerInner = (props: any) => {
         <CadViewerJscad
           {...props}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+          cameraType={cameraType}
           onUserInteraction={handleUserInteraction}
           onCameraControllerReady={handleCameraControllerReady}
         />
@@ -154,6 +187,7 @@ const CadViewerInner = (props: any) => {
         <CadViewerManifold
           {...props}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+          cameraType={cameraType}
           onUserInteraction={handleUserInteraction}
           onCameraControllerReady={handleCameraControllerReady}
         />
@@ -194,16 +228,36 @@ const CadViewerInner = (props: any) => {
             downloadGltf()
             closeMenu()
           }}
+          onOpenKeyboardShortcuts={() => {
+            setIsKeyboardShortcutsDialogOpen(true)
+            closeMenu()
+          }}
         />
       )}
+      <KeyboardShortcutsDialog
+        open={isKeyboardShortcutsDialogOpen}
+        onClose={() => setIsKeyboardShortcutsDialogOpen(false)}
+      />
     </div>
   )
 }
 
 export const CadViewer = (props: any) => {
+  // Default camera target and position - these will be overridden by CadViewerContainer
+  const defaultTarget = useMemo(() => new THREE.Vector3(0, 0, 0), [])
+  const initialCameraPosition = useMemo<readonly [number, number, number]>(
+    () => [5, -5, 5] as const,
+    [],
+  )
+
   return (
-    <LayerVisibilityProvider>
-      <CadViewerInner {...props} />
-    </LayerVisibilityProvider>
+    <CameraControllerProvider
+      defaultTarget={defaultTarget}
+      initialCameraPosition={initialCameraPosition}
+    >
+      <LayerVisibilityProvider>
+        <CadViewerInner {...props} />
+      </LayerVisibilityProvider>
+    </CameraControllerProvider>
   )
 }

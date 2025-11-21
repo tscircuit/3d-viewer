@@ -1,5 +1,5 @@
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
-import type { AnyCircuitElement } from "circuit-json"
+import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import { cuboid } from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
@@ -17,31 +17,56 @@ import { createBoardGeomWithOutline } from "../geoms/create-board-with-outline"
 export const createSimplifiedBoardGeom = (
   circuitJson: AnyCircuitElement[],
 ): Geom3[] => {
-  const board = su(circuitJson).pcb_board.list()[0]
-  if (!board) {
-    console.warn("No pcb_board found for simplified geometry")
-    return []
+  // Check for panel first
+  const panels = circuitJson.filter(
+    (e): e is PcbPanel => e.type === "pcb_panel",
+  )
+  const boards = su(circuitJson).pcb_board.list()
+
+  let boardOrPanel: PcbBoard | PcbPanel | undefined
+  let pcbThickness = 1.2
+
+  if (panels.length > 0) {
+    // Use the panel as the board
+    boardOrPanel = panels[0]!
+  } else {
+    // Skip boards that are inside a panel - only render the panel outline
+    const boardsNotInPanel = boards.filter(
+      (b): b is PcbBoard => !b.pcb_panel_id,
+    )
+    boardOrPanel = boardsNotInPanel[0]
+    if (!boardOrPanel) {
+      console.warn("No pcb_board or pcb_panel found for simplified geometry")
+      return []
+    }
+    pcbThickness = boardOrPanel.thickness ?? 1.2
   }
 
   let boardGeom: Geom3
-  const pcbThickness = 1.2 // TODO: Get from board if available
 
-  if (board.outline && board.outline.length > 0) {
+  if (
+    "outline" in boardOrPanel &&
+    boardOrPanel.outline &&
+    boardOrPanel.outline.length > 0
+  ) {
     boardGeom = createBoardGeomWithOutline(
       {
-        outline: board.outline!,
+        outline: boardOrPanel.outline,
       },
       pcbThickness,
     )
   } else {
     boardGeom = cuboid({
-      size: [board.width, board.height, pcbThickness],
-      center: [board.center.x, board.center.y, 0],
+      size: [boardOrPanel.width ?? 10, boardOrPanel.height ?? 10, pcbThickness],
+      center: [boardOrPanel.center.x, boardOrPanel.center.y, 0],
     })
   }
 
   // Colorize and return the simplified board
-  const material = boardMaterialColors[board.material] ?? colors.fr4Green
+  const material =
+    boardMaterialColors[
+      "material" in boardOrPanel ? (boardOrPanel.material ?? "fr4") : "fr4"
+    ] ?? colors.fr4Green
 
   return [colorize(material, boardGeom)]
 }

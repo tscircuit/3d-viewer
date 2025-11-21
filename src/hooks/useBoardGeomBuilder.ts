@@ -17,7 +17,11 @@ export const useBoardGeomBuilder = (
       setBoardGeom(null)
       return
     }
-    if (!circuitJson.some((e) => e.type === "pcb_board")) {
+    // Check for either pcb_board or pcb_panel
+    const hasBoardOrPanel = circuitJson.some(
+      (e) => e.type === "pcb_board" || e.type === "pcb_panel",
+    )
+    if (!hasBoardOrPanel) {
       setBoardGeom(null)
       return
     }

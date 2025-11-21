@@ -3,6 +3,7 @@ import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import type React from "react"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { CheckIcon, ChevronRightIcon } from "./Icons"
+import { zIndexMap } from "../../lib/utils/z-index-map"
 
 const itemStyles: React.CSSProperties = {
   padding: "6px 8px",
@@ -43,7 +44,7 @@ const contentStyles: React.CSSProperties = {
   border: "1px solid #333333",
   padding: "4px",
   minWidth: 160,
-  zIndex: 10001,
+  zIndex: zIndexMap.appearanceMenu,
   fontSize: 14,
   fontFamily:
     'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
@@ -79,6 +80,7 @@ export const AppearanceMenu = () => {
           }}
           onMouseEnter={() => setHoveredItem("appearance")}
           onMouseLeave={() => setHoveredItem(null)}
+          onTouchStart={() => setHoveredItem("appearance")}
         >
           <span style={{ flex: 1, display: "flex", alignItems: "center" }}>
             Appearance
@@ -114,6 +116,7 @@ export const AppearanceMenu = () => {
               }}
               onMouseEnter={() => setHoveredItem("boardBody")}
               onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("boardBody")}
             >
               <span style={iconContainerStyles}>
                 {visibility.boardBody && <CheckIcon />}
@@ -136,6 +139,7 @@ export const AppearanceMenu = () => {
               }}
               onMouseEnter={() => setHoveredItem("topCopper")}
               onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("topCopper")}
             >
               <span style={iconContainerStyles}>
                 {visibility.topCopper && <CheckIcon />}
@@ -158,6 +162,7 @@ export const AppearanceMenu = () => {
               }}
               onMouseEnter={() => setHoveredItem("bottomCopper")}
               onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("bottomCopper")}
             >
               <span style={iconContainerStyles}>
                 {visibility.bottomCopper && <CheckIcon />}
@@ -180,6 +185,7 @@ export const AppearanceMenu = () => {
               }}
               onMouseEnter={() => setHoveredItem("topSilkscreen")}
               onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("topSilkscreen")}
             >
               <span style={iconContainerStyles}>
                 {visibility.topSilkscreen && <CheckIcon />}
@@ -204,6 +210,7 @@ export const AppearanceMenu = () => {
               }}
               onMouseEnter={() => setHoveredItem("bottomSilkscreen")}
               onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("bottomSilkscreen")}
             >
               <span style={iconContainerStyles}>
                 {visibility.bottomSilkscreen && <CheckIcon />}
@@ -226,6 +233,7 @@ export const AppearanceMenu = () => {
               }}
               onMouseEnter={() => setHoveredItem("smtModels")}
               onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("smtModels")}
             >
               <span style={iconContainerStyles}>
                 {visibility.smtModels && <CheckIcon />}

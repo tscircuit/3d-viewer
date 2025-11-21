@@ -45,8 +45,8 @@ export function createTraceTextureForLayer({
   if (tracesOnLayer.length === 0) return null
 
   const canvas = document.createElement("canvas")
-  const canvasWidth = Math.floor(boardData.width * traceTextureResolution)
-  const canvasHeight = Math.floor(boardData.height * traceTextureResolution)
+  const canvasWidth = Math.floor(boardData.width! * traceTextureResolution)
+  const canvasHeight = Math.floor(boardData.height! * traceTextureResolution)
   canvas.width = canvasWidth
   canvas.height = canvasHeight
   const ctx = canvas.getContext("2d")
@@ -75,10 +75,10 @@ export function createTraceTextureForLayer({
       currentLineWidth = point.width * traceTextureResolution
       ctx.lineWidth = currentLineWidth
       const canvasX =
-        (pcbX - boardData.center.x + boardData.width / 2) *
+        (pcbX - boardData.center.x + boardData.width! / 2) *
         traceTextureResolution
       const canvasY =
-        (-(pcbY - boardData.center.y) + boardData.height / 2) *
+        (-(pcbY - boardData.center.y) + boardData.height! / 2) *
         traceTextureResolution
       if (firstPoint) {
         ctx.moveTo(canvasX, canvasY)
@@ -96,10 +96,10 @@ export function createTraceTextureForLayer({
   ctx.fillStyle = "black"
   allPcbVias.forEach((via) => {
     const canvasX =
-      (via.x - boardData.center.x + boardData.width / 2) *
+      (via.x - boardData.center.x + boardData.width! / 2) *
       traceTextureResolution
     const canvasY =
-      (-(via.y - boardData.center.y) + boardData.height / 2) *
+      (-(via.y - boardData.center.y) + boardData.height! / 2) *
       traceTextureResolution
     const canvasRadius = (via.outer_diameter / 2) * traceTextureResolution
     ctx.beginPath()
@@ -109,10 +109,10 @@ export function createTraceTextureForLayer({
   allPcbPlatedHoles.forEach((ph) => {
     if (ph.layers.includes(layer) && ph.shape === "circle") {
       const canvasX =
-        (ph.x - boardData.center.x + boardData.width / 2) *
+        (ph.x - boardData.center.x + boardData.width! / 2) *
         traceTextureResolution
       const canvasY =
-        (-(ph.y - boardData.center.y) + boardData.height / 2) *
+        (-(ph.y - boardData.center.y) + boardData.height! / 2) *
         traceTextureResolution
       const canvasRadius = (ph.outer_diameter / 2) * traceTextureResolution
       ctx.beginPath()

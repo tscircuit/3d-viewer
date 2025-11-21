@@ -1,28 +1,30 @@
 import type * as React from "react"
-import { forwardRef, useMemo, useState } from "react"
+import { forwardRef, useEffect, useMemo, useState } from "react"
 import * as THREE from "three"
 import packageJson from "../package.json"
-import { CubeWithLabeledSides } from "./three-components/cube-with-labeled-sides"
 import { Canvas } from "./react-three/Canvas"
 import { OrbitControls } from "./react-three/OrbitControls"
 import { Grid } from "./react-three/Grid"
 import { useFrame, useThree } from "./react-three/ThreeContext"
 import { Lights } from "./react-three/Lights"
-import {
-  CameraAnimator,
-  useCameraController,
-} from "./hooks/useCameraController"
-import type { CameraController } from "./hooks/useCameraController"
+import { CameraAnimatorWithContext } from "./hooks/cameraAnimation"
+import { useCameraController } from "./contexts/CameraControllerContext"
+import { useCameraSession } from "./hooks/useCameraSession"
+import type { CameraController } from "./hooks/cameraAnimation"
+import { OrientationCubeCanvas } from "./three-components/OrientationCubeCanvas"
+import { zIndexMap } from "../lib/utils/z-index-map"
 export type {
   CameraController,
   CameraPreset,
-} from "./hooks/useCameraController"
+} from "./hooks/cameraAnimation"
 
 export const RotationTracker = () => {
   const { camera } = useThree()
+  const { setCameraRotation } = useCameraController()
+
   useFrame(() => {
     if (camera) {
-      window.TSCI_MAIN_CAMERA_ROTATION = camera.rotation
+      setCameraRotation(camera.rotation)
     }
   })
 
@@ -60,6 +62,19 @@ export const CadViewerContainer = forwardRef<
       !clickToInteractEnabled,
     )
 
+    const { mainCameraRef, handleControlsChange, controller } =
+      useCameraController()
+    const {
+      handleCameraCreated,
+      handleControlsChange: handleSessionControlsChange,
+    } = useCameraSession()
+
+    useEffect(() => {
+      if (onCameraControllerReady) {
+        onCameraControllerReady(controller)
+      }
+    }, [controller, onCameraControllerReady])
+
     const gridSectionSize = useMemo(() => {
       if (!boardDimensions) return 10
       const width = boardDimensions.width ?? 0
@@ -74,46 +89,19 @@ export const CadViewerContainer = forwardRef<
       return [boardCenter.x, boardCenter.y, 0] as [number, number, number]
     }, [boardCenter])
 
-    const defaultTarget = useMemo(() => {
-      if (orbitTarget) {
-        return new THREE.Vector3(orbitTarget[0], orbitTarget[1], orbitTarget[2])
-      }
-      return new THREE.Vector3(0, 0, 0)
-    }, [orbitTarget])
-
-    const { cameraAnimatorProps, handleControlsChange } = useCameraController({
-      defaultTarget,
-      initialCameraPosition,
-      onCameraControllerReady,
-    })
-
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: 120,
-            height: 120,
-          }}
-        >
-          <Canvas
-            camera={{
-              up: [0, 0, 1],
-              position: [1, 1, 1],
-            }}
-            style={{ zIndex: 10 }}
-          >
-            <CubeWithLabeledSides />
-          </Canvas>
-        </div>
+        <OrientationCubeCanvas />
         <Canvas
           ref={ref}
           scene={{ up: new THREE.Vector3(0, 0, 1) }}
           camera={{ up: [0, 0, 1], position: initialCameraPosition }}
+          onCreated={({ camera }) => {
+            mainCameraRef.current = camera
+            handleCameraCreated(camera)
+          }}
         >
-          <CameraAnimator {...cameraAnimatorProps} />
+          <CameraAnimatorWithContext />
           <RotationTracker />
           {isInteractionEnabled && (
             <OrbitControls
@@ -126,7 +114,10 @@ export const CadViewerContainer = forwardRef<
               enableDamping={true}
               dampingFactor={0.1}
               target={orbitTarget}
-              onControlsChange={handleControlsChange}
+              onControlsChange={(controls) => {
+                handleControlsChange(controls)
+                handleSessionControlsChange()
+              }}
             />
           )}
           <Lights />
@@ -165,7 +156,7 @@ export const CadViewerContainer = forwardRef<
               position: "absolute",
               inset: 0,
               cursor: "pointer",
-              zIndex: 10,
+              zIndex: zIndexMap.clickToInteractOverlay,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",

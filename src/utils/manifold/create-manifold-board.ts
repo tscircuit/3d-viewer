@@ -1,7 +1,7 @@
 import type {
   ManifoldToplevel,
   CrossSection as ManifoldCrossSection,
-} from "manifold-3d/manifold.d.ts"
+} from "manifold-3d"
 import type { PcbBoard } from "circuit-json"
 
 const arePointsClockwise = (points: Array<[number, number]>): boolean => {
@@ -64,7 +64,7 @@ export function createManifoldBoard(
     }
     // Fallback to cuboid if no outline or invalid outline
     boardOp = Manifold.cube(
-      [boardData.width, boardData.height, pcbThickness],
+      [boardData.width!, boardData.height!, pcbThickness],
       true, // center (for all axes)
     )
     manifoldInstancesForCleanup.push(boardOp)
