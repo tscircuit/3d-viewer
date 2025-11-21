@@ -534,7 +534,27 @@ export function processPlatedHolesForManifold(
       // Final copper with hole
       const finalCopper = copperUnion.subtract(holeCutOp)
       manifoldInstancesForCleanup.push(finalCopper)
+      const translatedCopper = finalCopper.translate([ph.x, ph.y, 0])
+      manifoldInstancesForCleanup.push(translatedCopper)
 
+      let finalCopperOp: any = translatedCopper
+      if (boardClipVolume) {
+        const clipped = Manifold.intersection([
+          translatedCopper,
+          boardClipVolume,
+        ])
+        manifoldInstancesForCleanup.push(clipped)
+        finalCopperOp = clipped
+      }
+
+      platedHoleCopperOpsForSubtract.push(finalCopperOp)
+
+      const threeGeom = manifoldMeshToThreeGeometry(finalCopperOp.getMesh())
+      platedHoleCopperGeoms.push({
+        key: `ph-${ph.pcb_plated_hole_id || index}`,
+        geometry: threeGeom,
+        color: COPPER_COLOR,
+      })
       // Translate the entire assembly to the final position
     } else if (ph.shape === "hole_with_polygon_pad") {
       const padOutline = ph.pad_outline
