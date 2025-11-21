@@ -9,9 +9,13 @@ import type {
   PcbVia,
   PcbSilkscreenText,
   PcbSilkscreenPath,
+  PcbSilkscreenLine,
+  PcbSilkscreenRect,
+  PcbSilkscreenCircle,
   Point,
   PcbCutout,
   PcbCopperPour,
+  PcbPanel,
 } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import { translate, rotateZ } from "@jscad/modeling/src/operations/transforms"
@@ -34,6 +38,7 @@ import {
   colors,
   boardMaterialColors,
   tracesMaterialColors,
+  BOARD_SURFACE_OFFSET,
 } from "./geoms/constants"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { expand } from "@jscad/modeling/src/operations/expansions"
@@ -44,12 +49,16 @@ import {
 import type { Vec2 } from "@jscad/modeling/src/maths/types"
 import { createSilkscreenTextGeoms } from "./geoms/create-geoms-for-silkscreen-text"
 import { createSilkscreenPathGeom } from "./geoms/create-geoms-for-silkscreen-path"
+import { createSilkscreenLineGeom } from "./geoms/create-geoms-for-silkscreen-line"
+import { createSilkscreenRectGeom } from "./geoms/create-geoms-for-silkscreen-rect"
+import { createSilkscreenCircleGeom } from "./geoms/create-geoms-for-silkscreen-circle"
 import { createGeom2FromBRep } from "./geoms/brep-converter"
 import type { GeomContext } from "./GeomContext"
 import {
   clampRectBorderRadius,
   extractRectBorderRadius,
 } from "./utils/rect-border-radius"
+import { createHoleWithPolygonPadHoleGeom } from "./geoms/create-hole-with-polygon-pad"
 
 const PAD_ROUNDED_SEGMENTS = 64
 const BOARD_CLIP_Z_MARGIN = 1
@@ -84,6 +93,9 @@ type BuilderState =
   | "processing_traces"
   | "processing_vias"
   | "processing_silkscreen_text"
+  | "processing_silkscreen_lines"
+  | "processing_silkscreen_circles"
+  | "processing_silkscreen_rects"
   | "processing_silkscreen_paths"
   | "processing_cutouts"
   | "processing_copper_pours"
@@ -102,6 +114,9 @@ const buildStateOrder: BuilderState[] = [
   "processing_traces",
   "processing_vias",
   "processing_silkscreen_text",
+  "processing_silkscreen_lines",
+  "processing_silkscreen_circles",
+  "processing_silkscreen_rects",
   "processing_silkscreen_paths",
   "finalizing",
   "done",
@@ -117,6 +132,9 @@ export class BoardGeomBuilder {
   private pcb_vias: PcbVia[]
   private silkscreenTexts: PcbSilkscreenText[]
   private silkscreenPaths: PcbSilkscreenPath[]
+  private silkscreenLines: PcbSilkscreenLine[]
+  private silkscreenCircles: PcbSilkscreenCircle[]
+  private silkscreenRects: PcbSilkscreenRect[]
   private pcb_cutouts: PcbCutout[]
   private pcb_copper_pours: PcbCopperPour[]
 
@@ -128,6 +146,9 @@ export class BoardGeomBuilder {
   private viaGeoms: Geom3[] = [] // Combined with platedHoleGeoms
   private silkscreenTextGeoms: Geom3[] = []
   private silkscreenPathGeoms: Geom3[] = []
+  private silkscreenLineGeoms: Geom3[] = []
+  private silkscreenCircleGeoms: Geom3[] = []
+  private silkscreenRectGeoms: Geom3[] = []
   private copperPourGeoms: Geom3[] = []
   private boardClipGeom: Geom3 | null = null
 
@@ -168,8 +189,32 @@ export class BoardGeomBuilder {
     this.circuitJson = circuitJson
     this.onCompleteCallback = onComplete
 
-    // Extract elements
-    this.board = su(circuitJson).pcb_board.list()[0]!
+    // Extract elements - check for panel first, then board
+    const panels = circuitJson.filter(
+      (e) => e.type === "pcb_panel",
+    ) as PcbPanel[]
+    const boards = su(circuitJson).pcb_board.list()
+
+    // If we have a panel, use it as the board outline
+    if (panels.length > 0) {
+      const panel = panels[0]!
+      // Create a board-like object from the panel
+      this.board = {
+        type: "pcb_board",
+        pcb_board_id: panel.pcb_panel_id,
+        center: panel.center,
+        width: panel.width,
+        height: panel.height,
+        thickness: 1.6, // Default thickness
+        material: "fr4",
+        num_layers: 2,
+      } as PcbBoard
+    } else {
+      // Skip boards that are inside a panel - only render the panel outline
+      const boardsNotInPanel = boards.filter((b) => !b.pcb_panel_id)
+      this.board = boardsNotInPanel[0]!
+    }
+
     this.plated_holes = su(circuitJson).pcb_plated_hole.list()
     this.holes = su(circuitJson).pcb_hole.list()
     this.pads = su(circuitJson).pcb_smtpad.list()
@@ -177,6 +222,9 @@ export class BoardGeomBuilder {
     this.pcb_vias = su(circuitJson).pcb_via.list()
     this.silkscreenTexts = su(circuitJson).pcb_silkscreen_text.list()
     this.silkscreenPaths = su(circuitJson).pcb_silkscreen_path.list()
+    this.silkscreenLines = su(circuitJson).pcb_silkscreen_line.list()
+    this.silkscreenCircles = su(circuitJson).pcb_silkscreen_circle.list()
+    this.silkscreenRects = su(circuitJson).pcb_silkscreen_rect.list()
     this.pcb_cutouts = su(circuitJson).pcb_cutout.list()
     this.pcb_copper_pours = circuitJson.filter(
       (e) => e.type === "pcb_copper_pour",
@@ -207,13 +255,13 @@ export class BoardGeomBuilder {
       )
     } else {
       this.boardGeom = cuboid({
-        size: [this.board.width, this.board.height, this.ctx.pcbThickness],
+        size: [this.board.width!, this.board.height!, this.ctx.pcbThickness],
         center: [this.board.center.x, this.board.center.y, 0],
       })
       this.boardClipGeom = cuboid({
         size: [
-          this.board.width + 2 * BOARD_CLIP_XY_OUTSET,
-          this.board.height + 2 * BOARD_CLIP_XY_OUTSET,
+          this.board.width! + 2 * BOARD_CLIP_XY_OUTSET,
+          this.board.height! + 2 * BOARD_CLIP_XY_OUTSET,
           clipDepth,
         ],
         center: [this.board.center.x, this.board.center.y, 0],
@@ -293,6 +341,35 @@ export class BoardGeomBuilder {
           }
           break
 
+        case "processing_silkscreen_lines":
+          if (this.currentIndex < this.silkscreenLines.length) {
+            this.processSilkscreenLine(this.silkscreenLines[this.currentIndex]!)
+            this.currentIndex++
+          } else {
+            this.goToNextState()
+          }
+          break
+
+        case "processing_silkscreen_circles":
+          if (this.currentIndex < this.silkscreenCircles.length) {
+            this.processSilkscreenCircle(
+              this.silkscreenCircles[this.currentIndex]!,
+            )
+            this.currentIndex++
+          } else {
+            this.goToNextState()
+          }
+          break
+
+        case "processing_silkscreen_rects":
+          if (this.currentIndex < this.silkscreenRects.length) {
+            this.processSilkscreenRect(this.silkscreenRects[this.currentIndex]!)
+            this.currentIndex++
+          } else {
+            this.goToNextState()
+          }
+          break
+
         case "processing_silkscreen_paths":
           if (this.currentIndex < this.silkscreenPaths.length) {
             this.processSilkscreenPath(this.silkscreenPaths[this.currentIndex]!)
@@ -338,10 +415,34 @@ export class BoardGeomBuilder {
 
     switch (cutout.shape) {
       case "rect":
-        cutoutGeom = cuboid({
-          center: [cutout.center.x, cutout.center.y, 0],
-          size: [cutout.width, cutout.height, cutoutHeight],
-        })
+        const rectCornerRadius = clampRectBorderRadius(
+          cutout.width,
+          cutout.height,
+          extractRectBorderRadius(cutout),
+        )
+
+        if (rectCornerRadius > 0) {
+          const rect2d = roundedRectangle({
+            size: [cutout.width, cutout.height],
+            roundRadius: rectCornerRadius,
+            segments: PAD_ROUNDED_SEGMENTS,
+          })
+          cutoutGeom = extrudeLinear({ height: cutoutHeight }, rect2d)
+          cutoutGeom = translate([0, 0, -cutoutHeight / 2], cutoutGeom)
+          cutoutGeom = translate(
+            [cutout.center.x, cutout.center.y, 0],
+            cutoutGeom,
+          )
+        } else {
+          const baseCutoutGeom = cuboid({
+            center: [0, 0, 0],
+            size: [cutout.width, cutout.height, cutoutHeight],
+          })
+          cutoutGeom = translate(
+            [cutout.center.x, cutout.center.y, 0],
+            baseCutoutGeom,
+          )
+        }
         if (cutout.rotation) {
           const rotationRadians = (cutout.rotation * Math.PI) / 180
           cutoutGeom = rotateZ(rotationRadians, cutoutGeom)
@@ -378,7 +479,9 @@ export class BoardGeomBuilder {
 
   private processCopperPour(pour: PcbCopperPour) {
     const layerSign = pour.layer === "bottom" ? -1 : 1
-    const zPos = (layerSign * this.ctx.pcbThickness) / 2 + layerSign * M
+    const zPos =
+      (layerSign * this.ctx.pcbThickness) / 2 +
+      layerSign * BOARD_SURFACE_OFFSET.copper
 
     let pourGeom: Geom3 | null = null
 
@@ -422,7 +525,12 @@ export class BoardGeomBuilder {
       if (this.boardClipGeom) {
         pourGeom = intersect(this.boardClipGeom, pourGeom)
       }
-      const coloredPourGeom = colorize(colors.copper, pourGeom)
+      const covered = (pour as any).covered_with_solder_mask !== false
+      const pourMaterialColor = covered
+        ? (tracesMaterialColors[this.board.material] ??
+          colors.fr4GreenSolderWithMask)
+        : colors.copper
+      const coloredPourGeom = colorize(pourMaterialColor, pourGeom)
       this.copperPourGeoms.push(coloredPourGeom)
     }
   }
@@ -554,6 +662,38 @@ export class BoardGeomBuilder {
         clipGeom: this.boardClipGeom,
       })
       this.platedHoleGeoms.push(platedHoleGeom)
+    } else if (ph.shape === "hole_with_polygon_pad") {
+      const padOutline = ph.pad_outline
+      if (!Array.isArray(padOutline) || padOutline.length < 3) {
+        return
+      }
+
+      const holeDepth = this.ctx.pcbThickness * 1.5
+      const boardHole = createHoleWithPolygonPadHoleGeom(ph, holeDepth, {
+        sizeDelta: 2 * M,
+      })
+      const copperHole = createHoleWithPolygonPadHoleGeom(ph, holeDepth, {
+        sizeDelta: -2 * M,
+      })
+
+      if (!boardHole || !copperHole) return
+
+      if (!opts.dontCutBoard) {
+        this.boardGeom = subtract(this.boardGeom, boardHole)
+      }
+
+      this.padGeoms = this.padGeoms.map((pg) =>
+        colorize(colors.copper, subtract(pg, boardHole)),
+      )
+
+      this.platedHoleGeoms = this.platedHoleGeoms.map((phg) =>
+        colorize(colors.copper, subtract(phg, copperHole)),
+      )
+
+      const platedHoleGeom = platedHole(ph, this.ctx, {
+        clipGeom: this.boardClipGeom,
+      })
+      this.platedHoleGeoms.push(platedHoleGeom)
     }
   }
 
@@ -655,7 +795,9 @@ export class BoardGeomBuilder {
 
   private processPad(pad: PcbSmtPad) {
     const layerSign = pad.layer === "bottom" ? -1 : 1
-    const zPos = (layerSign * this.ctx.pcbThickness) / 2 + layerSign * M * 2 // Slightly offset from board surface
+    const zPos =
+      (layerSign * this.ctx.pcbThickness) / 2 +
+      layerSign * BOARD_SURFACE_OFFSET.copper // Slightly offset from board surface
 
     const rectBorderRadius = extractRectBorderRadius(pad)
 
@@ -716,7 +858,9 @@ export class BoardGeomBuilder {
     const finishSegment = () => {
       if (currentSegmentPoints.length >= 2 && currentLayer) {
         const layerSign = currentLayer === "bottom" ? -1 : 1
-        const zPos = (layerSign * this.ctx.pcbThickness) / 2 + layerSign * M
+        const zCenter =
+          (layerSign * this.ctx.pcbThickness) / 2 +
+          layerSign * BOARD_SURFACE_OFFSET.traces
 
         const linePath = line(currentSegmentPoints)
         // Use the width of the starting point of the segment for consistency
@@ -725,7 +869,7 @@ export class BoardGeomBuilder {
           linePath,
         )
         let traceGeom = translate(
-          [0, 0, zPos],
+          [0, 0, zCenter - M / 2],
           extrudeLinear({ height: M }, expandedPath),
         )
 
@@ -740,7 +884,7 @@ export class BoardGeomBuilder {
         )
         if (startHole) {
           const cuttingCylinder = cylinder({
-            center: [startPointCoords[0], startPointCoords[1], zPos + M / 2],
+            center: [startPointCoords[0], startPointCoords[1], zCenter],
             radius: startHole.diameter / 2 + M,
             height: M,
           })
@@ -750,7 +894,7 @@ export class BoardGeomBuilder {
         const endHole = this.getHoleToCut(endPointCoords[0], endPointCoords[1])
         if (endHole) {
           const cuttingCylinder = cylinder({
-            center: [endPointCoords[0], endPointCoords[1], zPos + M / 2],
+            center: [endPointCoords[0], endPointCoords[1], zCenter],
             radius: endHole.diameter / 2 + M,
             height: M,
           })
@@ -883,6 +1027,27 @@ export class BoardGeomBuilder {
     }
   }
 
+  private processSilkscreenLine(sl: PcbSilkscreenLine) {
+    const lineGeom = createSilkscreenLineGeom(sl, this.ctx)
+    if (lineGeom) {
+      this.silkscreenLineGeoms.push(lineGeom)
+    }
+  }
+
+  private processSilkscreenCircle(sc: PcbSilkscreenCircle) {
+    const circleGeom = createSilkscreenCircleGeom(sc, this.ctx)
+    if (circleGeom) {
+      this.silkscreenCircleGeoms.push(circleGeom)
+    }
+  }
+
+  private processSilkscreenRect(sr: PcbSilkscreenRect) {
+    const rectGeom = createSilkscreenRectGeom(sr, this.ctx)
+    if (rectGeom) {
+      this.silkscreenRectGeoms.push(rectGeom)
+    }
+  }
+
   private finalize() {
     if (!this.boardGeom) return
     // Colorize the final board geometry
@@ -898,6 +1063,9 @@ export class BoardGeomBuilder {
       ...this.viaGeoms,
       ...this.copperPourGeoms,
       ...this.silkscreenTextGeoms,
+      ...this.silkscreenLineGeoms,
+      ...this.silkscreenCircleGeoms,
+      ...this.silkscreenRectGeoms,
       ...this.silkscreenPathGeoms,
     ]
 

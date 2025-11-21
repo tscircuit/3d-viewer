@@ -1,161 +1,250 @@
 import { useState } from "react"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import type React from "react"
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
+import { CheckIcon, ChevronRightIcon } from "./Icons"
+import { zIndexMap } from "../../lib/utils/z-index-map"
 
-const menuItemStyle: React.CSSProperties = {
-  padding: "8px 18px",
-  cursor: "pointer",
+const itemStyles: React.CSSProperties = {
+  padding: "6px 8px",
+  borderRadius: 6,
+  cursor: "default",
+  outline: "none",
+  userSelect: "none",
   display: "flex",
   alignItems: "center",
-  gap: 10,
-  color: "#f5f6fa",
+  gap: 8,
+  color: "#fafafa",
   fontWeight: 400,
   fontSize: 14,
-  transition: "background 0.1s",
+  transition: "background-color 0.15s ease, color 0.15s ease",
+  fontFamily:
+    'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
 }
 
-const checkmarkStyle: React.CSSProperties = {
-  width: 20,
+const itemPaddingStyles: React.CSSProperties = {
+  paddingLeft: 32,
+  paddingTop: 6,
+  paddingBottom: 6,
+  paddingRight: 8,
 }
 
-const handleMouseOver = (e: React.MouseEvent<HTMLDivElement>) => {
-  e.currentTarget.style.background = "#2d313a"
+const separatorStyles: React.CSSProperties = {
+  height: 1,
+  backgroundColor: "#ffffff1a",
+  margin: "4px 0",
 }
 
-const handleMouseOut = (e: React.MouseEvent<HTMLDivElement>) => {
-  e.currentTarget.style.background = "transparent"
+const contentStyles: React.CSSProperties = {
+  backgroundColor: "#262626",
+  color: "#fafafa",
+  borderRadius: 8,
+  boxShadow:
+    "0px 12px 48px -12px rgba(0, 0, 0, 0.5), 0px 8px 24px -8px rgba(0, 0, 0, 0.3)",
+  border: "1px solid #333333",
+  padding: "4px",
+  minWidth: 160,
+  zIndex: zIndexMap.appearanceMenu,
+  fontSize: 14,
+  fontFamily:
+    'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+}
+
+const iconContainerStyles: React.CSSProperties = {
+  width: 16,
+  height: 16,
+  display: "flex",
+  alignItems: "flex-end",
+  justifyContent: "center",
+  flexShrink: 0,
 }
 
 export const AppearanceMenu = () => {
   const { visibility, toggleLayer } = useLayerVisibility()
-  const [showSubmenu, setShowSubmenu] = useState(false)
+  const [appearanceSubOpen, setAppearanceSubOpen] = useState(false)
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
   return (
     <>
-      <div
-        style={{
-          borderTop: "1px solid rgba(255, 255, 255, 0.1)",
-          margin: "8px 0",
-        }}
-      />
-      <div
-        style={{
-          padding: "8px 18px",
-          fontSize: 14,
-          color: "#f5f6fa",
-          fontWeight: 400,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          transition: "background 0.1s",
-          position: "relative",
-        }}
-        onMouseEnter={() => setShowSubmenu(true)}
-        onMouseLeave={() => setShowSubmenu(false)}
-        onMouseOver={handleMouseOver}
-        onMouseOut={handleMouseOut}
-      >
-        <span>Appearance</span>
-        <span
-          style={{
-            fontSize: 10,
-            transform: showSubmenu ? "rotate(90deg)" : "rotate(0deg)",
-            transition: "transform 0.2s",
-            display: "inline-block",
-          }}
-        >
-          ▶
-        </span>
+      <DropdownMenu.Separator style={separatorStyles} />
 
-        {showSubmenu && (
+      <DropdownMenu.Sub onOpenChange={setAppearanceSubOpen}>
+        <DropdownMenu.SubTrigger
+          style={{
+            ...itemStyles,
+            ...itemPaddingStyles,
+            backgroundColor:
+              appearanceSubOpen || hoveredItem === "appearance"
+                ? "#404040"
+                : "transparent",
+          }}
+          onMouseEnter={() => setHoveredItem("appearance")}
+          onMouseLeave={() => setHoveredItem(null)}
+          onTouchStart={() => setHoveredItem("appearance")}
+        >
+          <span style={{ flex: 1, display: "flex", alignItems: "center" }}>
+            Appearance
+          </span>
           <div
             style={{
-              position: "absolute",
-              left: "100%",
-              top: 0,
-              minWidth: 200,
-              background: "#23272f",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: 6,
-              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
-              zIndex: 1000,
-              marginTop: 8,
-              marginBottom: 8,
+              marginLeft: "auto",
+              display: "flex",
+              alignItems: "flex-end",
+              marginBottom: "-5px",
             }}
-            onMouseEnter={() => setShowSubmenu(true)}
-            onMouseLeave={() => setShowSubmenu(false)}
-            onClick={(e) => e.stopPropagation()}
           >
-            <div
-              style={menuItemStyle}
-              onClick={() => toggleLayer("boardBody")}
-              onMouseOver={handleMouseOver}
-              onMouseOut={handleMouseOut}
-            >
-              <span style={checkmarkStyle}>
-                {visibility.boardBody ? "✔" : ""}
-              </span>
-              Board Body
-            </div>
-            <div
-              style={menuItemStyle}
-              onClick={() => toggleLayer("topCopper")}
-              onMouseOver={handleMouseOver}
-              onMouseOut={handleMouseOut}
-            >
-              <span style={checkmarkStyle}>
-                {visibility.topCopper ? "✔" : ""}
-              </span>
-              Top Copper
-            </div>
-            <div
-              style={menuItemStyle}
-              onClick={() => toggleLayer("bottomCopper")}
-              onMouseOver={handleMouseOver}
-              onMouseOut={handleMouseOut}
-            >
-              <span style={checkmarkStyle}>
-                {visibility.bottomCopper ? "✔" : ""}
-              </span>
-              Bottom Copper
-            </div>
-            <div
-              style={menuItemStyle}
-              onClick={() => toggleLayer("topSilkscreen")}
-              onMouseOver={handleMouseOver}
-              onMouseOut={handleMouseOut}
-            >
-              <span style={checkmarkStyle}>
-                {visibility.topSilkscreen ? "✔" : ""}
-              </span>
-              Top Silkscreen
-            </div>
-            <div
-              style={menuItemStyle}
-              onClick={() => toggleLayer("bottomSilkscreen")}
-              onMouseOver={handleMouseOver}
-              onMouseOut={handleMouseOut}
-            >
-              <span style={checkmarkStyle}>
-                {visibility.bottomSilkscreen ? "✔" : ""}
-              </span>
-              Bottom Silkscreen
-            </div>
-            <div
-              style={menuItemStyle}
-              onClick={() => toggleLayer("smtModels")}
-              onMouseOver={handleMouseOver}
-              onMouseOut={handleMouseOut}
-            >
-              <span style={checkmarkStyle}>
-                {visibility.smtModels ? "✔" : ""}
-              </span>
-              CAD Models
-            </div>
+            <ChevronRightIcon isOpen={appearanceSubOpen} />
           </div>
-        )}
-      </div>
+        </DropdownMenu.SubTrigger>
+
+        <DropdownMenu.Portal>
+          <DropdownMenu.SubContent
+            style={{ ...contentStyles, marginLeft: -2 }}
+            collisionPadding={10}
+            avoidCollisions={true}
+          >
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "boardBody" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                toggleLayer("boardBody")
+              }}
+              onMouseEnter={() => setHoveredItem("boardBody")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("boardBody")}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.boardBody && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Board Body
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "topCopper" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                toggleLayer("topCopper")
+              }}
+              onMouseEnter={() => setHoveredItem("topCopper")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("topCopper")}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.topCopper && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Top Copper
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "bottomCopper" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                toggleLayer("bottomCopper")
+              }}
+              onMouseEnter={() => setHoveredItem("bottomCopper")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("bottomCopper")}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.bottomCopper && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Bottom Copper
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "topSilkscreen" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                toggleLayer("topSilkscreen")
+              }}
+              onMouseEnter={() => setHoveredItem("topSilkscreen")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("topSilkscreen")}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.topSilkscreen && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Top Silkscreen
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "bottomSilkscreen"
+                    ? "#404040"
+                    : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                toggleLayer("bottomSilkscreen")
+              }}
+              onMouseEnter={() => setHoveredItem("bottomSilkscreen")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("bottomSilkscreen")}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.bottomSilkscreen && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Bottom Silkscreen
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "smtModels" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                toggleLayer("smtModels")
+              }}
+              onMouseEnter={() => setHoveredItem("smtModels")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("smtModels")}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.smtModels && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                CAD Models
+              </span>
+            </DropdownMenu.Item>
+          </DropdownMenu.SubContent>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Sub>
     </>
   )
 }

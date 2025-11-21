@@ -1,5 +1,5 @@
-import type { ManifoldToplevel, CrossSection } from "manifold-3d/manifold.d.ts"
-import type { AnyCircuitElement, PcbCopperPour } from "circuit-json"
+import type { ManifoldToplevel, CrossSection } from "manifold-3d"
+import type { AnyCircuitElement, PcbBoard, PcbCopperPour } from "circuit-json"
 import * as THREE from "three"
 import { manifoldMeshToThreeGeometry } from "../manifold-mesh-to-three-geometry"
 import {
@@ -7,9 +7,8 @@ import {
   DEFAULT_SMT_PAD_THICKNESS,
   MANIFOLD_Z_OFFSET,
   SMOOTH_CIRCLE_SEGMENTS,
+  tracesMaterialColors,
 } from "../../geoms/constants"
-
-const COPPER_COLOR = new THREE.Color(...defaultColors.copper)
 
 const arePointsClockwise = (points: Array<[number, number]>): boolean => {
   let area = 0
@@ -112,6 +111,7 @@ export function processCopperPoursForManifold(
   circuitJson: AnyCircuitElement[],
   pcbThickness: number,
   manifoldInstancesForCleanup: any[],
+  boardMaterial: PcbBoard["material"],
   holeUnion?: any,
   boardClipVolume?: any,
 ): ProcessCopperPoursResult {
@@ -207,11 +207,17 @@ export function processCopperPoursForManifold(
         manifoldInstancesForCleanup.push(clipped)
         pourOp = clipped
       }
+      const covered = (pour as any).covered_with_solder_mask !== false
+      const pourColorArr = covered
+        ? (tracesMaterialColors[boardMaterial] ??
+          defaultColors.fr4GreenSolderWithMask)
+        : defaultColors.copper
+      const pourColor = new THREE.Color(...pourColorArr)
       const threeGeom = manifoldMeshToThreeGeometry(pourOp.getMesh())
       copperPourGeoms.push({
         key: `coppour-${pour.pcb_copper_pour_id}`,
         geometry: threeGeom,
-        color: COPPER_COLOR,
+        color: pourColor,
       })
     }
   }

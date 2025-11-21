@@ -3,6 +3,11 @@ import type { PcbBoard } from "circuit-json"
 
 export const M = 0.01
 
+export const BOARD_SURFACE_OFFSET = {
+  traces: 0.001,
+  copper: 0.002,
+} as const
+
 export const colors = {
   copper: [0.9, 0.6, 0.2],
   fr4Green: [0.04, 0.16, 0.08],

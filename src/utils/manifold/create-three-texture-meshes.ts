@@ -1,6 +1,7 @@
 import * as THREE from "three"
 import type { PcbBoard } from "circuit-json"
 import type { ManifoldTextures } from "../../hooks/useManifoldBoardBuilder"
+import { BOARD_SURFACE_OFFSET } from "../../geoms/constants"
 
 export function createTextureMeshes(
   textures: ManifoldTextures | null,
@@ -35,7 +36,7 @@ export function createTextureMeshes(
 
   const topTraceMesh = createTexturePlane(
     textures.topTrace,
-    pcbThickness / 2 + 0.015, // Offset similar to CadViewerManifold
+    pcbThickness / 2 + BOARD_SURFACE_OFFSET.traces, // Use consistent copper offset
     false,
     "trace",
   )
@@ -51,7 +52,7 @@ export function createTextureMeshes(
 
   const bottomTraceMesh = createTexturePlane(
     textures.bottomTrace,
-    -pcbThickness / 2 - 0.015,
+    -pcbThickness / 2 - BOARD_SURFACE_OFFSET.traces, // Use consistent copper offset
     true,
     "trace",
   )

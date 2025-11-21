@@ -1,21 +1,45 @@
-import { useState, useCallback, useRef, useEffect } from "react"
+import type React from "react"
+import { useState, useCallback, useRef, useEffect, useMemo } from "react"
+import * as THREE from "three"
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
+import { useCameraPreset } from "./hooks/useCameraPreset"
 import { useGlobalDownloadGltf } from "./hooks/useGlobalDownloadGltf"
-import packageJson from "../package.json"
+import { useRegisteredHotkey } from "./hooks/useRegisteredHotkey"
 import {
   LayerVisibilityProvider,
   useLayerVisibility,
 } from "./contexts/LayerVisibilityContext"
-import { AppearanceMenu } from "./components/AppearanceMenu"
+import {
+  CameraControllerProvider,
+  useCameraController,
+} from "./contexts/CameraControllerContext"
+import { ContextMenu } from "./components/ContextMenu"
+import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
+import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
 
 const CadViewerInner = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const [autoRotate, setAutoRotate] = useState(true)
-  const [autoRotateUserToggled, setAutoRotateUserToggled] = useState(false)
+  const [isKeyboardShortcutsDialogOpen, setIsKeyboardShortcutsDialogOpen] =
+    useState(false)
+  const [autoRotate, setAutoRotate] = useState(() => {
+    const stored = window.localStorage.getItem("cadViewerAutoRotate")
+    return stored === "false" ? false : true
+  })
+  const [autoRotateUserToggled, setAutoRotateUserToggled] = useState(() => {
+    const stored = window.localStorage.getItem("cadViewerAutoRotateUserToggled")
+    return stored === "true"
+  })
+  const [cameraPreset, setCameraPreset] = useState<CameraPreset>("Custom")
+  const { cameraType, setCameraType } = useCameraController()
   const { visibility, toggleLayer } = useLayerVisibility()
+
+  const cameraControllerRef = useRef<CameraController | null>(null)
+  const externalCameraControllerReady = props.onCameraControllerReady as
+    | ((controller: CameraController | null) => void)
+    | undefined
 
   const {
     menuVisible,
@@ -28,11 +52,29 @@ const CadViewerInner = (props: any) => {
   const autoRotateUserToggledRef = useRef(autoRotateUserToggled)
   autoRotateUserToggledRef.current = autoRotateUserToggled
 
+  const isAnimatingRef = useRef(false)
+  const lastPresetSelectTime = useRef(0)
+  const PRESET_COOLDOWN = 1000 // 1 second cooldown after selecting a preset
+
   const handleUserInteraction = useCallback(() => {
+    // Don't update if we're in the middle of an animation or just selected a preset
+    if (
+      isAnimatingRef.current ||
+      Date.now() - lastPresetSelectTime.current < PRESET_COOLDOWN
+    ) {
+      return
+    }
+
     if (!autoRotateUserToggledRef.current) {
       setAutoRotate(false)
     }
-  }, [])
+
+    // Only set to Custom if the user is actually interacting with the camera
+    // and not just clicking on the preset menu
+    if (!menuVisible) {
+      setCameraPreset("Custom")
+    }
+  }, [menuVisible])
 
   const toggleAutoRotate = useCallback(() => {
     setAutoRotate((prev) => !prev)
@@ -41,10 +83,42 @@ const CadViewerInner = (props: any) => {
 
   const downloadGltf = useGlobalDownloadGltf()
 
-  const handleMenuClick = (newEngine: "jscad" | "manifold") => {
-    setEngine(newEngine)
+  const closeMenu = useCallback(() => {
     setMenuVisible(false)
-  }
+  }, [setMenuVisible])
+
+  const handleCameraControllerReady = useCallback(
+    (controller: CameraController | null) => {
+      cameraControllerRef.current = controller
+      externalCameraControllerReady?.(controller)
+      if (controller && cameraPreset !== "Custom") {
+        controller.animateToPreset(cameraPreset)
+      }
+    },
+    [cameraPreset, externalCameraControllerReady],
+  )
+
+  const { handleCameraPresetSelect } = useCameraPreset({
+    setAutoRotate,
+    setAutoRotateUserToggled,
+    setCameraPreset,
+    closeMenu,
+    cameraControllerRef,
+    isAnimatingRef,
+    lastPresetSelectTime,
+  })
+
+  useRegisteredHotkey(
+    "open_keyboard_shortcuts_dialog",
+    () => {
+      setIsKeyboardShortcutsDialogOpen(true)
+    },
+    {
+      key: "?",
+      description: "Open keyboard shortcuts",
+      modifiers: ["Shift"],
+    },
+  )
 
   useEffect(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
@@ -56,6 +130,30 @@ const CadViewerInner = (props: any) => {
   useEffect(() => {
     window.localStorage.setItem("cadViewerEngine", engine)
   }, [engine])
+
+  useEffect(() => {
+    window.localStorage.setItem("cadViewerAutoRotate", String(autoRotate))
+  }, [autoRotate])
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      "cadViewerAutoRotateUserToggled",
+      String(autoRotateUserToggled),
+    )
+  }, [autoRotateUserToggled])
+
+  // Initialize camera type from localStorage
+  useEffect(() => {
+    const stored = window.localStorage.getItem("cadViewerCameraType")
+    if (stored === "orthographic" || stored === "perspective") {
+      setCameraType(stored)
+    }
+  }, [setCameraType])
+
+  // Sync camera type to localStorage
+  useEffect(() => {
+    window.localStorage.setItem("cadViewerCameraType", cameraType)
+  }, [cameraType])
 
   const viewerKey = props.circuitJson
     ? JSON.stringify(props.circuitJson)
@@ -81,13 +179,17 @@ const CadViewerInner = (props: any) => {
         <CadViewerJscad
           {...props}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+          cameraType={cameraType}
           onUserInteraction={handleUserInteraction}
+          onCameraControllerReady={handleCameraControllerReady}
         />
       ) : (
         <CadViewerManifold
           {...props}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+          cameraType={cameraType}
           onUserInteraction={handleUserInteraction}
+          onCameraControllerReady={handleCameraControllerReady}
         />
       )}
       <div
@@ -107,135 +209,55 @@ const CadViewerInner = (props: any) => {
         Engine: <b>{engine === "jscad" ? "JSCAD" : "Manifold"}</b>
       </div>
       {menuVisible && (
-        <div
-          ref={menuRef}
-          style={{
-            position: "fixed",
-            top: menuPos.y,
-            left: menuPos.x,
-            background: "#23272f",
-            color: "#f5f6fa",
-            borderRadius: 6,
-            boxShadow: "0 6px 24px 0 rgba(0,0,0,0.18)",
-            zIndex: 1000,
-            minWidth: 200,
-            border: "1px solid #353945",
-            padding: 0,
-            fontSize: 15,
-            fontWeight: 500,
-            transition: "opacity 0.1s",
+        <ContextMenu
+          menuRef={menuRef}
+          menuPos={menuPos}
+          engine={engine}
+          cameraPreset={cameraPreset}
+          autoRotate={autoRotate}
+          onEngineSwitch={(newEngine) => {
+            setEngine(newEngine)
+            closeMenu()
           }}
-        >
-          <div
-            style={{
-              padding: "12px 18px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              color: "#f5f6fa",
-              fontWeight: 500,
-              borderRadius: 6,
-              transition: "background 0.1s",
-            }}
-            onClick={() =>
-              handleMenuClick(engine === "jscad" ? "manifold" : "jscad")
-            }
-            onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
-            onMouseOut={(e) =>
-              (e.currentTarget.style.background = "transparent")
-            }
-          >
-            Switch to {engine === "jscad" ? "Manifold" : "JSCAD"} Engine
-            <span
-              style={{
-                fontSize: 12,
-                marginLeft: "auto",
-                opacity: 0.5,
-                fontWeight: 400,
-              }}
-            >
-              {engine === "jscad" ? "experimental" : "default"}
-            </span>
-          </div>
-          <div
-            style={{
-              padding: "12px 18px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              color: "#f5f6fa",
-              fontWeight: 500,
-              borderRadius: 6,
-              transition: "background 0.1s",
-            }}
-            onClick={() => {
-              toggleAutoRotate()
-              setMenuVisible(false)
-            }}
-            onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
-            onMouseOut={(e) =>
-              (e.currentTarget.style.background = "transparent")
-            }
-          >
-            <span style={{ marginRight: 8 }}>{autoRotate ? "✔" : ""}</span>
-            Auto rotate
-          </div>
-          <div
-            style={{
-              padding: "12px 18px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              color: "#f5f6fa",
-              fontWeight: 500,
-              borderRadius: 6,
-              transition: "background 0.1s",
-            }}
-            onClick={() => {
-              downloadGltf()
-              setMenuVisible(false)
-            }}
-            onMouseOver={(e) => (e.currentTarget.style.background = "#2d313a")}
-            onMouseOut={(e) =>
-              (e.currentTarget.style.background = "transparent")
-            }
-          >
-            Download GLTF
-          </div>
-          <AppearanceMenu />
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              padding: "8px 0",
-              borderTop: "1px solid rgba(255, 255, 255, 0.1)",
-              marginTop: "8px",
-            }}
-          >
-            <span
-              style={{
-                fontSize: 10,
-                opacity: 0.6,
-                fontWeight: 300,
-                color: "#c0c0c0",
-              }}
-            >
-              @tscircuit/3d-viewer@{packageJson.version}
-            </span>
-          </div>
-        </div>
+          onCameraPresetSelect={handleCameraPresetSelect}
+          onAutoRotateToggle={() => {
+            toggleAutoRotate()
+            closeMenu()
+          }}
+          onDownloadGltf={() => {
+            downloadGltf()
+            closeMenu()
+          }}
+          onOpenKeyboardShortcuts={() => {
+            setIsKeyboardShortcutsDialogOpen(true)
+            closeMenu()
+          }}
+        />
       )}
+      <KeyboardShortcutsDialog
+        open={isKeyboardShortcutsDialogOpen}
+        onClose={() => setIsKeyboardShortcutsDialogOpen(false)}
+      />
     </div>
   )
 }
 
 export const CadViewer = (props: any) => {
+  // Default camera target and position - these will be overridden by CadViewerContainer
+  const defaultTarget = useMemo(() => new THREE.Vector3(0, 0, 0), [])
+  const initialCameraPosition = useMemo<readonly [number, number, number]>(
+    () => [5, -5, 5] as const,
+    [],
+  )
+
   return (
-    <LayerVisibilityProvider>
-      <CadViewerInner {...props} />
-    </LayerVisibilityProvider>
+    <CameraControllerProvider
+      defaultTarget={defaultTarget}
+      initialCameraPosition={initialCameraPosition}
+    >
+      <LayerVisibilityProvider>
+        <CadViewerInner {...props} />
+      </LayerVisibilityProvider>
+    </CameraControllerProvider>
   )
 }
