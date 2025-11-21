@@ -18,6 +18,7 @@ interface ContextMenuProps {
   onCameraPresetSelect: (preset: CameraPreset) => void
   onAutoRotateToggle: () => void
   onDownloadGltf: () => void
+  onOpenKeyboardShortcuts: () => void
 }
 
 const cameraOptions: CameraPreset[] = [
@@ -108,6 +109,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onCameraPresetSelect,
   onAutoRotateToggle,
   onDownloadGltf,
+  onOpenKeyboardShortcuts,
 }) => {
   const { cameraType, setCameraType } = useCameraController()
   const [cameraSubOpen, setCameraSubOpen] = useState(false)
@@ -312,6 +314,35 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 }}
               >
                 {engine === "jscad" ? "experimental" : "default"}
+              </div>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Separator style={separatorStyles} />
+
+            {/* Keyboard Shortcuts */}
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                ...itemPaddingStyles,
+                backgroundColor:
+                  hoveredItem === "shortcuts" ? "#404040" : "transparent",
+              }}
+              onSelect={onOpenKeyboardShortcuts}
+              onMouseEnter={() => setHoveredItem("shortcuts")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("shortcuts")}
+            >
+              <span style={{ flex: 1, display: "flex", alignItems: "center" }}>
+                Keyboard Shortcuts
+              </span>
+              <div
+                style={{
+                  ...badgeStyles,
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                Shift+?
               </div>
             </DropdownMenu.Item>
 

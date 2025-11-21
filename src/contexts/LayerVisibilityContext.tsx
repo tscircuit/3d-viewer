@@ -30,7 +30,6 @@ export interface LayerVisibilityState {
 
 interface LayerVisibilityContextType {
   visibility: LayerVisibilityState
-  toggleLayer: (layer: keyof LayerVisibilityState) => void
   setLayerVisibility: (
     layer: keyof LayerVisibilityState,
     visible: boolean,
@@ -69,13 +68,6 @@ export const LayerVisibilityProvider: React.FC<{
   const [visibility, setVisibility] =
     useState<LayerVisibilityState>(defaultVisibility)
 
-  const toggleLayer = useCallback((layer: keyof LayerVisibilityState) => {
-    setVisibility((prev) => ({
-      ...prev,
-      [layer]: !prev[layer],
-    }))
-  }, [])
-
   const setLayerVisibility = useCallback(
     (layer: keyof LayerVisibilityState, visible: boolean) => {
       setVisibility((prev) => ({
@@ -93,11 +85,10 @@ export const LayerVisibilityProvider: React.FC<{
   const value = useMemo(
     () => ({
       visibility,
-      toggleLayer,
       setLayerVisibility,
       resetToDefaults,
     }),
-    [visibility, toggleLayer, setLayerVisibility, resetToDefaults],
+    [visibility, setLayerVisibility, resetToDefaults],
   )
 
   return (

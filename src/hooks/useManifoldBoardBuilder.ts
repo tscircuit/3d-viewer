@@ -254,6 +254,7 @@ export const useManifoldBoardBuilder = (
         platedHoleSubtractOp,
       } = processPlatedHolesForManifold(
         Manifold,
+        CrossSection,
         circuitJson,
         currentPcbThickness,
         manifoldInstancesForCleanup.current,
