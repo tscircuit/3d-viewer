@@ -14,7 +14,7 @@ import {
 import { BOARD_SURFACE_OFFSET, M, colors } from "./constants"
 import type { GeomContext } from "../GeomContext"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
-import { translate } from "@jscad/modeling/src/operations/transforms"
+import { rotate, translate } from "@jscad/modeling/src/operations/transforms"
 import {
   clampRectBorderRadius,
   extractRectBorderRadius,
@@ -188,6 +188,13 @@ export const platedHole = (
   }
 
   if (plated_hole.shape === "pill") {
+    const rotationRadians = ((plated_hole.ccw_rotation || 0) * Math.PI) / 180
+    const rotateAroundCenter = (geom: Geom3) => {
+      if (!rotationRadians) return geom
+      const toOrigin = translate([-plated_hole.x, -plated_hole.y, 0], geom)
+      const rotated = rotate([0, 0, rotationRadians], toOrigin)
+      return translate([plated_hole.x, plated_hole.y, 0], rotated)
+    }
     const shouldRotate = plated_hole.hole_height! > plated_hole.hole_width!
 
     const holeWidth = shouldRotate
@@ -279,8 +286,9 @@ export const platedHole = (
     })
     const drillUnion = union(drillRect, drillLeftCap, drillRightCap)
 
-    const copperSolid = maybeClip(outerBarrel, clipGeom)
-    const drill = drillUnion
+    const copperSolid = maybeClip(rotateAroundCenter(outerBarrel), clipGeom)
+    const drill = rotateAroundCenter(drillUnion)
+    // const drill = drillUnion
 
     return colorize(colors.copper, subtract(copperSolid, drill))
     // biome-ignore lint/style/noUselessElse: <explanation>
