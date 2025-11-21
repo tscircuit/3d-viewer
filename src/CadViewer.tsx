@@ -34,7 +34,7 @@ const CadViewerInner = (props: any) => {
   })
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>("Custom")
   const { cameraType, setCameraType } = useCameraController()
-  const { visibility, toggleLayer } = useLayerVisibility()
+  const { visibility, setLayerVisibility } = useLayerVisibility()
 
   const cameraControllerRef = useRef<CameraController | null>(null)
   const externalCameraControllerReady = props.onCameraControllerReady as
@@ -114,9 +114,8 @@ const CadViewerInner = (props: any) => {
       setIsKeyboardShortcutsDialogOpen(true)
     },
     {
-      key: "?",
+      shortcut: "shift+?",
       description: "Open keyboard shortcuts",
-      modifiers: ["Shift"],
     },
   )
 

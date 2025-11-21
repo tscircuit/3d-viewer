@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 
 export type HotkeyMetadata = {
-  key: string
+  shortcut: string
   description: string
-  modifiers?: ("Ctrl" | "Cmd" | "Shift" | "Alt")[]
 }
 
 type HotkeyRegistration = HotkeyMetadata & {
@@ -18,30 +17,30 @@ const subscribers = new Set<HotkeySubscriber>()
 
 let isListenerAttached = false
 
-const matchesKey = (eventKey: string, targetKey: string) => {
-  if (!eventKey || !targetKey) return false
-  return eventKey.toLowerCase() === targetKey.toLowerCase()
+const parseShortcut = (shortcut: string) => {
+  const parts = shortcut.toLowerCase().split("+")
+  const key = parts[parts.length - 1]
+  const modifierParts = parts.slice(0, -1)
+
+  return {
+    key,
+    ctrl: modifierParts.includes("ctrl"),
+    cmd: modifierParts.includes("cmd"),
+    shift: modifierParts.includes("shift"),
+    alt: modifierParts.includes("alt"),
+  }
 }
 
-const matchesModifiers = (
-  event: KeyboardEvent,
-  modifiers?: ("Ctrl" | "Cmd" | "Shift" | "Alt")[],
-) => {
-  if (!modifiers || modifiers.length === 0) {
-    return !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey
-  }
+const matchesShortcut = (event: KeyboardEvent, shortcut: string) => {
+  const parsed = parseShortcut(shortcut)
 
-  const hasCtrl = modifiers.includes("Ctrl")
-  const hasCmd = modifiers.includes("Cmd")
-  const hasShift = modifiers.includes("Shift")
-  const hasAlt = modifiers.includes("Alt")
+  const keyMatches = event.key.toLowerCase() === parsed.key
+  const ctrlMatches = parsed.ctrl === event.ctrlKey
+  const cmdMatches = parsed.cmd === event.metaKey
+  const shiftMatches = parsed.shift === event.shiftKey
+  const altMatches = parsed.alt === event.altKey
 
-  if (hasCtrl && !event.ctrlKey) return false
-  if (hasCmd && !event.metaKey) return false
-  if (hasShift && !event.shiftKey) return false
-  if (hasAlt && !event.altKey) return false
-
-  return true
+  return keyMatches && ctrlMatches && cmdMatches && shiftMatches && altMatches
 }
 
 const isEditableTarget = (target: EventTarget | null) => {
@@ -61,10 +60,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 
   hotkeyRegistry.forEach((entry) => {
-    if (
-      matchesKey(event.key, entry.key) &&
-      matchesModifiers(event, entry.modifiers)
-    ) {
+    if (matchesShortcut(event, entry.shortcut)) {
       event.preventDefault()
       entry.invoke()
     }
@@ -113,11 +109,10 @@ export const useRegisteredHotkey = (
 
   const normalizedMetadata = useMemo(
     () => ({
-      key: metadata.key,
+      shortcut: metadata.shortcut,
       description: metadata.description,
-      modifiers: metadata.modifiers,
     }),
-    [metadata.key, metadata.description, metadata.modifiers],
+    [metadata.shortcut, metadata.description],
   )
 
   useEffect(() => {
