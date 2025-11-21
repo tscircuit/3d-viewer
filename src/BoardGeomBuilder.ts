@@ -612,22 +612,42 @@ export class BoardGeomBuilder {
 
       pillHole = union(
         cuboid({
-          center: [ph.x, ph.y, 0],
+          center: [
+            ph.x + (ph.hole_offset_x || 0),
+            ph.y + (ph.hole_offset_y || 0),
+            0,
+          ],
           size: shouldRotate
             ? [holeHeight, rectLength, this.ctx.pcbThickness * 1.5]
             : [rectLength, holeHeight, this.ctx.pcbThickness * 1.5],
         }),
         cylinder({
           center: shouldRotate
-            ? [ph.x, ph.y - rectLength / 2, 0]
-            : [ph.x - rectLength / 2, ph.y, 0],
+            ? [
+                ph.x + (ph.hole_offset_x || 0),
+                ph.y + (ph.hole_offset_y || 0) - rectLength / 2,
+                0,
+              ]
+            : [
+                ph.x + (ph.hole_offset_x || 0) - rectLength / 2,
+                ph.y + (ph.hole_offset_y || 0),
+                0,
+              ],
           radius: holeRadius,
           height: this.ctx.pcbThickness * 1.5,
         }),
         cylinder({
           center: shouldRotate
-            ? [ph.x, ph.y + rectLength / 2, 0]
-            : [ph.x + rectLength / 2, ph.y, 0],
+            ? [
+                ph.x + (ph.hole_offset_x || 0),
+                ph.y + (ph.hole_offset_y || 0) + rectLength / 2,
+                0,
+              ]
+            : [
+                ph.x + (ph.hole_offset_x || 0) + rectLength / 2,
+                ph.y + (ph.hole_offset_y || 0),
+                0,
+              ],
           radius: holeRadius,
           height: this.ctx.pcbThickness * 1.5,
         }),
