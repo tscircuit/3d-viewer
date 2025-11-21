@@ -35,7 +35,7 @@ const CadViewerInner = (props: any) => {
   })
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>("Custom")
   const { cameraType, setCameraType } = useCameraController()
-  const { visibility, toggleLayer } = useLayerVisibility()
+  const { visibility, setLayerVisibility } = useLayerVisibility()
   const { showToast } = useToast()
 
   const cameraControllerRef = useRef<CameraController | null>(null)
@@ -124,9 +124,10 @@ const CadViewerInner = (props: any) => {
   useRegisteredHotkey(
     "toggle_smt_models",
     () => {
-      const newState = toggleLayer("smtModels")
+      const newVisibility = !visibility.smtModels
+      setLayerVisibility("smtModels", newVisibility)
       showToast(
-        newState ? "SMT components visible" : "SMT components hidden",
+        newVisibility ? "SMT components visible" : "SMT components hidden",
         1500,
       )
     },
@@ -139,9 +140,10 @@ const CadViewerInner = (props: any) => {
   useRegisteredHotkey(
     "toggle_through_hole_models",
     () => {
-      const newState = toggleLayer("throughHoleModels")
+      const newVisibility = !visibility.throughHoleModels
+      setLayerVisibility("throughHoleModels", newVisibility)
       showToast(
-        newState
+        newVisibility
           ? "Through-hole components visible"
           : "Through-hole components hidden",
         1500,
