@@ -42,7 +42,7 @@ export const KeyboardShortcutsDialog = ({
       return hotkeys
     }
     return hotkeys.filter((hotkey) => {
-      const haystack = `${hotkey.key} ${hotkey.description}`
+      const haystack = `${hotkey.shortcut} ${hotkey.description}`
       return haystack.toLowerCase().includes(normalizedQuery)
     })
   }, [hotkeys, query])
@@ -173,16 +173,10 @@ export const KeyboardShortcutsDialog = ({
                           padding: "4px 8px",
                           fontFamily: "monospace",
                           fontSize: "0.95rem",
+                          textTransform: "capitalize",
                         }}
                       >
-                        {hotkey.modifiers?.length ? (
-                          <>
-                            {hotkey.modifiers.map((mod) => `${mod}+`).join("")}
-                            {hotkey.key.toUpperCase()}
-                          </>
-                        ) : (
-                          hotkey.key.toUpperCase()
-                        )}
+                        {hotkey.shortcut}
                       </span>
                     </td>
                     <td style={{ padding: "12px 24px" }}>
