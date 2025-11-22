@@ -6,7 +6,10 @@ import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
 import { useCameraPreset } from "./hooks/useCameraPreset"
 import { useGlobalDownloadGltf } from "./hooks/useGlobalDownloadGltf"
-import { useRegisteredHotkey } from "./hooks/useRegisteredHotkey"
+import {
+  useRegisteredHotkey,
+  registerHotkeyViewer,
+} from "./hooks/useRegisteredHotkey"
 import {
   LayerVisibilityProvider,
   useLayerVisibility,
@@ -154,6 +157,13 @@ const CadViewerInner = (props: any) => {
       description: "Toggle through-hole components",
     },
   )
+
+  // Register the viewer element for hotkey bounds checking
+  useEffect(() => {
+    if (containerRef.current) {
+      registerHotkeyViewer(containerRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")

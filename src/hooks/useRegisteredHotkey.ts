@@ -16,6 +16,10 @@ const hotkeyRegistry = new Map<string, HotkeyRegistration>()
 const subscribers = new Set<HotkeySubscriber>()
 
 let isListenerAttached = false
+let lastMouseX = 0
+let lastMouseY = 0
+let viewerElement: HTMLElement | null = null
+let mouseTrackingAttached = false
 
 const MAX_PARENT_DEPTH = 20 // Reasonable limit for DOM traversal; real-world nesting is typically 3-5 levels
 
@@ -93,9 +97,38 @@ const isInputFocused = () => {
   return contentEditable === "true" || contentEditable === ""
 }
 
+const isMouseOverViewer = () => {
+  // If no viewer is registered, allow hotkeys globally (backward compatible)
+  if (!viewerElement) return true
+
+  const rect = viewerElement.getBoundingClientRect()
+  return (
+    lastMouseX >= rect.left &&
+    lastMouseX <= rect.right &&
+    lastMouseY >= rect.top &&
+    lastMouseY <= rect.bottom
+  )
+}
+
+const attachMouseTracking = () => {
+  if (mouseTrackingAttached || typeof window === "undefined") return
+
+  window.addEventListener("mousemove", (e) => {
+    lastMouseX = e.clientX
+    lastMouseY = e.clientY
+  })
+
+  mouseTrackingAttached = true
+}
+
 const handleKeydown = (event: KeyboardEvent) => {
-  // Double protection: check both event target and focused element
+  // Check if user is typing in an editable element
   if (isEditableTarget(event.target) || isInputFocused()) {
+    return
+  }
+
+  // Only trigger hotkeys if mouse is over viewer (if registered)
+  if (viewerElement && !isMouseOverViewer()) {
     return
   }
 
@@ -178,6 +211,15 @@ export const useHotkeyRegistry = () => {
   useEffect(() => subscribeToRegistry(setEntries), [])
 
   return entries
+}
+
+/**
+ * Register a viewer element for hotkey bounds checking
+ * Only hotkeys triggered while mouse is over this element will be executed
+ */
+export const registerHotkeyViewer = (element: HTMLElement) => {
+  viewerElement = element
+  attachMouseTracking()
 }
 
 export type RegisteredHotkey = Omit<HotkeyRegistration, "invoke">
