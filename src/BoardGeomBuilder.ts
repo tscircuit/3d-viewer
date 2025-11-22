@@ -626,57 +626,94 @@ export class BoardGeomBuilder {
         clipGeom: this.boardClipGeom,
       })
       this.platedHoleGeoms.push(platedHoleGeom)
-    } else if (ph.shape === "pill_hole_with_rect_pad") {
-      const shouldRotate = ph.hole_height! > ph.hole_width!
-      const holeWidth = shouldRotate ? ph.hole_height! : ph.hole_width!
-      const holeHeight = shouldRotate ? ph.hole_width! : ph.hole_height!
-      const holeRadius = holeHeight / 2
-      const rectLength = Math.abs(holeWidth - holeHeight)
+    } else if (
+      ph.shape === "pill_hole_with_rect_pad" ||
+      ph.shape === "rotated_pill_hole_with_rect_pad"
+    ) {
+      const holeOffsetX = ph.hole_offset_x || 0
+      const holeOffsetY = ph.hole_offset_y || 0
 
-      let pillHole: Geom3
+      // -----------------------
+      // 1. Decide width/height
+      // -----------------------
+      // Common thickness
+      const thickness = this.ctx.pcbThickness * 1.5
 
-      pillHole = union(
+      let pillWidth: number
+      let pillHeight: number
+
+      if (ph.shape === "pill_hole_with_rect_pad") {
+        // OLD behaviour: shouldRotate logic
+        const shouldRotate = ph.hole_height! > ph.hole_width!
+        const holeWidth = shouldRotate ? ph.hole_height! : ph.hole_width!
+        const holeHeight = shouldRotate ? ph.hole_width! : ph.hole_height!
+
+        pillWidth = holeWidth
+        pillHeight = holeHeight
+      } else {
+        // rotated_pill_hole_with_rect_pad:
+        // use dimensions as-is (NO shouldRotate swap)
+        pillWidth = ph.hole_width!
+        pillHeight = ph.hole_height!
+      }
+
+      const pillRadius = pillHeight / 2
+      const pillRectLength = Math.abs(pillWidth - pillHeight)
+
+      // -----------------------
+      // 2. Base pill geometry (centered at 0,0)
+      // -----------------------
+      const basePillHole = union(
         cuboid({
-          center: [
-            ph.x + (ph.hole_offset_x || 0),
-            ph.y + (ph.hole_offset_y || 0),
-            0,
-          ],
-          size: shouldRotate
-            ? [holeHeight, rectLength, this.ctx.pcbThickness * 1.5]
-            : [rectLength, holeHeight, this.ctx.pcbThickness * 1.5],
+          center: [0, 0, 0],
+          size: [pillRectLength, pillHeight, thickness],
         }),
         cylinder({
-          center: shouldRotate
-            ? [
-                ph.x + (ph.hole_offset_x || 0),
-                ph.y + (ph.hole_offset_y || 0) - rectLength / 2,
-                0,
-              ]
-            : [
-                ph.x + (ph.hole_offset_x || 0) - rectLength / 2,
-                ph.y + (ph.hole_offset_y || 0),
-                0,
-              ],
-          radius: holeRadius,
-          height: this.ctx.pcbThickness * 1.5,
+          center: [-pillRectLength / 2, 0, 0],
+          radius: pillRadius,
+          height: thickness,
         }),
         cylinder({
-          center: shouldRotate
-            ? [
-                ph.x + (ph.hole_offset_x || 0),
-                ph.y + (ph.hole_offset_y || 0) + rectLength / 2,
-                0,
-              ]
-            : [
-                ph.x + (ph.hole_offset_x || 0) + rectLength / 2,
-                ph.y + (ph.hole_offset_y || 0),
-                0,
-              ],
-          radius: holeRadius,
-          height: this.ctx.pcbThickness * 1.5,
+          center: [pillRectLength / 2, 0, 0],
+          radius: pillRadius,
+          height: thickness,
         }),
       )
+
+      // -----------------------
+      // 3. Rotation + translation
+      // -----------------------
+      let finalPillHole: Geom3
+
+      if (ph.shape === "rotated_pill_hole_with_rect_pad") {
+        const holeRotationDeg = ph.hole_ccw_rotation || 0
+        const holeRotationRad = (holeRotationDeg * Math.PI) / 180
+
+        finalPillHole = translate(
+          [ph.x + holeOffsetX, ph.y + holeOffsetY, 0],
+          rotateZ(holeRotationRad, basePillHole),
+        )
+      } else {
+        // No extra rotation, just move to (x + offset, y + offset)
+        finalPillHole = translate(
+          [ph.x + holeOffsetX, ph.y + holeOffsetY, 0],
+          basePillHole,
+        )
+      }
+      // -----------------------
+      // 4. Subtract from board/pads
+      if (!opts.dontCutBoard) {
+        this.boardGeom = subtract(this.boardGeom, finalPillHole)
+      }
+
+      this.padGeoms = this.padGeoms.map((pg) =>
+        colorize(colors.copper, subtract(pg, finalPillHole)),
+      )
+
+      const platedHoleGeom = platedHole(ph, this.ctx, {
+        clipGeom: this.boardClipGeom,
+      })
+      this.platedHoleGeoms.push(platedHoleGeom)
     } else if (ph.shape === "hole_with_polygon_pad") {
       const padOutline = ph.pad_outline
       if (!Array.isArray(padOutline) || padOutline.length < 3) {

@@ -15,7 +15,11 @@ import {
 import { BOARD_SURFACE_OFFSET, M, colors } from "./constants"
 import type { GeomContext } from "../GeomContext"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
-import { rotate, translate } from "@jscad/modeling/src/operations/transforms"
+import {
+  rotateZ,
+  translate,
+  rotate,
+} from "@jscad/modeling/src/operations/transforms"
 import {
   clampRectBorderRadius,
   extractRectBorderRadius,
