@@ -48,6 +48,15 @@ export const AnyCadComponent = ({
     })?.name
   }, [circuitJson, cad_component.source_component_id])
 
+  const isThroughHole = useMemo(() => {
+    const platedHoles = circuitJson.filter(
+      (elm) =>
+        elm.type === "pcb_plated_hole" &&
+        elm.pcb_component_id === cad_component.pcb_component_id,
+    )
+    return platedHoles.length > 0
+  }, [circuitJson, cad_component.pcb_component_id])
+
   const url =
     cad_component.model_obj_url ??
     cad_component.model_wrl_url ??
@@ -140,7 +149,10 @@ export const AnyCadComponent = ({
   }
 
   // Check if models should be visible
-  if (!visibility.smtModels) {
+  if (isThroughHole && !visibility.throughHoleModels) {
+    return null
+  }
+  if (!isThroughHole && !visibility.smtModels) {
     return null
   }
 

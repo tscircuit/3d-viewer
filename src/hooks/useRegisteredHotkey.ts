@@ -16,6 +16,12 @@ const hotkeyRegistry = new Map<string, HotkeyRegistration>()
 const subscribers = new Set<HotkeySubscriber>()
 
 let isListenerAttached = false
+let lastMouseX = 0
+let lastMouseY = 0
+let viewerElement: HTMLElement | null = null
+let mouseTrackingAttached = false
+
+const MAX_PARENT_DEPTH = 20 // Reasonable limit for DOM traversal; real-world nesting is typically 3-5 levels
 
 const parseShortcut = (shortcut: string) => {
   const parts = shortcut.toLowerCase().split("+")
@@ -51,11 +57,78 @@ const isEditableTarget = (target: EventTarget | null) => {
   if (editableTags.includes(tagName)) {
     return true
   }
-  return Boolean(element.getAttribute?.("contenteditable"))
+
+  // Check contenteditable attribute - only true/"" means editable, not "false"
+  const contentEditable = element.getAttribute?.("contenteditable")
+  if (contentEditable === "true" || contentEditable === "") {
+    return true
+  }
+
+  // Check for any parent elements that are editable
+  let current = element.parentElement
+  for (let depth = 0; depth < MAX_PARENT_DEPTH && current; depth++) {
+    const tagName = current.tagName
+    if (editableTags.includes(tagName)) {
+      return true
+    }
+
+    const contentEditable = current.getAttribute?.("contenteditable")
+    if (contentEditable === "true" || contentEditable === "") {
+      return true
+    }
+
+    current = current.parentElement
+  }
+
+  return false
+}
+
+const isInputFocused = () => {
+  if (typeof document === "undefined") return false
+  const activeElement = document.activeElement
+  if (!activeElement) return false
+
+  const tagName = activeElement.tagName
+  if (tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT") {
+    return true
+  }
+
+  const contentEditable = activeElement.getAttribute("contenteditable")
+  return contentEditable === "true" || contentEditable === ""
+}
+
+const isMouseOverViewer = () => {
+  // If no viewer is registered, allow hotkeys globally (backward compatible)
+  if (!viewerElement) return true
+
+  const rect = viewerElement.getBoundingClientRect()
+  return (
+    lastMouseX >= rect.left &&
+    lastMouseX <= rect.right &&
+    lastMouseY >= rect.top &&
+    lastMouseY <= rect.bottom
+  )
+}
+
+const attachMouseTracking = () => {
+  if (mouseTrackingAttached || typeof window === "undefined") return
+
+  window.addEventListener("mousemove", (e) => {
+    lastMouseX = e.clientX
+    lastMouseY = e.clientY
+  })
+
+  mouseTrackingAttached = true
 }
 
 const handleKeydown = (event: KeyboardEvent) => {
-  if (isEditableTarget(event.target)) {
+  // Check if user is typing in an editable element
+  if (isEditableTarget(event.target) || isInputFocused()) {
+    return
+  }
+
+  // Only trigger hotkeys if mouse is over viewer (if registered)
+  if (viewerElement && !isMouseOverViewer()) {
     return
   }
 
@@ -138,6 +211,15 @@ export const useHotkeyRegistry = () => {
   useEffect(() => subscribeToRegistry(setEntries), [])
 
   return entries
+}
+
+/**
+ * Register a viewer element for hotkey bounds checking
+ * Only hotkeys triggered while mouse is over this element will be executed
+ */
+export const registerHotkeyViewer = (element: HTMLElement) => {
+  viewerElement = element
+  attachMouseTracking()
 }
 
 export type RegisteredHotkey = Omit<HotkeyRegistration, "invoke">

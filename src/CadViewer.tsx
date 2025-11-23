@@ -6,7 +6,10 @@ import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
 import { useCameraPreset } from "./hooks/useCameraPreset"
 import { useGlobalDownloadGltf } from "./hooks/useGlobalDownloadGltf"
-import { useRegisteredHotkey } from "./hooks/useRegisteredHotkey"
+import {
+  useRegisteredHotkey,
+  registerHotkeyViewer,
+} from "./hooks/useRegisteredHotkey"
 import {
   LayerVisibilityProvider,
   useLayerVisibility,
@@ -15,6 +18,7 @@ import {
   CameraControllerProvider,
   useCameraController,
 } from "./contexts/CameraControllerContext"
+import { ToastProvider, useToast } from "./contexts/ToastContext"
 import { ContextMenu } from "./components/ContextMenu"
 import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
 import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
@@ -35,6 +39,7 @@ const CadViewerInner = (props: any) => {
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>("Custom")
   const { cameraType, setCameraType } = useCameraController()
   const { visibility, setLayerVisibility } = useLayerVisibility()
+  const { showToast } = useToast()
 
   const cameraControllerRef = useRef<CameraController | null>(null)
   const externalCameraControllerReady = props.onCameraControllerReady as
@@ -118,6 +123,47 @@ const CadViewerInner = (props: any) => {
       description: "Open keyboard shortcuts",
     },
   )
+
+  useRegisteredHotkey(
+    "toggle_smt_models",
+    () => {
+      const newVisibility = !visibility.smtModels
+      setLayerVisibility("smtModels", newVisibility)
+      showToast(
+        newVisibility ? "SMT components visible" : "SMT components hidden",
+        1500,
+      )
+    },
+    {
+      shortcut: "shift+s",
+      description: "Toggle surface mount components",
+    },
+  )
+
+  useRegisteredHotkey(
+    "toggle_through_hole_models",
+    () => {
+      const newVisibility = !visibility.throughHoleModels
+      setLayerVisibility("throughHoleModels", newVisibility)
+      showToast(
+        newVisibility
+          ? "Through-hole components visible"
+          : "Through-hole components hidden",
+        1500,
+      )
+    },
+    {
+      shortcut: "shift+t",
+      description: "Toggle through-hole components",
+    },
+  )
+
+  // Register the viewer element for hotkey bounds checking
+  useEffect(() => {
+    if (containerRef.current) {
+      registerHotkeyViewer(containerRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
@@ -255,7 +301,9 @@ export const CadViewer = (props: any) => {
       initialCameraPosition={initialCameraPosition}
     >
       <LayerVisibilityProvider>
-        <CadViewerInner {...props} />
+        <ToastProvider>
+          <CadViewerInner {...props} />
+        </ToastProvider>
       </LayerVisibilityProvider>
     </CameraControllerProvider>
   )
