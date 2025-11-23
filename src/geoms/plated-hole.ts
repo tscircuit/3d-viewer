@@ -12,6 +12,7 @@ import {
   subtract,
   union,
 } from "@jscad/modeling/src/operations/booleans"
+import { scale } from "@jscad/modeling/src/operations/transforms"
 import { BOARD_SURFACE_OFFSET, M, colors } from "./constants"
 import type { GeomContext } from "../GeomContext"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
@@ -91,6 +92,48 @@ export const platedHole = (
     })
 
     return colorize(colors.copper, subtract(copperSolid, drill))
+  }
+
+  if (plated_hole.shape === "oval") {
+    // For oval holes, we'll create an elliptical cylinder
+    const outerWidth = plated_hole.outer_width || plated_hole.hole_width || 0
+    const outerHeight = plated_hole.outer_height || plated_hole.hole_height || 0
+    const holeWidth = plated_hole.hole_width || 0
+    const holeHeight = plated_hole.hole_height || 0
+
+    // Create the outer copper body as an elliptical cylinder
+    const copperBody = (() => {
+      // Create a circle and scale it to make an ellipse
+      const circle = cylinder({
+        center: [0, 0, 0],
+        radius: 1,
+        height: copperSpan + 0.01,
+        segments: 64, // High segment count for smooth ellipse
+      })
+      // Scale the circle to create an ellipse
+      const scaled = scale([outerWidth / 2, outerHeight / 2, 1], circle)
+      return translate([plated_hole.x, plated_hole.y, 0], scaled)
+    })()
+
+    const copperSolid = maybeClip(copperBody, clipGeom)
+
+    // Create the hole as an elliptical cylinder
+    const drill = (() => {
+      const circle = cylinder({
+        center: [0, 0, 0],
+        radius: 1,
+        height: throughDrillHeight,
+        segments: 64, // High segment count for smooth ellipse
+      })
+      // Scale the circle to create an ellipse for the hole
+      const scaled = scale(
+        [Math.max(holeWidth / 2, 0.01), Math.max(holeHeight / 2, 0.01), 1],
+        circle,
+      )
+      return translate([plated_hole.x, plated_hole.y, 0], scaled)
+    })()
+
+    return colorize(colors.copper, subtract(copperSolid, drill)) as Geom3
   }
   if (plated_hole.shape === "circular_hole_with_rect_pad") {
     const holeOffsetX = plated_hole.hole_offset_x || 0
