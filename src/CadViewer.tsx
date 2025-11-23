@@ -7,6 +7,10 @@ import { useContextMenu } from "./hooks/useContextMenu"
 import { useCameraPreset } from "./hooks/useCameraPreset"
 import { useGlobalDownloadGltf } from "./hooks/useGlobalDownloadGltf"
 import {
+  useRegisteredHotkey,
+  registerHotkeyViewer,
+} from "./hooks/useRegisteredHotkey"
+import {
   LayerVisibilityProvider,
   useLayerVisibility,
 } from "./contexts/LayerVisibilityContext"
@@ -14,12 +18,16 @@ import {
   CameraControllerProvider,
   useCameraController,
 } from "./contexts/CameraControllerContext"
+import { ToastProvider, useToast } from "./contexts/ToastContext"
 import { ContextMenu } from "./components/ContextMenu"
+import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
 import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
 
 const CadViewerInner = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const [isKeyboardShortcutsDialogOpen, setIsKeyboardShortcutsDialogOpen] =
+    useState(false)
   const [autoRotate, setAutoRotate] = useState(() => {
     const stored = window.localStorage.getItem("cadViewerAutoRotate")
     return stored === "false" ? false : true
@@ -30,7 +38,8 @@ const CadViewerInner = (props: any) => {
   })
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>("Custom")
   const { cameraType, setCameraType } = useCameraController()
-  const { visibility, toggleLayer } = useLayerVisibility()
+  const { visibility, setLayerVisibility } = useLayerVisibility()
+  const { showToast } = useToast()
 
   const cameraControllerRef = useRef<CameraController | null>(null)
   const externalCameraControllerReady = props.onCameraControllerReady as
@@ -103,6 +112,58 @@ const CadViewerInner = (props: any) => {
     isAnimatingRef,
     lastPresetSelectTime,
   })
+
+  useRegisteredHotkey(
+    "open_keyboard_shortcuts_dialog",
+    () => {
+      setIsKeyboardShortcutsDialogOpen(true)
+    },
+    {
+      shortcut: "shift+?",
+      description: "Open keyboard shortcuts",
+    },
+  )
+
+  useRegisteredHotkey(
+    "toggle_smt_models",
+    () => {
+      const newVisibility = !visibility.smtModels
+      setLayerVisibility("smtModels", newVisibility)
+      showToast(
+        newVisibility ? "SMT components visible" : "SMT components hidden",
+        1500,
+      )
+    },
+    {
+      shortcut: "shift+s",
+      description: "Toggle surface mount components",
+    },
+  )
+
+  useRegisteredHotkey(
+    "toggle_through_hole_models",
+    () => {
+      const newVisibility = !visibility.throughHoleModels
+      setLayerVisibility("throughHoleModels", newVisibility)
+      showToast(
+        newVisibility
+          ? "Through-hole components visible"
+          : "Through-hole components hidden",
+        1500,
+      )
+    },
+    {
+      shortcut: "shift+t",
+      description: "Toggle through-hole components",
+    },
+  )
+
+  // Register the viewer element for hotkey bounds checking
+  useEffect(() => {
+    if (containerRef.current) {
+      registerHotkeyViewer(containerRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
@@ -212,8 +273,16 @@ const CadViewerInner = (props: any) => {
             downloadGltf()
             closeMenu()
           }}
+          onOpenKeyboardShortcuts={() => {
+            setIsKeyboardShortcutsDialogOpen(true)
+            closeMenu()
+          }}
         />
       )}
+      <KeyboardShortcutsDialog
+        open={isKeyboardShortcutsDialogOpen}
+        onClose={() => setIsKeyboardShortcutsDialogOpen(false)}
+      />
     </div>
   )
 }
@@ -232,7 +301,9 @@ export const CadViewer = (props: any) => {
       initialCameraPosition={initialCameraPosition}
     >
       <LayerVisibilityProvider>
-        <CadViewerInner {...props} />
+        <ToastProvider>
+          <CadViewerInner {...props} />
+        </ToastProvider>
       </LayerVisibilityProvider>
     </CameraControllerProvider>
   )

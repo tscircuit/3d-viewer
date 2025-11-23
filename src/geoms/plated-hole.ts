@@ -4,6 +4,7 @@ import {
   cuboid,
   cylinder,
   roundedRectangle,
+  polygon as jscadPolygon,
 } from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
 import {
@@ -14,11 +15,12 @@ import {
 import { BOARD_SURFACE_OFFSET, M, colors } from "./constants"
 import type { GeomContext } from "../GeomContext"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
-import { translate } from "@jscad/modeling/src/operations/transforms"
+import { rotate, translate } from "@jscad/modeling/src/operations/transforms"
 import {
   clampRectBorderRadius,
   extractRectBorderRadius,
 } from "../utils/rect-border-radius"
+import { createHoleWithPolygonPadHoleGeom } from "./create-hole-with-polygon-pad"
 
 const platedHoleLipHeight = 0.02
 const RECT_PAD_SEGMENTS = 64
@@ -188,6 +190,13 @@ export const platedHole = (
   }
 
   if (plated_hole.shape === "pill") {
+    const rotationRadians = ((plated_hole.ccw_rotation || 0) * Math.PI) / 180
+    const rotateAroundCenter = (geom: Geom3) => {
+      if (!rotationRadians) return geom
+      const toOrigin = translate([-plated_hole.x, -plated_hole.y, 0], geom)
+      const rotated = rotate([0, 0, rotationRadians], toOrigin)
+      return translate([plated_hole.x, plated_hole.y, 0], rotated)
+    }
     const shouldRotate = plated_hole.hole_height! > plated_hole.hole_width!
 
     const holeWidth = shouldRotate
@@ -279,8 +288,9 @@ export const platedHole = (
     })
     const drillUnion = union(drillRect, drillLeftCap, drillRightCap)
 
-    const copperSolid = maybeClip(outerBarrel, clipGeom)
-    const drill = drillUnion
+    const copperSolid = maybeClip(rotateAroundCenter(outerBarrel), clipGeom)
+    const drill = rotateAroundCenter(drillUnion)
+    // const drill = drillUnion
 
     return colorize(colors.copper, subtract(copperSolid, drill))
     // biome-ignore lint/style/noUselessElse: <explanation>
@@ -480,6 +490,55 @@ export const platedHole = (
     )
 
     return colorize(colors.copper, finalCopper)
+  } else if (plated_hole.shape === "hole_with_polygon_pad") {
+    const padOutline = plated_hole.pad_outline
+    if (!Array.isArray(padOutline) || padOutline.length < 3) {
+      throw new Error(
+        `Invalid pad_outline for plated hole at (${plated_hole.x}, ${plated_hole.y})`,
+      )
+    }
+
+    const polygonPoints = padOutline.map((point: { x: number; y: number }) => [
+      point.x,
+      point.y,
+    ])
+    const polygon2d = jscadPolygon({ points: polygonPoints as any })
+    const centerZ = (topSurfaceZ + bottomSurfaceZ) / 2
+
+    const createPolygonPad = (thickness: number, zCenter: number) => {
+      const safeThickness = Math.max(thickness, M)
+      const extruded = extrudeLinear({ height: safeThickness }, polygon2d)
+      return translate(
+        [plated_hole.x, plated_hole.y, zCenter - safeThickness / 2],
+        extruded,
+      )
+    }
+
+    const mainFill = createPolygonPad(
+      Math.max(copperSpan - platedHoleLipHeight * 2, M),
+      centerZ,
+    )
+    const topPad = createPolygonPad(platedHoleLipHeight, topSurfaceZ)
+    const bottomPad = createPolygonPad(platedHoleLipHeight, bottomSurfaceZ)
+
+    const copperSolid = maybeClip(union(mainFill, topPad, bottomPad), clipGeom)
+    const barrel = createHoleWithPolygonPadHoleGeom(plated_hole, copperSpan)
+    if (!barrel) return colorize(colors.copper, copperSolid)
+
+    const drill =
+      createHoleWithPolygonPadHoleGeom(plated_hole, throughDrillHeight, {
+        sizeDelta: -2 * M,
+      }) || barrel
+
+    let finalCopper = union(subtract(copperSolid, barrel), barrel)
+
+    if (options.clipGeom) {
+      finalCopper = subtract(finalCopper, drill)
+      finalCopper = intersect(finalCopper, options.clipGeom)
+      return colorize(colors.copper, finalCopper)
+    }
+
+    return colorize(colors.copper, subtract(finalCopper, drill))
   } else {
     throw new Error(`Unsupported plated hole shape: ${plated_hole.shape}`)
   }

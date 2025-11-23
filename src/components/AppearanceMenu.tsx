@@ -60,7 +60,7 @@ const iconContainerStyles: React.CSSProperties = {
 }
 
 export const AppearanceMenu = () => {
-  const { visibility, toggleLayer } = useLayerVisibility()
+  const { visibility, setLayerVisibility } = useLayerVisibility()
   const [appearanceSubOpen, setAppearanceSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
@@ -112,7 +112,7 @@ export const AppearanceMenu = () => {
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
                 e.preventDefault()
-                toggleLayer("boardBody")
+                setLayerVisibility("boardBody", !visibility.boardBody)
               }}
               onMouseEnter={() => setHoveredItem("boardBody")}
               onMouseLeave={() => setHoveredItem(null)}
@@ -135,7 +135,7 @@ export const AppearanceMenu = () => {
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
                 e.preventDefault()
-                toggleLayer("topCopper")
+                setLayerVisibility("topCopper", !visibility.topCopper)
               }}
               onMouseEnter={() => setHoveredItem("topCopper")}
               onMouseLeave={() => setHoveredItem(null)}
@@ -158,7 +158,7 @@ export const AppearanceMenu = () => {
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
                 e.preventDefault()
-                toggleLayer("bottomCopper")
+                setLayerVisibility("bottomCopper", !visibility.bottomCopper)
               }}
               onMouseEnter={() => setHoveredItem("bottomCopper")}
               onMouseLeave={() => setHoveredItem(null)}
@@ -181,7 +181,7 @@ export const AppearanceMenu = () => {
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
                 e.preventDefault()
-                toggleLayer("topSilkscreen")
+                setLayerVisibility("topSilkscreen", !visibility.topSilkscreen)
               }}
               onMouseEnter={() => setHoveredItem("topSilkscreen")}
               onMouseLeave={() => setHoveredItem(null)}
@@ -206,7 +206,10 @@ export const AppearanceMenu = () => {
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
                 e.preventDefault()
-                toggleLayer("bottomSilkscreen")
+                setLayerVisibility(
+                  "bottomSilkscreen",
+                  !visibility.bottomSilkscreen,
+                )
               }}
               onMouseEnter={() => setHoveredItem("bottomSilkscreen")}
               onMouseLeave={() => setHoveredItem(null)}
@@ -229,7 +232,7 @@ export const AppearanceMenu = () => {
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
                 e.preventDefault()
-                toggleLayer("smtModels")
+                setLayerVisibility("smtModels", !visibility.smtModels)
               }}
               onMouseEnter={() => setHoveredItem("smtModels")}
               onMouseLeave={() => setHoveredItem(null)}
@@ -239,7 +242,35 @@ export const AppearanceMenu = () => {
                 {visibility.smtModels && <CheckIcon />}
               </span>
               <span style={{ display: "flex", alignItems: "center" }}>
-                CAD Models
+                Surface Mount Components
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "throughHoleModels"
+                    ? "#404040"
+                    : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                setLayerVisibility(
+                  "throughHoleModels",
+                  !visibility.throughHoleModels,
+                )
+              }}
+              onMouseEnter={() => setHoveredItem("throughHoleModels")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("throughHoleModels")}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.throughHoleModels && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Through-Hole Components
               </span>
             </DropdownMenu.Item>
           </DropdownMenu.SubContent>

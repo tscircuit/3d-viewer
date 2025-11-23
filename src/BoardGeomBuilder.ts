@@ -58,6 +58,7 @@ import {
   clampRectBorderRadius,
   extractRectBorderRadius,
 } from "./utils/rect-border-radius"
+import { createHoleWithPolygonPadHoleGeom } from "./geoms/create-hole-with-polygon-pad"
 
 const PAD_ROUNDED_SEGMENTS = 64
 const BOARD_CLIP_Z_MARGIN = 1
@@ -414,10 +415,34 @@ export class BoardGeomBuilder {
 
     switch (cutout.shape) {
       case "rect":
-        cutoutGeom = cuboid({
-          center: [cutout.center.x, cutout.center.y, 0],
-          size: [cutout.width, cutout.height, cutoutHeight],
-        })
+        const rectCornerRadius = clampRectBorderRadius(
+          cutout.width,
+          cutout.height,
+          extractRectBorderRadius(cutout),
+        )
+
+        if (rectCornerRadius > 0) {
+          const rect2d = roundedRectangle({
+            size: [cutout.width, cutout.height],
+            roundRadius: rectCornerRadius,
+            segments: PAD_ROUNDED_SEGMENTS,
+          })
+          cutoutGeom = extrudeLinear({ height: cutoutHeight }, rect2d)
+          cutoutGeom = translate([0, 0, -cutoutHeight / 2], cutoutGeom)
+          cutoutGeom = translate(
+            [cutout.center.x, cutout.center.y, 0],
+            cutoutGeom,
+          )
+        } else {
+          const baseCutoutGeom = cuboid({
+            center: [0, 0, 0],
+            size: [cutout.width, cutout.height, cutoutHeight],
+          })
+          cutoutGeom = translate(
+            [cutout.center.x, cutout.center.y, 0],
+            baseCutoutGeom,
+          )
+        }
         if (cutout.rotation) {
           const rotationRadians = (cutout.rotation * Math.PI) / 180
           cutoutGeom = rotateZ(rotationRadians, cutoutGeom)
@@ -548,7 +573,7 @@ export class BoardGeomBuilder {
         clipGeom: this.boardClipGeom,
       })
       this.platedHoleGeoms.push(platedHoleGeom)
-    } else if (ph.shape === "pill" || ph.shape === "pill_hole_with_rect_pad") {
+    } else if (ph.shape === "pill" || ph.shape === "oval") {
       const shouldRotate = ph.hole_height! > ph.hole_width!
       const holeWidth = shouldRotate ? ph.hole_height! : ph.hole_width!
       const holeHeight = shouldRotate ? ph.hole_width! : ph.hole_height!
@@ -557,73 +582,37 @@ export class BoardGeomBuilder {
 
       let pillHole: Geom3
 
-      if (ph.shape === "pill_hole_with_rect_pad") {
-        pillHole = union(
-          cuboid({
-            center: [
-              ph.x + (ph.hole_offset_x || 0),
-              ph.y + (ph.hole_offset_y || 0),
-              0,
-            ],
-            size: shouldRotate
-              ? [holeHeight, rectLength, this.ctx.pcbThickness * 1.5]
-              : [rectLength, holeHeight, this.ctx.pcbThickness * 1.5],
-          }),
-          cylinder({
-            center: shouldRotate
-              ? [
-                  ph.x + (ph.hole_offset_x || 0),
-                  ph.y + (ph.hole_offset_y || 0) - rectLength / 2,
-                  0,
-                ]
-              : [
-                  ph.x + (ph.hole_offset_x || 0) - rectLength / 2,
-                  ph.y + (ph.hole_offset_y || 0),
-                  0,
-                ],
-            radius: holeRadius,
-            height: this.ctx.pcbThickness * 1.5,
-          }),
-          cylinder({
-            center: shouldRotate
-              ? [
-                  ph.x + (ph.hole_offset_x || 0),
-                  ph.y + (ph.hole_offset_y || 0) + rectLength / 2,
-                  0,
-                ]
-              : [
-                  ph.x + (ph.hole_offset_x || 0) + rectLength / 2,
-                  ph.y + (ph.hole_offset_y || 0),
-                  0,
-                ],
-            radius: holeRadius,
-            height: this.ctx.pcbThickness * 1.5,
-          }),
-        )
-      } else {
-        pillHole = union(
-          cuboid({
-            center: [ph.x, ph.y, 0],
-            size: shouldRotate
-              ? [holeHeight, rectLength, this.ctx.pcbThickness * 1.5]
-              : [rectLength, holeHeight, this.ctx.pcbThickness * 1.5],
-          }),
-          cylinder({
-            center: shouldRotate
-              ? [ph.x, ph.y - rectLength / 2, 0]
-              : [ph.x - rectLength / 2, ph.y, 0],
-            radius: holeRadius,
-            height: this.ctx.pcbThickness * 1.5,
-          }),
-          cylinder({
-            center: shouldRotate
-              ? [ph.x, ph.y + rectLength / 2, 0]
-              : [ph.x + rectLength / 2, ph.y, 0],
-            radius: holeRadius,
-            height: this.ctx.pcbThickness * 1.5,
-          }),
+      pillHole = union(
+        cuboid({
+          center: [ph.x, ph.y, 0],
+          size: shouldRotate
+            ? [holeHeight, rectLength, this.ctx.pcbThickness * 1.5]
+            : [rectLength, holeHeight, this.ctx.pcbThickness * 1.5],
+        }),
+        cylinder({
+          center: shouldRotate
+            ? [ph.x, ph.y - rectLength / 2, 0]
+            : [ph.x - rectLength / 2, ph.y, 0],
+          radius: holeRadius,
+          height: this.ctx.pcbThickness * 1.5,
+        }),
+        cylinder({
+          center: shouldRotate
+            ? [ph.x, ph.y + rectLength / 2, 0]
+            : [ph.x + rectLength / 2, ph.y, 0],
+          radius: holeRadius,
+          height: this.ctx.pcbThickness * 1.5,
+        }),
+      )
+
+      if (ph.ccw_rotation) {
+        const rotationRadians = (ph.ccw_rotation * Math.PI) / 180
+        pillHole = translate(
+          [ph.x, ph.y, 0],
+          rotateZ(rotationRadians, translate([-ph.x, -ph.y, 0], pillHole)),
         )
       }
+
       if (!opts.dontCutBoard) {
         this.boardGeom = subtract(this.boardGeom, pillHole)
       }
@@ -631,6 +620,89 @@ export class BoardGeomBuilder {
 
       this.padGeoms = this.padGeoms.map((pg) =>
         colorize(colors.copper, subtract(pg, pillHole)),
+      )
+
+      const platedHoleGeom = platedHole(ph, this.ctx, {
+        clipGeom: this.boardClipGeom,
+      })
+      this.platedHoleGeoms.push(platedHoleGeom)
+    } else if (ph.shape === "pill_hole_with_rect_pad") {
+      const shouldRotate = ph.hole_height! > ph.hole_width!
+      const holeWidth = shouldRotate ? ph.hole_height! : ph.hole_width!
+      const holeHeight = shouldRotate ? ph.hole_width! : ph.hole_height!
+      const holeRadius = holeHeight / 2
+      const rectLength = Math.abs(holeWidth - holeHeight)
+
+      let pillHole: Geom3
+
+      pillHole = union(
+        cuboid({
+          center: [
+            ph.x + (ph.hole_offset_x || 0),
+            ph.y + (ph.hole_offset_y || 0),
+            0,
+          ],
+          size: shouldRotate
+            ? [holeHeight, rectLength, this.ctx.pcbThickness * 1.5]
+            : [rectLength, holeHeight, this.ctx.pcbThickness * 1.5],
+        }),
+        cylinder({
+          center: shouldRotate
+            ? [
+                ph.x + (ph.hole_offset_x || 0),
+                ph.y + (ph.hole_offset_y || 0) - rectLength / 2,
+                0,
+              ]
+            : [
+                ph.x + (ph.hole_offset_x || 0) - rectLength / 2,
+                ph.y + (ph.hole_offset_y || 0),
+                0,
+              ],
+          radius: holeRadius,
+          height: this.ctx.pcbThickness * 1.5,
+        }),
+        cylinder({
+          center: shouldRotate
+            ? [
+                ph.x + (ph.hole_offset_x || 0),
+                ph.y + (ph.hole_offset_y || 0) + rectLength / 2,
+                0,
+              ]
+            : [
+                ph.x + (ph.hole_offset_x || 0) + rectLength / 2,
+                ph.y + (ph.hole_offset_y || 0),
+                0,
+              ],
+          radius: holeRadius,
+          height: this.ctx.pcbThickness * 1.5,
+        }),
+      )
+    } else if (ph.shape === "hole_with_polygon_pad") {
+      const padOutline = ph.pad_outline
+      if (!Array.isArray(padOutline) || padOutline.length < 3) {
+        return
+      }
+
+      const holeDepth = this.ctx.pcbThickness * 1.5
+      const boardHole = createHoleWithPolygonPadHoleGeom(ph, holeDepth, {
+        sizeDelta: 2 * M,
+      })
+      const copperHole = createHoleWithPolygonPadHoleGeom(ph, holeDepth, {
+        sizeDelta: -2 * M,
+      })
+
+      if (!boardHole || !copperHole) return
+
+      if (!opts.dontCutBoard) {
+        this.boardGeom = subtract(this.boardGeom, boardHole)
+      }
+
+      this.padGeoms = this.padGeoms.map((pg) =>
+        colorize(colors.copper, subtract(pg, boardHole)),
+      )
+
+      this.platedHoleGeoms = this.platedHoleGeoms.map((phg) =>
+        colorize(colors.copper, subtract(phg, copperHole)),
       )
 
       const platedHoleGeom = platedHole(ph, this.ctx, {
