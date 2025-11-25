@@ -2,8 +2,8 @@ import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement } from "circuit-json"
 import type * as React from "react"
-import { forwardRef, useCallback, useMemo, useState } from "react"
-import type * as THREE from "three"
+import { forwardRef, useCallback, useEffect, useMemo, useState } from "react"
+import * as THREE from "three"
 import { Euler } from "three"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
@@ -20,6 +20,7 @@ import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 import { tuple } from "./utils/tuple"
+import { useCameraController } from "./contexts/CameraControllerContext"
 
 interface Props {
   /**
@@ -31,6 +32,7 @@ interface Props {
   clickToInteractEnabled?: boolean
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
+  defaultTarget: THREE.Vector3
 }
 
 export const CadViewerJscad = forwardRef<
@@ -46,6 +48,7 @@ export const CadViewerJscad = forwardRef<
       clickToInteractEnabled,
       onUserInteraction,
       onCameraControllerReady,
+      defaultTarget,
     },
     ref,
   ) => {
@@ -124,11 +127,40 @@ export const CadViewerJscad = forwardRef<
 
     const cad_components = su(internalCircuitJson).cad_component.list()
 
+    const { setBoundingBox } = useCameraController()
+
+    const boundingBox = useMemo(() => {
+      const box = new THREE.Box3()
+      boardGeom.forEach((geom: Geom3) => {
+        if (geom.bounds) {
+          box.min.min(new THREE.Vector3(...geom.bounds.min))
+          box.max.max(new THREE.Vector3(...geom.bounds.max))
+        }
+      })
+      cad_components.forEach((comp) => {
+        if (comp.position) {
+          const pos = new THREE.Vector3(
+            comp.position.x,
+            comp.position.y,
+            comp.position.z,
+          )
+          box.expandByPoint(pos)
+          box.expandByPoint(pos.clone().addScalar(1))
+        }
+      })
+      return box
+    }, [boardGeom, cad_components])
+
+    useEffect(() => {
+      setBoundingBox(boundingBox.isEmpty() ? null : boundingBox)
+    }, [boundingBox, setBoundingBox])
+
     return (
       <CadViewerContainer
         ref={ref}
         autoRotateDisabled={autoRotateDisabled}
         initialCameraPosition={initialCameraPosition}
+        defaultTarget={defaultTarget}
         clickToInteractEnabled={clickToInteractEnabled}
         boardDimensions={boardDimensions}
         boardCenter={boardCenter}
