@@ -512,6 +512,131 @@ export function processPlatedHolesForManifold(
         geometry: threeGeom,
         color: COPPER_COLOR,
       })
+    } else if (ph.shape === "oval") {
+      const holeW = ph.hole_width!
+      const holeH = ph.hole_height!
+      const outerW = ph.outer_width ?? holeW + 0.4 // Default 0.2mm pad extension per side
+      const outerH = ph.outer_height ?? holeH + 0.4 // Default 0.2mm pad extension per side
+
+      // Board Drill
+      const drillW = holeW + 2 * MANIFOLD_Z_OFFSET
+      const drillH = holeH + 2 * MANIFOLD_Z_OFFSET
+      const drillDepth = pcbThickness * 1.2 // Ensure cut-through
+
+      // Create oval drill hole
+      let boardDrillPoints = createEllipsePoints(
+        drillW,
+        drillH,
+        SMOOTH_CIRCLE_SEGMENTS,
+      )
+      if (arePointsClockwise(boardDrillPoints)) {
+        boardDrillPoints = boardDrillPoints.reverse()
+      }
+      const boardDrillCrossSection = CrossSection.ofPolygons([boardDrillPoints])
+      manifoldInstancesForCleanup.push(boardDrillCrossSection)
+      let boardDrillOp = Manifold.extrude(
+        boardDrillCrossSection,
+        drillDepth,
+        0,
+        0,
+        [1, 1],
+        true,
+      )
+      manifoldInstancesForCleanup.push(boardDrillOp)
+
+      // Apply rotation if specified
+      if (ph.ccw_rotation) {
+        const rotatedDrill = boardDrillOp.rotate([0, 0, ph.ccw_rotation])
+        manifoldInstancesForCleanup.push(rotatedDrill)
+        boardDrillOp = rotatedDrill
+      }
+
+      // Position the drill
+      const translatedDrill = boardDrillOp.translate([ph.x, ph.y, 0])
+      manifoldInstancesForCleanup.push(translatedDrill)
+      platedHoleBoardDrills.push(translatedDrill)
+
+      // Copper Part
+      const copperPartThickness = pcbThickness + 2 * MANIFOLD_Z_OFFSET
+
+      // Create outer copper ellipse
+      let outerPoints = createEllipsePoints(
+        outerW,
+        outerH,
+        SMOOTH_CIRCLE_SEGMENTS,
+      )
+      if (arePointsClockwise(outerPoints)) {
+        outerPoints = outerPoints.reverse()
+      }
+      const outerCrossSection = CrossSection.ofPolygons([outerPoints])
+      manifoldInstancesForCleanup.push(outerCrossSection)
+      let outerCopperOp = Manifold.extrude(
+        outerCrossSection,
+        copperPartThickness,
+        0,
+        0,
+        [1, 1],
+        true,
+      )
+      manifoldInstancesForCleanup.push(outerCopperOp)
+
+      // Create inner hole ellipse
+      let innerPoints = createEllipsePoints(
+        holeW,
+        holeH,
+        SMOOTH_CIRCLE_SEGMENTS,
+      )
+      if (arePointsClockwise(innerPoints)) {
+        innerPoints = innerPoints.reverse()
+      }
+      const innerCrossSection = CrossSection.ofPolygons([innerPoints])
+      manifoldInstancesForCleanup.push(innerCrossSection)
+      let innerDrillOp = Manifold.extrude(
+        innerCrossSection,
+        copperPartThickness * 1.05,
+        0,
+        0,
+        [1, 1],
+        true,
+      )
+      manifoldInstancesForCleanup.push(innerDrillOp)
+
+      // Subtract inner from outer
+      let finalPlatedPartOp = outerCopperOp.subtract(innerDrillOp)
+      manifoldInstancesForCleanup.push(finalPlatedPartOp)
+
+      // Apply rotation if specified
+      if (ph.ccw_rotation) {
+        const rotatedOp = finalPlatedPartOp.rotate([0, 0, ph.ccw_rotation])
+        manifoldInstancesForCleanup.push(rotatedOp)
+        finalPlatedPartOp = rotatedOp
+      }
+
+      // Position the copper part
+      const translatedPlatedPart = finalPlatedPartOp.translate([ph.x, ph.y, 0])
+      manifoldInstancesForCleanup.push(translatedPlatedPart)
+
+      // Handle board clipping if needed
+      let finalCopperOp: any = translatedPlatedPart
+      if (boardClipVolume) {
+        const clipped = Manifold.intersection([
+          translatedPlatedPart,
+          boardClipVolume,
+        ])
+        manifoldInstancesForCleanup.push(clipped)
+        finalCopperOp = clipped
+      }
+
+      // Add to copper ops for subtraction
+      platedHoleCopperOpsForSubtract.push(finalCopperOp)
+
+      // Create Three.js geometry for rendering
+      const threeGeom = manifoldMeshToThreeGeometry(finalCopperOp.getMesh())
+      platedHoleCopperGeoms.push({
+        key: `ph-${ph.pcb_plated_hole_id || index}`,
+        geometry: threeGeom,
+        color: COPPER_COLOR,
+      })
     } else if (ph.shape === "circular_hole_with_rect_pad") {
       // Get hole offsets (default to 0 if not specified)
       const holeOffsetX = ph.hole_offset_x || 0
