@@ -1,4 +1,3 @@
-import type React from "react"
 import { useState, useCallback, useRef, useEffect, useMemo } from "react"
 import * as THREE from "three"
 import { CadViewerJscad } from "./CadViewerJscad"
@@ -23,7 +22,14 @@ import { ContextMenu } from "./components/ContextMenu"
 import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
 import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
 
-const CadViewerInner = (props: any) => {
+const CadViewerInner = ({
+  defaultTarget,
+  initialCameraPosition,
+  ...props
+}: any & {
+  defaultTarget: THREE.Vector3
+  initialCameraPosition: readonly [number, number, number]
+}) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [isKeyboardShortcutsDialogOpen, setIsKeyboardShortcutsDialogOpen] =
@@ -227,6 +233,8 @@ const CadViewerInner = (props: any) => {
           cameraType={cameraType}
           onUserInteraction={handleUserInteraction}
           onCameraControllerReady={handleCameraControllerReady}
+          defaultTarget={defaultTarget}
+          initialCameraPosition={initialCameraPosition}
         />
       ) : (
         <CadViewerManifold
@@ -235,6 +243,8 @@ const CadViewerInner = (props: any) => {
           cameraType={cameraType}
           onUserInteraction={handleUserInteraction}
           onCameraControllerReady={handleCameraControllerReady}
+          defaultTarget={defaultTarget}
+          initialCameraPosition={initialCameraPosition}
         />
       )}
       <div
@@ -302,7 +312,11 @@ export const CadViewer = (props: any) => {
     >
       <LayerVisibilityProvider>
         <ToastProvider>
-          <CadViewerInner {...props} />
+          <CadViewerInner
+            {...props}
+            defaultTarget={defaultTarget}
+            initialCameraPosition={initialCameraPosition}
+          />
         </ToastProvider>
       </LayerVisibilityProvider>
     </CameraControllerProvider>

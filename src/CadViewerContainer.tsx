@@ -34,6 +34,7 @@ export const RotationTracker = () => {
 interface Props {
   autoRotateDisabled?: boolean
   initialCameraPosition?: readonly [number, number, number] | undefined
+  defaultTarget: THREE.Vector3
   clickToInteractEnabled?: boolean
   boardDimensions?: { width?: number; height?: number }
   boardCenter?: { x: number; y: number }
@@ -49,6 +50,7 @@ export const CadViewerContainer = forwardRef<
     {
       children,
       initialCameraPosition = [5, -5, 5],
+      defaultTarget,
       autoRotateDisabled,
       clickToInteractEnabled = false,
       boardDimensions,
