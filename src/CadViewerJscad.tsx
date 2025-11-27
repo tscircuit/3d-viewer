@@ -2,8 +2,8 @@ import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement } from "circuit-json"
 import type * as React from "react"
-import { forwardRef, useCallback, useMemo, useState } from "react"
-import type * as THREE from "three"
+import { forwardRef, useCallback, useEffect, useMemo, useState } from "react"
+import * as THREE from "three"
 import { Euler } from "three"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
@@ -20,6 +20,7 @@ import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 import { tuple } from "./utils/tuple"
+import { useCameraController } from "./contexts/CameraControllerContext"
 
 interface Props {
   /**
@@ -31,6 +32,7 @@ interface Props {
   clickToInteractEnabled?: boolean
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
+  defaultTarget: THREE.Vector3
 }
 
 export const CadViewerJscad = forwardRef<
@@ -46,6 +48,7 @@ export const CadViewerJscad = forwardRef<
       clickToInteractEnabled,
       onUserInteraction,
       onCameraControllerReady,
+      defaultTarget,
     },
     ref,
   ) => {
@@ -57,33 +60,6 @@ export const CadViewerJscad = forwardRef<
 
     // Use the new hook to manage board geometry building
     const boardGeom = useBoardGeomBuilder(internalCircuitJson)
-
-    const initialCameraPosition = useMemo(() => {
-      if (!internalCircuitJson) return [5, -5, 5] as const
-      try {
-        const board = su(internalCircuitJson as any).pcb_board.list()[0]
-        if (!board) return [5, -5, 5] as const
-        const { width, height } = board
-
-        if (!width && !height) {
-          return [5, -5, 5] as const
-        }
-
-        const minCameraDistance = 5
-        const adjustedBoardWidth = Math.max(width!, minCameraDistance)
-        const adjustedBoardHeight = Math.max(height!, minCameraDistance)
-        const largestDim = Math.max(adjustedBoardWidth, adjustedBoardHeight)
-        // Position the camera for a top-front-right view
-        return [
-          largestDim * 0.4, // Move right
-          -largestDim * 0.7, // Move back (negative Y)
-          largestDim * 0.9, // Keep height but slightly lower than top-down
-        ] as const
-      } catch (e) {
-        console.error(e)
-        return [5, -5, 5] as const
-      }
-    }, [internalCircuitJson])
 
     const isFauxBoard = useMemo(() => {
       if (!internalCircuitJson) return false
@@ -124,11 +100,76 @@ export const CadViewerJscad = forwardRef<
 
     const cad_components = su(internalCircuitJson).cad_component.list()
 
+    const { setBoundingBox } = useCameraController()
+
+    const boundingBox = useMemo(() => {
+      const box = new THREE.Box3()
+      if (boardGeom) {
+        for (const geom of boardGeom) {
+          const bounds = (geom as any).bounds
+          if (bounds) {
+            box.min.min(new THREE.Vector3(...bounds.min))
+            box.max.max(new THREE.Vector3(...bounds.max))
+          }
+        }
+      }
+      for (const comp of cad_components) {
+        if (comp.position) {
+          const pos = new THREE.Vector3(
+            comp.position.x,
+            comp.position.y,
+            comp.position.z,
+          )
+          box.expandByPoint(pos)
+          box.expandByPoint(pos.clone().addScalar(1))
+        }
+      }
+      return box
+    }, [boardGeom, cad_components])
+
+    useEffect(() => {
+      setBoundingBox(boundingBox.isEmpty() ? null : boundingBox)
+    }, [boundingBox, setBoundingBox])
+
+    const initialCameraPosition = useMemo(() => {
+      if (!internalCircuitJson) return [5, -5, 5] as const
+      try {
+        const board = su(internalCircuitJson as any).pcb_board.list()[0]
+        if (!board) return [5, -5, 5] as const
+        const { width, height } = board
+
+        let largestDim = 5
+        if (width || height) {
+          const minCameraDistance = 5
+          const adjustedBoardWidth = Math.max(width!, minCameraDistance)
+          const adjustedBoardHeight = Math.max(height!, minCameraDistance)
+          largestDim = Math.max(adjustedBoardWidth, adjustedBoardHeight)
+        }
+
+        if (boundingBox && !boundingBox.isEmpty()) {
+          const size = boundingBox.getSize(new THREE.Vector3())
+          const maxDim = Math.max(size.x, size.y, size.z)
+          largestDim = Math.max(maxDim, largestDim)
+        }
+
+        // Position the camera for a top-front-right view
+        return [
+          largestDim * 0.4, // Move right
+          -largestDim * 0.7, // Move back (negative Y)
+          largestDim * 0.9, // Keep height but slightly lower than top-down
+        ] as const
+      } catch (e) {
+        console.error(e)
+        return [5, -5, 5] as const
+      }
+    }, [internalCircuitJson, boundingBox])
+
     return (
       <CadViewerContainer
         ref={ref}
         autoRotateDisabled={autoRotateDisabled}
         initialCameraPosition={initialCameraPosition}
+        defaultTarget={defaultTarget}
         clickToInteractEnabled={clickToInteractEnabled}
         boardDimensions={boardDimensions}
         boardCenter={boardCenter}

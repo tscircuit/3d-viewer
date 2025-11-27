@@ -69,6 +69,8 @@ interface CameraControllerContextValue {
   mainCameraRef: React.MutableRefObject<THREE.Camera | null>
   defaultTarget: THREE.Vector3
   baseDistance: number
+  boundingBox: THREE.Box3 | null
+  setBoundingBox: (box: THREE.Box3 | null) => void
   controller: CameraController | null
   setController: (controller: CameraController | null) => void
   getPresetConfig: (preset: CameraPreset) => CameraAnimationConfig | null
@@ -99,6 +101,7 @@ export const CameraControllerProvider: React.FC<
   const controlsRef = useRef<ThreeOrbitControls | null>(null)
   const mainCameraRef = useRef<THREE.Camera | null>(null)
   const [controller, setController] = useState<CameraController | null>(null)
+  const [boundingBox, setBoundingBox] = useState<THREE.Box3 | null>(null)
   const [cameraType, setCameraType] = useState<"perspective" | "orthographic">(
     "perspective",
   )
@@ -126,8 +129,12 @@ export const CameraControllerProvider: React.FC<
         defaultTarget.y,
         defaultTarget.z,
       ] as const
-      const distance = baseDistance
-      const heightOffset = distance * 0.3
+      let distance = baseDistance
+      if (boundingBox && !boundingBox.isEmpty()) {
+        const size = boundingBox.getSize(new THREE.Vector3())
+        const maxDim = Math.max(size.x, size.y, size.z)
+        distance = Math.max(maxDim * 0.8, 5)
+      }
 
       switch (preset) {
         case "Top Center Angled": {
@@ -207,7 +214,7 @@ export const CameraControllerProvider: React.FC<
           return null
       }
     },
-    [baseDistance, defaultTarget],
+    [baseDistance, defaultTarget, boundingBox],
   )
 
   const handleControlsChange = useCallback(
@@ -223,6 +230,8 @@ export const CameraControllerProvider: React.FC<
       mainCameraRef,
       defaultTarget,
       baseDistance,
+      boundingBox,
+      setBoundingBox,
       controller,
       setController,
       getPresetConfig,
@@ -239,6 +248,8 @@ export const CameraControllerProvider: React.FC<
     [
       defaultTarget,
       baseDistance,
+      boundingBox,
+      setBoundingBox,
       controller,
       getPresetConfig,
       handleControlsChange,
