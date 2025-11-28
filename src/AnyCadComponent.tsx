@@ -155,6 +155,12 @@ export const AnyCadComponent = ({
   if (!isThroughHole && !visibility.smtModels) {
     return null
   }
+  if (
+    cad_component.show_as_translucent_model &&
+    !visibility.translucentModels
+  ) {
+    return null
+  }
 
   // Render the model and the tooltip if hovered
   return (

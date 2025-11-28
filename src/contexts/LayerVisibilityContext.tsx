@@ -19,7 +19,7 @@ export interface LayerVisibilityState {
   bottomMask: boolean
   throughHoleModels: boolean
   smtModels: boolean
-  virtualModels: boolean
+  translucentModels: boolean
   modelsNotInPosFile: boolean
   modelsMarkedDNP: boolean
   modelBoundingBoxes: boolean
@@ -49,7 +49,7 @@ const defaultVisibility: LayerVisibilityState = {
   bottomMask: true,
   throughHoleModels: true,
   smtModels: true,
-  virtualModels: false,
+  translucentModels: true,
   modelsNotInPosFile: false,
   modelsMarkedDNP: false,
   modelBoundingBoxes: false,
