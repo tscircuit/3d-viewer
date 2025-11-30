@@ -52,6 +52,7 @@
     "@tscircuit/props": "^0.0.422",
     "@tscircuit/checks": "^0.0.87",
     "@tscircuit/math-utils": "^0.0.29",
+    "@tscircuit/copper-pour-solver": "^0.0.14",
     "@tscircuit/capacity-autorouter": "^0.0.131",
     "calculate-packing": "^0.0.48",
     "@types/jsdom": "^21.1.7",
