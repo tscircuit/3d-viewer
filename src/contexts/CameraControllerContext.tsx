@@ -126,8 +126,14 @@ export const CameraControllerProvider: React.FC<
         defaultTarget.y,
         defaultTarget.z,
       ] as const
-      const distance = baseDistance
-      const heightOffset = distance * 0.3
+
+      const camera = mainCameraRef.current
+      const controls = controlsRef.current
+
+      let distance = baseDistance
+      if (camera && controls) {
+        distance = camera.position.distanceTo(controls.target)
+      }
 
       switch (preset) {
         case "Top Center Angled": {
@@ -207,7 +213,7 @@ export const CameraControllerProvider: React.FC<
           return null
       }
     },
-    [baseDistance, defaultTarget],
+    [baseDistance, defaultTarget, mainCameraRef, controlsRef],
   )
 
   const handleControlsChange = useCallback(
