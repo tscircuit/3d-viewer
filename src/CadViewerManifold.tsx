@@ -3,7 +3,7 @@ import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import { ManifoldToplevel } from "manifold-3d"
 import type React from "react"
 import { useEffect, useMemo, useState } from "react"
-import type * as THREE from "three"
+import * as THREE from "three"
 import { useThree } from "./react-three/ThreeContext"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
@@ -16,6 +16,7 @@ import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
 import { createTextureMeshes } from "./utils/manifold/create-three-texture-meshes"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
+import { useCameraController } from "./contexts/CameraControllerContext"
 
 declare global {
   interface Window {
@@ -120,6 +121,7 @@ type CadViewerManifoldProps = {
   clickToInteractEnabled?: boolean
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
+  defaultTarget: THREE.Vector3
 } & (
   | { circuitJson: AnyCircuitElement[]; children?: React.ReactNode }
   | { circuitJson?: never; children: React.ReactNode }
@@ -134,6 +136,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   onUserInteraction,
   children,
   onCameraControllerReady,
+  defaultTarget,
 }) => {
   const childrenCircuitJson = useConvertChildrenToCircuitJson(children)
   const circuitJson = useMemo(() => {
@@ -238,6 +241,33 @@ try {
     [textures, boardData, pcbThickness],
   )
 
+  const { setBoundingBox } = useCameraController()
+
+  const boundingBox = useMemo(() => {
+    const box = new THREE.Box3()
+    for (const mesh of geometryMeshes) {
+      mesh.geometry.computeBoundingBox()
+      if (mesh.geometry.boundingBox) {
+        const meshBox = mesh.geometry.boundingBox.clone()
+        meshBox.applyMatrix4(mesh.matrixWorld)
+        box.union(meshBox)
+      }
+    }
+    for (const mesh of textureMeshes) {
+      mesh.geometry.computeBoundingBox()
+      if (mesh.geometry.boundingBox) {
+        const meshBox = mesh.geometry.boundingBox.clone()
+        meshBox.applyMatrix4(mesh.matrixWorld)
+        box.union(meshBox)
+      }
+    }
+    return box
+  }, [geometryMeshes, textureMeshes])
+
+  useEffect(() => {
+    setBoundingBox(boundingBox.isEmpty() ? null : boundingBox)
+  }, [boundingBox, setBoundingBox])
+
   const cadComponents = useMemo(
     () => su(circuitJson).cad_component.list(),
     [circuitJson],
@@ -261,13 +291,18 @@ try {
     const { width = 0, height = 0 } = boardData
     const safeWidth = Math.max(width, 1)
     const safeHeight = Math.max(height, 1)
-    const largestDim = Math.max(safeWidth, safeHeight, 5)
+    let largestDim = Math.max(safeWidth, safeHeight, 5)
+    if (boundingBox && !boundingBox.isEmpty()) {
+      const size = boundingBox.getSize(new THREE.Vector3())
+      const maxDim = Math.max(size.x, size.y, size.z)
+      largestDim = Math.max(maxDim, largestDim)
+    }
     return [
       largestDim * 0.4, // Move right
       -largestDim * 0.7, // Move back (negative Y)
       largestDim * 0.9, // Keep height but slightly lower than top-down
     ] as const
-  }, [boardData])
+  }, [boardData, boundingBox])
 
   if (manifoldLoadingError) {
     return (
@@ -307,6 +342,7 @@ try {
   return (
     <CadViewerContainer
       initialCameraPosition={initialCameraPosition}
+      defaultTarget={defaultTarget}
       autoRotateDisabled={autoRotateDisabled}
       clickToInteractEnabled={clickToInteractEnabled}
       boardDimensions={boardDimensions}
