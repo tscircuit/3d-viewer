@@ -257,9 +257,10 @@ export function createSilkscreenTextureForLayer({
     ctx.lineWidth = textStrokeWidth
     ctx.lineCap = "butt"
     ctx.lineJoin = "miter"
+    const processedTextInput = (textS.text ?? "").replace(/\\n/g, "\n")
     const rawTextOutlines = vectorText({
       height: fontSize * 0.45,
-      input: textS.text,
+      input: processedTextInput,
     })
     const processedTextOutlines: Array<Array<[number, number]>> = []
     rawTextOutlines.forEach((outline: any) => {

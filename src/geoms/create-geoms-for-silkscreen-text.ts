@@ -10,9 +10,10 @@ import { PcbSilkscreenText } from "circuit-json"
 
 // Generate 2D text outlines
 export function createSilkscreenTextGeoms(silkscreenText: PcbSilkscreenText) {
+  const textInput = (silkscreenText.text ?? "").replace(/\\n/g, "\n")
   const textOutlines = vectorText({
     height: silkscreenText.font_size * 0.45,
-    input: silkscreenText.text,
+    input: textInput,
   })
 
   let rotationDegrees = silkscreenText.ccw_rotation ?? 0
