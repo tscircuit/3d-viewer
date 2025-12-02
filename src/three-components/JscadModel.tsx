@@ -15,6 +15,7 @@ export const JscadModel = ({
   onUnhover,
   isHovered,
   scale,
+  isTranslucent = false,
 }: {
   jscadPlan: JscadOperation
   positionOffset?: [number, number, number]
@@ -23,6 +24,7 @@ export const JscadModel = ({
   onUnhover: () => void
   isHovered: boolean
   scale?: number
+  isTranslucent?: boolean
 }) => {
   const { rootObject } = useThree()
   const { threeGeom, material } = useMemo(() => {
@@ -81,6 +83,30 @@ export const JscadModel = ({
       material.emissiveIntensity = 0
     }
   }, [isHovered, material])
+
+  useEffect(() => {
+    if (!material || !isTranslucent) return
+
+    const originalMaterial = material
+
+    const clone = material.clone()
+    clone.transparent = true
+    clone.opacity = 0.5
+    clone.depthWrite = false
+    clone.needsUpdate = true
+
+    if (mesh) {
+      mesh.material = clone
+    }
+
+    // Cleanup — restore original material
+    return () => {
+      if (mesh) {
+        mesh.material = originalMaterial
+      }
+    }
+  }, [material, isTranslucent, mesh])
+
   if (!threeGeom) return null
 
   return (

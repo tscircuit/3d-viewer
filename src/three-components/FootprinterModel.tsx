@@ -16,6 +16,7 @@ export const FootprinterModel = ({
   onUnhover,
   isHovered,
   scale,
+  isTranslucent = false,
 }: {
   positionOffset: any
   footprint: string
@@ -24,6 +25,7 @@ export const FootprinterModel = ({
   onUnhover: () => void
   isHovered: boolean
   scale?: number
+  isTranslucent?: boolean
 }) => {
   const { rootObject } = useThree()
   const group = useMemo(() => {
@@ -93,6 +95,45 @@ export const FootprinterModel = ({
       }
     })
   }, [isHovered, group])
+
+  useEffect(() => {
+    if (!group || !isTranslucent) return
+
+    const originalMaterials: {
+      mesh: THREE.Mesh
+      material: THREE.Material | THREE.Material[]
+    }[] = []
+
+    group.traverse((child) => {
+      if (child instanceof THREE.Mesh && child.material) {
+        // Save original material(s)
+        originalMaterials.push({ mesh: child, material: child.material })
+
+        // Clone to avoid mutating shared materials
+        const makeTransparent = (mat: THREE.Material) => {
+          const clone = mat.clone()
+          clone.transparent = true
+          clone.opacity = 0.5
+          clone.depthWrite = false
+          clone.needsUpdate = true
+          return clone
+        }
+
+        if (Array.isArray(child.material)) {
+          child.material = child.material.map(makeTransparent)
+        } else {
+          child.material = makeTransparent(child.material)
+        }
+      }
+    })
+
+    // Cleanup — restore original materials
+    return () => {
+      originalMaterials.forEach(({ mesh, material }) => {
+        mesh.material = material
+      })
+    }
+  }, [group, isTranslucent])
 
   if (!group) return null
 
