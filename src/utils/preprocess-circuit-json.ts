@@ -33,12 +33,13 @@ export function addFauxBoardIfNeeded(
     if (element.type === "cad_component") {
       const cadComponent = element as CadComponent
       if (cadComponent.position) {
+        const positionZOffset = cadComponent.position.z ?? 0
         // Set z position to componentZ, preserving x and y
         return {
           ...cadComponent,
           position: {
             ...cadComponent.position,
-            z: componentZ,
+            z: positionZOffset + componentZ,
           },
         }
       }
