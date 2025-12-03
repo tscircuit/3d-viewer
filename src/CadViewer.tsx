@@ -158,6 +158,24 @@ const CadViewerInner = (props: any) => {
     },
   )
 
+  useRegisteredHotkey(
+    "toggle_translucent_models",
+    () => {
+      const newVisibility = !visibility.translucentModels
+      setLayerVisibility("translucentModels", newVisibility)
+      showToast(
+        newVisibility
+          ? "Translucent components visible"
+          : "Translucent components hidden",
+        1500,
+      )
+    },
+    {
+      shortcut: "shift+v",
+      description: "Toggle translucent components",
+    },
+  )
+
   // Register the viewer element for hotkey bounds checking
   useEffect(() => {
     if (containerRef.current) {

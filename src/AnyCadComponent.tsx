@@ -149,11 +149,19 @@ export const AnyCadComponent = ({
   }
 
   // Check if models should be visible
-  if (isThroughHole && !visibility.throughHoleModels) {
-    return null
-  }
-  if (!isThroughHole && !visibility.smtModels) {
-    return null
+  // Translucent models are controlled only by translucent visibility
+  if (cad_component.show_as_translucent_model) {
+    if (!visibility.translucentModels) {
+      return null
+    }
+  } else {
+    // Non-translucent models are controlled by SMT/through-hole visibility
+    if (isThroughHole && !visibility.throughHoleModels) {
+      return null
+    }
+    if (!isThroughHole && !visibility.smtModels) {
+      return null
+    }
   }
 
   // Render the model and the tooltip if hovered

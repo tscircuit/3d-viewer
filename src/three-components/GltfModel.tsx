@@ -26,6 +26,7 @@ export function GltfModel({
 }) {
   const { renderer, rootObject } = useThree()
   const [model, setModel] = useState<THREE.Group | null>(null)
+  const [loadError, setLoadError] = useState<Error | null>(null)
 
   useEffect(() => {
     if (!gltfUrl) return
@@ -38,8 +39,13 @@ export function GltfModel({
       },
       undefined,
       (error) => {
-        if (isMounted)
-          console.error(`An error happened loading ${gltfUrl}`, error)
+        if (!isMounted) return
+        console.error(`An error happened loading ${gltfUrl}`, error)
+        const err =
+          error instanceof Error
+            ? error
+            : new Error(`Failed to load glTF model from ${gltfUrl}`)
+        setLoadError(err)
       },
     )
     return () => {
@@ -142,6 +148,10 @@ export function GltfModel({
       }
     })
   }, [isHovered, model])
+
+  if (loadError) {
+    throw loadError
+  }
 
   if (!model) return null
 
