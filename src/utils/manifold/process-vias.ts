@@ -44,7 +44,7 @@ export function processViasForManifold(
         Manifold,
         x: via.x,
         y: via.y,
-        outerDiameter: via.hole_diameter,
+        holeDiameter: via.hole_diameter,
         thickness: pcbThickness,
         zOffset: MANIFOLD_Z_OFFSET,
         segments: SMOOTH_CIRCLE_SEGMENTS,

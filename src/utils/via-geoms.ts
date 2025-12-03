@@ -11,6 +11,12 @@ export function createViaCopper({
   const padThickness = zOffset // Visual thickness for the annular rings
   const platingThickness = zOffset // Visual thickness for the barrel wall
 
+  if (outerDiameter < holeDiameter) {
+    console.warn(
+      `Invalid via geometry: outerDiameter (${outerDiameter}) is smaller than holeDiameter (${holeDiameter}).`,
+    )
+  }
+
   // Ensure the barrel isn't wider than the pads
   const barrelRadius = Math.min(
     outerDiameter / 2,
