@@ -29,24 +29,22 @@ export function MixedStlModel({
 
   const model = useMemo(() => {
     if (obj && !(obj instanceof Error)) {
-      if (isTranslucent) {
-        obj.traverse((child) => {
-          if (child instanceof THREE.Mesh && child.material) {
-            const applyTransparency = (mat: THREE.Material) => {
-              mat.transparent = true
-              mat.opacity = 0.5
-              mat.depthWrite = false
-              mat.needsUpdate = true
-            }
-
-            if (Array.isArray(child.material)) {
-              child.material.forEach(applyTransparency)
-            } else {
-              applyTransparency(child.material)
-            }
+      obj.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.material) {
+          const setMaterialTransparency = (mat: THREE.Material) => {
+            mat.transparent = isTranslucent
+            mat.opacity = isTranslucent ? 0.5 : 1
+            mat.depthWrite = !isTranslucent
+            mat.needsUpdate = true
           }
-        })
-      }
+
+          if (Array.isArray(child.material)) {
+            child.material.forEach(setMaterialTransparency)
+          } else {
+            setMaterialTransparency(child.material)
+          }
+        }
+      })
       return obj
     }
     // Fallback mesh
