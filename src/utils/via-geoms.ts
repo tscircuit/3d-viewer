@@ -48,7 +48,7 @@ export function createViaCopper({
   const viaSolid = Manifold.union([barrel, topPad, bottomPad])
 
   // Create the hole to drill through
-  const drillHeight = thickness + padThickness * 4 // Ensure it clears the pads
+  const drillHeight = thickness + padThickness * 2 // Ensure it clears the pads with a reasonable margin
   const drill = Manifold.cylinder(
     drillHeight,
     holeDiameter / 2,
