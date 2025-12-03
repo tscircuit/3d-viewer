@@ -187,7 +187,7 @@ export function processPlatedHolesForManifold(
         Manifold,
         x: ph.x,
         y: ph.y,
-        outerDiameter: ph.hole_diameter * 1.02,
+        holeDiameter: ph.hole_diameter * 1.02,
         thickness: pcbThickness,
         zOffset: MANIFOLD_Z_OFFSET,
         segments: SMOOTH_CIRCLE_SEGMENTS,

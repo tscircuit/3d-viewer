@@ -20,12 +20,12 @@ export function createPlatedHoleDrill({
   Manifold,
   x,
   y,
-  outerDiameter,
+  holeDiameter,
   thickness,
   zOffset = 0.001,
   segments = 32,
 }) {
-  const boardHoleRadius = outerDiameter / 2 + zOffset
+  const boardHoleRadius = holeDiameter / 2 + zOffset
   const drill = Manifold.cylinder(
     thickness * 1.2,
     boardHoleRadius,
