@@ -38,10 +38,13 @@ export const JscadModel = ({
 
     const material = new THREE.MeshStandardMaterial({
       vertexColors: true,
-      side: THREE.DoubleSide, // Ensure both sides are visible
+      side: THREE.DoubleSide,
+      transparent: isTranslucent,
+      opacity: isTranslucent ? 0.5 : 1,
+      depthWrite: !isTranslucent,
     })
     return { threeGeom, material }
-  }, [jscadPlan])
+  }, [jscadPlan, isTranslucent])
 
   const mesh = useMemo(() => {
     if (!threeGeom) return null
@@ -83,29 +86,6 @@ export const JscadModel = ({
       material.emissiveIntensity = 0
     }
   }, [isHovered, material])
-
-  useEffect(() => {
-    if (!material || !isTranslucent) return
-
-    const originalMaterial = material
-
-    const clone = material.clone()
-    clone.transparent = true
-    clone.opacity = 0.5
-    clone.depthWrite = false
-    clone.needsUpdate = true
-
-    if (mesh) {
-      mesh.material = clone
-    }
-
-    // Cleanup — restore original material
-    return () => {
-      if (mesh) {
-        mesh.material = originalMaterial
-      }
-    }
-  }, [material, isTranslucent, mesh])
 
   if (!threeGeom) return null
 

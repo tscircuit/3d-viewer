@@ -47,13 +47,16 @@ export const FootprinterModel = ({
       const material = new THREE.MeshStandardMaterial({
         vertexColors: true,
         side: THREE.DoubleSide,
+        transparent: isTranslucent,
+        opacity: isTranslucent ? 0.5 : 1,
+        depthWrite: !isTranslucent,
       })
       const mesh = new THREE.Mesh(threeGeom, material)
       group.add(mesh)
     }
 
     return group
-  }, [footprint])
+  }, [footprint, isTranslucent])
 
   useEffect(() => {
     if (!group || !rootObject) return
@@ -95,45 +98,6 @@ export const FootprinterModel = ({
       }
     })
   }, [isHovered, group])
-
-  useEffect(() => {
-    if (!group || !isTranslucent) return
-
-    const originalMaterials: {
-      mesh: THREE.Mesh
-      material: THREE.Material | THREE.Material[]
-    }[] = []
-
-    group.traverse((child) => {
-      if (child instanceof THREE.Mesh && child.material) {
-        // Save original material(s)
-        originalMaterials.push({ mesh: child, material: child.material })
-
-        // Clone to avoid mutating shared materials
-        const makeTransparent = (mat: THREE.Material) => {
-          const clone = mat.clone()
-          clone.transparent = true
-          clone.opacity = 0.5
-          clone.depthWrite = false
-          clone.needsUpdate = true
-          return clone
-        }
-
-        if (Array.isArray(child.material)) {
-          child.material = child.material.map(makeTransparent)
-        } else {
-          child.material = makeTransparent(child.material)
-        }
-      }
-    })
-
-    // Cleanup — restore original materials
-    return () => {
-      originalMaterials.forEach(({ mesh, material }) => {
-        mesh.material = material
-      })
-    }
-  }, [group, isTranslucent])
 
   if (!group) return null
 

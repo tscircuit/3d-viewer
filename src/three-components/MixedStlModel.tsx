@@ -29,6 +29,24 @@ export function MixedStlModel({
 
   const model = useMemo(() => {
     if (obj && !(obj instanceof Error)) {
+      if (isTranslucent) {
+        obj.traverse((child) => {
+          if (child instanceof THREE.Mesh && child.material) {
+            const applyTransparency = (mat: THREE.Material) => {
+              mat.transparent = true
+              mat.opacity = 0.5
+              mat.depthWrite = false
+              mat.needsUpdate = true
+            }
+
+            if (Array.isArray(child.material)) {
+              child.material.forEach(applyTransparency)
+            } else {
+              applyTransparency(child.material)
+            }
+          }
+        })
+      }
       return obj
     }
     // Fallback mesh
@@ -40,7 +58,7 @@ export function MixedStlModel({
         opacity: 0.25,
       }),
     )
-  }, [obj])
+  }, [obj, isTranslucent])
 
   useEffect(() => {
     if (!rootObject || !model) return
@@ -80,45 +98,6 @@ export function MixedStlModel({
     Array.isArray(rotation) ? rotation[2] : (rotation as THREE.Euler)?.z,
     scale,
   ])
-
-  useEffect(() => {
-    if (!model || !isTranslucent) return
-
-    const originalMaterials: {
-      mesh: THREE.Mesh
-      material: THREE.Material | THREE.Material[]
-    }[] = []
-
-    model.traverse((child) => {
-      if (child instanceof THREE.Mesh && child.material) {
-        // Save original material(s)
-        originalMaterials.push({ mesh: child, material: child.material })
-
-        // Clone to avoid mutating shared materials
-        const makeTransparent = (mat: THREE.Material) => {
-          const clone = mat.clone()
-          clone.transparent = true
-          clone.opacity = 0.5
-          clone.depthWrite = false
-          clone.needsUpdate = true
-          return clone
-        }
-
-        if (Array.isArray(child.material)) {
-          child.material = child.material.map(makeTransparent)
-        } else {
-          child.material = makeTransparent(child.material)
-        }
-      }
-    })
-
-    // Cleanup — restore original materials
-    return () => {
-      originalMaterials.forEach(({ mesh, material }) => {
-        mesh.material = material
-      })
-    }
-  }, [model, isTranslucent])
 
   if (obj instanceof Error) {
     throw obj
