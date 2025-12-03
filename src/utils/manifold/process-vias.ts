@@ -39,12 +39,12 @@ export function processViasForManifold(
 
   pcbVias.forEach((via: PcbVia, index: number) => {
     // Board cut for vias
-    if (typeof via.outer_diameter === "number") {
+    if (typeof via.hole_diameter === "number") {
       const translatedDrill = createPlatedHoleDrill({
         Manifold,
         x: via.x,
         y: via.y,
-        outerDiameter: via.outer_diameter,
+        outerDiameter: via.hole_diameter,
         thickness: pcbThickness,
         zOffset: MANIFOLD_Z_OFFSET,
         segments: SMOOTH_CIRCLE_SEGMENTS,
