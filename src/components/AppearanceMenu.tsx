@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
+import { useFauxBoard } from "../contexts/FauxBoardContext"
 import type React from "react"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { CheckIcon, ChevronRightIcon } from "./Icons"
@@ -61,6 +62,7 @@ const iconContainerStyles: React.CSSProperties = {
 
 export const AppearanceMenu = () => {
   const { visibility, setLayerVisibility } = useLayerVisibility()
+  const { isFauxBoard } = useFauxBoard()
   const [appearanceSubOpen, setAppearanceSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
@@ -125,6 +127,31 @@ export const AppearanceMenu = () => {
                 Board Body
               </span>
             </DropdownMenu.Item>
+
+            {isFauxBoard && (
+              <DropdownMenu.Item
+                style={{
+                  ...itemStyles,
+                  backgroundColor:
+                    hoveredItem === "fauxBoard" ? "#404040" : "transparent",
+                }}
+                onSelect={(e) => e.preventDefault()}
+                onPointerDown={(e) => {
+                  e.preventDefault()
+                  setLayerVisibility("fauxBoard", !visibility.fauxBoard)
+                }}
+                onMouseEnter={() => setHoveredItem("fauxBoard")}
+                onMouseLeave={() => setHoveredItem(null)}
+                onTouchStart={() => setHoveredItem("fauxBoard")}
+              >
+                <span style={iconContainerStyles}>
+                  {visibility.fauxBoard && <CheckIcon />}
+                </span>
+                <span style={{ display: "flex", alignItems: "center" }}>
+                  Faux Board
+                </span>
+              </DropdownMenu.Item>
+            )}
 
             <DropdownMenu.Item
               style={{

@@ -20,6 +20,7 @@ import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 import { tuple } from "./utils/tuple"
+import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
 
 interface Props {
   /**
@@ -121,8 +122,12 @@ export const CadViewerJscad = forwardRef<
 
     // Use the state `boardGeom` which starts simplified and gets updated
     const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
+    const { visibility } = useLayerVisibility()
 
     const cad_components = su(internalCircuitJson).cad_component.list()
+
+    // If this is a faux board and faux board visibility is disabled, don't render the board
+    const shouldRenderBoard = !(isFauxBoard && !visibility.fauxBoard)
 
     return (
       <CadViewerContainer
@@ -135,15 +140,16 @@ export const CadViewerJscad = forwardRef<
         onUserInteraction={onUserInteraction}
         onCameraControllerReady={onCameraControllerReady}
       >
-        {boardStls.map(({ stlData, color, layerType }, index) => (
-          <VisibleSTLModel
-            key={`board-${index}`}
-            stlData={stlData}
-            color={color}
-            opacity={index === 0 ? (isFauxBoard ? 0.8 : 0.95) : 1}
-            layerType={layerType}
-          />
-        ))}
+        {shouldRenderBoard &&
+          boardStls.map(({ stlData, color, layerType }, index) => (
+            <VisibleSTLModel
+              key={`board-${index}`}
+              stlData={stlData}
+              color={color}
+              opacity={index === 0 ? (isFauxBoard ? 0.8 : 0.95) : 1}
+              layerType={layerType}
+            />
+          ))}
         {cad_components.map((cad_component) => (
           <ThreeErrorBoundary
             key={cad_component.cad_component_id}

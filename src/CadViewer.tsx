@@ -19,6 +19,7 @@ import {
   useCameraController,
 } from "./contexts/CameraControllerContext"
 import { ToastProvider, useToast } from "./contexts/ToastContext"
+import { FauxBoardProvider } from "./contexts/FauxBoardContext"
 import { ContextMenu } from "./components/ContextMenu"
 import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
 import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
@@ -319,9 +320,11 @@ export const CadViewer = (props: any) => {
       initialCameraPosition={initialCameraPosition}
     >
       <LayerVisibilityProvider>
-        <ToastProvider>
-          <CadViewerInner {...props} />
-        </ToastProvider>
+        <FauxBoardProvider>
+          <ToastProvider>
+            <CadViewerInner {...props} />
+          </ToastProvider>
+        </FauxBoardProvider>
       </LayerVisibilityProvider>
     </CameraControllerProvider>
   )
