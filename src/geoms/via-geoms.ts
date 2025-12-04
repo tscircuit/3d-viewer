@@ -19,9 +19,9 @@ export function createViaCopper({
   holeDiameter: number
   thickness: number
 }): Geom3 {
-  if (outerDiameter < holeDiameter) {
+  if (outerDiameter <= holeDiameter) {
     throw new Error(
-      `Invalid via geometry: outerDiameter (${outerDiameter}) must be >= holeDiameter (${holeDiameter})`,
+      `Invalid via geometry: outerDiameter (${outerDiameter}) must be > holeDiameter (${holeDiameter})`,
     )
   }
 
