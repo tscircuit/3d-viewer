@@ -16,6 +16,29 @@ import type {
 } from "../hooks/cameraAnimation"
 
 const CAMERA_KEY = "cadViewerCameraStateSession"
+const CAMERA_PRESET_KEY = "cadViewerCameraPreset"
+
+// Camera preset persistence functions
+export const saveCameraPresetToSession = (preset: CameraPreset) => {
+  try {
+    sessionStorage.setItem(CAMERA_PRESET_KEY, preset)
+  } catch (err) {
+    console.warn("Failed to save camera preset:", err)
+  }
+}
+
+export const loadCameraPresetFromSession = (): CameraPreset | null => {
+  try {
+    const preset = sessionStorage.getItem(CAMERA_PRESET_KEY)
+    if (preset) {
+      return preset as CameraPreset
+    }
+    return null
+  } catch (err) {
+    console.warn("Failed to load camera preset:", err)
+    return null
+  }
+}
 
 // Camera session storage functions
 export const saveCameraToSession = (camera: THREE.Camera, controls: any) => {
