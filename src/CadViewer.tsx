@@ -240,19 +240,20 @@ const CadViewerInner = (props: any) => {
   }, [cameraPreset])
 
   // Re-read camera preset from session when viewerKey changes (file switch)
-  useEffect(() => {
-    const stored = loadCameraPresetFromSession()
-    if (stored) {
-      // Set flag to prevent handleUserInteraction from resetting to Custom
-      isRestoringCameraRef.current = true
-      lastPresetSelectTime.current = Date.now()
-      setCameraPreset(stored)
-      // Keep the restoring flag true for a bit to prevent premature reset
-      setTimeout(() => {
-        isRestoringCameraRef.current = false
-      }, 2000)
-    }
-  }, [viewerKey])
+useEffect(() => {
+  const stored = loadCameraPresetFromSession()
+  if (stored) {
+    // Set flag to prevent handleUserInteraction from resetting to Custom
+    isRestoringCameraRef.current = true
+    lastPresetSelectTime.current = Date.now()
+    setCameraPreset(stored)
+    // Keep the restoring flag true for a bit to prevent premature reset
+    const timeout = setTimeout(() => {
+      isRestoringCameraRef.current = false
+    }, 2000)
+    return () => clearTimeout(timeout)
+  }
+}, [viewerKey])
 
   // Sync camera type to localStorage
   useEffect(() => {
