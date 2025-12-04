@@ -1024,11 +1024,6 @@ export class BoardGeomBuilder {
       this.padGeoms = this.padGeoms.map((pg) =>
         colorize(colors.copper, subtract(pg, viaDrill)),
       )
-
-      // Cut drill through any existing vias (in case of overlapping vias)
-      this.viaGeoms = this.viaGeoms.map((vg) =>
-        colorize(colors.copper, subtract(vg, viaDrill)),
-      )
     }
   }
 
