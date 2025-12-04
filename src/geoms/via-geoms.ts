@@ -2,10 +2,18 @@ import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import { subtract, union } from "@jscad/modeling/src/operations/booleans"
 import { translate } from "@jscad/modeling/src/operations/transforms"
 import { cylinder } from "@jscad/modeling/src/primitives"
-import { M } from "./constants"
+import { M, SMOOTH_CIRCLE_SEGMENTS } from "./constants"
 
-const VIA_SEGMENTS = 32
-
+/**
+ * Creates a 3D geometry for via copper (barrel and annular rings).
+ *
+ * @param x - X coordinate of via center
+ * @param y - Y coordinate of via center
+ * @param outerDiameter - Outer diameter of annular rings
+ * @param holeDiameter - Diameter of the hole through the via
+ * @param thickness - PCB thickness
+ * @returns Positioned via copper geometry (uncolored)
+ */
 export function createViaCopper({
   x,
   y,
@@ -39,7 +47,7 @@ export function createViaCopper({
     center: [0, 0, 0],
     radius: barrelRadius,
     height: thickness,
-    segments: VIA_SEGMENTS,
+    segments: SMOOTH_CIRCLE_SEGMENTS,
   })
 
   // Top annular ring
@@ -47,7 +55,7 @@ export function createViaCopper({
     center: [0, 0, thickness / 2],
     radius: outerDiameter / 2,
     height: padThickness,
-    segments: VIA_SEGMENTS,
+    segments: SMOOTH_CIRCLE_SEGMENTS,
   })
 
   // Bottom annular ring
@@ -55,7 +63,7 @@ export function createViaCopper({
     center: [0, 0, -thickness / 2],
     radius: outerDiameter / 2,
     height: padThickness,
-    segments: VIA_SEGMENTS,
+    segments: SMOOTH_CIRCLE_SEGMENTS,
   })
 
   // Combine barrel and pads
@@ -67,7 +75,7 @@ export function createViaCopper({
     center: [0, 0, 0],
     radius: holeDiameter / 2,
     height: drillHeight,
-    segments: VIA_SEGMENTS,
+    segments: SMOOTH_CIRCLE_SEGMENTS,
   })
 
   // Subtract hole from via solid
@@ -97,7 +105,7 @@ export function createViaBoardDrill({
     center: [x, y, 0],
     radius: drillRadius,
     height: drillHeight,
-    segments: VIA_SEGMENTS,
+    segments: SMOOTH_CIRCLE_SEGMENTS,
   })
 
   return drill
