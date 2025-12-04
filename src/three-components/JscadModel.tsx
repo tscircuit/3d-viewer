@@ -15,6 +15,7 @@ export const JscadModel = ({
   onUnhover,
   isHovered,
   scale,
+  isTranslucent = false,
 }: {
   jscadPlan: JscadOperation
   positionOffset?: [number, number, number]
@@ -23,6 +24,7 @@ export const JscadModel = ({
   onUnhover: () => void
   isHovered: boolean
   scale?: number
+  isTranslucent?: boolean
 }) => {
   const { rootObject } = useThree()
   const { threeGeom, material } = useMemo(() => {
@@ -36,10 +38,13 @@ export const JscadModel = ({
 
     const material = new THREE.MeshStandardMaterial({
       vertexColors: true,
-      side: THREE.DoubleSide, // Ensure both sides are visible
+      side: THREE.DoubleSide,
+      transparent: isTranslucent,
+      opacity: isTranslucent ? 0.5 : 1,
+      depthWrite: !isTranslucent,
     })
     return { threeGeom, material }
-  }, [jscadPlan])
+  }, [jscadPlan, isTranslucent])
 
   const mesh = useMemo(() => {
     if (!threeGeom) return null
@@ -81,6 +86,7 @@ export const JscadModel = ({
       material.emissiveIntensity = 0
     }
   }, [isHovered, material])
+
   if (!threeGeom) return null
 
   return (
