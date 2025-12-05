@@ -1,39 +1,40 @@
 import { useState, useEffect, useMemo, useRef } from "react"
 import type {
   AnyCircuitElement,
-  PcbBoard,
-  PcbPlatedHole,
-  PcbSmtPad,
-  PcbHole,
-  PcbTrace,
-  PcbSilkscreenText,
-  PcbSilkscreenPath,
   Point as CircuitPoint,
-  PcbVia,
+  PcbBoard,
+  PcbHole,
   PcbPanel,
+  PcbPlatedHole,
+  PcbSilkscreenPath,
+  PcbSilkscreenText,
+  PcbSmtPad,
+  PcbTrace,
+  PcbVia,
 } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import * as THREE from "three"
 import {
   boardMaterialColors,
+  DEFAULT_SMT_PAD_THICKNESS,
   colors as defaultColors,
-  tracesMaterialColors,
   MANIFOLD_Z_OFFSET,
   SMOOTH_CIRCLE_SEGMENTS,
-  DEFAULT_SMT_PAD_THICKNESS,
   TRACE_TEXTURE_RESOLUTION,
+  tracesMaterialColors,
 } from "../geoms/constants"
-import { manifoldMeshToThreeGeometry } from "../utils/manifold-mesh-to-three-geometry"
 import type { ManifoldToplevel } from "manifold-3d"
-import { createTraceTextureForLayer } from "../utils/trace-texture"
-import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
-import { processNonPlatedHolesForManifold } from "../utils/manifold/process-non-plated-holes"
-import { processPlatedHolesForManifold } from "../utils/manifold/process-plated-holes"
-import { processViasForManifold } from "../utils/manifold/process-vias"
-import { processSmtPadsForManifold } from "../utils/manifold/process-smt-pads"
 import { createManifoldBoard } from "../utils/manifold/create-manifold-board"
 import { processCopperPoursForManifold } from "../utils/manifold/process-copper-pours"
 import { processCutoutsForManifold } from "../utils/manifold/process-cutouts"
+import { processNonPlatedHolesForManifold } from "../utils/manifold/process-non-plated-holes"
+import { processPlatedHolesForManifold } from "../utils/manifold/process-plated-holes"
+import { processSmtPadsForManifold } from "../utils/manifold/process-smt-pads"
+import { processViasForManifold } from "../utils/manifold/process-vias"
+import { manifoldMeshToThreeGeometry } from "../utils/manifold-mesh-to-three-geometry"
+import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
+import { createSoldermaskTextureForLayer } from "../utils/soldermask-texture"
+import { createTraceTextureForLayer } from "../utils/trace-texture"
 
 export interface ManifoldGeoms {
   board?: {
@@ -69,6 +70,8 @@ export interface ManifoldTextures {
   bottomTrace?: THREE.CanvasTexture | null
   topSilkscreen?: THREE.CanvasTexture | null
   bottomSilkscreen?: THREE.CanvasTexture | null
+  topSoldermask?: THREE.CanvasTexture | null
+  bottomSoldermask?: THREE.CanvasTexture | null
 }
 
 interface UseManifoldBoardBuilderResult {
@@ -404,6 +407,26 @@ export const useManifoldBoardBuilder = (
         circuitJson,
         boardData,
         silkscreenColor,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      })
+
+      // --- Process Soldermask (as Textures) ---
+      const soldermaskColorArr =
+        tracesMaterialColors[boardData.material] ??
+        defaultColors.fr4GreenSolderWithMask
+      const soldermaskColor = `rgb(${Math.round(soldermaskColorArr[0] * 255)}, ${Math.round(soldermaskColorArr[1] * 255)}, ${Math.round(soldermaskColorArr[2] * 255)})`
+      currentTextures.topSoldermask = createSoldermaskTextureForLayer({
+        layer: "top",
+        circuitJson,
+        boardData,
+        soldermaskColor,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      })
+      currentTextures.bottomSoldermask = createSoldermaskTextureForLayer({
+        layer: "bottom",
+        circuitJson,
+        boardData,
+        soldermaskColor,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
       setTextures(currentTextures)
