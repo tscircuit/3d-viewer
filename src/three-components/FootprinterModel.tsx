@@ -16,6 +16,7 @@ export const FootprinterModel = ({
   onUnhover,
   isHovered,
   scale,
+  isTranslucent = false,
 }: {
   positionOffset: any
   footprint: string
@@ -24,6 +25,7 @@ export const FootprinterModel = ({
   onUnhover: () => void
   isHovered: boolean
   scale?: number
+  isTranslucent?: boolean
 }) => {
   const { rootObject } = useThree()
   const group = useMemo(() => {
@@ -45,13 +47,16 @@ export const FootprinterModel = ({
       const material = new THREE.MeshStandardMaterial({
         vertexColors: true,
         side: THREE.DoubleSide,
+        transparent: isTranslucent,
+        opacity: isTranslucent ? 0.5 : 1,
+        depthWrite: !isTranslucent,
       })
       const mesh = new THREE.Mesh(threeGeom, material)
       group.add(mesh)
     }
 
     return group
-  }, [footprint])
+  }, [footprint, isTranslucent])
 
   useEffect(() => {
     if (!group || !rootObject) return

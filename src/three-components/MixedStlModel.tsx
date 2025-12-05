@@ -13,6 +13,7 @@ export function MixedStlModel({
   onUnhover,
   isHovered,
   scale,
+  isTranslucent = false,
 }: {
   url: string
   position?: Vector3 | [number, number, number]
@@ -21,12 +22,29 @@ export function MixedStlModel({
   onUnhover: () => void
   isHovered: boolean
   scale?: number
+  isTranslucent?: boolean
 }) {
   const obj = useGlobalObjLoader(url)
   const { rootObject } = useThree()
 
   const model = useMemo(() => {
     if (obj && !(obj instanceof Error)) {
+      obj.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.material) {
+          const setMaterialTransparency = (mat: THREE.Material) => {
+            mat.transparent = isTranslucent
+            mat.opacity = isTranslucent ? 0.5 : 1
+            mat.depthWrite = !isTranslucent
+            mat.needsUpdate = true
+          }
+
+          if (Array.isArray(child.material)) {
+            child.material.forEach(setMaterialTransparency)
+          } else {
+            setMaterialTransparency(child.material)
+          }
+        }
+      })
       return obj
     }
     // Fallback mesh
@@ -38,7 +56,7 @@ export function MixedStlModel({
         opacity: 0.25,
       }),
     )
-  }, [obj])
+  }, [obj, isTranslucent])
 
   useEffect(() => {
     if (!rootObject || !model) return
