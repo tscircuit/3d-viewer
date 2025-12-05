@@ -196,6 +196,101 @@ export function createSoldermaskTextureForLayer({
         ctx.ellipse(canvasX, canvasY, radiusX, radiusY, 0, 0, 2 * Math.PI)
         ctx.fill()
       }
+    } else if (hole.shape === "hole_with_polygon_pad") {
+      // Handle plated holes with polygon pads
+      const holeShape = hole.hole_shape || "circle"
+      const holeOffsetX = hole.hole_offset_x || 0
+      const holeOffsetY = hole.hole_offset_y || 0
+      // Convert the actual hole position (including offset) to canvas coordinates
+      const adjustedCanvasX = canvasXFromPcb(hole.x + holeOffsetX)
+      const adjustedCanvasY = canvasYFromPcb(hole.y + holeOffsetY)
+
+      if (holeShape === "pill" || holeShape === "rotated_pill") {
+        const width =
+          ((hole.outer_width ??
+            hole.outer_diameter ??
+            hole.hole_width) as number) * traceTextureResolution
+        const height =
+          ((hole.outer_height ??
+            hole.outer_diameter ??
+            hole.hole_height) as number) * traceTextureResolution
+        const radius = Math.min(width, height) / 2
+        let rotation = (hole.ccw_rotation as number) || 0
+
+        // For bottom layer, rotation direction needs to be flipped
+        if (layer === "bottom") {
+          rotation = -rotation
+        }
+
+        // Apply rotation if specified
+        if (rotation) {
+          ctx.save()
+          ctx.translate(adjustedCanvasX, adjustedCanvasY)
+          ctx.rotate((rotation * Math.PI) / 180)
+          ctx.beginPath()
+          ctx.roundRect(-width / 2, -height / 2, width, height, radius)
+          ctx.fill()
+          ctx.restore()
+        } else {
+          ctx.beginPath()
+          ctx.roundRect(
+            adjustedCanvasX - width / 2,
+            adjustedCanvasY - height / 2,
+            width,
+            height,
+            radius,
+          )
+          ctx.fill()
+        }
+      } else if (holeShape === "oval") {
+        const width =
+          ((hole.outer_width ??
+            hole.outer_diameter ??
+            hole.hole_width) as number) * traceTextureResolution
+        const height =
+          ((hole.outer_height ??
+            hole.outer_diameter ??
+            hole.hole_height) as number) * traceTextureResolution
+        const radiusX = width / 2
+        const radiusY = height / 2
+        let rotation = (hole.ccw_rotation as number) || 0
+
+        // For bottom layer, rotation direction needs to be flipped
+        if (rotation) {
+          rotation = -rotation
+        }
+
+        // Apply rotation if specified
+        if (rotation) {
+          ctx.save()
+          ctx.translate(adjustedCanvasX, adjustedCanvasY)
+          ctx.rotate((rotation * Math.PI) / 180)
+          ctx.beginPath()
+          ctx.ellipse(0, 0, radiusX, radiusY, 0, 0, 2 * Math.PI)
+          ctx.fill()
+          ctx.restore()
+        } else {
+          ctx.beginPath()
+          ctx.ellipse(
+            adjustedCanvasX,
+            adjustedCanvasY,
+            radiusX,
+            radiusY,
+            0,
+            0,
+            2 * Math.PI,
+          )
+          ctx.fill()
+        }
+      } else if (holeShape === "circle") {
+        const outerDiameter =
+          (hole.outer_diameter ?? hole.hole_diameter ?? 0) *
+          traceTextureResolution
+        const canvasRadius = outerDiameter / 2
+        ctx.beginPath()
+        ctx.arc(adjustedCanvasX, adjustedCanvasY, canvasRadius, 0, 2 * Math.PI)
+        ctx.fill()
+      }
     }
   })
 
