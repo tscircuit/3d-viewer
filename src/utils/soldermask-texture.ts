@@ -149,6 +149,67 @@ export function createSoldermaskTextureForLayer({
     }
   })
 
+  // Get all non-plated holes (they go through both layers, so cut out on both)
+  const pcbHoles = su(circuitJson).pcb_hole.list()
+  pcbHoles.forEach((hole: any) => {
+    const x = hole.x as number
+    const y = hole.y as number
+    const canvasX = canvasXFromPcb(x)
+    const canvasY = canvasYFromPcb(y)
+
+    const holeShape = hole.hole_shape || hole.shape
+
+    if (holeShape === "circle" && typeof hole.hole_diameter === "number") {
+      const canvasRadius = (hole.hole_diameter / 2) * traceTextureResolution
+      ctx.beginPath()
+      ctx.arc(canvasX, canvasY, canvasRadius, 0, 2 * Math.PI)
+      ctx.fill()
+    } else if (
+      holeShape === "pill" &&
+      typeof hole.hole_width === "number" &&
+      typeof hole.hole_height === "number"
+    ) {
+      const width = hole.hole_width * traceTextureResolution
+      const height = hole.hole_height * traceTextureResolution
+      const radius = Math.min(width, height) / 2
+      ctx.beginPath()
+      ctx.roundRect(
+        canvasX - width / 2,
+        canvasY - height / 2,
+        width,
+        height,
+        radius,
+      )
+      ctx.fill()
+    } else if (
+      holeShape === "rotated_pill" &&
+      typeof hole.hole_width === "number" &&
+      typeof hole.hole_height === "number"
+    ) {
+      const width = hole.hole_width * traceTextureResolution
+      const height = hole.hole_height * traceTextureResolution
+      const radius = Math.min(width, height) / 2
+      const rotation = (hole.ccw_rotation || 0) * (Math.PI / 180)
+
+      // Save context state
+      ctx.save()
+      // Translate to hole center
+      ctx.translate(canvasX, canvasY)
+      // Apply rotation (for bottom layer, we need to flip rotation direction)
+      if (layer === "bottom") {
+        ctx.rotate(-rotation)
+      } else {
+        ctx.rotate(rotation)
+      }
+      // Draw the pill shape centered at origin
+      ctx.beginPath()
+      ctx.roundRect(-width / 2, -height / 2, width, height, radius)
+      ctx.fill()
+      // Restore context state
+      ctx.restore()
+    }
+  })
+
   // Get copper pours that are not covered with soldermask
   const pcbCopperPours = su(circuitJson).pcb_copper_pour.list()
   pcbCopperPours.forEach((pour) => {
