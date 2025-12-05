@@ -2,6 +2,10 @@
 import * as THREE from "three"
 import type { AnyCircuitElement, PcbBoard } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
+import {
+  extractRectBorderRadius,
+  clampRectBorderRadius,
+} from "./rect-border-radius"
 
 export function createSoldermaskTextureForLayer({
   layer,
@@ -381,6 +385,107 @@ export function createSoldermaskTextureForLayer({
       })
       ctx.closePath()
       ctx.fill()
+    }
+  })
+
+  // Get all PCB cutouts and cut them out from soldermask (cutouts go through both layers)
+  const pcbCutouts = su(circuitJson).pcb_cutout.list()
+  pcbCutouts.forEach((cutout: any) => {
+    switch (cutout.shape) {
+      case "rect": {
+        const canvasX = canvasXFromPcb(cutout.center.x)
+        const canvasY = canvasYFromPcb(cutout.center.y)
+        const width = cutout.width * traceTextureResolution
+        const height = cutout.height * traceTextureResolution
+        const rectCornerRadius = extractRectBorderRadius(cutout)
+        const borderRadius = clampRectBorderRadius(
+          cutout.width,
+          cutout.height,
+          rectCornerRadius,
+        )
+
+        if (cutout.rotation) {
+          ctx.save()
+          ctx.translate(canvasX, canvasY)
+          // For bottom layer, flip rotation direction
+          const rotation =
+            layer === "bottom"
+              ? -cutout.rotation * (Math.PI / 180)
+              : cutout.rotation * (Math.PI / 180)
+          ctx.rotate(rotation)
+
+          if (borderRadius > 0) {
+            ctx.beginPath()
+            ctx.roundRect(
+              -width / 2,
+              -height / 2,
+              width,
+              height,
+              borderRadius * traceTextureResolution,
+            )
+            ctx.fill()
+          } else {
+            ctx.fillRect(-width / 2, -height / 2, width, height)
+          }
+          ctx.restore()
+        } else {
+          if (borderRadius > 0) {
+            ctx.beginPath()
+            ctx.roundRect(
+              canvasX - width / 2,
+              canvasY - height / 2,
+              width,
+              height,
+              borderRadius * traceTextureResolution,
+            )
+            ctx.fill()
+          } else {
+            ctx.fillRect(
+              canvasX - width / 2,
+              canvasY - height / 2,
+              width,
+              height,
+            )
+          }
+        }
+        break
+      }
+      case "circle": {
+        const canvasX = canvasXFromPcb(cutout.center.x)
+        const canvasY = canvasYFromPcb(cutout.center.y)
+        const canvasRadius = cutout.radius * traceTextureResolution
+        ctx.beginPath()
+        ctx.arc(canvasX, canvasY, canvasRadius, 0, 2 * Math.PI)
+        ctx.fill()
+        break
+      }
+      case "polygon": {
+        if (!cutout.points || cutout.points.length < 3) {
+          console.warn(
+            `PCB Cutout [${cutout.pcb_cutout_id}] polygon has fewer than 3 points, skipping in soldermask texture.`,
+          )
+          break
+        }
+        ctx.beginPath()
+        cutout.points.forEach(
+          (point: { x: number; y: number }, index: number) => {
+            const px = canvasXFromPcb(point.x)
+            const py = canvasYFromPcb(point.y)
+            if (index === 0) {
+              ctx.moveTo(px, py)
+            } else {
+              ctx.lineTo(px, py)
+            }
+          },
+        )
+        ctx.closePath()
+        ctx.fill()
+        break
+      }
+      default:
+        console.warn(
+          `Unsupported cutout shape: ${(cutout as any).shape} for cutout ${cutout.pcb_cutout_id} in soldermask texture.`,
+        )
     }
   })
 
