@@ -137,15 +137,32 @@ export function createSoldermaskTextureForLayer({
           hole.outer_diameter ??
           hole.hole_height) as number) * traceTextureResolution
       const radius = Math.min(width, height) / 2
-      ctx.beginPath()
-      ctx.roundRect(
-        canvasX - width / 2,
-        canvasY - height / 2,
-        width,
-        height,
-        radius,
-      )
-      ctx.fill()
+      let rotation = (hole.ccw_rotation as number) || 0
+
+      if (rotation) {
+        rotation = -rotation
+      }
+
+      // Apply rotation if specified
+      if (rotation) {
+        ctx.save()
+        ctx.translate(canvasX, canvasY)
+        ctx.rotate((rotation * Math.PI) / 180)
+        ctx.beginPath()
+        ctx.roundRect(-width / 2, -height / 2, width, height, radius)
+        ctx.fill()
+        ctx.restore()
+      } else {
+        ctx.beginPath()
+        ctx.roundRect(
+          canvasX - width / 2,
+          canvasY - height / 2,
+          width,
+          height,
+          radius,
+        )
+        ctx.fill()
+      }
     }
   })
 
