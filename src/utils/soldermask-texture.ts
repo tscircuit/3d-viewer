@@ -81,26 +81,78 @@ export function createSoldermaskTextureForLayer({
     if (pad.shape === "rect") {
       const width = (pad.width as number) * traceTextureResolution
       const height = (pad.height as number) * traceTextureResolution
-      ctx.fillRect(canvasX - width / 2, canvasY - height / 2, width, height)
+      const rawRadius = extractRectBorderRadius(pad)
+      const borderRadius =
+        clampRectBorderRadius(
+          pad.width as number,
+          pad.height as number,
+          rawRadius,
+        ) * traceTextureResolution
+
+      if (borderRadius > 0) {
+        ctx.beginPath()
+        ctx.roundRect(
+          canvasX - width / 2,
+          canvasY - height / 2,
+          width,
+          height,
+          borderRadius,
+        )
+        ctx.fill()
+      } else {
+        ctx.fillRect(canvasX - width / 2, canvasY - height / 2, width, height)
+      }
     } else if (pad.shape === "circle") {
       const radius =
         ((pad.radius ?? pad.width / 2) as number) * traceTextureResolution
       ctx.beginPath()
       ctx.arc(canvasX, canvasY, radius, 0, 2 * Math.PI)
       ctx.fill()
-    } else if (pad.shape === "pill" || pad.shape === "rotated_rect") {
+    } else if (pad.shape === "pill") {
       const width = (pad.width as number) * traceTextureResolution
       const height = (pad.height as number) * traceTextureResolution
-      const radius = Math.min(width, height) / 2
+      const rawRadius = extractRectBorderRadius(pad)
+      const borderRadius =
+        clampRectBorderRadius(
+          pad.width as number,
+          pad.height as number,
+          rawRadius,
+        ) * traceTextureResolution
+
       ctx.beginPath()
       ctx.roundRect(
         canvasX - width / 2,
         canvasY - height / 2,
         width,
         height,
-        radius,
+        borderRadius,
       )
       ctx.fill()
+    } else if (pad.shape === "rotated_rect") {
+      const width = (pad.width as number) * traceTextureResolution
+      const height = (pad.height as number) * traceTextureResolution
+      const rawRadius = extractRectBorderRadius(pad)
+      const borderRadius =
+        clampRectBorderRadius(
+          pad.width as number,
+          pad.height as number,
+          rawRadius,
+        ) * traceTextureResolution
+
+      // For rotated_rect, always apply rotation transform
+      // Match the pattern from BoardGeomBuilder.ts
+      const ccwRotation = (pad.ccw_rotation as number) || 0
+      const rotationRadians = ccwRotation * (Math.PI / 180)
+      // For bottom layer, flip rotation direction (Y axis is flipped)
+      const rotation = layer === "bottom" ? -rotationRadians : rotationRadians
+
+      ctx.save()
+      ctx.translate(canvasX, canvasY)
+      ctx.rotate(rotation)
+      ctx.beginPath()
+      ctx.roundRect(-width / 2, -height / 2, width, height, borderRadius)
+      ctx.fill()
+      ctx.restore()
     }
   })
 
@@ -148,7 +200,7 @@ export function createSoldermaskTextureForLayer({
         rotation = -rotation
       }
 
-      // Apply rotation if specified
+      // Apply rotation if specified (convert to radians)
       if (rotation) {
         ctx.save()
         ctx.translate(canvasX, canvasY)
@@ -295,6 +347,85 @@ export function createSoldermaskTextureForLayer({
         ctx.arc(adjustedCanvasX, adjustedCanvasY, canvasRadius, 0, 2 * Math.PI)
         ctx.fill()
       }
+    } else if (hole.shape === "circular_hole_with_rect_pad") {
+      // Handle circular hole with rectangular pad
+      const padWidth =
+        (hole.rect_pad_width ?? hole.hole_diameter ?? 0) *
+        traceTextureResolution
+      const padHeight =
+        (hole.rect_pad_height ?? hole.hole_diameter ?? 0) *
+        traceTextureResolution
+      const rawRadius = extractRectBorderRadius(hole)
+      const borderRadius =
+        clampRectBorderRadius(
+          hole.rect_pad_width ?? hole.hole_diameter ?? 0,
+          hole.rect_pad_height ?? hole.hole_diameter ?? 0,
+          rawRadius,
+        ) * traceTextureResolution
+
+      if (borderRadius > 0) {
+        ctx.beginPath()
+        ctx.roundRect(
+          canvasX - padWidth / 2,
+          canvasY - padHeight / 2,
+          padWidth,
+          padHeight,
+          borderRadius,
+        )
+        ctx.fill()
+      } else {
+        ctx.fillRect(
+          canvasX - padWidth / 2,
+          canvasY - padHeight / 2,
+          padWidth,
+          padHeight,
+        )
+      }
+    } else if (hole.shape === "pill_hole_with_rect_pad") {
+      // Handle pill-shaped hole with rectangular pad
+      const padWidth =
+        (hole.rect_pad_width ?? hole.hole_width ?? 0) * traceTextureResolution
+      const padHeight =
+        (hole.rect_pad_height ?? hole.hole_height ?? 0) * traceTextureResolution
+      const rawRadius = extractRectBorderRadius(hole)
+      const borderRadius =
+        clampRectBorderRadius(
+          hole.rect_pad_width ?? hole.hole_width ?? 0,
+          hole.rect_pad_height ?? hole.hole_height ?? 0,
+          rawRadius,
+        ) * traceTextureResolution
+
+      let rotation = (hole.ccw_rotation as number) || 0
+      // For bottom layer, flip rotation direction
+      if (layer === "bottom") {
+        rotation = -rotation
+      }
+
+      if (rotation) {
+        ctx.save()
+        ctx.translate(canvasX, canvasY)
+        ctx.rotate((rotation * Math.PI) / 180)
+        ctx.beginPath()
+        ctx.roundRect(
+          -padWidth / 2,
+          -padHeight / 2,
+          padWidth,
+          padHeight,
+          borderRadius,
+        )
+        ctx.fill()
+        ctx.restore()
+      } else {
+        ctx.beginPath()
+        ctx.roundRect(
+          canvasX - padWidth / 2,
+          canvasY - padHeight / 2,
+          padWidth,
+          padHeight,
+          borderRadius,
+        )
+        ctx.fill()
+      }
     }
   })
 
@@ -314,48 +445,45 @@ export function createSoldermaskTextureForLayer({
       ctx.arc(canvasX, canvasY, canvasRadius, 0, 2 * Math.PI)
       ctx.fill()
     } else if (
-      holeShape === "pill" &&
+      (holeShape === "pill" || holeShape === "rotated_pill") &&
       typeof hole.hole_width === "number" &&
       typeof hole.hole_height === "number"
     ) {
       const width = hole.hole_width * traceTextureResolution
       const height = hole.hole_height * traceTextureResolution
       const radius = Math.min(width, height) / 2
-      ctx.beginPath()
-      ctx.roundRect(
-        canvasX - width / 2,
-        canvasY - height / 2,
-        width,
-        height,
-        radius,
-      )
-      ctx.fill()
-    } else if (
-      holeShape === "rotated_pill" &&
-      typeof hole.hole_width === "number" &&
-      typeof hole.hole_height === "number"
-    ) {
-      const width = hole.hole_width * traceTextureResolution
-      const height = hole.hole_height * traceTextureResolution
-      const radius = Math.min(width, height) / 2
-      const rotation = (hole.ccw_rotation || 0) * (Math.PI / 180)
+      let rotation = (hole.ccw_rotation || 0) * (Math.PI / 180)
 
-      // Save context state
-      ctx.save()
-      // Translate to hole center
-      ctx.translate(canvasX, canvasY)
-      // Apply rotation (for bottom layer, we need to flip rotation direction)
+      // For bottom layer, rotation direction needs to be flipped
       if (layer === "bottom") {
-        ctx.rotate(-rotation)
-      } else {
-        ctx.rotate(rotation)
+        rotation = -rotation
       }
-      // Draw the pill shape centered at origin
-      ctx.beginPath()
-      ctx.roundRect(-width / 2, -height / 2, width, height, radius)
-      ctx.fill()
-      // Restore context state
-      ctx.restore()
+
+      // Apply rotation if specified
+      if (rotation) {
+        // Save context state
+        ctx.save()
+        // Translate to hole center
+        ctx.translate(canvasX, canvasY)
+        // Apply rotation
+        ctx.rotate(rotation)
+        // Draw the pill shape centered at origin
+        ctx.beginPath()
+        ctx.roundRect(-width / 2, -height / 2, width, height, radius)
+        ctx.fill()
+        // Restore context state
+        ctx.restore()
+      } else {
+        ctx.beginPath()
+        ctx.roundRect(
+          canvasX - width / 2,
+          canvasY - height / 2,
+          width,
+          height,
+          radius,
+        )
+        ctx.fill()
+      }
     }
   })
 
