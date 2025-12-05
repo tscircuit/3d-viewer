@@ -127,7 +127,7 @@ export function createSoldermaskTextureForLayer({
       ctx.beginPath()
       ctx.arc(canvasX, canvasY, canvasRadius, 0, 2 * Math.PI)
       ctx.fill()
-    } else if (hole.shape === "pill" || hole.shape === "oval") {
+    } else if (hole.shape === "pill") {
       const width =
         ((hole.outer_width ??
           hole.outer_diameter ??
@@ -139,7 +139,8 @@ export function createSoldermaskTextureForLayer({
       const radius = Math.min(width, height) / 2
       let rotation = (hole.ccw_rotation as number) || 0
 
-      if (rotation) {
+      // For bottom layer, rotation direction needs to be flipped
+      if (layer === "bottom") {
         rotation = -rotation
       }
 
@@ -161,6 +162,38 @@ export function createSoldermaskTextureForLayer({
           height,
           radius,
         )
+        ctx.fill()
+      }
+    } else if (hole.shape === "oval") {
+      const width =
+        ((hole.outer_width ??
+          hole.outer_diameter ??
+          hole.hole_width) as number) * traceTextureResolution
+      const height =
+        ((hole.outer_height ??
+          hole.outer_diameter ??
+          hole.hole_height) as number) * traceTextureResolution
+      const radiusX = width / 2
+      const radiusY = height / 2
+      let rotation = (hole.ccw_rotation as number) || 0
+
+      // For bottom layer, rotation direction needs to be flipped
+      if (layer === "bottom") {
+        rotation = -rotation
+      }
+
+      // Apply rotation if specified
+      if (rotation) {
+        ctx.save()
+        ctx.translate(canvasX, canvasY)
+        ctx.rotate((rotation * Math.PI) / 180)
+        ctx.beginPath()
+        ctx.ellipse(0, 0, radiusX, radiusY, 0, 0, 2 * Math.PI)
+        ctx.fill()
+        ctx.restore()
+      } else {
+        ctx.beginPath()
+        ctx.ellipse(canvasX, canvasY, radiusX, radiusY, 0, 0, 2 * Math.PI)
         ctx.fill()
       }
     }
