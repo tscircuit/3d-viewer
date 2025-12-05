@@ -1,6 +1,6 @@
 import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, CadComponent } from "circuit-json"
-import { ManifoldToplevel } from "manifold-3d"
+import type { ManifoldToplevel } from "manifold-3d"
 import type React from "react"
 import { useEffect, useMemo, useState } from "react"
 import type * as THREE from "three"
@@ -110,6 +110,14 @@ const BoardMeshes = ({
       // Bottom silkscreen
       else if (mesh.name.includes("bottom-silkscreen")) {
         shouldShow = visibility.bottomSilkscreen
+      }
+      // Top soldermask
+      else if (mesh.name.includes("top-soldermask")) {
+        shouldShow = visibility.topMask
+      }
+      // Bottom soldermask
+      else if (mesh.name.includes("bottom-soldermask")) {
+        shouldShow = visibility.bottomMask
       }
 
       if (shouldShow) {

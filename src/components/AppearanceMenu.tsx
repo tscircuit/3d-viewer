@@ -254,6 +254,52 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
+                  hoveredItem === "topMask" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                setLayerVisibility("topMask", !visibility.topMask)
+              }}
+              onMouseEnter={() => setHoveredItem("topMask")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("topMask")}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.topMask && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Top Soldermask
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "bottomMask" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                setLayerVisibility("bottomMask", !visibility.bottomMask)
+              }}
+              onMouseEnter={() => setHoveredItem("bottomMask")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("bottomMask")}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.bottomMask && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Bottom Soldermask
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
                   hoveredItem === "smtModels" ? "#404040" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}

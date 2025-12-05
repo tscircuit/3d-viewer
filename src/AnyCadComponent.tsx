@@ -91,6 +91,7 @@ export const AnyCadComponent = ({
         onHover={handleHover}
         onUnhover={handleUnhover}
         isHovered={isHovered}
+        isTranslucent={cad_component.show_as_translucent_model}
       />
     )
   } else if (gltfUrl) {
@@ -112,6 +113,7 @@ export const AnyCadComponent = ({
         onHover={handleHover}
         onUnhover={handleUnhover}
         isHovered={isHovered}
+        isTranslucent={cad_component.show_as_translucent_model}
       />
     )
   } else if (cad_component.model_jscad) {
@@ -124,6 +126,7 @@ export const AnyCadComponent = ({
         onHover={handleHover}
         onUnhover={handleUnhover}
         isHovered={isHovered}
+        isTranslucent={cad_component.show_as_translucent_model}
       />
     )
   } else if (cad_component.footprinter_string) {
@@ -144,6 +147,7 @@ export const AnyCadComponent = ({
         onHover={handleHover}
         onUnhover={handleUnhover}
         isHovered={isHovered}
+        isTranslucent={cad_component.show_as_translucent_model}
       />
     )
   }

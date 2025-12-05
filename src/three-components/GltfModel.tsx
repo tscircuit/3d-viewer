@@ -15,6 +15,7 @@ export function GltfModel({
   onUnhover,
   isHovered,
   scale,
+  isTranslucent = false,
 }: {
   gltfUrl: string
   position?: [number, number, number]
@@ -23,6 +24,7 @@ export function GltfModel({
   onUnhover: () => void
   isHovered: boolean
   scale?: number
+  isTranslucent?: boolean
 }) {
   const { renderer, rootObject } = useThree()
   const [model, setModel] = useState<THREE.Group | null>(null)
@@ -35,7 +37,27 @@ export function GltfModel({
     loader.load(
       gltfUrl,
       (gltf) => {
-        if (isMounted) setModel(gltf.scene)
+        if (!isMounted) return
+        const scene = gltf.scene
+
+        scene.traverse((child) => {
+          if (child instanceof THREE.Mesh && child.material) {
+            const setMaterialTransparency = (mat: THREE.Material) => {
+              mat.transparent = isTranslucent
+              mat.opacity = isTranslucent ? 0.5 : 1
+              mat.depthWrite = !isTranslucent
+              mat.needsUpdate = true
+            }
+
+            if (Array.isArray(child.material)) {
+              child.material.forEach(setMaterialTransparency)
+            } else {
+              setMaterialTransparency(child.material)
+            }
+          }
+        })
+
+        setModel(scene)
       },
       undefined,
       (error) => {
@@ -51,7 +73,7 @@ export function GltfModel({
     return () => {
       isMounted = false
     }
-  }, [gltfUrl])
+  }, [gltfUrl, isTranslucent])
 
   useEffect(() => {
     if (!model) return
