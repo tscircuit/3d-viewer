@@ -16,7 +16,6 @@ import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
 import { createTextureMeshes } from "./utils/manifold/create-three-texture-meshes"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
-import { useFauxBoard } from "./contexts/FauxBoardContext"
 
 declare global {
   interface Window {
@@ -260,13 +259,6 @@ try {
     boardData,
     isFauxBoard,
   } = useManifoldBoardBuilder(manifoldJSModule, circuitJson)
-
-  const { setIsFauxBoard } = useFauxBoard()
-
-  // Update the context with the faux board state
-  useEffect(() => {
-    setIsFauxBoard(isFauxBoard)
-  }, [isFauxBoard, setIsFauxBoard])
 
   const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
   const textureMeshes = useMemo(
