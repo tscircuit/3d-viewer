@@ -16,6 +16,7 @@ export function createTextureMeshes(
     yOffset: number,
     isBottomLayer: boolean,
     keySuffix: string,
+    usePolygonOffset = false,
   ) => {
     if (!texture) return null
     const planeGeom = new THREE.PlaneGeometry(boardData.width, boardData.height)
@@ -24,6 +25,9 @@ export function createTextureMeshes(
       transparent: true,
       side: THREE.DoubleSide,
       depthWrite: false, // Important for layers to avoid z-fighting issues with board itself
+      polygonOffset: usePolygonOffset,
+      polygonOffsetFactor: usePolygonOffset ? -1 : 0,
+      polygonOffsetUnits: usePolygonOffset ? -1 : 0,
     })
     const mesh = new THREE.Mesh(planeGeom, material)
     mesh.position.set(boardData.center.x, boardData.center.y, yOffset)
@@ -65,6 +69,26 @@ export function createTextureMeshes(
     "silkscreen",
   )
   if (bottomSilkscreenMesh) meshes.push(bottomSilkscreenMesh)
+
+  // Soldermask meshes - positioned between board and traces
+  // Use polygonOffset to prevent Z-fighting with the board surface
+  const topSoldermaskMesh = createTexturePlane(
+    textures.topSoldermask,
+    pcbThickness / 2 + 0.0008, // Just above board surface, below traces
+    false,
+    "soldermask",
+    true, // Enable polygon offset
+  )
+  if (topSoldermaskMesh) meshes.push(topSoldermaskMesh)
+
+  const bottomSoldermaskMesh = createTexturePlane(
+    textures.bottomSoldermask,
+    -pcbThickness / 2 - 0.0008, // Just below board surface (bottom side)
+    true,
+    "soldermask",
+    true, // Enable polygon offset
+  )
+  if (bottomSoldermaskMesh) meshes.push(bottomSoldermaskMesh)
 
   return meshes
 }
