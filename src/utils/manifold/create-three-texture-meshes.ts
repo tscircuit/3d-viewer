@@ -46,6 +46,15 @@ export function createTextureMeshes(
   )
   if (topTraceMesh) meshes.push(topTraceMesh)
 
+  // Trace with mask (light green) - same position, will be toggled based on soldermask visibility
+  const topTraceWithMaskMesh = createTexturePlane(
+    textures.topTraceWithMask,
+    pcbThickness / 2 + BOARD_SURFACE_OFFSET.traces,
+    false,
+    "trace-with-mask",
+  )
+  if (topTraceWithMaskMesh) meshes.push(topTraceWithMaskMesh)
+
   const topSilkscreenMesh = createTexturePlane(
     textures.topSilkscreen,
     pcbThickness / 2 + 0.017, // Slightly above trace
@@ -61,6 +70,15 @@ export function createTextureMeshes(
     "trace",
   )
   if (bottomTraceMesh) meshes.push(bottomTraceMesh)
+
+  // Bottom trace with mask (light green)
+  const bottomTraceWithMaskMesh = createTexturePlane(
+    textures.bottomTraceWithMask,
+    -pcbThickness / 2 - BOARD_SURFACE_OFFSET.traces,
+    true,
+    "trace-with-mask",
+  )
+  if (bottomTraceWithMaskMesh) meshes.push(bottomTraceWithMaskMesh)
 
   const bottomSilkscreenMesh = createTexturePlane(
     textures.bottomSilkscreen,

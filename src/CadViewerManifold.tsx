@@ -75,13 +75,31 @@ const BoardMeshes = ({
     textureMeshes.forEach((mesh) => {
       let shouldShow = true
 
-      // Top trace layer
-      if (mesh.name.includes("top-trace")) {
-        shouldShow = visibility.topCopper
+      // Top trace layer (without mask - tan/brown color)
+      if (
+        mesh.name.includes("top-trace-texture-plane") &&
+        !mesh.name.includes("with-mask")
+      ) {
+        // Show tan/brown trace when soldermask is OFF
+        shouldShow = visibility.topCopper && !visibility.topMask
       }
-      // Bottom trace layer
-      else if (mesh.name.includes("bottom-trace")) {
-        shouldShow = visibility.bottomCopper
+      // Top trace with mask (light green color)
+      else if (mesh.name.includes("top-trace-with-mask")) {
+        // Show light green trace when soldermask is ON
+        shouldShow = visibility.topCopper && visibility.topMask
+      }
+      // Bottom trace layer (without mask - tan/brown color)
+      else if (
+        mesh.name.includes("bottom-trace-texture-plane") &&
+        !mesh.name.includes("with-mask")
+      ) {
+        // Show tan/brown trace when soldermask is OFF
+        shouldShow = visibility.bottomCopper && !visibility.bottomMask
+      }
+      // Bottom trace with mask (light green color)
+      else if (mesh.name.includes("bottom-trace-with-mask")) {
+        // Show light green trace when soldermask is ON
+        shouldShow = visibility.bottomCopper && visibility.bottomMask
       }
       // Top silkscreen
       else if (mesh.name.includes("top-silkscreen")) {
