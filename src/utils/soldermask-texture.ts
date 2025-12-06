@@ -162,11 +162,10 @@ export function createSoldermaskTextureForLayer({
         ) * traceTextureResolution
 
       // For rotated_rect, always apply rotation transform
-      // Match the pattern from BoardGeomBuilder.ts
+      // Canvas rotation is clockwise-positive, but ccw_rotation is counter-clockwise
+      // Also canvas Y is inverted. Net effect: negate rotation to match 3D geometry
       const ccwRotation = (pad.ccw_rotation as number) || 0
-      const rotationRadians = ccwRotation * (Math.PI / 180)
-      // For bottom layer, flip rotation direction (Y axis is flipped)
-      const rotation = layer === "bottom" ? -rotationRadians : rotationRadians
+      const rotation = -ccwRotation * (Math.PI / 180)
 
       ctx.save()
       ctx.translate(canvasX, canvasY)
@@ -215,12 +214,9 @@ export function createSoldermaskTextureForLayer({
           hole.outer_diameter ??
           hole.hole_height) as number) * traceTextureResolution
       const radius = Math.min(width, height) / 2
-      let rotation = (hole.ccw_rotation as number) || 0
-
-      // For bottom layer, rotation direction needs to be flipped
-      if (layer === "bottom") {
-        rotation = -rotation
-      }
+      const ccwRotationDeg = (hole.ccw_rotation as number) || 0
+      // we need to negate the rotation to match the 3D geometry
+      const rotation = -ccwRotationDeg
 
       // Apply rotation if specified (convert to radians)
       if (rotation) {
@@ -253,12 +249,9 @@ export function createSoldermaskTextureForLayer({
           hole.hole_height) as number) * traceTextureResolution
       const radiusX = width / 2
       const radiusY = height / 2
-      let rotation = (hole.ccw_rotation as number) || 0
-
-      // For bottom layer, rotation direction needs to be flipped
-      if (layer === "bottom") {
-        rotation = -rotation
-      }
+      const ccwRotationDeg = (hole.ccw_rotation as number) || 0
+      // Canvas rotation is clockwise-positive, negate for ccw
+      const rotation = -ccwRotationDeg
 
       // Apply rotation if specified
       if (rotation) {
@@ -293,12 +286,9 @@ export function createSoldermaskTextureForLayer({
             hole.outer_diameter ??
             hole.hole_height) as number) * traceTextureResolution
         const radius = Math.min(width, height) / 2
-        let rotation = (hole.ccw_rotation as number) || 0
-
-        // For bottom layer, rotation direction needs to be flipped
-        if (layer === "bottom") {
-          rotation = -rotation
-        }
+        const ccwRotationDeg = (hole.ccw_rotation as number) || 0
+        // Canvas rotation is clockwise-positive, negate for ccw
+        const rotation = -ccwRotationDeg
 
         // Apply rotation if specified
         if (rotation) {
@@ -331,12 +321,9 @@ export function createSoldermaskTextureForLayer({
             hole.hole_height) as number) * traceTextureResolution
         const radiusX = width / 2
         const radiusY = height / 2
-        let rotation = (hole.ccw_rotation as number) || 0
-
-        // For bottom layer, rotation direction needs to be flipped
-        if (rotation) {
-          rotation = -rotation
-        }
+        const ccwRotationDeg = (hole.ccw_rotation as number) || 0
+        // Canvas rotation is clockwise-positive, negate for ccw
+        const rotation = -ccwRotationDeg
 
         // Apply rotation if specified
         if (rotation) {
@@ -417,11 +404,9 @@ export function createSoldermaskTextureForLayer({
           rawRadius,
         ) * traceTextureResolution
 
-      let rotation = (hole.ccw_rotation as number) || 0
-      // For bottom layer, flip rotation direction
-      if (layer === "bottom") {
-        rotation = -rotation
-      }
+      const ccwRotationDeg = (hole.ccw_rotation as number) || 0
+      // Canvas rotation is clockwise-positive, negate for ccw
+      const rotation = -ccwRotationDeg
 
       if (rotation) {
         ctx.save()
@@ -474,26 +459,18 @@ export function createSoldermaskTextureForLayer({
       const width = hole.hole_width * traceTextureResolution
       const height = hole.hole_height * traceTextureResolution
       const radius = Math.min(width, height) / 2
-      let rotation = (hole.ccw_rotation || 0) * (Math.PI / 180)
-
-      // For bottom layer, rotation direction needs to be flipped
-      if (layer === "bottom") {
-        rotation = -rotation
-      }
+      const ccwRotationDeg = hole.ccw_rotation || 0
+      // Canvas rotation is clockwise-positive, negate for ccw
+      const rotation = -ccwRotationDeg * (Math.PI / 180)
 
       // Apply rotation if specified
       if (rotation) {
-        // Save context state
         ctx.save()
-        // Translate to hole center
         ctx.translate(canvasX, canvasY)
-        // Apply rotation
         ctx.rotate(rotation)
-        // Draw the pill shape centered at origin
         ctx.beginPath()
         ctx.roundRect(-width / 2, -height / 2, width, height, radius)
         ctx.fill()
-        // Restore context state
         ctx.restore()
       } else {
         ctx.beginPath()
@@ -557,11 +534,9 @@ export function createSoldermaskTextureForLayer({
         if (cutout.rotation) {
           ctx.save()
           ctx.translate(canvasX, canvasY)
-          // For bottom layer, flip rotation direction
-          const rotation =
-            layer === "bottom"
-              ? -cutout.rotation * (Math.PI / 180)
-              : cutout.rotation * (Math.PI / 180)
+          // Canvas rotation is clockwise-positive, cutout.rotation appears to be clockwise
+          // Negate to match 3D geometry
+          const rotation = -cutout.rotation * (Math.PI / 180)
           ctx.rotate(rotation)
 
           if (borderRadius > 0) {
