@@ -210,7 +210,7 @@ export function processCopperPoursForManifold(
       const covered = (pour as any).covered_with_solder_mask !== false
       const pourColorArr = covered
         ? (tracesMaterialColors[boardMaterial] ??
-          defaultColors.fr4GreenSolderWithMask)
+          defaultColors.fr4TracesWithoutMaskTan)
         : defaultColors.copper
       const pourColor = new THREE.Color(...pourColorArr)
       const threeGeom = manifoldMeshToThreeGeometry(pourOp.getMesh())

@@ -22,6 +22,7 @@ import {
   SMOOTH_CIRCLE_SEGMENTS,
   TRACE_TEXTURE_RESOLUTION,
   tracesMaterialColors,
+  soldermaskColors,
 } from "../geoms/constants"
 import type { ManifoldToplevel } from "manifold-3d"
 import { createManifoldBoard } from "../utils/manifold/create-manifold-board"
@@ -68,6 +69,8 @@ export interface ManifoldGeoms {
 export interface ManifoldTextures {
   topTrace?: THREE.CanvasTexture | null
   bottomTrace?: THREE.CanvasTexture | null
+  topTraceWithMask?: THREE.CanvasTexture | null
+  bottomTraceWithMask?: THREE.CanvasTexture | null
   topSilkscreen?: THREE.CanvasTexture | null
   bottomSilkscreen?: THREE.CanvasTexture | null
   topSoldermask?: THREE.CanvasTexture | null
@@ -334,7 +337,7 @@ export const useManifoldBoardBuilder = (
         const boardThreeMesh = boardManifold.getMesh()
         const finalBoardGeom = manifoldMeshToThreeGeometry(boardThreeMesh)
         const matColorArray =
-          boardMaterialColors[boardData.material] ?? defaultColors.fr4Green
+          boardMaterialColors[boardData.material] ?? defaultColors.fr4Tan
         currentGeoms.board = {
           geometry: finalBoardGeom,
           color: new THREE.Color(
@@ -374,22 +377,39 @@ export const useManifoldBoardBuilder = (
       setGeoms(currentGeoms)
 
       // --- Process Traces (as Textures) ---
-      const traceColorArr =
-        tracesMaterialColors[boardData.material] ??
-        defaultColors.fr4GreenSolderWithMask
-      const traceColor = `rgb(${Math.round(traceColorArr[0] * 255)}, ${Math.round(traceColorArr[1] * 255)}, ${Math.round(traceColorArr[2] * 255)})`
+      // Create trace textures for when soldermask is OFF (tan/brown copper color)
+      const traceColorWithoutMaskArr = defaultColors.fr4TracesWithoutMaskTan
+      const traceColorWithoutMask = `rgb(${Math.round(traceColorWithoutMaskArr[0] * 255)}, ${Math.round(traceColorWithoutMaskArr[1] * 255)}, ${Math.round(traceColorWithoutMaskArr[2] * 255)})`
       currentTextures.topTrace = createTraceTextureForLayer({
         layer: "top",
         circuitJson,
         boardData,
-        traceColor,
+        traceColor: traceColorWithoutMask,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
       currentTextures.bottomTrace = createTraceTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
-        traceColor,
+        traceColor: traceColorWithoutMask,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      })
+
+      // Create trace textures for when soldermask is ON (light green)
+      const traceColorWithMaskArr = defaultColors.fr4TracesWithMaskGreen
+      const traceColorWithMask = `rgb(${Math.round(traceColorWithMaskArr[0] * 255)}, ${Math.round(traceColorWithMaskArr[1] * 255)}, ${Math.round(traceColorWithMaskArr[2] * 255)})`
+      currentTextures.topTraceWithMask = createTraceTextureForLayer({
+        layer: "top",
+        circuitJson,
+        boardData,
+        traceColor: traceColorWithMask,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      })
+      currentTextures.bottomTraceWithMask = createTraceTextureForLayer({
+        layer: "bottom",
+        circuitJson,
+        boardData,
+        traceColor: traceColorWithMask,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
 
@@ -412,8 +432,7 @@ export const useManifoldBoardBuilder = (
 
       // --- Process Soldermask (as Textures) ---
       const soldermaskColorArr =
-        tracesMaterialColors[boardData.material] ??
-        defaultColors.fr4GreenSolderWithMask
+        soldermaskColors[boardData.material] ?? defaultColors.fr4SolderMaskGreen
       const soldermaskColor = `rgb(${Math.round(soldermaskColorArr[0] * 255)}, ${Math.round(soldermaskColorArr[1] * 255)}, ${Math.round(soldermaskColorArr[2] * 255)})`
       currentTextures.topSoldermask = createSoldermaskTextureForLayer({
         layer: "top",
