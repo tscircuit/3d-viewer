@@ -677,6 +677,19 @@ export class BoardGeomBuilder {
           height: this.ctx.pcbThickness * 1.5,
         }),
       )
+
+      if (!opts.dontCutBoard) {
+        this.boardGeom = subtract(this.boardGeom, pillHole)
+      }
+      // Drill through pads
+      this.padGeoms = this.padGeoms.map((pg) =>
+        colorize(colors.copper, subtract(pg, pillHole)),
+      )
+
+      const platedHoleGeom = platedHole(ph, this.ctx, {
+        clipGeom: this.boardClipGeom,
+      })
+      this.platedHoleGeoms.push(platedHoleGeom)
     } else if (ph.shape === "hole_with_polygon_pad") {
       const padOutline = ph.pad_outline
       if (!Array.isArray(padOutline) || padOutline.length < 3) {
