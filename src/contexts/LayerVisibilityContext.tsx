@@ -26,6 +26,7 @@ export interface LayerVisibilityState {
   threedAxis: boolean
   backgroundStart: boolean
   backgroundEnd: boolean
+  fauxBoard: boolean
 }
 
 interface LayerVisibilityContextType {
@@ -56,6 +57,7 @@ const defaultVisibility: LayerVisibilityState = {
   threedAxis: false,
   backgroundStart: true,
   backgroundEnd: true,
+  fauxBoard: true,
 }
 
 const LayerVisibilityContext = createContext<

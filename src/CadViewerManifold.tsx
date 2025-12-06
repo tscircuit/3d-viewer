@@ -28,15 +28,34 @@ declare global {
 const BoardMeshes = ({
   geometryMeshes,
   textureMeshes,
+  isFauxBoard,
 }: {
   geometryMeshes: THREE.Mesh[]
   textureMeshes: THREE.Mesh[]
+  isFauxBoard: boolean
 }) => {
   const { rootObject } = useThree()
   const { visibility } = useLayerVisibility()
 
   useEffect(() => {
     if (!rootObject) return
+
+    // If this is a faux board and faux board visibility is disabled, don't render anything
+    // But we still need to clean up any previously added meshes
+    if (isFauxBoard && !visibility.fauxBoard) {
+      // Clean up any previously added meshes
+      geometryMeshes.forEach((mesh) => {
+        if (mesh.parent === rootObject) {
+          rootObject.remove(mesh)
+        }
+      })
+      textureMeshes.forEach((mesh) => {
+        if (mesh.parent === rootObject) {
+          rootObject.remove(mesh)
+        }
+      })
+      return
+    }
 
     // Filter and add meshes based on visibility settings
     geometryMeshes.forEach((mesh) => {
@@ -118,7 +137,7 @@ const BoardMeshes = ({
         }
       })
     }
-  }, [rootObject, geometryMeshes, textureMeshes, visibility])
+  }, [rootObject, geometryMeshes, textureMeshes, visibility, isFauxBoard])
 
   return null
 }
@@ -238,6 +257,7 @@ try {
     error: builderError,
     isLoading: builderIsLoading,
     boardData,
+    isFauxBoard,
   } = useManifoldBoardBuilder(manifoldJSModule, circuitJson)
 
   const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
@@ -325,6 +345,7 @@ try {
       <BoardMeshes
         geometryMeshes={geometryMeshes}
         textureMeshes={textureMeshes}
+        isFauxBoard={isFauxBoard}
       />
       {cadComponents.map((cad_component: CadComponent) => (
         <ThreeErrorBoundary

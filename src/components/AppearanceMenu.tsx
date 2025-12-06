@@ -130,6 +130,29 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
+                  hoveredItem === "fauxBoard" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                setLayerVisibility("fauxBoard", !visibility.fauxBoard)
+              }}
+              onMouseEnter={() => setHoveredItem("fauxBoard")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("fauxBoard")}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.fauxBoard && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Faux Board
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
                   hoveredItem === "topCopper" ? "#404040" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
