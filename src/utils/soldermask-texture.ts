@@ -33,16 +33,30 @@ export function createSoldermaskTextureForLayer({
     ctx.scale(1, -1)
   }
 
-  // Fill the entire canvas with soldermask color
-  ctx.fillStyle = soldermaskColor
-  ctx.fillRect(0, 0, canvasWidth, canvasHeight)
-
   // Helper functions for coordinate conversion
   const canvasXFromPcb = (pcbX: number) =>
     (pcbX - boardData.center.x + boardData.width! / 2) * traceTextureResolution
   const canvasYFromPcb = (pcbY: number) =>
     (-(pcbY - boardData.center.y) + boardData.height! / 2) *
     traceTextureResolution
+
+  // Fill soldermask - either within board outline or full rectangle
+  ctx.fillStyle = soldermaskColor
+  if (boardData.outline && boardData.outline.length >= 3) {
+    // Draw soldermask only within the board outline
+    ctx.beginPath()
+    const firstPoint = boardData.outline[0]!
+    ctx.moveTo(canvasXFromPcb(firstPoint.x), canvasYFromPcb(firstPoint.y))
+    for (let i = 1; i < boardData.outline.length; i++) {
+      const point = boardData.outline[i]!
+      ctx.lineTo(canvasXFromPcb(point.x), canvasYFromPcb(point.y))
+    }
+    ctx.closePath()
+    ctx.fill()
+  } else {
+    // No outline - fill the entire canvas
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight)
+  }
 
   // Cut out openings for pads, vias, and plated holes (expose copper)
   ctx.globalCompositeOperation = "destination-out"
@@ -72,6 +86,14 @@ export function createSoldermaskTextureForLayer({
 
     // For non-polygon pads, use x and y coordinates
     if (pad.x === undefined || pad.y === undefined) return
+
+    // Skip pads with invalid (NaN) coordinates
+    if (Number.isNaN(pad.x) || Number.isNaN(pad.y)) {
+      console.warn(
+        `[soldermask-texture] Skipping pad ${pad.pcb_smtpad_id} with NaN coordinates`,
+      )
+      return
+    }
 
     const x = pad.x as number
     const y = pad.y as number
