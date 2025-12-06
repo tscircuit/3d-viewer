@@ -429,24 +429,22 @@ export class BoardGeomBuilder {
           })
           cutoutGeom = extrudeLinear({ height: cutoutHeight }, rect2d)
           cutoutGeom = translate([0, 0, -cutoutHeight / 2], cutoutGeom)
-          cutoutGeom = translate(
-            [cutout.center.x, cutout.center.y, 0],
-            cutoutGeom,
-          )
         } else {
-          const baseCutoutGeom = cuboid({
+          cutoutGeom = cuboid({
             center: [0, 0, 0],
             size: [cutout.width, cutout.height, cutoutHeight],
           })
-          cutoutGeom = translate(
-            [cutout.center.x, cutout.center.y, 0],
-            baseCutoutGeom,
-          )
         }
+        // Apply rotation before translation (rotate around origin)
         if (cutout.rotation) {
           const rotationRadians = (cutout.rotation * Math.PI) / 180
           cutoutGeom = rotateZ(rotationRadians, cutoutGeom)
         }
+        // Translate to final position after rotation
+        cutoutGeom = translate(
+          [cutout.center.x, cutout.center.y, 0],
+          cutoutGeom,
+        )
         break
       case "circle":
         cutoutGeom = cylinder({

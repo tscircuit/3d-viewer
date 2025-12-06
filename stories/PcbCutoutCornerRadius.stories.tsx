@@ -31,7 +31,7 @@ const circuitJson = [
     center: { x: -8, y: 8 },
     width: 8,
     height: 5,
-    corner_radius: 2.5,
+    corner_radius: 0.5,
   },
   {
     type: "pcb_cutout",
