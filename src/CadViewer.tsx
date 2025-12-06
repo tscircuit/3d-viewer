@@ -22,6 +22,7 @@ import { ToastProvider, useToast } from "./contexts/ToastContext"
 import { ContextMenu } from "./components/ContextMenu"
 import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
 import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
+import { useCameraPresetPersistence } from "./hooks/useCameraPresetPersistence"
 
 const CadViewerInner = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
@@ -36,7 +37,6 @@ const CadViewerInner = (props: any) => {
     const stored = window.localStorage.getItem("cadViewerAutoRotateUserToggled")
     return stored === "true"
   })
-  const [cameraPreset, setCameraPreset] = useState<CameraPreset>("Custom")
   const { cameraType, setCameraType } = useCameraController()
   const { visibility, setLayerVisibility } = useLayerVisibility()
   const { showToast } = useToast()
@@ -54,17 +54,32 @@ const CadViewerInner = (props: any) => {
     setMenuVisible,
   } = useContextMenu({ containerRef })
 
+  const viewerKey = props.circuitJson
+    ? JSON.stringify(props.circuitJson)
+    : undefined
+
   const autoRotateUserToggledRef = useRef(autoRotateUserToggled)
   autoRotateUserToggledRef.current = autoRotateUserToggled
 
   const isAnimatingRef = useRef(false)
   const lastPresetSelectTime = useRef(0)
-  const PRESET_COOLDOWN = 1000 // 1 second cooldown after selecting a preset
+  const PRESET_COOLDOWN = 1500 // 1.5 second cooldown after selecting a preset
+
+  const {
+    cameraPreset,
+    setCameraPreset,
+    isRestoringCameraRef,
+    handleCameraControllerReadyForPreset,
+  } = useCameraPresetPersistence({
+    viewerKey,
+    lastPresetSelectTime,
+  })
 
   const handleUserInteraction = useCallback(() => {
-    // Don't update if we're in the middle of an animation or just selected a preset
+    // Don't update if we're in the middle of an animation, restoring camera, or just selected a preset
     if (
       isAnimatingRef.current ||
+      isRestoringCameraRef.current ||
       Date.now() - lastPresetSelectTime.current < PRESET_COOLDOWN
     ) {
       return
@@ -96,11 +111,9 @@ const CadViewerInner = (props: any) => {
     (controller: CameraController | null) => {
       cameraControllerRef.current = controller
       externalCameraControllerReady?.(controller)
-      if (controller && cameraPreset !== "Custom") {
-        controller.animateToPreset(cameraPreset)
-      }
+      handleCameraControllerReadyForPreset(controller)
     },
-    [cameraPreset, externalCameraControllerReady],
+    [externalCameraControllerReady, handleCameraControllerReadyForPreset],
   )
 
   const { handleCameraPresetSelect } = useCameraPreset({
@@ -217,10 +230,6 @@ const CadViewerInner = (props: any) => {
   useEffect(() => {
     window.localStorage.setItem("cadViewerCameraType", cameraType)
   }, [cameraType])
-
-  const viewerKey = props.circuitJson
-    ? JSON.stringify(props.circuitJson)
-    : undefined
 
   return (
     <div
