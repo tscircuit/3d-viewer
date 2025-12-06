@@ -66,7 +66,7 @@ export const createSimplifiedBoardGeom = (
   const material =
     boardMaterialColors[
       "material" in boardOrPanel ? (boardOrPanel.material ?? "fr4") : "fr4"
-    ] ?? colors.fr4Green
+    ] ?? colors.fr4Tan
 
   return [colorize(material, boardGeom)]
 }

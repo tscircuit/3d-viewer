@@ -528,7 +528,7 @@ export class BoardGeomBuilder {
       const covered = (pour as any).covered_with_solder_mask !== false
       const pourMaterialColor = covered
         ? (tracesMaterialColors[this.board.material] ??
-          colors.fr4GreenSolderWithMask)
+          colors.fr4TracesWithoutMaskTan)
         : colors.copper
       const coloredPourGeom = colorize(pourMaterialColor, pourGeom)
       this.copperPourGeoms.push(coloredPourGeom)
@@ -918,7 +918,7 @@ export class BoardGeomBuilder {
 
         const tracesMaterialColor =
           tracesMaterialColors[this.board.material] ??
-          colors.fr4GreenSolderWithMask
+          colors.fr4TracesWithoutMaskTan
 
         if (this.boardClipGeom) {
           traceGeom = intersect(this.boardClipGeom, traceGeom)
@@ -1067,7 +1067,7 @@ export class BoardGeomBuilder {
     if (!this.boardGeom) return
     // Colorize the final board geometry
     const boardMaterialColor =
-      boardMaterialColors[this.board.material] ?? colors.fr4Green
+      boardMaterialColors[this.board.material] ?? colors.fr4Tan
     this.boardGeom = colorize(boardMaterialColor, this.boardGeom)
 
     this.finalGeoms = [
