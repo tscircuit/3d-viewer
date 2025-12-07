@@ -13,7 +13,7 @@ const createCircuit = async () => {
       <board width="20mm" height="15mm">
         <resistor resistance="1k" footprint="0402" name="R2" />
       </board>
-    </panel>
+    </panel>,
   )
 
   await circuit.renderUntilSettled()
