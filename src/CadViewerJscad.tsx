@@ -98,7 +98,17 @@ export const CadViewerJscad = forwardRef<
     const boardDimensions = useMemo(() => {
       if (!internalCircuitJson) return undefined
       try {
-        const board = su(internalCircuitJson as any).pcb_board.list()[0]
+        // Check for panel first, then fall back to board
+        const panel = internalCircuitJson.find(
+          (e: any) => e.type === "pcb_panel",
+        ) as any
+        if (panel) {
+          return { width: panel.width ?? 0, height: panel.height ?? 0 }
+        }
+        const boards = su(internalCircuitJson as any).pcb_board.list()
+        // Filter out boards inside panels
+        const boardsNotInPanel = boards.filter((b: any) => !b.pcb_panel_id)
+        const board = boardsNotInPanel[0]
         if (!board) return undefined
         return { width: board.width ?? 0, height: board.height ?? 0 }
       } catch (e) {
@@ -110,7 +120,17 @@ export const CadViewerJscad = forwardRef<
     const boardCenter = useMemo(() => {
       if (!internalCircuitJson) return undefined
       try {
-        const board = su(internalCircuitJson as any).pcb_board.list()[0]
+        // Check for panel first, then fall back to board
+        const panel = internalCircuitJson.find(
+          (e: any) => e.type === "pcb_panel",
+        ) as any
+        if (panel?.center) {
+          return { x: panel.center.x, y: panel.center.y }
+        }
+        const boards = su(internalCircuitJson as any).pcb_board.list()
+        // Filter out boards inside panels
+        const boardsNotInPanel = boards.filter((b: any) => !b.pcb_panel_id)
+        const board = boardsNotInPanel[0]
         if (!board || !board.center) return undefined
         return { x: board.center.x, y: board.center.y }
       } catch (e) {
