@@ -1,6 +1,10 @@
 import type React from "react"
-import { useState, useCallback, useRef, useEffect, useMemo } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import * as THREE from "three"
+
+// Constants for camera initialization - defined once, reused across renders
+const DEFAULT_TARGET = new THREE.Vector3(0, 0, 0)
+const INITIAL_CAMERA_POSITION = [5, -5, 5] as const
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
@@ -306,17 +310,10 @@ const CadViewerInner = (props: any) => {
 }
 
 export const CadViewer = (props: any) => {
-  // Default camera target and position - these will be overridden by CadViewerContainer
-  const defaultTarget = useMemo(() => new THREE.Vector3(0, 0, 0), [])
-  const initialCameraPosition = useMemo<readonly [number, number, number]>(
-    () => [5, -5, 5] as const,
-    [],
-  )
-
   return (
     <CameraControllerProvider
-      defaultTarget={defaultTarget}
-      initialCameraPosition={initialCameraPosition}
+      defaultTarget={DEFAULT_TARGET}
+      initialCameraPosition={INITIAL_CAMERA_POSITION}
     >
       <LayerVisibilityProvider>
         <ToastProvider>

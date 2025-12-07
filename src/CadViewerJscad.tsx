@@ -9,6 +9,7 @@ import type { CameraController } from "./hooks/cameraAnimation"
 import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
 import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { useBoardGeomBuilder } from "./hooks/useBoardGeomBuilder"
+import { usePcbThickness } from "./hooks/usePcbThickness"
 import { Error3d } from "./three-components/Error3d"
 import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
@@ -113,16 +114,7 @@ export const CadViewerJscad = forwardRef<
       }
     }, [internalCircuitJson])
 
-    const pcbThickness = useMemo(() => {
-      if (!internalCircuitJson) return 1.2
-      try {
-        const board = su(internalCircuitJson as any).pcb_board.list()[0]
-        // Default to 1.2 to match BoardGeomBuilder default
-        return board?.thickness ?? 1.2
-      } catch (e) {
-        return 1.2
-      }
-    }, [internalCircuitJson])
+    const pcbThickness = usePcbThickness(internalCircuitJson)
 
     // Use the state `boardGeom` which starts simplified and gets updated
     const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
