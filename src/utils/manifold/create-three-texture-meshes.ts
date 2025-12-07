@@ -63,7 +63,7 @@ export function createTextureMeshes(
 
   const topSilkscreenMesh = createTexturePlane(
     textures.topSilkscreen,
-    pcbThickness / 2 + 0.017, // Slightly above trace
+    pcbThickness / 2 + 0.003, // Slightly above soldermask
     false,
     "silkscreen",
     false,
@@ -94,7 +94,7 @@ export function createTextureMeshes(
 
   const bottomSilkscreenMesh = createTexturePlane(
     textures.bottomSilkscreen,
-    -pcbThickness / 2 - 0.017,
+    -pcbThickness / 2 - 0.003,
     true,
     "silkscreen",
     false,
@@ -102,11 +102,12 @@ export function createTextureMeshes(
   )
   if (bottomSilkscreenMesh) meshes.push(bottomSilkscreenMesh)
 
-  // Soldermask meshes - positioned between board and traces
-  // Use polygonOffset and renderOrder to prevent Z-fighting with the board surface
+  // Soldermask meshes - positioned at board surface
+  // Use polygonOffset to prevent Z-fighting with the board surface
+
   const topSoldermaskMesh = createTexturePlane(
     textures.topSoldermask,
-    pcbThickness / 2 + 0.0008, // Just above board surface, below traces
+    pcbThickness / 2 + 0.001, // Just above board surface
     false,
     "soldermask",
     true, // Enable polygon offset
@@ -116,7 +117,7 @@ export function createTextureMeshes(
 
   const bottomSoldermaskMesh = createTexturePlane(
     textures.bottomSoldermask,
-    -pcbThickness / 2 - 0.0008, // Just below board surface (bottom side)
+    -pcbThickness / 2 - 0.001, // Just below board surface (bottom side)
     true,
     "soldermask",
     true, // Enable polygon offset
