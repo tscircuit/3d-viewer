@@ -1,7 +1,7 @@
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import type {
   AnyCircuitElement,
-  PCBPlatedHole,
+  PcbPlatedHole,
   PcbBoard,
   PcbHole,
   PcbSmtPad,
@@ -12,7 +12,6 @@ import type {
   PcbSilkscreenLine,
   PcbSilkscreenRect,
   PcbSilkscreenCircle,
-  Point,
   PcbCutout,
   PcbCopperPour,
   PcbPanel,
@@ -59,6 +58,7 @@ import {
   extractRectBorderRadius,
 } from "./utils/rect-border-radius"
 import { createHoleWithPolygonPadHoleGeom } from "./geoms/create-hole-with-polygon-pad"
+import { createViaCopper, createViaBoardDrill } from "./geoms/via-geoms"
 
 const PAD_ROUNDED_SEGMENTS = 64
 const BOARD_CLIP_Z_MARGIN = 1
@@ -125,7 +125,7 @@ const buildStateOrder: BuilderState[] = [
 export class BoardGeomBuilder {
   private circuitJson: AnyCircuitElement[]
   private board: PcbBoard
-  private plated_holes: PCBPlatedHole[]
+  private plated_holes: PcbPlatedHole[]
   private holes: PcbHole[]
   private pads: PcbSmtPad[]
   private traces: PcbTrace[]
@@ -140,7 +140,6 @@ export class BoardGeomBuilder {
 
   private boardGeom: Geom3 | null = null
   private platedHoleGeoms: Geom3[] = []
-  private holeGeoms: Geom3[] = [] // Currently only used for subtraction
   private padGeoms: Geom3[] = []
   private traceGeoms: Geom3[] = []
   private viaGeoms: Geom3[] = [] // Combined with platedHoleGeoms
@@ -414,7 +413,7 @@ export class BoardGeomBuilder {
     const cutoutHeight = this.ctx.pcbThickness * 1.5
 
     switch (cutout.shape) {
-      case "rect":
+      case "rect": {
         const rectCornerRadius = clampRectBorderRadius(
           cutout.width,
           cutout.height,
@@ -448,6 +447,7 @@ export class BoardGeomBuilder {
           cutoutGeom = rotateZ(rotationRadians, cutoutGeom)
         }
         break
+      }
       case "circle":
         cutoutGeom = cylinder({
           center: [cutout.center.x, cutout.center.y, 0],
@@ -455,7 +455,7 @@ export class BoardGeomBuilder {
           height: cutoutHeight,
         })
         break
-      case "polygon":
+      case "polygon": {
         let pointsVec2: Vec2[] = cutout.points.map((p) => [p.x, p.y])
         if (pointsVec2.length < 3) {
           console.warn(
@@ -470,6 +470,7 @@ export class BoardGeomBuilder {
         cutoutGeom = extrudeLinear({ height: cutoutHeight }, polygon2d)
         cutoutGeom = translate([0, 0, -cutoutHeight / 2], cutoutGeom)
         break
+      }
     }
 
     if (cutoutGeom) {
@@ -499,7 +500,7 @@ export class BoardGeomBuilder {
       pourGeom = translate([pour.center.x, pour.center.y, zPos], baseGeom)
     } else if (pour.shape === "brep") {
       const brepShape = pour.brep_shape
-      if (brepShape && brepShape.outer_ring) {
+      if (brepShape?.outer_ring) {
         const pourGeom2 = createGeom2FromBRep(brepShape)
         pourGeom = extrudeLinear({ height: M }, pourGeom2)
         pourGeom = translate([0, 0, zPos], pourGeom)
@@ -536,7 +537,7 @@ export class BoardGeomBuilder {
   }
 
   private processPlatedHole(
-    ph: PCBPlatedHole,
+    ph: PcbPlatedHole,
     opts: { dontCutBoard?: boolean } = {},
   ) {
     if (!this.boardGeom) return
@@ -981,22 +982,49 @@ export class BoardGeomBuilder {
   }
 
   private processVia(via: PcbVia) {
-    // Treat vias like plated holes for geometry generation
-    this.processPlatedHole(
-      {
+    if (!this.boardGeom) return
+
+    // Create via copper geometry (barrel + annular rings)
+    if (
+      typeof via.outer_diameter === "number" &&
+      typeof via.hole_diameter === "number"
+    ) {
+      const viaCopperGeom = createViaCopper({
         x: via.x,
         y: via.y,
-        hole_diameter: via.hole_diameter,
-        outer_diameter: via.outer_diameter,
-        shape: "circle",
-        layers: ["top", "bottom"], // Assume through-hole via
-        type: "pcb_plated_hole",
-        pcb_plated_hole_id: `via_${via.pcb_via_id}`, // Create a unique-ish ID
-      },
-      {
-        dontCutBoard: true, // Board cut should happen via trace logic or dedicated via cut
-      },
-    )
+        outerDiameter: via.outer_diameter,
+        holeDiameter: via.hole_diameter,
+        thickness: this.ctx.pcbThickness,
+      })
+
+      // Clip via copper to board boundaries if needed
+      let finalViaGeom = viaCopperGeom
+      if (this.boardClipGeom) {
+        finalViaGeom = intersect(this.boardClipGeom, viaCopperGeom)
+        // Reapply color after intersect (intersect may remove color)
+        finalViaGeom = colorize(colors.copper, finalViaGeom)
+      }
+
+      this.viaGeoms.push(finalViaGeom)
+    }
+
+    // Create board drill for via hole
+    if (typeof via.hole_diameter === "number") {
+      const viaDrill = createViaBoardDrill({
+        x: via.x,
+        y: via.y,
+        holeDiameter: via.hole_diameter,
+        thickness: this.ctx.pcbThickness,
+      })
+
+      // Subtract drill from board
+      this.boardGeom = subtract(this.boardGeom, viaDrill)
+
+      // Cut drill through any existing pads
+      this.padGeoms = this.padGeoms.map((pg) =>
+        colorize(colors.copper, subtract(pg, viaDrill)),
+      )
+    }
   }
 
   private processSilkscreenText(st: PcbSilkscreenText) {
