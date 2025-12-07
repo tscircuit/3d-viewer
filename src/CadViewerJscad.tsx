@@ -1,10 +1,8 @@
-import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement } from "circuit-json"
 import type * as React from "react"
-import { forwardRef, useCallback, useMemo, useState } from "react"
+import { forwardRef, useMemo } from "react"
 import type * as THREE from "three"
-import { Euler } from "three"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
 import type { CameraController } from "./hooks/cameraAnimation"
@@ -12,14 +10,10 @@ import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to
 import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { useBoardGeomBuilder } from "./hooks/useBoardGeomBuilder"
 import { Error3d } from "./three-components/Error3d"
-import { FootprinterModel } from "./three-components/FootprinterModel"
-import { JscadModel } from "./three-components/JscadModel"
-import { MixedStlModel } from "./three-components/MixedStlModel"
-import { STLModel } from "./three-components/STLModel"
 import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
+import { JscadBoardTextures } from "./three-components/JscadBoardTextures"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
-import { tuple } from "./utils/tuple"
 
 interface Props {
   /**
@@ -119,6 +113,17 @@ export const CadViewerJscad = forwardRef<
       }
     }, [internalCircuitJson])
 
+    const pcbThickness = useMemo(() => {
+      if (!internalCircuitJson) return 1.2
+      try {
+        const board = su(internalCircuitJson as any).pcb_board.list()[0]
+        // Default to 1.2 to match BoardGeomBuilder default
+        return board?.thickness ?? 1.2
+      } catch (e) {
+        return 1.2
+      }
+    }, [internalCircuitJson])
+
     // Use the state `boardGeom` which starts simplified and gets updated
     const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
 
@@ -144,6 +149,10 @@ export const CadViewerJscad = forwardRef<
             layerType={layerType}
           />
         ))}
+        <JscadBoardTextures
+          circuitJson={internalCircuitJson}
+          pcbThickness={pcbThickness}
+        />
         {cad_components.map((cad_component) => (
           <ThreeErrorBoundary
             key={cad_component.cad_component_id}
