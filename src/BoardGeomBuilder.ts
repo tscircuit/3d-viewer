@@ -428,24 +428,22 @@ export class BoardGeomBuilder {
           })
           cutoutGeom = extrudeLinear({ height: cutoutHeight }, rect2d)
           cutoutGeom = translate([0, 0, -cutoutHeight / 2], cutoutGeom)
-          cutoutGeom = translate(
-            [cutout.center.x, cutout.center.y, 0],
-            cutoutGeom,
-          )
         } else {
-          const baseCutoutGeom = cuboid({
+          cutoutGeom = cuboid({
             center: [0, 0, 0],
             size: [cutout.width, cutout.height, cutoutHeight],
           })
-          cutoutGeom = translate(
-            [cutout.center.x, cutout.center.y, 0],
-            baseCutoutGeom,
-          )
         }
+        // Apply rotation before translation (rotate around origin)
         if (cutout.rotation) {
           const rotationRadians = (cutout.rotation * Math.PI) / 180
           cutoutGeom = rotateZ(rotationRadians, cutoutGeom)
         }
+        // Translate to final position after rotation
+        cutoutGeom = translate(
+          [cutout.center.x, cutout.center.y, 0],
+          cutoutGeom,
+        )
         break
       }
       case "circle":
@@ -678,6 +676,19 @@ export class BoardGeomBuilder {
           height: this.ctx.pcbThickness * 1.5,
         }),
       )
+
+      if (!opts.dontCutBoard) {
+        this.boardGeom = subtract(this.boardGeom, pillHole)
+      }
+
+      this.padGeoms = this.padGeoms.map((pg) =>
+        colorize(colors.copper, subtract(pg, pillHole)),
+      )
+
+      const platedHoleGeom = platedHole(ph, this.ctx, {
+        clipGeom: this.boardClipGeom,
+      })
+      this.platedHoleGeoms.push(platedHoleGeom)
     } else if (ph.shape === "hole_with_polygon_pad") {
       const padOutline = ph.pad_outline
       if (!Array.isArray(padOutline) || padOutline.length < 3) {
