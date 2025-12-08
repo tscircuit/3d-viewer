@@ -11,6 +11,7 @@ import {
   colors as defaultColors,
   soldermaskColors,
   TRACE_TEXTURE_RESOLUTION,
+  BOARD_SURFACE_OFFSET,
 } from "../geoms/constants"
 
 interface JscadBoardTexturesProps {
@@ -41,7 +42,7 @@ export function JscadBoardTextures({
     // Silkscreen color
     const silkscreenColor = "rgb(255,255,255)"
 
-    // Trace color with mask (visible through soldermask)
+    // Trace color with mask (same as Manifold: fr4TracesWithMaskGreen)
     const traceColorWithMaskArr = defaultColors.fr4TracesWithMaskGreen
     const traceColorWithMask = `rgb(${Math.round(traceColorWithMaskArr[0] * 255)}, ${Math.round(traceColorWithMaskArr[1] * 255)}, ${Math.round(traceColorWithMaskArr[2] * 255)})`
 
@@ -160,10 +161,11 @@ export function JscadBoardTextures({
     }
 
     // Top trace with mask (visible traces through soldermask)
+    // Place traces just above the 3D copper traces but still below pads.
     if (visibility.topCopper && visibility.topMask) {
       const topTraceWithMaskMesh = createTexturePlane(
         textures.topTraceWithMask,
-        pcbThickness / 2 + SURFACE_OFFSET + 0.001,
+        pcbThickness / 2 + BOARD_SURFACE_OFFSET.traces + 0.004,
         false,
         "jscad-top-trace-with-mask",
       )
@@ -173,11 +175,11 @@ export function JscadBoardTextures({
       }
     }
 
-    // Bottom trace with mask
+    // Bottom trace with mask - mirror ordering: board < copper traces < mask < pads
     if (visibility.bottomCopper && visibility.bottomMask) {
       const bottomTraceWithMaskMesh = createTexturePlane(
         textures.bottomTraceWithMask,
-        -pcbThickness / 2 - SURFACE_OFFSET - 0.001,
+        -pcbThickness / 2 - BOARD_SURFACE_OFFSET.traces - 0.005,
         true,
         "jscad-bottom-trace-with-mask",
       )

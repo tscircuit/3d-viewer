@@ -885,9 +885,11 @@ export class BoardGeomBuilder {
     const finishSegment = () => {
       if (currentSegmentPoints.length >= 2 && currentLayer) {
         const layerSign = currentLayer === "bottom" ? -1 : 1
+        // Place traces slightly closer to the board surface than
+        // BOARD_SURFACE_OFFSET.traces to sit a bit lower visually.
+        const traceOffset = BOARD_SURFACE_OFFSET.traces - 0.002
         const zCenter =
-          (layerSign * this.ctx.pcbThickness) / 2 +
-          layerSign * BOARD_SURFACE_OFFSET.traces
+          (layerSign * this.ctx.pcbThickness) / 2 + layerSign * traceOffset
 
         const linePath = line(currentSegmentPoints)
         // Use the width of the starting point of the segment for consistency
