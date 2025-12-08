@@ -7,6 +7,7 @@ import { createBoardGeomFromCircuitJson } from "./soup-to-3d"
 import { createBoardMaterial } from "./utils/create-board-material"
 import { createGeometryFromPolygons } from "./utils/create-geometry-from-polygons"
 import { renderComponent } from "./utils/render-component"
+import { colors } from "./geoms/constants"
 
 interface CircuitToSvgOptions {
   width?: number
@@ -97,15 +98,18 @@ export async function convertCircuitJsonTo3dSvg(
   // Add board geometry after components
   const boardGeom = createBoardGeomFromCircuitJson(circuitJson)
   if (boardGeom) {
+    // Use green solder mask color for the board
+    const solderMaskColor = colors.fr4SolderMaskGreen
+    const baseColor = new THREE.Color(
+      solderMaskColor[0],
+      solderMaskColor[1],
+      solderMaskColor[2],
+    )
+
     for (const geom of boardGeom) {
       const g = geom as any
       if (!g.polygons || g.polygons.length === 0) continue
       const geometry = createGeometryFromPolygons(g.polygons)
-      const baseColor = new THREE.Color(
-        g.color?.[0] ?? 0,
-        g.color?.[1] ?? 0,
-        g.color?.[2] ?? 0,
-      )
 
       const material = createBoardMaterial({
         material: boardData?.material,
@@ -117,9 +121,22 @@ export async function convertCircuitJsonTo3dSvg(
     }
   }
 
-  // Add grid
-  const gridHelper = new THREE.GridHelper(100, 100)
+  // Add grid with thin lines and low opacity
+  const gridColor = new THREE.Color(0x888888)
+  const gridHelper = new THREE.GridHelper(100, 100, gridColor, gridColor)
   gridHelper.rotation.x = Math.PI / 2
+  // Set grid material to have low opacity and proper color
+  const materials = Array.isArray(gridHelper.material)
+    ? gridHelper.material
+    : [gridHelper.material]
+  for (const mat of materials) {
+    mat.transparent = true
+    mat.opacity = 0.3
+    if (mat instanceof THREE.LineBasicMaterial) {
+      mat.color = gridColor
+      mat.vertexColors = false
+    }
+  }
   scene.add(gridHelper)
 
   // Center and scale scene
