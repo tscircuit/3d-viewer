@@ -36,6 +36,7 @@ import { manifoldMeshToThreeGeometry } from "../utils/manifold-mesh-to-three-geo
 import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
 import { createSoldermaskTextureForLayer } from "../utils/soldermask-texture"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
+import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
 
 export interface ManifoldGeoms {
   board?: {
@@ -75,6 +76,8 @@ export interface ManifoldTextures {
   bottomSilkscreen?: THREE.CanvasTexture | null
   topSoldermask?: THREE.CanvasTexture | null
   bottomSoldermask?: THREE.CanvasTexture | null
+  topCopperText?: THREE.CanvasTexture | null
+  bottomCopperText?: THREE.CanvasTexture | null
 }
 
 interface UseManifoldBoardBuilderResult {
@@ -448,6 +451,25 @@ export const useManifoldBoardBuilder = (
         soldermaskColor,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
+
+      // --- Process Copper Text (as Textures) ---
+      const copperColorArr = defaultColors.copper
+      const copperColor = `rgb(${Math.round(copperColorArr[0] * 255)}, ${Math.round(copperColorArr[1] * 255)}, ${Math.round(copperColorArr[2] * 255)})`
+      currentTextures.topCopperText = createCopperTextTextureForLayer({
+        layer: "top",
+        circuitJson,
+        boardData,
+        copperColor,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      })
+      currentTextures.bottomCopperText = createCopperTextTextureForLayer({
+        layer: "bottom",
+        circuitJson,
+        boardData,
+        copperColor,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      })
+
       setTextures(currentTextures)
     } catch (e: any) {
       console.error("Error processing geometry with Manifold in hook:", e)

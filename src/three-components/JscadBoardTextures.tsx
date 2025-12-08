@@ -7,10 +7,12 @@ import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import { createSoldermaskTextureForLayer } from "../utils/soldermask-texture"
 import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
+import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
 import {
   colors as defaultColors,
   soldermaskColors,
   TRACE_TEXTURE_RESOLUTION,
+  BOARD_SURFACE_OFFSET,
 } from "../geoms/constants"
 
 interface JscadBoardTexturesProps {
@@ -86,6 +88,20 @@ export function JscadBoardTextures({
         circuitJson,
         boardData,
         traceColor: traceColorWithMask,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      }),
+      topCopperText: createCopperTextTextureForLayer({
+        layer: "top",
+        circuitJson,
+        boardData,
+        copperColor: `rgb(${Math.round(defaultColors.copper[0] * 255)}, ${Math.round(defaultColors.copper[1] * 255)}, ${Math.round(defaultColors.copper[2] * 255)})`,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      }),
+      bottomCopperText: createCopperTextTextureForLayer({
+        layer: "bottom",
+        circuitJson,
+        boardData,
+        copperColor: `rgb(${Math.round(defaultColors.copper[0] * 255)}, ${Math.round(defaultColors.copper[1] * 255)}, ${Math.round(defaultColors.copper[2] * 255)})`,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       }),
     }
@@ -212,6 +228,34 @@ export function JscadBoardTextures({
       if (bottomSilkscreenMesh) {
         meshes.push(bottomSilkscreenMesh)
         rootObject.add(bottomSilkscreenMesh)
+      }
+    }
+
+    // Top copper text
+    if (visibility.topCopper) {
+      const topCopperTextMesh = createTexturePlane(
+        textures.topCopperText,
+        pcbThickness / 2 + BOARD_SURFACE_OFFSET.copper,
+        false,
+        "jscad-top-copper-text",
+      )
+      if (topCopperTextMesh) {
+        meshes.push(topCopperTextMesh)
+        rootObject.add(topCopperTextMesh)
+      }
+    }
+
+    // Bottom copper text
+    if (visibility.bottomCopper) {
+      const bottomCopperTextMesh = createTexturePlane(
+        textures.bottomCopperText,
+        -pcbThickness / 2 - BOARD_SURFACE_OFFSET.copper,
+        true,
+        "jscad-bottom-copper-text",
+      )
+      if (bottomCopperTextMesh) {
+        meshes.push(bottomCopperTextMesh)
+        rootObject.add(bottomCopperTextMesh)
       }
     }
 

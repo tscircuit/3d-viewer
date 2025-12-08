@@ -117,6 +117,14 @@ const BoardMeshes = ({
       else if (mesh.name.includes("bottom-soldermask")) {
         shouldShow = visibility.bottomMask
       }
+      // Top copper text
+      else if (mesh.name.includes("top-copper-text")) {
+        shouldShow = visibility.topCopper
+      }
+      // Bottom copper text
+      else if (mesh.name.includes("bottom-copper-text")) {
+        shouldShow = visibility.bottomCopper
+      }
 
       if (shouldShow) {
         rootObject.add(mesh)
