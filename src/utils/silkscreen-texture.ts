@@ -15,6 +15,29 @@ import {
   extractRectBorderRadius,
 } from "./rect-border-radius"
 
+// Helper function to parse color string to RGB string
+function parseFabricationNoteColor(colorString: string): string {
+  // Handle hex colors like "#FF0000" or "FF0000"
+  let hex = colorString
+  if (hex.startsWith("#")) {
+    hex = hex.slice(1)
+  }
+  if (hex.length === 6) {
+    const r = parseInt(hex.slice(0, 2), 16)
+    const g = parseInt(hex.slice(2, 4), 16)
+    const b = parseInt(hex.slice(4, 6), 16)
+    return `rgb(${r}, ${g}, ${b})`
+  }
+
+  // Handle rgb() format - return as-is
+  if (colorString.startsWith("rgb")) {
+    return colorString
+  }
+
+  // Default fallback
+  return "rgb(255, 243, 204)"
+}
+
 export function createSilkscreenTextureForLayer({
   layer,
   circuitJson,
@@ -33,18 +56,24 @@ export function createSilkscreenTextureForLayer({
   const pcbSilkscreenLines = su(circuitJson).pcb_silkscreen_line.list()
   const pcbSilkscreenRects = su(circuitJson).pcb_silkscreen_rect.list()
   const pcbSilkscreenCircles = su(circuitJson).pcb_silkscreen_circle.list()
+  const pcbFabricationNoteRects =
+    su(circuitJson).pcb_fabrication_note_rect.list()
 
   const textsOnLayer = pcbSilkscreenTexts.filter((t) => t.layer === layer)
   const pathsOnLayer = pcbSilkscreenPaths.filter((p) => p.layer === layer)
   const linesOnLayer = pcbSilkscreenLines.filter((l) => l.layer === layer)
   const rectsOnLayer = pcbSilkscreenRects.filter((r) => r.layer === layer)
   const circlesOnLayer = pcbSilkscreenCircles.filter((c) => c.layer === layer)
+  const fabricationNoteRectsOnLayer = pcbFabricationNoteRects.filter(
+    (r) => r.layer === layer,
+  )
   if (
     textsOnLayer.length === 0 &&
     pathsOnLayer.length === 0 &&
     linesOnLayer.length === 0 &&
     rectsOnLayer.length === 0 &&
-    circlesOnLayer.length === 0
+    circlesOnLayer.length === 0 &&
+    fabricationNoteRectsOnLayer.length === 0
   ) {
     return null
   }
@@ -234,6 +263,114 @@ export function createSilkscreenTextureForLayer({
     }
 
     if (hasStroke && strokeWidthPx > 0) {
+      ctx.lineWidth = strokeWidthPx
+      if (isDashed) {
+        const dashLength = Math.max(strokeWidthPx * 2, 1)
+        ctx.setLineDash([dashLength, dashLength])
+      }
+      ctx.stroke()
+      if (isDashed) {
+        ctx.setLineDash([])
+      }
+    }
+
+    ctx.restore()
+  })
+
+  // Draw Fabrication Note Rectangles
+  fabricationNoteRectsOnLayer.forEach((rect: any) => {
+    const width = coerceDimensionToMm(rect.width, 0)
+    const height = coerceDimensionToMm(rect.height, 0)
+    if (width <= 0 || height <= 0) return
+
+    const centerXmm = parseDimensionToMm(rect.center?.x) ?? 0
+    const centerYmm = parseDimensionToMm(rect.center?.y) ?? 0
+
+    const canvasCenterX = canvasXFromPcb(centerXmm)
+    const canvasCenterY = canvasYFromPcb(centerYmm)
+
+    const rawRadius = extractRectBorderRadius(rect)
+    const borderRadiusInput =
+      typeof rawRadius === "string" ? parseDimensionToMm(rawRadius) : rawRadius
+    const borderRadiusMm = clampRectBorderRadius(
+      width,
+      height,
+      borderRadiusInput,
+    )
+
+    ctx.save()
+    ctx.translate(canvasCenterX, canvasCenterY)
+
+    const halfWidthPx = (width / 2) * traceTextureResolution
+    const halfHeightPx = (height / 2) * traceTextureResolution
+    const borderRadiusPx = Math.min(
+      borderRadiusMm * traceTextureResolution,
+      halfWidthPx,
+      halfHeightPx,
+    )
+
+    const hasStroke = rect.has_stroke ?? false
+    const isFilled = rect.is_filled ?? true
+    const isDashed = rect.is_stroke_dashed ?? false
+    const strokeWidthPx = hasStroke
+      ? coerceDimensionToMm(rect.stroke_width, 0.1) * traceTextureResolution
+      : 0
+
+    // Parse color for fabrication notes (default to light yellow/orange)
+    let fillColor = silkscreenColor
+    let strokeColor = silkscreenColor
+    if (rect.color) {
+      const parsedColor = parseFabricationNoteColor(rect.color)
+      fillColor = parsedColor
+      strokeColor = parsedColor
+    } else {
+      // Default fabrication note color: light yellow/orange
+      fillColor = "rgb(255, 243, 204)"
+      strokeColor = "rgb(255, 243, 204)"
+    }
+
+    const drawRoundedRectPath = (
+      x: number,
+      y: number,
+      rectWidth: number,
+      rectHeight: number,
+      radius: number,
+    ) => {
+      ctx.beginPath()
+      if (radius <= 0) {
+        ctx.rect(x, y, rectWidth, rectHeight)
+      } else {
+        const r = radius
+        const right = x + rectWidth
+        const bottom = y + rectHeight
+        ctx.moveTo(x + r, y)
+        ctx.lineTo(right - r, y)
+        ctx.quadraticCurveTo(right, y, right, y + r)
+        ctx.lineTo(right, bottom - r)
+        ctx.quadraticCurveTo(right, bottom, right - r, bottom)
+        ctx.lineTo(x + r, bottom)
+        ctx.quadraticCurveTo(x, bottom, x, bottom - r)
+        ctx.lineTo(x, y + r)
+        ctx.quadraticCurveTo(x, y, x + r, y)
+        ctx.closePath()
+      }
+    }
+
+    drawRoundedRectPath(
+      -halfWidthPx,
+      -halfHeightPx,
+      halfWidthPx * 2,
+      halfHeightPx * 2,
+      borderRadiusPx,
+    )
+
+    if (isFilled) {
+      ctx.fillStyle = fillColor
+      ctx.fill()
+    }
+
+    if (hasStroke && strokeWidthPx > 0) {
+      ctx.strokeStyle = strokeColor
       ctx.lineWidth = strokeWidthPx
       if (isDashed) {
         const dashLength = Math.max(strokeWidthPx * 2, 1)
