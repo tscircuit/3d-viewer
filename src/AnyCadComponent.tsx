@@ -15,9 +15,11 @@ import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
 export const AnyCadComponent = ({
   cad_component,
   circuitJson,
+  pcbThickness = 1.4,
 }: {
   cad_component: CadComponent
   circuitJson: AnyCircuitElement[]
+  pcbThickness?: number
 }) => {
   const [isHovered, setIsHovered] = useState(false)
   const { visibility } = useLayerVisibility()
@@ -57,6 +59,37 @@ export const AnyCadComponent = ({
     return platedHoles.length > 0
   }, [circuitJson, cad_component.pcb_component_id])
 
+  // Get the component's layer to determine correct Z position
+  const componentLayer = useMemo(() => {
+    const pcbComponent = circuitJson.find(
+      (elm) =>
+        elm.type === "pcb_component" &&
+        elm.pcb_component_id === cad_component.pcb_component_id,
+    )
+    if (pcbComponent && "layer" in pcbComponent) {
+      return pcbComponent.layer as "top" | "bottom"
+    }
+    return "top" // Default to top layer
+  }, [circuitJson, cad_component.pcb_component_id])
+
+  // Compute corrected position - fix Z when it's 0 (panel case)
+  const correctedPosition = useMemo(() => {
+    if (!cad_component.position) return undefined
+
+    const { x, y, z } = cad_component.position
+    // If Z is 0 or very close to 0, it likely means the board thickness wasn't
+    // available when @tscircuit/core computed the position (e.g., panels).
+    // In this case, compute the correct Z based on the layer and pcbThickness.
+    const needsZCorrection = Math.abs(z) < 0.001
+    const correctedZ = needsZCorrection
+      ? componentLayer === "bottom"
+        ? -pcbThickness / 2
+        : pcbThickness / 2
+      : z
+
+    return [x, y, correctedZ] as [number, number, number]
+  }, [cad_component.position, componentLayer, pcbThickness])
+
   const url =
     cad_component.model_obj_url ??
     cad_component.model_wrl_url ??
@@ -77,15 +110,7 @@ export const AnyCadComponent = ({
       <MixedStlModel
         key={cad_component.cad_component_id}
         url={url}
-        position={
-          cad_component.position
-            ? [
-                cad_component.position.x,
-                cad_component.position.y,
-                cad_component.position.z,
-              ]
-            : undefined
-        }
+        position={correctedPosition}
         rotation={rotationOffset}
         scale={cad_component.model_unit_to_mm_scale_factor}
         onHover={handleHover}
@@ -99,15 +124,7 @@ export const AnyCadComponent = ({
       <GltfModel
         key={cad_component.cad_component_id}
         gltfUrl={gltfUrl}
-        position={
-          cad_component.position
-            ? [
-                cad_component.position.x,
-                cad_component.position.y,
-                cad_component.position.z,
-              ]
-            : undefined
-        }
+        position={correctedPosition}
         rotation={rotationOffset}
         scale={cad_component.model_unit_to_mm_scale_factor}
         onHover={handleHover}
@@ -132,15 +149,7 @@ export const AnyCadComponent = ({
   } else if (cad_component.footprinter_string) {
     modelComponent = (
       <FootprinterModel
-        positionOffset={
-          cad_component.position
-            ? [
-                cad_component.position.x,
-                cad_component.position.y,
-                cad_component.position.z,
-              ]
-            : undefined
-        }
+        positionOffset={correctedPosition}
         rotationOffset={rotationOffset}
         footprint={cad_component.footprinter_string}
         scale={cad_component.model_unit_to_mm_scale_factor}
