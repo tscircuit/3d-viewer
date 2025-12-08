@@ -24,11 +24,23 @@ export const createSimplifiedBoardGeom = (
   const boards = su(circuitJson).pcb_board.list()
 
   let boardOrPanel: PcbBoard | PcbPanel | undefined
-  let pcbThickness = 1.2
+  let pcbThickness = 1.4
+  let boardMaterial: "fr4" | "fr1" = "fr4"
 
   if (panels.length > 0) {
-    // Use the panel as the board
-    boardOrPanel = panels[0]!
+    // Use the panel as the board outline
+    const panel = panels[0]!
+    boardOrPanel = panel
+
+    // Get boards inside the panel to inherit material/thickness properties
+    const boardsInPanel = boards.filter(
+      (b) => b.pcb_panel_id === panel.pcb_panel_id,
+    )
+    const firstBoardInPanel = boardsInPanel[0]
+    if (firstBoardInPanel) {
+      pcbThickness = firstBoardInPanel.thickness ?? 1.2
+      boardMaterial = firstBoardInPanel.material ?? "fr4"
+    }
   } else {
     // Skip boards that are inside a panel - only render the panel outline
     const boardsNotInPanel = boards.filter(
@@ -40,6 +52,7 @@ export const createSimplifiedBoardGeom = (
       return []
     }
     pcbThickness = boardOrPanel.thickness ?? 1.2
+    boardMaterial = boardOrPanel.material ?? "fr4"
   }
 
   let boardGeom: Geom3
@@ -63,10 +76,7 @@ export const createSimplifiedBoardGeom = (
   }
 
   // Colorize and return the simplified board
-  const material =
-    boardMaterialColors[
-      "material" in boardOrPanel ? (boardOrPanel.material ?? "fr4") : "fr4"
-    ] ?? colors.fr4Tan
+  const material = boardMaterialColors[boardMaterial] ?? colors.fr4Tan
 
   return [colorize(material, boardGeom)]
 }

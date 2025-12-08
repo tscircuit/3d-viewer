@@ -354,6 +354,7 @@ try {
           <AnyCadComponent
             cad_component={cad_component}
             circuitJson={circuitJson}
+            pcbThickness={pcbThickness ?? undefined}
           />
         </ThreeErrorBoundary>
       ))}

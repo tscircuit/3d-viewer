@@ -107,17 +107,24 @@ export const useManifoldBoardBuilder = (
     const boards = su(circuitJson).pcb_board.list()
 
     if (panels.length > 0) {
-      // Use the panel as the board
+      // Use the panel as the board outline
       const panel = panels[0]!
+      // Get boards inside the panel to inherit material/thickness properties
+      const boardsInPanel = boards.filter(
+        (b) => b.pcb_panel_id === panel.pcb_panel_id,
+      )
+      const firstBoardInPanel = boardsInPanel[0]
+
       return {
         type: "pcb_board",
         pcb_board_id: panel.pcb_panel_id,
         center: panel.center,
         width: panel.width,
         height: panel.height,
-        thickness: 1.6, // Default thickness
-        material: "fr4",
-        num_layers: 2,
+        // Inherit thickness and material from the first board in the panel, or use defaults
+        thickness: firstBoardInPanel?.thickness ?? 1.4,
+        material: firstBoardInPanel?.material ?? "fr4",
+        num_layers: firstBoardInPanel?.num_layers ?? 2,
       } as PcbBoard
     }
 
@@ -184,7 +191,7 @@ export const useManifoldBoardBuilder = (
     const currentTextures: ManifoldTextures = {}
 
     try {
-      const currentPcbThickness = boardData.thickness || 1.6
+      const currentPcbThickness = boardData.thickness || 1.4
       setPcbThickness(currentPcbThickness)
 
       const { boardOp: initialBoardOp, outlineCrossSection } =

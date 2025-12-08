@@ -1,5 +1,7 @@
+import React, { useState, useEffect } from "react"
 import { AnyCircuitElement } from "circuit-json"
 import { CadViewer } from "src/CadViewer"
+import { Circuit } from "@tscircuit/core"
 
 export const PanelWithTwoBoards = () => {
   const circuitJson: AnyCircuitElement[] = [
@@ -391,6 +393,105 @@ export const SimplePanelWithOneBoard = () => {
   ]
 
   return <CadViewer circuitJson={circuitJson} />
+}
+
+const createPanelCircuit = async () => {
+  const circuit = new Circuit()
+
+  circuit.add(
+    <panel width="60mm" height="60mm" boardGap="5mm">
+      <board width="25mm" height="25mm" pcbX={-15} pcbY={15}>
+        <resistor
+          name="R1"
+          resistance="10k"
+          footprint="0402"
+          pcbX={0}
+          pcbY={5}
+        />
+        <capacitor
+          name="C1"
+          capacitance="100nF"
+          footprint="0402"
+          pcbX={0}
+          pcbY={-5}
+        />
+        <trace from=".R1 > .pin2" to=".C1 > .pin1" />
+      </board>
+      <board width="25mm" height="25mm" pcbX={15} pcbY={15}>
+        <resistor
+          name="R1"
+          resistance="10k"
+          footprint="0402"
+          pcbX={0}
+          pcbY={5}
+        />
+        <capacitor
+          name="C1"
+          capacitance="100nF"
+          footprint="0402"
+          pcbX={0}
+          pcbY={-5}
+        />
+        <trace from=".R1 > .pin2" to=".C1 > .pin1" />
+      </board>
+      <board width="25mm" height="25mm" pcbX={-15} pcbY={-15}>
+        <resistor
+          name="R1"
+          resistance="10k"
+          footprint="0402"
+          pcbX={0}
+          pcbY={5}
+        />
+        <capacitor
+          name="C1"
+          capacitance="100nF"
+          footprint="0402"
+          pcbX={0}
+          pcbY={-5}
+        />
+        <trace from=".R1 > .pin2" to=".C1 > .pin1" />
+      </board>
+      <board width="25mm" height="25mm" pcbX={15} pcbY={-15}>
+        <resistor
+          name="R1"
+          resistance="10k"
+          footprint="0402"
+          pcbX={0}
+          pcbY={5}
+        />
+        <capacitor
+          name="C1"
+          capacitance="100nF"
+          footprint="0402"
+          pcbX={0}
+          pcbY={-5}
+        />
+        <trace from=".R1 > .pin2" to=".C1 > .pin1" />
+      </board>
+    </panel>,
+  )
+
+  await circuit.renderUntilSettled()
+
+  return circuit.getCircuitJson()
+}
+
+export const PanelWithFourBoards = () => {
+  const [circuitJson, setCircuitJson] = useState<any>(null)
+
+  useEffect(() => {
+    const renderCircuit = async () => {
+      const json = await createPanelCircuit()
+      setCircuitJson(json)
+    }
+    renderCircuit()
+  }, [])
+
+  if (!circuitJson) {
+    return <div>Loading...</div>
+  }
+
+  return <CadViewer circuitJson={circuitJson as any} />
 }
 
 export default {

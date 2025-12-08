@@ -198,6 +198,12 @@ export class BoardGeomBuilder {
     // If we have a panel, use it as the board outline
     if (panels.length > 0) {
       const panel = panels[0]!
+      // Get boards inside the panel to inherit material/thickness properties
+      const boardsInPanel = boards.filter(
+        (b) => b.pcb_panel_id === panel.pcb_panel_id,
+      )
+      const firstBoardInPanel = boardsInPanel[0]
+
       // Create a board-like object from the panel
       this.board = {
         type: "pcb_board",
@@ -205,9 +211,10 @@ export class BoardGeomBuilder {
         center: panel.center,
         width: panel.width,
         height: panel.height,
-        thickness: 1.6, // Default thickness
-        material: "fr4",
-        num_layers: 2,
+        // Inherit thickness and material from the first board in the panel, or use defaults
+        thickness: firstBoardInPanel?.thickness ?? 1.4,
+        material: firstBoardInPanel?.material ?? "fr4",
+        num_layers: firstBoardInPanel?.num_layers ?? 2,
       } as PcbBoard
     } else {
       // Skip boards that are inside a panel - only render the panel outline
@@ -230,7 +237,7 @@ export class BoardGeomBuilder {
       (e) => e.type === "pcb_copper_pour",
     ) as any
 
-    this.ctx = { pcbThickness: this.board.thickness ?? 1.2 }
+    this.ctx = { pcbThickness: this.board.thickness ?? 1.4 }
 
     // Start processing
     this.initializeBoard()
