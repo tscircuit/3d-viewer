@@ -125,5 +125,26 @@ export function createTextureMeshes(
   )
   if (bottomSoldermaskMesh) meshes.push(bottomSoldermaskMesh)
 
+  // Copper text meshes - positioned at copper layer (same as traces/pads)
+  const topCopperTextMesh = createTexturePlane(
+    textures.topCopperText,
+    pcbThickness / 2 + BOARD_SURFACE_OFFSET.copper,
+    false,
+    "copper-text",
+    false,
+    2, // Render after soldermask
+  )
+  if (topCopperTextMesh) meshes.push(topCopperTextMesh)
+
+  const bottomCopperTextMesh = createTexturePlane(
+    textures.bottomCopperText,
+    -pcbThickness / 2 - BOARD_SURFACE_OFFSET.copper,
+    true,
+    "copper-text",
+    false,
+    2, // Render after soldermask
+  )
+  if (bottomCopperTextMesh) meshes.push(bottomCopperTextMesh)
+
   return meshes
 }

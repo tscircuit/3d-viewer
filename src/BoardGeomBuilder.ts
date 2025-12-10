@@ -7,11 +7,6 @@ import type {
   PcbSmtPad,
   PcbTrace,
   PcbVia,
-  PcbSilkscreenText,
-  PcbSilkscreenPath,
-  PcbSilkscreenLine,
-  PcbSilkscreenRect,
-  PcbSilkscreenCircle,
   PcbCutout,
   PcbCopperPour,
   PcbPanel,
@@ -46,11 +41,7 @@ import {
   arePointsClockwise,
 } from "./geoms/create-board-with-outline"
 import type { Vec2 } from "@jscad/modeling/src/maths/types"
-import { createSilkscreenTextGeoms } from "./geoms/create-geoms-for-silkscreen-text"
-import { createSilkscreenPathGeom } from "./geoms/create-geoms-for-silkscreen-path"
-import { createSilkscreenLineGeom } from "./geoms/create-geoms-for-silkscreen-line"
-import { createSilkscreenRectGeom } from "./geoms/create-geoms-for-silkscreen-rect"
-import { createSilkscreenCircleGeom } from "./geoms/create-geoms-for-silkscreen-circle"
+
 import { createGeom2FromBRep } from "./geoms/brep-converter"
 import type { GeomContext } from "./GeomContext"
 import {
@@ -92,11 +83,6 @@ type BuilderState =
   | "processing_pads"
   | "processing_traces"
   | "processing_vias"
-  | "processing_silkscreen_text"
-  | "processing_silkscreen_lines"
-  | "processing_silkscreen_circles"
-  | "processing_silkscreen_rects"
-  | "processing_silkscreen_paths"
   | "processing_cutouts"
   | "processing_copper_pours"
   | "finalizing"
@@ -113,11 +99,6 @@ const buildStateOrder: BuilderState[] = [
 
   "processing_traces",
   "processing_vias",
-  "processing_silkscreen_text",
-  "processing_silkscreen_lines",
-  "processing_silkscreen_circles",
-  "processing_silkscreen_rects",
-  "processing_silkscreen_paths",
   "finalizing",
   "done",
 ]
@@ -130,11 +111,6 @@ export class BoardGeomBuilder {
   private pads: PcbSmtPad[]
   private traces: PcbTrace[]
   private pcb_vias: PcbVia[]
-  private silkscreenTexts: PcbSilkscreenText[]
-  private silkscreenPaths: PcbSilkscreenPath[]
-  private silkscreenLines: PcbSilkscreenLine[]
-  private silkscreenCircles: PcbSilkscreenCircle[]
-  private silkscreenRects: PcbSilkscreenRect[]
   private pcb_cutouts: PcbCutout[]
   private pcb_copper_pours: PcbCopperPour[]
 
@@ -143,11 +119,6 @@ export class BoardGeomBuilder {
   private padGeoms: Geom3[] = []
   private traceGeoms: Geom3[] = []
   private viaGeoms: Geom3[] = [] // Combined with platedHoleGeoms
-  private silkscreenTextGeoms: Geom3[] = []
-  private silkscreenPathGeoms: Geom3[] = []
-  private silkscreenLineGeoms: Geom3[] = []
-  private silkscreenCircleGeoms: Geom3[] = []
-  private silkscreenRectGeoms: Geom3[] = []
   private copperPourGeoms: Geom3[] = []
   private boardClipGeom: Geom3 | null = null
 
@@ -219,11 +190,6 @@ export class BoardGeomBuilder {
     this.pads = su(circuitJson).pcb_smtpad.list()
     this.traces = su(circuitJson).pcb_trace.list()
     this.pcb_vias = su(circuitJson).pcb_via.list()
-    this.silkscreenTexts = su(circuitJson).pcb_silkscreen_text.list()
-    this.silkscreenPaths = su(circuitJson).pcb_silkscreen_path.list()
-    this.silkscreenLines = su(circuitJson).pcb_silkscreen_line.list()
-    this.silkscreenCircles = su(circuitJson).pcb_silkscreen_circle.list()
-    this.silkscreenRects = su(circuitJson).pcb_silkscreen_rect.list()
     this.pcb_cutouts = su(circuitJson).pcb_cutout.list()
     this.pcb_copper_pours = circuitJson.filter(
       (e) => e.type === "pcb_copper_pour",
@@ -325,53 +291,6 @@ export class BoardGeomBuilder {
         case "processing_vias":
           if (this.currentIndex < this.pcb_vias.length) {
             this.processVia(this.pcb_vias[this.currentIndex]!)
-            this.currentIndex++
-          } else {
-            this.goToNextState()
-          }
-          break
-
-        case "processing_silkscreen_text":
-          if (this.currentIndex < this.silkscreenTexts.length) {
-            this.processSilkscreenText(this.silkscreenTexts[this.currentIndex]!)
-            this.currentIndex++
-          } else {
-            this.goToNextState()
-          }
-          break
-
-        case "processing_silkscreen_lines":
-          if (this.currentIndex < this.silkscreenLines.length) {
-            this.processSilkscreenLine(this.silkscreenLines[this.currentIndex]!)
-            this.currentIndex++
-          } else {
-            this.goToNextState()
-          }
-          break
-
-        case "processing_silkscreen_circles":
-          if (this.currentIndex < this.silkscreenCircles.length) {
-            this.processSilkscreenCircle(
-              this.silkscreenCircles[this.currentIndex]!,
-            )
-            this.currentIndex++
-          } else {
-            this.goToNextState()
-          }
-          break
-
-        case "processing_silkscreen_rects":
-          if (this.currentIndex < this.silkscreenRects.length) {
-            this.processSilkscreenRect(this.silkscreenRects[this.currentIndex]!)
-            this.currentIndex++
-          } else {
-            this.goToNextState()
-          }
-          break
-
-        case "processing_silkscreen_paths":
-          if (this.currentIndex < this.silkscreenPaths.length) {
-            this.processSilkscreenPath(this.silkscreenPaths[this.currentIndex]!)
             this.currentIndex++
           } else {
             this.goToNextState()
@@ -1040,70 +959,6 @@ export class BoardGeomBuilder {
     }
   }
 
-  private processSilkscreenText(st: PcbSilkscreenText) {
-    const { textOutlines, xOffset, yOffset } = createSilkscreenTextGeoms(st)
-
-    for (const outline of textOutlines) {
-      const alignedOutline = outline.map((point) => [
-        point[0] + xOffset + st.anchor_position.x,
-        point[1] + yOffset + st.anchor_position.y,
-      ]) as Vec2[]
-      const textPath = line(alignedOutline)
-
-      const fontSize = st.font_size || 0.25
-      const expansionDelta = Math.min(
-        Math.max(0.01, fontSize * 0.1),
-        fontSize * 0.05,
-      )
-      const expandedPath = expand(
-        { delta: expansionDelta, corners: "round" },
-        textPath,
-      )
-      let textGeom: any
-      if (st.layer === "bottom") {
-        textGeom = translate(
-          [0, 0, -this.ctx.pcbThickness / 2 - M], // Position above board
-          extrudeLinear({ height: 0.012 }, expandedPath),
-        )
-      } else {
-        textGeom = translate(
-          [0, 0, this.ctx.pcbThickness / 2 + M], // Position above board
-          extrudeLinear({ height: 0.012 }, expandedPath),
-        )
-      }
-      textGeom = colorize([1, 1, 1], textGeom) // White
-      this.silkscreenTextGeoms.push(textGeom)
-    }
-  }
-
-  private processSilkscreenPath(sp: PcbSilkscreenPath) {
-    const pathGeom = createSilkscreenPathGeom(sp, this.ctx)
-    if (pathGeom) {
-      this.silkscreenPathGeoms.push(pathGeom)
-    }
-  }
-
-  private processSilkscreenLine(sl: PcbSilkscreenLine) {
-    const lineGeom = createSilkscreenLineGeom(sl, this.ctx)
-    if (lineGeom) {
-      this.silkscreenLineGeoms.push(lineGeom)
-    }
-  }
-
-  private processSilkscreenCircle(sc: PcbSilkscreenCircle) {
-    const circleGeom = createSilkscreenCircleGeom(sc, this.ctx)
-    if (circleGeom) {
-      this.silkscreenCircleGeoms.push(circleGeom)
-    }
-  }
-
-  private processSilkscreenRect(sr: PcbSilkscreenRect) {
-    const rectGeom = createSilkscreenRectGeom(sr, this.ctx)
-    if (rectGeom) {
-      this.silkscreenRectGeoms.push(rectGeom)
-    }
-  }
-
   private finalize() {
     if (!this.boardGeom) return
     // Colorize the final board geometry
@@ -1118,11 +973,6 @@ export class BoardGeomBuilder {
       ...this.traceGeoms,
       ...this.viaGeoms,
       ...this.copperPourGeoms,
-      ...this.silkscreenTextGeoms,
-      ...this.silkscreenLineGeoms,
-      ...this.silkscreenCircleGeoms,
-      ...this.silkscreenRectGeoms,
-      ...this.silkscreenPathGeoms,
     ]
 
     if (this.onCompleteCallback) {
