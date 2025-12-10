@@ -125,6 +125,10 @@ const BoardMeshes = ({
       else if (mesh.name.includes("bottom-copper-text")) {
         shouldShow = visibility.bottomCopper
       }
+      // Panel outlines
+      else if (mesh.name.includes("panel-outlines")) {
+        shouldShow = visibility.boardBody
+      }
 
       if (shouldShow) {
         rootObject.add(mesh)

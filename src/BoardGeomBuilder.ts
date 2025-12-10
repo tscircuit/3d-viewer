@@ -168,6 +168,9 @@ export class BoardGeomBuilder {
     // If we have a panel, use it as the board outline
     if (panels.length > 0) {
       const panel = panels[0]!
+      const firstBoardInPanel = boards.find(
+        (b) => b.pcb_panel_id === panel.pcb_panel_id,
+      )
       // Create a board-like object from the panel
       this.board = {
         type: "pcb_board",
@@ -175,9 +178,9 @@ export class BoardGeomBuilder {
         center: panel.center,
         width: panel.width,
         height: panel.height,
-        thickness: 1.6, // Default thickness
-        material: "fr4",
-        num_layers: 2,
+        thickness: firstBoardInPanel?.thickness ?? 1.6,
+        material: firstBoardInPanel?.material ?? "fr4",
+        num_layers: firstBoardInPanel?.num_layers ?? 2,
       } as PcbBoard
     } else {
       // Skip boards that are inside a panel - only render the panel outline

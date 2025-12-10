@@ -29,6 +29,10 @@ export const createSimplifiedBoardGeom = (
   if (panels.length > 0) {
     // Use the panel as the board
     boardOrPanel = panels[0]!
+    const firstBoardInPanel = boards.find(
+      (b) => b.pcb_panel_id === boardOrPanel!.pcb_panel_id,
+    )
+    pcbThickness = firstBoardInPanel?.thickness ?? 1.2
   } else {
     // Skip boards that are inside a panel - only render the panel outline
     const boardsNotInPanel = boards.filter(
@@ -63,10 +67,15 @@ export const createSimplifiedBoardGeom = (
   }
 
   // Colorize and return the simplified board
-  const material =
-    boardMaterialColors[
-      "material" in boardOrPanel ? (boardOrPanel.material ?? "fr4") : "fr4"
-    ] ?? colors.fr4Tan
+  const materialName =
+    "material" in boardOrPanel && boardOrPanel.material
+      ? boardOrPanel.material
+      : panels.length > 0
+        ? (boards.find(
+            (b) => b.pcb_panel_id === (boardOrPanel as PcbPanel).pcb_panel_id,
+          )?.material ?? "fr4")
+        : "fr4"
+  const material = boardMaterialColors[materialName] ?? colors.fr4Tan
 
   return [colorize(material, boardGeom)]
 }
