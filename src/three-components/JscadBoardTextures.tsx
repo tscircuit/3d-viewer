@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react"
 import * as THREE from "three"
-import type { AnyCircuitElement } from "circuit-json"
+import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import { useThree } from "../react-three/ThreeContext"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
@@ -8,6 +8,7 @@ import { createSoldermaskTextureForLayer } from "../utils/soldermask-texture"
 import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
 import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
+import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
 import {
   colors as defaultColors,
   soldermaskColors,
@@ -28,8 +29,35 @@ export function JscadBoardTextures({
   const { visibility } = useLayerVisibility()
 
   const boardData = useMemo(() => {
+    // Check for panel first
+    const panels = circuitJson.filter(
+      (e): e is PcbPanel => e.type === "pcb_panel",
+    )
     const boards = su(circuitJson).pcb_board.list()
-    return boards.length > 0 ? boards[0]! : null
+
+    if (panels.length > 0) {
+      // Use the panel as the board for texture sizing
+      const panel = panels[0]!
+      const firstBoardInPanel = boards.find(
+        (b) => b.pcb_panel_id === panel.pcb_panel_id,
+      )
+      return {
+        type: "pcb_board",
+        pcb_board_id: panel.pcb_panel_id,
+        center: panel.center,
+        width: panel.width,
+        height: panel.height,
+        thickness: firstBoardInPanel?.thickness ?? 1.6,
+        material: firstBoardInPanel?.material ?? "fr4",
+        num_layers: firstBoardInPanel?.num_layers ?? 2,
+      } as PcbBoard
+    }
+
+    // Skip boards that are inside a panel to avoid rendering them individually
+    const boardsNotInPanel = boards.filter(
+      (b): b is PcbBoard => !b.pcb_panel_id,
+    )
+    return boardsNotInPanel.length > 0 ? boardsNotInPanel[0]! : null
   }, [circuitJson])
 
   const textures = useMemo(() => {
@@ -104,6 +132,18 @@ export function JscadBoardTextures({
         copperColor: `rgb(${Math.round(defaultColors.copper[0] * 255)}, ${Math.round(defaultColors.copper[1] * 255)}, ${Math.round(defaultColors.copper[2] * 255)})`,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       }),
+      topPanelOutlines: createPanelOutlineTextureForLayer({
+        layer: "top",
+        circuitJson,
+        panelData: boardData,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      }),
+      bottomPanelOutlines: createPanelOutlineTextureForLayer({
+        layer: "bottom",
+        circuitJson,
+        panelData: boardData,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      }),
     }
   }, [circuitJson, boardData])
 
@@ -118,6 +158,7 @@ export function JscadBoardTextures({
       isBottomLayer: boolean,
       name: string,
       usePolygonOffset = false,
+      depthWrite = false,
     ) => {
       if (!texture) return null
       const planeGeom = new THREE.PlaneGeometry(
@@ -128,7 +169,7 @@ export function JscadBoardTextures({
         map: texture,
         transparent: true,
         side: THREE.DoubleSide,
-        depthWrite: false,
+        depthWrite,
         polygonOffset: usePolygonOffset,
         polygonOffsetFactor: usePolygonOffset ? -1 : 0,
         polygonOffsetUnits: usePolygonOffset ? -1 : 0,
@@ -257,6 +298,35 @@ export function JscadBoardTextures({
       if (bottomCopperTextMesh) {
         meshes.push(bottomCopperTextMesh)
         rootObject.add(bottomCopperTextMesh)
+      }
+    }
+
+    // Panel outlines
+    if (visibility.boardBody) {
+      const topPanelOutlinesMesh = createTexturePlane(
+        textures.topPanelOutlines,
+        pcbThickness / 2 + SURFACE_OFFSET + 0.003, // Above silkscreen
+        false,
+        "jscad-top-panel-outlines",
+        false,
+        true,
+      )
+      if (topPanelOutlinesMesh) {
+        meshes.push(topPanelOutlinesMesh)
+        rootObject.add(topPanelOutlinesMesh)
+      }
+
+      const bottomPanelOutlinesMesh = createTexturePlane(
+        textures.bottomPanelOutlines,
+        -pcbThickness / 2 - SURFACE_OFFSET - 0.003, // Below bottom silkscreen
+        true,
+        "jscad-bottom-panel-outlines",
+        false,
+        true,
+      )
+      if (bottomPanelOutlinesMesh) {
+        meshes.push(bottomPanelOutlinesMesh)
+        rootObject.add(bottomPanelOutlinesMesh)
       }
     }
 

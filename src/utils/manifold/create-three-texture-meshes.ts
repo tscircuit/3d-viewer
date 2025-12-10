@@ -25,7 +25,7 @@ export function createTextureMeshes(
       map: texture,
       transparent: true,
       side: THREE.DoubleSide,
-      depthWrite: false, // Important for layers to avoid z-fighting issues with board itself
+      depthWrite: keySuffix === "panel-outlines",
       polygonOffset: usePolygonOffset,
       polygonOffsetFactor: usePolygonOffset ? -4 : 0, // Increased for better z-fighting prevention
       polygonOffsetUnits: usePolygonOffset ? -4 : 0,
@@ -145,6 +145,26 @@ export function createTextureMeshes(
     2, // Render after soldermask
   )
   if (bottomCopperTextMesh) meshes.push(bottomCopperTextMesh)
+
+  const topPanelOutlinesMesh = createTexturePlane(
+    textures.topPanelOutlines,
+    pcbThickness / 2 + 0.004, // Above silkscreen
+    false,
+    "panel-outlines",
+    false,
+    4,
+  )
+  if (topPanelOutlinesMesh) meshes.push(topPanelOutlinesMesh)
+
+  const bottomPanelOutlinesMesh = createTexturePlane(
+    textures.bottomPanelOutlines,
+    -pcbThickness / 2 - 0.004, // Below bottom silkscreen
+    true,
+    "panel-outlines",
+    false,
+    4,
+  )
+  if (bottomPanelOutlinesMesh) meshes.push(bottomPanelOutlinesMesh)
 
   return meshes
 }

@@ -37,6 +37,7 @@ import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
 import { createSoldermaskTextureForLayer } from "../utils/soldermask-texture"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
 import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
+import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
 
 export interface ManifoldGeoms {
   board?: {
@@ -78,6 +79,8 @@ export interface ManifoldTextures {
   bottomSoldermask?: THREE.CanvasTexture | null
   topCopperText?: THREE.CanvasTexture | null
   bottomCopperText?: THREE.CanvasTexture | null
+  topPanelOutlines?: THREE.CanvasTexture | null
+  bottomPanelOutlines?: THREE.CanvasTexture | null
 }
 
 interface UseManifoldBoardBuilderResult {
@@ -112,15 +115,18 @@ export const useManifoldBoardBuilder = (
     if (panels.length > 0) {
       // Use the panel as the board
       const panel = panels[0]!
+      const firstBoardInPanel = boards.find(
+        (b) => b.pcb_panel_id === panel.pcb_panel_id,
+      )
       return {
         type: "pcb_board",
         pcb_board_id: panel.pcb_panel_id,
         center: panel.center,
         width: panel.width,
         height: panel.height,
-        thickness: 1.6, // Default thickness
-        material: "fr4",
-        num_layers: 2,
+        thickness: firstBoardInPanel?.thickness ?? 1.6,
+        material: firstBoardInPanel?.material ?? "fr4",
+        num_layers: firstBoardInPanel?.num_layers ?? 2,
       } as PcbBoard
     }
 
@@ -467,6 +473,20 @@ export const useManifoldBoardBuilder = (
         circuitJson,
         boardData,
         copperColor,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      })
+
+      // --- Process Panel Outlines (as Textures) ---
+      currentTextures.topPanelOutlines = createPanelOutlineTextureForLayer({
+        layer: "top",
+        circuitJson,
+        panelData: boardData,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      })
+      currentTextures.bottomPanelOutlines = createPanelOutlineTextureForLayer({
+        layer: "bottom",
+        circuitJson,
+        panelData: boardData,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
 
