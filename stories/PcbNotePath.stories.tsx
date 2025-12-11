@@ -1,0 +1,145 @@
+import { CadViewer } from "src/CadViewer"
+
+const pcbNotePathCircuit = [
+  {
+    type: "pcb_board",
+    pcb_board_id: "pcb_board_1",
+    center: { x: 0, y: 0 },
+    width: 15,
+    height: 8,
+    thickness: 1,
+    num_layers: 2,
+    material: "fr4",
+  },
+  {
+    type: "pcb_component",
+    pcb_component_id: "pcb_component_1",
+    center: { x: 0, y: 0 },
+    width: 0,
+    height: 0,
+    rotation: 0,
+    layer: "top",
+    obstructs_within_bounds: false,
+    do_not_place: true,
+  },
+  {
+    type: "pcb_component",
+    pcb_component_id: "pcb_component_bottom",
+    center: { x: 0, y: 0 },
+    width: 0,
+    height: 0,
+    rotation: 0,
+    layer: "bottom",
+    obstructs_within_bounds: false,
+    do_not_place: true,
+  },
+  {
+    type: "pcb_note_path",
+    pcb_note_path_id: "pcb_note_path_1",
+    pcb_component_id: "pcb_component_1",
+    route: [
+      { x: -3, y: 2 },
+      { x: -1, y: 2 },
+      { x: -1, y: 0 },
+      { x: 1, y: 0 },
+    ],
+    stroke_width: "0.15mm",
+    layer: "top",
+  },
+  {
+    type: "pcb_note_path",
+    pcb_note_path_id: "pcb_note_path_2",
+    pcb_component_id: "pcb_component_1",
+    route: [
+      { x: 1, y: 2 },
+      { x: 3, y: 2 },
+      { x: 3, y: 0 },
+      { x: 1, y: 0 },
+      { x: 1, y: 2 },
+    ],
+    stroke_width: "0.2mm",
+    color: "#FF6B6B",
+    layer: "top",
+  },
+  {
+    type: "pcb_note_path",
+    pcb_note_path_id: "pcb_note_path_3",
+    pcb_component_id: "pcb_component_1",
+    route: [
+      { x: -3, y: -1 },
+      { x: -2, y: -2 },
+      { x: -1, y: -1 },
+      { x: 0, y: -2 },
+      { x: 1, y: -1 },
+    ],
+    stroke_width: "0.1mm",
+    color: "#4ECDC4",
+    layer: "top",
+  },
+  {
+    type: "pcb_note_path",
+    pcb_note_path_id: "pcb_note_path_4",
+    pcb_component_id: "pcb_component_1",
+    route: [
+      { x: 2, y: -1 },
+      { x: 4, y: -1 },
+      { x: 4, y: -2.5 },
+      { x: 2, y: -2.5 },
+      { x: 2, y: -1 },
+    ],
+    stroke_width: "0.25mm",
+    layer: "top",
+  },
+  {
+    type: "pcb_note_path",
+    pcb_note_path_id: "pcb_note_path_5",
+    pcb_component_id: "pcb_component_bottom",
+    route: [
+      { x: -2, y: 1 },
+      { x: 0, y: 1 },
+      { x: 0, y: -1 },
+      { x: 2, y: -1 },
+    ],
+    stroke_width: "0.15mm",
+    color: "rgb(255, 200, 100)",
+    layer: "bottom",
+  },
+  {
+    type: "pcb_note_path",
+    pcb_note_path_id: "pcb_note_path_6",
+    pcb_component_id: "pcb_component_1",
+    route: [
+      { x: -4, y: 3 },
+      { x: -4, y: 3.5 },
+      { x: -3.5, y: 3.5 },
+      { x: -3.5, y: 3 },
+      { x: -4, y: 3 },
+    ],
+    stroke_width: "0.1mm",
+    color: "#9B59B6",
+    layer: "top",
+  },
+  {
+    type: "pcb_note_path",
+    pcb_note_path_id: "pcb_note_path_7",
+    pcb_component_id: "pcb_component_1",
+    route: [
+      { x: 4, y: 3 },
+      { x: 5, y: 3.5 },
+      { x: 5.5, y: 3 },
+      { x: 5, y: 2.5 },
+      { x: 4, y: 3 },
+    ],
+    stroke_width: "0.12mm",
+    layer: "top",
+  },
+]
+
+export const PcbNotePaths = () => (
+  <CadViewer circuitJson={pcbNotePathCircuit as any} />
+)
+
+export default {
+  title: "PCB Note Path",
+  component: PcbNotePaths,
+}
