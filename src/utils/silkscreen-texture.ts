@@ -58,6 +58,9 @@ export function createSilkscreenTextureForLayer({
   const pcbSilkscreenCircles = su(circuitJson).pcb_silkscreen_circle.list()
   const pcbFabricationNoteRects =
     su(circuitJson).pcb_fabrication_note_rect.list()
+  const pcbNoteTexts = circuitJson.filter(
+    (e) => e.type === "pcb_note_text",
+  ) as any[]
 
   const textsOnLayer = pcbSilkscreenTexts.filter((t) => t.layer === layer)
   const pathsOnLayer = pcbSilkscreenPaths.filter((p) => p.layer === layer)
@@ -67,13 +70,16 @@ export function createSilkscreenTextureForLayer({
   const fabricationNoteRectsOnLayer = pcbFabricationNoteRects.filter(
     (r) => r.layer === layer,
   )
+  // Note texts don't have a layer, so render them on top layer only
+  const noteTextsOnLayer = layer === "top" ? pcbNoteTexts : []
   if (
     textsOnLayer.length === 0 &&
     pathsOnLayer.length === 0 &&
     linesOnLayer.length === 0 &&
     rectsOnLayer.length === 0 &&
     circlesOnLayer.length === 0 &&
-    fabricationNoteRectsOnLayer.length === 0
+    fabricationNoteRectsOnLayer.length === 0 &&
+    noteTextsOnLayer.length === 0
   ) {
     return null
   }
@@ -484,6 +490,100 @@ export function createSilkscreenTextureForLayer({
       ctx.stroke()
     })
   })
+
+  // Draw Note Text (only on top layer, no layer property)
+  noteTextsOnLayer.forEach((noteText: any) => {
+    if (!noteText.text) return
+
+    // Use note text color if specified, otherwise use silkscreen color
+    const textColor = noteText.color
+      ? parseFabricationNoteColor(noteText.color)
+      : silkscreenColor
+    ctx.strokeStyle = textColor
+    ctx.fillStyle = textColor
+
+    const fontSize = coerceDimensionToMm(noteText.font_size, 1.0)
+    const textStrokeWidth =
+      Math.min(Math.max(0.01, fontSize * 0.1), fontSize * 0.05) *
+      traceTextureResolution
+    ctx.lineWidth = textStrokeWidth
+    ctx.lineCap = "butt"
+    ctx.lineJoin = "miter"
+
+    const rawTextOutlines = vectorText({
+      height: fontSize * 0.45,
+      input: noteText.text,
+    })
+    const processedTextOutlines: Array<Array<[number, number]>> = []
+    rawTextOutlines.forEach((outline: any) => {
+      if (outline.length === 29) {
+        processedTextOutlines.push(
+          outline.slice(0, 15) as Array<[number, number]>,
+        )
+        processedTextOutlines.push(
+          outline.slice(14, 29) as Array<[number, number]>,
+        )
+      } else if (outline.length === 17) {
+        processedTextOutlines.push(
+          outline.slice(0, 10) as Array<[number, number]>,
+        )
+        processedTextOutlines.push(
+          outline.slice(9, 17) as Array<[number, number]>,
+        )
+      } else {
+        processedTextOutlines.push(outline as Array<[number, number]>)
+      }
+    })
+
+    const points = processedTextOutlines.flat()
+    if (points.length === 0) return
+
+    const textBounds = {
+      minX: Math.min(...points.map((p) => p[0])),
+      maxX: Math.max(...points.map((p) => p[0])),
+      minY: Math.min(...points.map((p) => p[1])),
+      maxY: Math.max(...points.map((p) => p[1])),
+    }
+    const textCenterX = (textBounds.minX + textBounds.maxX) / 2
+    const textCenterY = (textBounds.minY + textBounds.maxY) / 2
+
+    let xOff = -textCenterX
+    let yOff = -textCenterY
+
+    const alignment = noteText.anchor_alignment || "center"
+
+    // Horizontal alignment
+    if (alignment.includes("left")) {
+      xOff = -textBounds.minX
+    } else if (alignment.includes("right")) {
+      xOff = -textBounds.maxX
+    }
+
+    // Vertical alignment
+    if (alignment.includes("top")) {
+      yOff = -textBounds.maxY
+    } else if (alignment.includes("bottom")) {
+      yOff = -textBounds.minY
+    }
+
+    // Note texts don't have rotation or layer mirroring
+    const anchorX = parseDimensionToMm(noteText.anchor_position?.x) ?? 0
+    const anchorY = parseDimensionToMm(noteText.anchor_position?.y) ?? 0
+
+    processedTextOutlines.forEach((segment) => {
+      ctx.beginPath()
+      segment.forEach((p, index) => {
+        const pcbX = p[0] + xOff + anchorX
+        const pcbY = p[1] + yOff + anchorY
+        const canvasX = canvasXFromPcb(pcbX)
+        const canvasY = canvasYFromPcb(pcbY)
+        if (index === 0) ctx.moveTo(canvasX, canvasY)
+        else ctx.lineTo(canvasX, canvasY)
+      })
+      ctx.stroke()
+    })
+  })
+
   const texture = new THREE.CanvasTexture(canvas)
   texture.generateMipmaps = true
   texture.minFilter = THREE.LinearMipmapLinearFilter
