@@ -59,6 +59,7 @@ export function createSilkscreenTextureForLayer({
   const pcbFabricationNoteRects =
     su(circuitJson).pcb_fabrication_note_rect.list()
   const pcbNotePaths = su(circuitJson).pcb_note_path.list()
+  const pcbNoteLines = su(circuitJson).pcb_note_line.list()
 
   const textsOnLayer = pcbSilkscreenTexts.filter((t) => t.layer === layer)
   const pathsOnLayer = pcbSilkscreenPaths.filter((p) => p.layer === layer)
@@ -71,6 +72,9 @@ export function createSilkscreenTextureForLayer({
   const notePathsOnLayer = pcbNotePaths.filter(
     (p: any) => (p.layer ?? "top") === layer,
   )
+  const noteLinesOnLayer = pcbNoteLines.filter(
+    (l) => (l as any).layer === layer,
+  )
   if (
     textsOnLayer.length === 0 &&
     pathsOnLayer.length === 0 &&
@@ -78,7 +82,8 @@ export function createSilkscreenTextureForLayer({
     rectsOnLayer.length === 0 &&
     circlesOnLayer.length === 0 &&
     fabricationNoteRectsOnLayer.length === 0 &&
-    notePathsOnLayer.length === 0
+    notePathsOnLayer.length === 0 &&
+    noteLinesOnLayer.length === 0
   ) {
     return null
   }
@@ -121,6 +126,50 @@ export function createSilkscreenTextureForLayer({
     ctx.moveTo(canvasXFromPcb(startXmm), canvasYFromPcb(startYmm))
     ctx.lineTo(canvasXFromPcb(endXmm), canvasYFromPcb(endYmm))
     ctx.stroke()
+  })
+
+  // Draw PCB Note Lines
+  noteLinesOnLayer.forEach((lineEl: any) => {
+    const startXmm = parseDimensionToMm(lineEl.x1) ?? 0
+    const startYmm = parseDimensionToMm(lineEl.y1) ?? 0
+    const endXmm = parseDimensionToMm(lineEl.x2) ?? 0
+    const endYmm = parseDimensionToMm(lineEl.y2) ?? 0
+
+    if (startXmm === endXmm && startYmm === endYmm) return
+
+    ctx.save()
+
+    // Parse color for note lines (default to fabrication note color)
+    let strokeColor = silkscreenColor
+    if (lineEl.color) {
+      strokeColor = parseFabricationNoteColor(lineEl.color)
+    } else {
+      // Default note line color: light yellow/orange
+      strokeColor = "rgb(255, 243, 204)"
+    }
+    ctx.strokeStyle = strokeColor
+
+    ctx.beginPath()
+    ctx.lineWidth =
+      coerceDimensionToMm(lineEl.stroke_width, 0.1) * traceTextureResolution
+    ctx.lineCap = "round"
+
+    // Handle dashed lines
+    const isDashed = lineEl.is_dashed ?? false
+    if (isDashed) {
+      const dashLength = Math.max(ctx.lineWidth * 2, 1)
+      ctx.setLineDash([dashLength, dashLength])
+    }
+
+    ctx.moveTo(canvasXFromPcb(startXmm), canvasYFromPcb(startYmm))
+    ctx.lineTo(canvasXFromPcb(endXmm), canvasYFromPcb(endYmm))
+    ctx.stroke()
+
+    if (isDashed) {
+      ctx.setLineDash([])
+    }
+
+    ctx.restore()
   })
 
   // Draw Silkscreen Paths
