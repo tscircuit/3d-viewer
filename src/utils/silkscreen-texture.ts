@@ -58,6 +58,7 @@ export function createSilkscreenTextureForLayer({
   const pcbSilkscreenCircles = su(circuitJson).pcb_silkscreen_circle.list()
   const pcbFabricationNoteRects =
     su(circuitJson).pcb_fabrication_note_rect.list()
+  const pcbNotePaths = su(circuitJson).pcb_note_path.list()
 
   const textsOnLayer = pcbSilkscreenTexts.filter((t) => t.layer === layer)
   const pathsOnLayer = pcbSilkscreenPaths.filter((p) => p.layer === layer)
@@ -67,13 +68,17 @@ export function createSilkscreenTextureForLayer({
   const fabricationNoteRectsOnLayer = pcbFabricationNoteRects.filter(
     (r) => r.layer === layer,
   )
+  const notePathsOnLayer = pcbNotePaths.filter(
+    (p: any) => (p.layer ?? "top") === layer,
+  )
   if (
     textsOnLayer.length === 0 &&
     pathsOnLayer.length === 0 &&
     linesOnLayer.length === 0 &&
     rectsOnLayer.length === 0 &&
     circlesOnLayer.length === 0 &&
-    fabricationNoteRectsOnLayer.length === 0
+    fabricationNoteRectsOnLayer.length === 0 &&
+    notePathsOnLayer.length === 0
   ) {
     return null
   }
@@ -382,6 +387,36 @@ export function createSilkscreenTextureForLayer({
       }
     }
 
+    ctx.restore()
+  })
+
+  // Draw PCB Note Paths
+  notePathsOnLayer.forEach((path: any) => {
+    if (path.route.length < 2) return
+
+    // Parse color for note paths (default to light yellow/orange like fabrication notes)
+    let strokeColor = silkscreenColor
+    if (path.color) {
+      strokeColor = parseFabricationNoteColor(path.color)
+    } else {
+      // Default note path color: light yellow/orange
+      strokeColor = "rgb(255, 243, 204)"
+    }
+
+    ctx.save()
+    ctx.beginPath()
+    ctx.strokeStyle = strokeColor
+    ctx.lineWidth =
+      coerceDimensionToMm(path.stroke_width, 0.1) * traceTextureResolution
+    ctx.lineCap = "round"
+    ctx.lineJoin = "round"
+    path.route.forEach((point: any, index: number) => {
+      const canvasX = canvasXFromPcb(parseDimensionToMm(point.x) ?? 0)
+      const canvasY = canvasYFromPcb(parseDimensionToMm(point.y) ?? 0)
+      if (index === 0) ctx.moveTo(canvasX, canvasY)
+      else ctx.lineTo(canvasX, canvasY)
+    })
+    ctx.stroke()
     ctx.restore()
   })
 
