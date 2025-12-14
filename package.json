@@ -67,7 +67,7 @@
     "circuit-json": "0.0.325",
     "circuit-to-svg": "^0.0.179",
     "debug": "^4.4.0",
-    "jscad-electronics": "^0.0.91",
+    "jscad-electronics": "^0.0.109",
     "jscad-planner": "^0.0.13",
     "jsdom": "^26.0.0",
     "manifold-3d": "^3.2.1",
