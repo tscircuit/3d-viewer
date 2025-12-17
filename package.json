@@ -48,7 +48,7 @@
     "@storybook/blocks": "9.0.0-alpha.17",
     "@storybook/react-vite": "^9.1.5",
     "@tscircuit/circuit-json-util": "^0.0.72",
-    "@tscircuit/core": "^0.0.890",
+    "@tscircuit/core": "^0.0.931",
     "@tscircuit/props": "^0.0.422",
     "@tscircuit/checks": "^0.0.87",
     "@tscircuit/math-utils": "^0.0.29",
