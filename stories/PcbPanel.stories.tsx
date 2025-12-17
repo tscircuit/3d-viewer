@@ -597,6 +597,7 @@ export const PanelWithFourBoards = () => {
       height: 0,
       pcb_component_ids: [],
       source_group_id: "source_group_4",
+      anchor_alignment: "center",
     },
     {
       type: "pcb_panel",
