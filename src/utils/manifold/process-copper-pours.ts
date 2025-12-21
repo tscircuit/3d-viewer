@@ -159,7 +159,7 @@ export function processCopperPoursForManifold(
       ).translate([0, 0, zPos])
       manifoldInstancesForCleanup.push(pourOp)
     } else if (pour.shape === "brep") {
-      const brepShape = (pour as any).brep_shape
+      const brepShape = pour.brep_shape
       if (!brepShape || !brepShape.outer_ring) continue
 
       let outerRingPoints = ringToPoints(
@@ -207,10 +207,11 @@ export function processCopperPoursForManifold(
         manifoldInstancesForCleanup.push(clipped)
         pourOp = clipped
       }
-      const covered = (pour as any).covered_with_solder_mask !== false
+      const covered = pour.covered_with_solder_mask !== false
       const pourColorArr = covered
-        ? (tracesMaterialColors[boardMaterial] ??
-          defaultColors.fr4TracesWithoutMaskTan)
+        ? boardMaterial === "fr4"
+          ? defaultColors.fr4TracesWithMaskGreen
+          : defaultColors.fr1TracesWithMaskCopper
         : defaultColors.copper
       const pourColor = new THREE.Color(...pourColorArr)
       const threeGeom = manifoldMeshToThreeGeometry(pourOp.getMesh())

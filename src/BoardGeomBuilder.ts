@@ -448,8 +448,9 @@ export class BoardGeomBuilder {
       }
       const covered = (pour as any).covered_with_solder_mask !== false
       const pourMaterialColor = covered
-        ? (tracesMaterialColors[this.board.material] ??
-          colors.fr4TracesWithoutMaskTan)
+        ? this.board.material === "fr4"
+          ? colors.fr4TracesWithMaskGreen
+          : colors.fr1TracesWithMaskCopper
         : colors.copper
       const coloredPourGeom = colorize(pourMaterialColor, pourGeom)
       this.copperPourGeoms.push(coloredPourGeom)

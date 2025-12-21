@@ -255,7 +255,7 @@ const soldermaskWithCopperPour = [
     width: 12,
     height: 20,
     covered_with_solder_mask: true,
-  } as any,
+  },
   // Copper pour WITHOUT soldermask (exposed copper)
   {
     type: "pcb_copper_pour",
@@ -266,7 +266,7 @@ const soldermaskWithCopperPour = [
     width: 12,
     height: 20,
     covered_with_solder_mask: false,
-  } as any,
+  },
   // Some pads
   {
     type: "pcb_smtpad",
@@ -305,5 +305,5 @@ const soldermaskWithCopperPour = [
 ]
 
 export const SoldermaskWithCopperPour = () => (
-  <CadViewer circuitJson={soldermaskWithCopperPour as any} />
+  <CadViewer circuitJson={soldermaskWithCopperPour} />
 )
