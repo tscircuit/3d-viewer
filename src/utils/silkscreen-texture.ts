@@ -14,6 +14,7 @@ import {
   clampRectBorderRadius,
   extractRectBorderRadius,
 } from "./rect-border-radius"
+import { calculateOutlineBounds } from "./outline-bounds"
 
 // Helper function to parse color string to RGB string
 function parseFabricationNoteColor(colorString: string): string {
@@ -83,9 +84,14 @@ export function createSilkscreenTextureForLayer({
     return null
   }
 
+  const boardOutlineBounds = calculateOutlineBounds(boardData)
   const canvas = document.createElement("canvas")
-  const canvasWidth = Math.floor(boardData.width * traceTextureResolution)
-  const canvasHeight = Math.floor(boardData.height * traceTextureResolution)
+  const canvasWidth = Math.floor(
+    boardOutlineBounds.width * traceTextureResolution,
+  )
+  const canvasHeight = Math.floor(
+    boardOutlineBounds.height * traceTextureResolution,
+  )
   canvas.width = canvasWidth
   canvas.height = canvasHeight
   const ctx = canvas.getContext("2d")
@@ -99,11 +105,12 @@ export function createSilkscreenTextureForLayer({
   ctx.strokeStyle = silkscreenColor
   ctx.fillStyle = silkscreenColor
 
+  // Helper functions for coordinate conversion using outline bounds
+  // Helper functions for coordinate conversion using outline bounds
   const canvasXFromPcb = (pcbX: number) =>
-    (pcbX - boardData.center.x + boardData.width / 2) * traceTextureResolution
+    (pcbX - boardOutlineBounds.minX) * traceTextureResolution
   const canvasYFromPcb = (pcbY: number) =>
-    (-(pcbY - boardData.center.y) + boardData.height / 2) *
-    traceTextureResolution
+    (boardOutlineBounds.maxY - pcbY) * traceTextureResolution
 
   // Draw Silkscreen Lines
   linesOnLayer.forEach((lineEl: any) => {

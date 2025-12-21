@@ -2,6 +2,7 @@ import * as THREE from "three"
 import type { PcbBoard } from "circuit-json"
 import type { ManifoldTextures } from "../../hooks/useManifoldBoardBuilder"
 import { BOARD_SURFACE_OFFSET } from "../../geoms/constants"
+import { calculateOutlineBounds } from "../outline-bounds"
 
 export function createTextureMeshes(
   textures: ManifoldTextures | null,
@@ -20,7 +21,13 @@ export function createTextureMeshes(
     renderOrder = 0,
   ) => {
     if (!texture) return null
-    const planeGeom = new THREE.PlaneGeometry(boardData.width, boardData.height)
+
+    // Use board outline bounds for plane geometry to match texture dimensions
+    const boardOutlineBounds = calculateOutlineBounds(boardData)
+    const planeGeom = new THREE.PlaneGeometry(
+      boardOutlineBounds.width,
+      boardOutlineBounds.height,
+    )
     const material = new THREE.MeshBasicMaterial({
       map: texture,
       transparent: true,
@@ -31,7 +38,11 @@ export function createTextureMeshes(
       polygonOffsetUnits: usePolygonOffset ? -4 : 0,
     })
     const mesh = new THREE.Mesh(planeGeom, material)
-    mesh.position.set(boardData.center.x, boardData.center.y, yOffset)
+    mesh.position.set(
+      boardOutlineBounds.centerX,
+      boardOutlineBounds.centerY,
+      yOffset,
+    )
     if (isBottomLayer) {
       mesh.rotation.set(Math.PI, 0, 0) // Flip for bottom layer
     }

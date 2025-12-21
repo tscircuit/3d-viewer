@@ -15,6 +15,7 @@ import {
   TRACE_TEXTURE_RESOLUTION,
   BOARD_SURFACE_OFFSET,
 } from "../geoms/constants"
+import { calculateOutlineBounds } from "../utils/outline-bounds"
 
 interface JscadBoardTexturesProps {
   circuitJson: AnyCircuitElement[]
@@ -161,9 +162,12 @@ export function JscadBoardTextures({
       depthWrite = false,
     ) => {
       if (!texture) return null
+
+      // Use board outline bounds for plane geometry to match texture dimensions
+      const boardOutlineBounds = calculateOutlineBounds(boardData)
       const planeGeom = new THREE.PlaneGeometry(
-        boardData.width!,
-        boardData.height!,
+        boardOutlineBounds.width,
+        boardOutlineBounds.height,
       )
       const material = new THREE.MeshBasicMaterial({
         map: texture,
@@ -175,7 +179,11 @@ export function JscadBoardTextures({
         polygonOffsetUnits: usePolygonOffset ? -1 : 0,
       })
       const mesh = new THREE.Mesh(planeGeom, material)
-      mesh.position.set(boardData.center.x, boardData.center.y, zOffset)
+      mesh.position.set(
+        boardOutlineBounds.centerX,
+        boardOutlineBounds.centerY,
+        zOffset,
+      )
       if (isBottomLayer) {
         mesh.rotation.set(Math.PI, 0, 0)
       }
