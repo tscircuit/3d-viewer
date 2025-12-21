@@ -491,35 +491,6 @@ export function createSoldermaskTextureForLayer({
     }
   })
 
-  // Get copper pours that are not covered with soldermask
-  const pcbCopperPours = su(circuitJson).pcb_copper_pour.list()
-  pcbCopperPours.forEach((pour) => {
-    if (pour.layer !== layer) return
-    // Only cut out if explicitly NOT covered with solder mask
-    if ((pour as any).covered_with_solder_mask !== false) return
-
-    if (pour.shape === "rect") {
-      const centerX = canvasXFromPcb(pour.center.x)
-      const centerY = canvasYFromPcb(pour.center.y)
-      const width = pour.width * traceTextureResolution
-      const height = pour.height * traceTextureResolution
-      ctx.fillRect(centerX - width / 2, centerY - height / 2, width, height)
-    } else if (pour.shape === "polygon" && pour.points) {
-      ctx.beginPath()
-      pour.points.forEach((point, index) => {
-        const px = canvasXFromPcb(point.x)
-        const py = canvasYFromPcb(point.y)
-        if (index === 0) {
-          ctx.moveTo(px, py)
-        } else {
-          ctx.lineTo(px, py)
-        }
-      })
-      ctx.closePath()
-      ctx.fill()
-    }
-  })
-
   // Get all PCB cutouts and cut them out from soldermask (cutouts go through both layers)
   const pcbCutouts = su(circuitJson).pcb_cutout.list()
   pcbCutouts.forEach((cutout: any) => {

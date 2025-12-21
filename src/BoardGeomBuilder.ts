@@ -8,7 +8,6 @@ import type {
   PcbTrace,
   PcbVia,
   PcbCutout,
-  PcbCopperPour,
   PcbPanel,
 } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
@@ -112,14 +111,12 @@ export class BoardGeomBuilder {
   private traces: PcbTrace[]
   private pcb_vias: PcbVia[]
   private pcb_cutouts: PcbCutout[]
-  private pcb_copper_pours: PcbCopperPour[]
 
   private boardGeom: Geom3 | null = null
   private platedHoleGeoms: Geom3[] = []
   private padGeoms: Geom3[] = []
   private traceGeoms: Geom3[] = []
-  private viaGeoms: Geom3[] = [] // Combined with platedHoleGeoms
-  private copperPourGeoms: Geom3[] = []
+  private viaGeoms: Geom3[] = []
   private boardClipGeom: Geom3 | null = null
 
   private state: BuilderState = "initializing"
@@ -194,9 +191,6 @@ export class BoardGeomBuilder {
     this.traces = su(circuitJson).pcb_trace.list()
     this.pcb_vias = su(circuitJson).pcb_via.list()
     this.pcb_cutouts = su(circuitJson).pcb_cutout.list()
-    this.pcb_copper_pours = circuitJson.filter(
-      (e) => e.type === "pcb_copper_pour",
-    ) as any
 
     this.ctx = { pcbThickness: this.board.thickness ?? 1.2 }
 
@@ -310,12 +304,7 @@ export class BoardGeomBuilder {
           break
 
         case "processing_copper_pours":
-          if (this.currentIndex < this.pcb_copper_pours.length) {
-            this.processCopperPour(this.pcb_copper_pours[this.currentIndex]!)
-            this.currentIndex++
-          } else {
-            this.goToNextState()
-          }
+          this.goToNextState()
           break
 
         case "finalizing":
@@ -395,65 +384,6 @@ export class BoardGeomBuilder {
 
     if (cutoutGeom) {
       this.boardGeom = subtract(this.boardGeom, cutoutGeom)
-    }
-  }
-
-  private processCopperPour(pour: PcbCopperPour) {
-    const layerSign = pour.layer === "bottom" ? -1 : 1
-    const zPos =
-      (layerSign * this.ctx.pcbThickness) / 2 +
-      layerSign * BOARD_SURFACE_OFFSET.copper
-
-    let pourGeom: Geom3 | null = null
-
-    if (pour.shape === "rect") {
-      let baseGeom = cuboid({
-        center: [0, 0, 0], // Create at origin for rotation
-        size: [pour.width, pour.height, M],
-      })
-
-      if ("rotation" in pour && pour.rotation) {
-        const rotationRadians = (pour.rotation * Math.PI) / 180
-        baseGeom = rotateZ(rotationRadians, baseGeom)
-      }
-
-      pourGeom = translate([pour.center.x, pour.center.y, zPos], baseGeom)
-    } else if (pour.shape === "brep") {
-      const brepShape = pour.brep_shape
-      if (brepShape?.outer_ring) {
-        const pourGeom2 = createGeom2FromBRep(brepShape)
-        pourGeom = extrudeLinear({ height: M }, pourGeom2)
-        pourGeom = translate([0, 0, zPos], pourGeom)
-      }
-    } else if (pour.shape === "polygon") {
-      let pointsVec2: Vec2[] = pour.points.map((p) => [p.x, p.y])
-      if (pointsVec2.length < 3) {
-        console.warn(
-          `PCB Copper Pour [${pour.pcb_copper_pour_id}] polygon has fewer than 3 points, skipping.`,
-        )
-        return
-      }
-      if (arePointsClockwise(pointsVec2)) {
-        pointsVec2 = pointsVec2.reverse()
-      }
-      const polygon2d = jscadPolygon({ points: pointsVec2 })
-      pourGeom = extrudeLinear({ height: M }, polygon2d)
-      pourGeom = translate([0, 0, zPos], pourGeom)
-    }
-
-    if (pourGeom) {
-      // TODO subtract vias/holes etc.
-      if (this.boardClipGeom) {
-        pourGeom = intersect(this.boardClipGeom, pourGeom)
-      }
-      const covered = (pour as any).covered_with_solder_mask !== false
-      const pourMaterialColor = covered
-        ? this.board.material === "fr4"
-          ? colors.fr4TracesWithMaskGreen
-          : colors.fr1TracesWithMaskCopper
-        : colors.copper
-      const coloredPourGeom = colorize(pourMaterialColor, pourGeom)
-      this.copperPourGeoms.push(coloredPourGeom)
     }
   }
 
@@ -976,7 +906,6 @@ export class BoardGeomBuilder {
       ...this.padGeoms,
       ...this.traceGeoms,
       ...this.viaGeoms,
-      ...this.copperPourGeoms,
     ]
 
     if (this.onCompleteCallback) {

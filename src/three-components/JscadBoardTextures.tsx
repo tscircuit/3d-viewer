@@ -9,6 +9,7 @@ import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
 import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
+import { createCopperPourTextureForLayer } from "../utils/copper-pour-texture"
 import {
   colors as defaultColors,
   soldermaskColors,
@@ -131,6 +132,26 @@ export function JscadBoardTextures({
         circuitJson,
         boardData,
         copperColor: `rgb(${Math.round(defaultColors.copper[0] * 255)}, ${Math.round(defaultColors.copper[1] * 255)}, ${Math.round(defaultColors.copper[2] * 255)})`,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      }),
+      topCopperPour: createCopperPourTextureForLayer({
+        layer: "top",
+        circuitJson,
+        boardData,
+        copperPourColors: {
+          masked: defaultColors.fr4TracesWithMaskGreen, // Green for covered with soldermask
+          exposed: defaultColors.copper, // Bright copper for exposed
+        },
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      }),
+      bottomCopperPour: createCopperPourTextureForLayer({
+        layer: "bottom",
+        circuitJson,
+        boardData,
+        copperPourColors: {
+          masked: defaultColors.fr4TracesWithMaskGreen, // Green for covered with soldermask
+          exposed: defaultColors.copper, // Bright copper for exposed
+        },
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       }),
       topPanelOutlines: createPanelOutlineTextureForLayer({
@@ -309,6 +330,34 @@ export function JscadBoardTextures({
       }
     }
 
+    // Top copper pour
+    if (visibility.topCopper) {
+      const topCopperPourMesh = createTexturePlane(
+        textures.topCopperPour,
+        pcbThickness / 2 + BOARD_SURFACE_OFFSET.traces,
+        false,
+        "jscad-top-copper-pour",
+      )
+      if (topCopperPourMesh) {
+        meshes.push(topCopperPourMesh)
+        rootObject.add(topCopperPourMesh)
+      }
+    }
+
+    // Bottom copper pour
+    if (visibility.bottomCopper) {
+      const bottomCopperPourMesh = createTexturePlane(
+        textures.bottomCopperPour,
+        -pcbThickness / 2 - BOARD_SURFACE_OFFSET.traces,
+        true,
+        "jscad-bottom-copper-pour",
+      )
+      if (bottomCopperPourMesh) {
+        meshes.push(bottomCopperPourMesh)
+        rootObject.add(bottomCopperPourMesh)
+      }
+    }
+
     // Panel outlines
     if (visibility.boardBody) {
       const topPanelOutlinesMesh = createTexturePlane(
@@ -339,7 +388,7 @@ export function JscadBoardTextures({
     }
 
     return () => {
-      meshes.forEach((mesh) => {
+      for (const mesh of meshes) {
         if (mesh.parent === rootObject) {
           rootObject.remove(mesh)
         }
@@ -347,7 +396,7 @@ export function JscadBoardTextures({
         if (mesh.material instanceof THREE.Material) {
           mesh.material.dispose()
         }
-      })
+      }
     }
   }, [rootObject, boardData, textures, pcbThickness, visibility])
 

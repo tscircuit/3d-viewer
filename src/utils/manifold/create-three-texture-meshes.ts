@@ -157,6 +157,26 @@ export function createTextureMeshes(
   )
   if (bottomCopperTextMesh) meshes.push(bottomCopperTextMesh)
 
+  const topCopperPourMesh = createTexturePlane(
+    textures.topCopperPour,
+    pcbThickness / 2 + BOARD_SURFACE_OFFSET.traces,
+    false,
+    "copper-pour",
+    false,
+    2, // Render after soldermask
+  )
+  if (topCopperPourMesh) meshes.push(topCopperPourMesh)
+
+  const bottomCopperPourMesh = createTexturePlane(
+    textures.bottomCopperPour,
+    -pcbThickness / 2 - BOARD_SURFACE_OFFSET.traces,
+    true,
+    "copper-pour",
+    false,
+    2, // Render after soldermask
+  )
+  if (bottomCopperPourMesh) meshes.push(bottomCopperPourMesh)
+
   const topPanelOutlinesMesh = createTexturePlane(
     textures.topPanelOutlines,
     pcbThickness / 2 + 0.004, // Above silkscreen

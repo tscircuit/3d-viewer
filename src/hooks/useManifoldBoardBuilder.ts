@@ -16,17 +16,12 @@ import { su } from "@tscircuit/circuit-json-util"
 import * as THREE from "three"
 import {
   boardMaterialColors,
-  DEFAULT_SMT_PAD_THICKNESS,
   colors as defaultColors,
-  MANIFOLD_Z_OFFSET,
-  SMOOTH_CIRCLE_SEGMENTS,
   TRACE_TEXTURE_RESOLUTION,
-  tracesMaterialColors,
   soldermaskColors,
 } from "../geoms/constants"
 import type { ManifoldToplevel } from "manifold-3d"
 import { createManifoldBoard } from "../utils/manifold/create-manifold-board"
-import { processCopperPoursForManifold } from "../utils/manifold/process-copper-pours"
 import { processCutoutsForManifold } from "../utils/manifold/process-cutouts"
 import { processNonPlatedHolesForManifold } from "../utils/manifold/process-non-plated-holes"
 import { processPlatedHolesForManifold } from "../utils/manifold/process-plated-holes"
@@ -38,6 +33,7 @@ import { createSoldermaskTextureForLayer } from "../utils/soldermask-texture"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
 import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
+import { createCopperPourTextureForLayer } from "../utils/copper-pour-texture"
 
 export interface ManifoldGeoms {
   board?: {
@@ -61,11 +57,6 @@ export interface ManifoldGeoms {
     geometry: THREE.BufferGeometry
     color: THREE.Color
   }>
-  copperPours?: Array<{
-    key: string
-    geometry: THREE.BufferGeometry
-    color: THREE.Color
-  }>
 }
 
 export interface ManifoldTextures {
@@ -81,6 +72,8 @@ export interface ManifoldTextures {
   bottomCopperText?: THREE.CanvasTexture | null
   topPanelOutlines?: THREE.CanvasTexture | null
   bottomPanelOutlines?: THREE.CanvasTexture | null
+  topCopperPour?: THREE.CanvasTexture | null
+  bottomCopperPour?: THREE.CanvasTexture | null
 }
 
 interface UseManifoldBoardBuilderResult {
@@ -370,19 +363,6 @@ export const useManifoldBoardBuilder = (
       )
       currentGeoms.smtPads = smtPadGeoms
 
-      // Process copper pours
-      const { copperPourGeoms } = processCopperPoursForManifold(
-        Manifold,
-        CrossSection,
-        circuitJson,
-        currentPcbThickness,
-        manifoldInstancesForCleanup.current,
-        boardData.material,
-        holeUnion,
-        boardClipVolume,
-      )
-      currentGeoms.copperPours = copperPourGeoms
-
       setGeoms(currentGeoms)
 
       // --- Process Traces (as Textures) ---
@@ -473,6 +453,26 @@ export const useManifoldBoardBuilder = (
         circuitJson,
         boardData,
         copperColor,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      })
+
+      // --- Process Copper Pour (as Textures) ---
+      const copperPourColors = {
+        masked: defaultColors.fr4TracesWithMaskGreen, // Green for covered with soldermask
+        exposed: defaultColors.copper, // Bright copper for exposed
+      }
+      currentTextures.topCopperPour = createCopperPourTextureForLayer({
+        layer: "top",
+        circuitJson,
+        boardData,
+        copperPourColors,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      })
+      currentTextures.bottomCopperPour = createCopperPourTextureForLayer({
+        layer: "bottom",
+        circuitJson,
+        boardData,
+        copperPourColors,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
 
