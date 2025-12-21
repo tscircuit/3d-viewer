@@ -6,10 +6,9 @@ import { useThree } from "../react-three/ThreeContext"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import { createSoldermaskTextureForLayer } from "../utils/soldermask-texture"
 import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
-import { createTraceTextureForLayer } from "../utils/trace-texture"
+import { createCopperTextureForLayer } from "../utils/copper-texture"
 import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
-import { createCopperPourTextureForLayer } from "../utils/copper-pour-texture"
 import {
   colors as defaultColors,
   soldermaskColors,
@@ -77,6 +76,12 @@ export function JscadBoardTextures({
     const traceColorWithMaskArr = defaultColors.fr4TracesWithMaskGreen
     const traceColorWithMask = `rgb(${Math.round(traceColorWithMaskArr[0] * 255)}, ${Math.round(traceColorWithMaskArr[1] * 255)}, ${Math.round(traceColorWithMaskArr[2] * 255)})`
 
+    // Copper pour colors
+    const copperPourColors = {
+      masked: defaultColors.fr4TracesWithMaskGreen, // Green for covered with soldermask
+      exposed: defaultColors.copper, // Bright copper for exposed
+    }
+
     return {
       topSoldermask: createSoldermaskTextureForLayer({
         layer: "top",
@@ -106,18 +111,20 @@ export function JscadBoardTextures({
         silkscreenColor,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       }),
-      topTraceWithMask: createTraceTextureForLayer({
+      topCopper: createCopperTextureForLayer({
         layer: "top",
         circuitJson,
         boardData,
         traceColor: traceColorWithMask,
+        copperPourColors,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       }),
-      bottomTraceWithMask: createTraceTextureForLayer({
+      bottomCopper: createCopperTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
         traceColor: traceColorWithMask,
+        copperPourColors,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       }),
       topCopperText: createCopperTextTextureForLayer({
@@ -134,26 +141,7 @@ export function JscadBoardTextures({
         copperColor: `rgb(${Math.round(defaultColors.copper[0] * 255)}, ${Math.round(defaultColors.copper[1] * 255)}, ${Math.round(defaultColors.copper[2] * 255)})`,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       }),
-      topCopperPour: createCopperPourTextureForLayer({
-        layer: "top",
-        circuitJson,
-        boardData,
-        copperPourColors: {
-          masked: defaultColors.fr4TracesWithMaskGreen, // Green for covered with soldermask
-          exposed: defaultColors.copper, // Bright copper for exposed
-        },
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
-      }),
-      bottomCopperPour: createCopperPourTextureForLayer({
-        layer: "bottom",
-        circuitJson,
-        boardData,
-        copperPourColors: {
-          masked: defaultColors.fr4TracesWithMaskGreen, // Green for covered with soldermask
-          exposed: defaultColors.copper, // Bright copper for exposed
-        },
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
-      }),
+
       topPanelOutlines: createPanelOutlineTextureForLayer({
         layer: "top",
         circuitJson,
@@ -245,32 +233,32 @@ export function JscadBoardTextures({
       }
     }
 
-    // Top trace with mask (visible traces through soldermask)
+    // Top copper with mask (visible traces through soldermask)
     // Place traces just above the 3D copper traces but still below pads.
     if (visibility.topCopper && visibility.topMask) {
-      const topTraceWithMaskMesh = createTexturePlane(
-        textures.topTraceWithMask,
+      const topCopperMesh = createTexturePlane(
+        textures.topCopper,
         pcbThickness / 2 + BOARD_SURFACE_OFFSET.traces + 0.004,
         false,
-        "jscad-top-trace-with-mask",
+        "jscad-top-copper",
       )
-      if (topTraceWithMaskMesh) {
-        meshes.push(topTraceWithMaskMesh)
-        rootObject.add(topTraceWithMaskMesh)
+      if (topCopperMesh) {
+        meshes.push(topCopperMesh)
+        rootObject.add(topCopperMesh)
       }
     }
 
-    // Bottom trace with mask - mirror ordering: board < copper traces < mask < pads
+    // Bottom copper with mask - mirror ordering: board < copper traces < mask < pads
     if (visibility.bottomCopper && visibility.bottomMask) {
-      const bottomTraceWithMaskMesh = createTexturePlane(
-        textures.bottomTraceWithMask,
+      const bottomCopperMesh = createTexturePlane(
+        textures.bottomCopper,
         -pcbThickness / 2 - BOARD_SURFACE_OFFSET.traces - 0.005,
         true,
-        "jscad-bottom-trace-with-mask",
+        "jscad-bottom-copper",
       )
-      if (bottomTraceWithMaskMesh) {
-        meshes.push(bottomTraceWithMaskMesh)
-        rootObject.add(bottomTraceWithMaskMesh)
+      if (bottomCopperMesh) {
+        meshes.push(bottomCopperMesh)
+        rootObject.add(bottomCopperMesh)
       }
     }
 
@@ -327,34 +315,6 @@ export function JscadBoardTextures({
       if (bottomCopperTextMesh) {
         meshes.push(bottomCopperTextMesh)
         rootObject.add(bottomCopperTextMesh)
-      }
-    }
-
-    // Top copper pour
-    if (visibility.topCopper) {
-      const topCopperPourMesh = createTexturePlane(
-        textures.topCopperPour,
-        pcbThickness / 2 + BOARD_SURFACE_OFFSET.traces,
-        false,
-        "jscad-top-copper-pour",
-      )
-      if (topCopperPourMesh) {
-        meshes.push(topCopperPourMesh)
-        rootObject.add(topCopperPourMesh)
-      }
-    }
-
-    // Bottom copper pour
-    if (visibility.bottomCopper) {
-      const bottomCopperPourMesh = createTexturePlane(
-        textures.bottomCopperPour,
-        -pcbThickness / 2 - BOARD_SURFACE_OFFSET.traces,
-        true,
-        "jscad-bottom-copper-pour",
-      )
-      if (bottomCopperPourMesh) {
-        meshes.push(bottomCopperPourMesh)
-        rootObject.add(bottomCopperPourMesh)
       }
     }
 

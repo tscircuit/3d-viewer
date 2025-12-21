@@ -30,10 +30,9 @@ import { processViasForManifold } from "../utils/manifold/process-vias"
 import { manifoldMeshToThreeGeometry } from "../utils/manifold-mesh-to-three-geometry"
 import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
 import { createSoldermaskTextureForLayer } from "../utils/soldermask-texture"
-import { createTraceTextureForLayer } from "../utils/trace-texture"
+import { createCopperTextureForLayer } from "../utils/copper-texture"
 import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
-import { createCopperPourTextureForLayer } from "../utils/copper-pour-texture"
 
 export interface ManifoldGeoms {
   board?: {
@@ -60,8 +59,8 @@ export interface ManifoldGeoms {
 }
 
 export interface ManifoldTextures {
-  topTrace?: THREE.CanvasTexture | null
-  bottomTrace?: THREE.CanvasTexture | null
+  topCopper?: THREE.CanvasTexture | null
+  bottomCopper?: THREE.CanvasTexture | null
   topTraceWithMask?: THREE.CanvasTexture | null
   bottomTraceWithMask?: THREE.CanvasTexture | null
   topSilkscreen?: THREE.CanvasTexture | null
@@ -72,8 +71,6 @@ export interface ManifoldTextures {
   bottomCopperText?: THREE.CanvasTexture | null
   topPanelOutlines?: THREE.CanvasTexture | null
   bottomPanelOutlines?: THREE.CanvasTexture | null
-  topCopperPour?: THREE.CanvasTexture | null
-  bottomCopperPour?: THREE.CanvasTexture | null
 }
 
 interface UseManifoldBoardBuilderResult {
@@ -369,36 +366,44 @@ export const useManifoldBoardBuilder = (
       // Create trace textures for when soldermask is OFF (tan/brown copper color)
       const traceColorWithoutMaskArr = defaultColors.fr4TracesWithoutMaskTan
       const traceColorWithoutMask = `rgb(${Math.round(traceColorWithoutMaskArr[0] * 255)}, ${Math.round(traceColorWithoutMaskArr[1] * 255)}, ${Math.round(traceColorWithoutMaskArr[2] * 255)})`
-      currentTextures.topTrace = createTraceTextureForLayer({
+      const copperPourColors = {
+        masked: defaultColors.fr4TracesWithMaskGreen, // Green for covered with soldermask
+        exposed: defaultColors.copper, // Bright copper for exposed
+      }
+      currentTextures.topCopper = createCopperTextureForLayer({
         layer: "top",
         circuitJson,
         boardData,
         traceColor: traceColorWithoutMask,
+        copperPourColors,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
-      currentTextures.bottomTrace = createTraceTextureForLayer({
+      currentTextures.bottomCopper = createCopperTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
         traceColor: traceColorWithoutMask,
+        copperPourColors,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
 
       // Create trace textures for when soldermask is ON (light green)
       const traceColorWithMaskArr = defaultColors.fr4TracesWithMaskGreen
       const traceColorWithMask = `rgb(${Math.round(traceColorWithMaskArr[0] * 255)}, ${Math.round(traceColorWithMaskArr[1] * 255)}, ${Math.round(traceColorWithMaskArr[2] * 255)})`
-      currentTextures.topTraceWithMask = createTraceTextureForLayer({
+      currentTextures.topTraceWithMask = createCopperTextureForLayer({
         layer: "top",
         circuitJson,
         boardData,
         traceColor: traceColorWithMask,
+        copperPourColors,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
-      currentTextures.bottomTraceWithMask = createTraceTextureForLayer({
+      currentTextures.bottomTraceWithMask = createCopperTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
         traceColor: traceColorWithMask,
+        copperPourColors,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
 
@@ -453,26 +458,6 @@ export const useManifoldBoardBuilder = (
         circuitJson,
         boardData,
         copperColor,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
-      })
-
-      // --- Process Copper Pour (as Textures) ---
-      const copperPourColors = {
-        masked: defaultColors.fr4TracesWithMaskGreen, // Green for covered with soldermask
-        exposed: defaultColors.copper, // Bright copper for exposed
-      }
-      currentTextures.topCopperPour = createCopperPourTextureForLayer({
-        layer: "top",
-        circuitJson,
-        boardData,
-        copperPourColors,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
-      })
-      currentTextures.bottomCopperPour = createCopperPourTextureForLayer({
-        layer: "bottom",
-        circuitJson,
-        boardData,
-        copperPourColors,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
 

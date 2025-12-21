@@ -51,26 +51,26 @@ export function createTextureMeshes(
     return mesh
   }
 
-  const topTraceMesh = createTexturePlane(
-    textures.topTrace,
+  const topCopperMesh = createTexturePlane(
+    textures.topCopper,
     pcbThickness / 2 + BOARD_SURFACE_OFFSET.traces, // Use consistent copper offset
     false,
-    "trace",
+    "copper",
     false,
     2, // Render after soldermask
   )
-  if (topTraceMesh) meshes.push(topTraceMesh)
+  if (topCopperMesh) meshes.push(topCopperMesh)
 
-  // Trace with mask (light green) - same position, will be toggled based on soldermask visibility
-  const topTraceWithMaskMesh = createTexturePlane(
+  // Copper with mask (light green) - same position, will be toggled based on soldermask visibility
+  const topCopperWithMaskMesh = createTexturePlane(
     textures.topTraceWithMask,
     pcbThickness / 2 + BOARD_SURFACE_OFFSET.traces,
     false,
-    "trace-with-mask",
+    "copper-with-mask",
     false,
     2, // Render after soldermask
   )
-  if (topTraceWithMaskMesh) meshes.push(topTraceWithMaskMesh)
+  if (topCopperWithMaskMesh) meshes.push(topCopperWithMaskMesh)
 
   const topSilkscreenMesh = createTexturePlane(
     textures.topSilkscreen,
@@ -82,26 +82,26 @@ export function createTextureMeshes(
   )
   if (topSilkscreenMesh) meshes.push(topSilkscreenMesh)
 
-  const bottomTraceMesh = createTexturePlane(
-    textures.bottomTrace,
+  const bottomCopperMesh = createTexturePlane(
+    textures.bottomCopper,
     -pcbThickness / 2 - BOARD_SURFACE_OFFSET.traces, // Use consistent copper offset
     true,
-    "trace",
+    "copper",
     false,
     2, // Render after soldermask
   )
-  if (bottomTraceMesh) meshes.push(bottomTraceMesh)
+  if (bottomCopperMesh) meshes.push(bottomCopperMesh)
 
-  // Bottom trace with mask (light green)
-  const bottomTraceWithMaskMesh = createTexturePlane(
+  // Bottom copper with mask (light green)
+  const bottomCopperWithMaskMesh = createTexturePlane(
     textures.bottomTraceWithMask,
     -pcbThickness / 2 - BOARD_SURFACE_OFFSET.traces,
     true,
-    "trace-with-mask",
+    "copper-with-mask",
     false,
     2, // Render after soldermask
   )
-  if (bottomTraceWithMaskMesh) meshes.push(bottomTraceWithMaskMesh)
+  if (bottomCopperWithMaskMesh) meshes.push(bottomCopperWithMaskMesh)
 
   const bottomSilkscreenMesh = createTexturePlane(
     textures.bottomSilkscreen,
@@ -156,26 +156,6 @@ export function createTextureMeshes(
     2, // Render after soldermask
   )
   if (bottomCopperTextMesh) meshes.push(bottomCopperTextMesh)
-
-  const topCopperPourMesh = createTexturePlane(
-    textures.topCopperPour,
-    pcbThickness / 2 + BOARD_SURFACE_OFFSET.traces,
-    false,
-    "copper-pour",
-    false,
-    2, // Render after soldermask
-  )
-  if (topCopperPourMesh) meshes.push(topCopperPourMesh)
-
-  const bottomCopperPourMesh = createTexturePlane(
-    textures.bottomCopperPour,
-    -pcbThickness / 2 - BOARD_SURFACE_OFFSET.traces,
-    true,
-    "copper-pour",
-    false,
-    2, // Render after soldermask
-  )
-  if (bottomCopperPourMesh) meshes.push(bottomCopperPourMesh)
 
   const topPanelOutlinesMesh = createTexturePlane(
     textures.topPanelOutlines,
