@@ -6,6 +6,7 @@ import {
   extractRectBorderRadius,
   clampRectBorderRadius,
 } from "./rect-border-radius"
+import { calculateOutlineBounds } from "./outline-bounds"
 
 export function createSoldermaskTextureForLayer({
   layer,
@@ -20,9 +21,10 @@ export function createSoldermaskTextureForLayer({
   soldermaskColor: string
   traceTextureResolution: number
 }): THREE.CanvasTexture | null {
+  const outlineBounds = calculateOutlineBounds(boardData)
   const canvas = document.createElement("canvas")
-  const canvasWidth = Math.floor(boardData.width! * traceTextureResolution)
-  const canvasHeight = Math.floor(boardData.height! * traceTextureResolution)
+  const canvasWidth = Math.floor(outlineBounds.width * traceTextureResolution)
+  const canvasHeight = Math.floor(outlineBounds.height * traceTextureResolution)
   canvas.width = canvasWidth
   canvas.height = canvasHeight
   const ctx = canvas.getContext("2d")
@@ -33,12 +35,11 @@ export function createSoldermaskTextureForLayer({
     ctx.scale(1, -1)
   }
 
-  // Helper functions for coordinate conversion
+  // Helper functions for coordinate conversion using outline bounds
   const canvasXFromPcb = (pcbX: number) =>
-    (pcbX - boardData.center.x + boardData.width! / 2) * traceTextureResolution
+    (pcbX - outlineBounds.minX) * traceTextureResolution
   const canvasYFromPcb = (pcbY: number) =>
-    (-(pcbY - boardData.center.y) + boardData.height! / 2) *
-    traceTextureResolution
+    (outlineBounds.maxY - pcbY) * traceTextureResolution
 
   // Fill soldermask - either within board outline or full rectangle
   ctx.fillStyle = soldermaskColor
