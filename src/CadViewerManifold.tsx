@@ -14,7 +14,7 @@ import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
-import { createTextureMeshes } from "./utils/manifold/create-three-texture-meshes"
+import { createTextureMeshes } from "./manifold/create-three-texture-meshes"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
 
 declare global {

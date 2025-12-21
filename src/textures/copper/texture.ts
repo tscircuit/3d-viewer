@@ -1,4 +1,4 @@
-// Utility for creating copper textures for PCB layers (traces + pours)
+// Copper texture generation (moved out of `utils` for clearer organization)
 import * as THREE from "three"
 import type {
   AnyCircuitElement,
@@ -9,7 +9,7 @@ import type {
   PcbCopperPour,
 } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
-import { calculateOutlineBounds } from "./outline-bounds"
+import { calculateOutlineBounds } from "../../utils/outline-bounds"
 
 export function isWireRoutePoint(
   point: any,
@@ -137,7 +137,7 @@ export function createCopperTextureForLayer({
         }
       } else if (pour.shape === "polygon" && pour.points) {
         ctx.beginPath()
-        pour.points.forEach((point, index) => {
+        pour.points.forEach((point: any, index: number) => {
           const px =
             (point.x - boardOutlineBounds.minX) * traceTextureResolution
           const py =
