@@ -1,26 +1,9 @@
-// Copper texture generation (moved out of `utils` for clearer organization)
+// Copper texture generation using circuit-to-canvas library
 import * as THREE from "three"
-import type {
-  AnyCircuitElement,
-  PcbTrace,
-  PcbBoard,
-  PcbVia,
-  PcbPlatedHole,
-  PcbCopperPour,
-} from "circuit-json"
+import type { AnyCircuitElement, PcbBoard } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
+import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import { calculateOutlineBounds } from "../../utils/outline-bounds"
-
-export function isWireRoutePoint(
-  point: any,
-): point is { x: number; y: number; width: number; layer: string } {
-  return (
-    point &&
-    point.route_type === "wire" &&
-    typeof point.layer === "string" &&
-    typeof point.width === "number"
-  )
-}
 
 export function createCopperTextureForLayer({
   layer,
@@ -41,20 +24,21 @@ export function createCopperTextureForLayer({
   traceTextureResolution: number
 }): THREE.CanvasTexture | null {
   const pcbTraces = su(circuitJson).pcb_trace.list()
-  const allPcbVias = su(circuitJson).pcb_via.list() as PcbVia[]
-  const allPcbPlatedHoles = su(
-    circuitJson,
-  ).pcb_plated_hole.list() as PcbPlatedHole[]
-  const pcbCopperPours = su(
-    circuitJson,
-  ).pcb_copper_pour.list() as PcbCopperPour[]
+  const allPcbVias = su(circuitJson).pcb_via.list()
+  const allPcbPlatedHoles = su(circuitJson).pcb_plated_hole.list()
+  const pcbCopperPours = su(circuitJson).pcb_copper_pour.list()
 
   const tracesOnLayer = pcbTraces.filter((t) =>
-    t.route.some((p) => isWireRoutePoint(p) && p.layer === layer),
+    t.route.some((p) => p.route_type === "wire" && (p as any).layer === layer),
   )
   const poursOnLayer = pcbCopperPours.filter((p) => p.layer === layer)
 
-  if (tracesOnLayer.length === 0 && poursOnLayer.length === 0) return null
+  if (tracesOnLayer.length === 0 && poursOnLayer.length === 0) {
+    // Check if we have any vias or plated holes that might affect this layer
+    const hasRelevantElements =
+      allPcbVias.length > 0 || allPcbPlatedHoles.length > 0
+    if (!hasRelevantElements) return null
+  }
 
   const boardOutlineBounds = calculateOutlineBounds(boardData)
   const canvas = document.createElement("canvas")
@@ -69,53 +53,99 @@ export function createCopperTextureForLayer({
   const ctx = canvas.getContext("2d")
   if (!ctx) return null
 
-  if (layer === "bottom") {
-    ctx.translate(0, canvasHeight)
-    ctx.scale(1, -1)
+  // Set up the circuit-to-canvas drawer
+  const drawer = new CircuitToCanvasDrawer(ctx)
+
+  // Configure camera bounds to match our canvas
+  drawer.setCameraBounds({
+    minX: boardOutlineBounds.minX,
+    maxX: boardOutlineBounds.maxX,
+    minY: boardOutlineBounds.minY,
+    maxY: boardOutlineBounds.maxY,
+  })
+
+  // Configure colors
+  const copperColorMap = {
+    top: traceColor,
+    bottom: traceColor,
+    inner1: traceColor,
+    inner2: traceColor,
+    inner3: traceColor,
+    inner4: traceColor,
+    inner5: traceColor,
+    inner6: traceColor,
   }
 
-  // Draw traces
-  for (const trace of tracesOnLayer) {
-    let firstPoint = true
+  drawer.configure({
+    colorOverrides: {
+      copper: copperColorMap,
+    },
+  })
+
+  // Prepare copper pour colors - we'll handle them in the second pass
+  const modifiedPours = poursOnLayer
+
+  // Draw traces and copper pours first (without vias to avoid overlap issues)
+  const copperElements: AnyCircuitElement[] = [
+    ...tracesOnLayer,
+    ...modifiedPours,
+  ]
+
+  drawer.drawElements(copperElements, {
+    layers: [`${layer}_copper`],
+  })
+
+  // Draw plated hole copper for this layer (also always copper)
+  for (const ph of allPcbPlatedHoles) {
+    if (ph.layers.includes(layer) && ph.shape === "circle") {
+      const canvasX = (ph.x - boardOutlineBounds.minX) * traceTextureResolution
+      const canvasY = (boardOutlineBounds.maxY - ph.y) * traceTextureResolution
+      const outerRadius = (ph.outer_diameter / 2) * traceTextureResolution
+
+      ctx.beginPath()
+      ctx.arc(canvasX, canvasY, outerRadius, 0, 2 * Math.PI, false)
+      ctx.fill()
+    }
+  }
+
+  // Cut out drill holes from copper (make them transparent holes)
+  ctx.globalCompositeOperation = "destination-out"
+  ctx.fillStyle = "black"
+
+  // Draw via holes (use outer diameter to make full transparent area)
+  for (const via of allPcbVias) {
+    const canvasX = (via.x - boardOutlineBounds.minX) * traceTextureResolution
+    const canvasY = (boardOutlineBounds.maxY - via.y) * traceTextureResolution
+    const holeRadius = (via.outer_diameter / 2) * traceTextureResolution
     ctx.beginPath()
-    ctx.strokeStyle = traceColor
-    ctx.lineCap = "round"
-    ctx.lineJoin = "round"
-    let currentLineWidth = 0
-    for (const point of trace.route) {
-      if (!isWireRoutePoint(point) || point.layer !== layer) {
-        if (!firstPoint) ctx.stroke()
-        firstPoint = true
-        continue
-      }
-      const pcbX = point.x
-      const pcbY = point.y
-      currentLineWidth = point.width * traceTextureResolution
-      ctx.lineWidth = currentLineWidth
-      const canvasX = (pcbX - boardOutlineBounds.minX) * traceTextureResolution
-      const canvasY = (boardOutlineBounds.maxY - pcbY) * traceTextureResolution
-      if (firstPoint) {
-        ctx.moveTo(canvasX, canvasY)
-        firstPoint = false
-      } else {
-        ctx.lineTo(canvasX, canvasY)
-      }
-    }
-    if (!firstPoint) {
-      ctx.stroke()
+    ctx.arc(canvasX, canvasY, holeRadius, 0, 2 * Math.PI, false)
+    ctx.fill()
+  }
+
+  // Draw plated hole drill holes for this layer
+  for (const ph of allPcbPlatedHoles) {
+    if (ph.layers.includes(layer) && ph.shape === "circle") {
+      const canvasX = (ph.x - boardOutlineBounds.minX) * traceTextureResolution
+      const canvasY = (boardOutlineBounds.maxY - ph.y) * traceTextureResolution
+      const innerRadius = (ph.hole_diameter / 2) * traceTextureResolution
+      ctx.beginPath()
+      ctx.arc(canvasX, canvasY, innerRadius, 0, 2 * Math.PI, false)
+      ctx.fill()
     }
   }
 
-  // Draw copper pours if colors are provided
-  if (copperPourColors && poursOnLayer.length > 0) {
-    // Helper function to get color as RGB string
-    const rgbToString = (rgb: [number, number, number]) =>
-      `rgb(${rgb[0] * 255}, ${rgb[1] * 255}, ${rgb[2] * 255})`
+  // Reset composite operation
+  ctx.globalCompositeOperation = "source-over"
 
+  // Handle copper pour colors manually since circuit-to-canvas doesn't support custom pour colors yet
+  if (copperPourColors && poursOnLayer.length > 0) {
+    // Redraw pours with correct colors using a second pass
     for (const pour of poursOnLayer) {
       const covered = (pour as any).covered_with_solder_mask !== false
       const color = covered ? copperPourColors.masked : copperPourColors.exposed
-      ctx.fillStyle = rgbToString(color)
+      const colorString = `rgb(${Math.floor(color[0] * 255)}, ${Math.floor(color[1] * 255)}, ${Math.floor(color[2] * 255)})`
+
+      ctx.fillStyle = colorString
 
       if (pour.shape === "rect") {
         const centerX =
@@ -129,7 +159,7 @@ export function createCopperTextureForLayer({
         if (pour.rotation) {
           ctx.save()
           ctx.translate(centerX, centerY)
-          ctx.rotate((-pour.rotation * Math.PI) / 180) // Negative because canvas Y is flipped
+          ctx.rotate((-pour.rotation * Math.PI) / 180)
           ctx.fillRect(-width / 2, -height / 2, width, height)
           ctx.restore()
         } else {
@@ -150,72 +180,9 @@ export function createCopperTextureForLayer({
         })
         ctx.closePath()
         ctx.fill()
-      } else if (pour.shape === "brep") {
-        const brepShape = (pour as any).brep_shape
-        if (brepShape?.outer_ring) {
-          // Draw outer ring
-          ctx.beginPath()
-          brepShape.outer_ring.vertices.forEach(
-            (vertex: any, index: number) => {
-              const px =
-                (vertex.x - boardOutlineBounds.minX) * traceTextureResolution
-              const py =
-                (boardOutlineBounds.maxY - vertex.y) * traceTextureResolution
-              if (index === 0) {
-                ctx.moveTo(px, py)
-              } else {
-                ctx.lineTo(px, py)
-              }
-            },
-          )
-          ctx.closePath()
-
-          // Cut out inner rings (holes)
-          if (brepShape.inner_rings) {
-            for (const innerRing of brepShape.inner_rings) {
-              for (const [index, vertex] of innerRing.vertices.entries()) {
-                const px =
-                  (vertex.x - boardOutlineBounds.minX) * traceTextureResolution
-                const py =
-                  (boardOutlineBounds.maxY - vertex.y) * traceTextureResolution
-                if (index === 0) {
-                  ctx.moveTo(px, py)
-                } else {
-                  ctx.lineTo(px, py)
-                }
-              }
-            }
-          }
-
-          ctx.fill()
-        }
       }
     }
   }
-
-  // Cut out holes and vias from copper
-  ctx.globalCompositeOperation = "destination-out"
-  ctx.fillStyle = "black"
-  for (const via of allPcbVias) {
-    const canvasX = (via.x - boardOutlineBounds.minX) * traceTextureResolution
-    const canvasY = (boardOutlineBounds.maxY - via.y) * traceTextureResolution
-    const canvasRadius = (via.outer_diameter / 2) * traceTextureResolution
-    ctx.beginPath()
-    ctx.arc(canvasX, canvasY, canvasRadius, 0, 2 * Math.PI, false)
-    ctx.fill()
-  }
-
-  for (const ph of allPcbPlatedHoles) {
-    if (ph.layers.includes(layer) && ph.shape === "circle") {
-      const canvasX = (ph.x - boardOutlineBounds.minX) * traceTextureResolution
-      const canvasY = (boardOutlineBounds.maxY - ph.y) * traceTextureResolution
-      const canvasRadius = (ph.outer_diameter / 2) * traceTextureResolution
-      ctx.beginPath()
-      ctx.arc(canvasX, canvasY, canvasRadius, 0, 2 * Math.PI, false)
-      ctx.fill()
-    }
-  }
-  ctx.globalCompositeOperation = "source-over"
 
   const texture = new THREE.CanvasTexture(canvas)
   texture.generateMipmaps = true
