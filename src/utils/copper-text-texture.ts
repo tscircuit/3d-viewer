@@ -9,6 +9,7 @@ import {
 } from "transformation-matrix"
 import type { AnyCircuitElement } from "circuit-json"
 import type { PcbCopperText } from "../geoms/create-geoms-for-copper-text"
+import { calculateOutlineBounds } from "./outline-bounds"
 
 /**
  * Parse a dimension value that could be a number or string (e.g., "0.5mm")
@@ -299,9 +300,14 @@ export function createCopperTextTextureForLayer({
     return null
   }
 
+  const boardOutlineBounds = calculateOutlineBounds(boardData)
   const canvas = document.createElement("canvas")
-  const canvasWidth = Math.floor(boardData.width * traceTextureResolution)
-  const canvasHeight = Math.floor(boardData.height * traceTextureResolution)
+  const canvasWidth = Math.floor(
+    boardOutlineBounds.width * traceTextureResolution,
+  )
+  const canvasHeight = Math.floor(
+    boardOutlineBounds.height * traceTextureResolution,
+  )
   canvas.width = canvasWidth
   canvas.height = canvasHeight
   const ctx = canvas.getContext("2d")
@@ -316,10 +322,9 @@ export function createCopperTextTextureForLayer({
   ctx.fillStyle = copperColor
 
   const canvasXFromPcb = (pcbX: number) =>
-    (pcbX - boardData.center.x + boardData.width / 2) * traceTextureResolution
+    (pcbX - boardOutlineBounds.minX) * traceTextureResolution
   const canvasYFromPcb = (pcbY: number) =>
-    (-(pcbY - boardData.center.y) + boardData.height / 2) *
-    traceTextureResolution
+    (boardOutlineBounds.maxY - pcbY) * traceTextureResolution
 
   // Draw each copper text
   textsOnLayer.forEach((textS: PcbCopperText) => {

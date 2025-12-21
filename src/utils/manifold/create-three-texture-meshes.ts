@@ -22,11 +22,11 @@ export function createTextureMeshes(
   ) => {
     if (!texture) return null
 
-    // Use outline bounds for plane geometry to match texture dimensions
-    const outlineBounds = calculateOutlineBounds(boardData)
+    // Use board outline bounds for plane geometry to match texture dimensions
+    const boardOutlineBounds = calculateOutlineBounds(boardData)
     const planeGeom = new THREE.PlaneGeometry(
-      outlineBounds.width,
-      outlineBounds.height,
+      boardOutlineBounds.width,
+      boardOutlineBounds.height,
     )
     const material = new THREE.MeshBasicMaterial({
       map: texture,
@@ -38,7 +38,11 @@ export function createTextureMeshes(
       polygonOffsetUnits: usePolygonOffset ? -4 : 0,
     })
     const mesh = new THREE.Mesh(planeGeom, material)
-    mesh.position.set(outlineBounds.centerX, outlineBounds.centerY, yOffset)
+    mesh.position.set(
+      boardOutlineBounds.centerX,
+      boardOutlineBounds.centerY,
+      yOffset,
+    )
     if (isBottomLayer) {
       mesh.rotation.set(Math.PI, 0, 0) // Flip for bottom layer
     }

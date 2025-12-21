@@ -45,10 +45,14 @@ export function createTraceTextureForLayer({
   )
   if (tracesOnLayer.length === 0) return null
 
-  const outlineBounds = calculateOutlineBounds(boardData)
+  const boardOutlineBounds = calculateOutlineBounds(boardData)
   const canvas = document.createElement("canvas")
-  const canvasWidth = Math.floor(outlineBounds.width * traceTextureResolution)
-  const canvasHeight = Math.floor(outlineBounds.height * traceTextureResolution)
+  const canvasWidth = Math.floor(
+    boardOutlineBounds.width * traceTextureResolution,
+  )
+  const canvasHeight = Math.floor(
+    boardOutlineBounds.height * traceTextureResolution,
+  )
   canvas.width = canvasWidth
   canvas.height = canvasHeight
   const ctx = canvas.getContext("2d")
@@ -76,8 +80,8 @@ export function createTraceTextureForLayer({
       const pcbY = point.y
       currentLineWidth = point.width * traceTextureResolution
       ctx.lineWidth = currentLineWidth
-      const canvasX = (pcbX - outlineBounds.minX) * traceTextureResolution
-      const canvasY = (outlineBounds.maxY - pcbY) * traceTextureResolution
+      const canvasX = (pcbX - boardOutlineBounds.minX) * traceTextureResolution
+      const canvasY = (boardOutlineBounds.maxY - pcbY) * traceTextureResolution
       if (firstPoint) {
         ctx.moveTo(canvasX, canvasY)
         firstPoint = false
@@ -93,8 +97,8 @@ export function createTraceTextureForLayer({
   ctx.globalCompositeOperation = "destination-out"
   ctx.fillStyle = "black"
   allPcbVias.forEach((via) => {
-    const canvasX = (via.x - outlineBounds.minX) * traceTextureResolution
-    const canvasY = (outlineBounds.maxY - via.y) * traceTextureResolution
+    const canvasX = (via.x - boardOutlineBounds.minX) * traceTextureResolution
+    const canvasY = (boardOutlineBounds.maxY - via.y) * traceTextureResolution
     const canvasRadius = (via.outer_diameter / 2) * traceTextureResolution
     ctx.beginPath()
     ctx.arc(canvasX, canvasY, canvasRadius, 0, 2 * Math.PI, false)
@@ -102,8 +106,8 @@ export function createTraceTextureForLayer({
   })
   allPcbPlatedHoles.forEach((ph) => {
     if (ph.layers.includes(layer) && ph.shape === "circle") {
-      const canvasX = (ph.x - outlineBounds.minX) * traceTextureResolution
-      const canvasY = (outlineBounds.maxY - ph.y) * traceTextureResolution
+      const canvasX = (ph.x - boardOutlineBounds.minX) * traceTextureResolution
+      const canvasY = (boardOutlineBounds.maxY - ph.y) * traceTextureResolution
       const canvasRadius = (ph.outer_diameter / 2) * traceTextureResolution
       ctx.beginPath()
       ctx.arc(canvasX, canvasY, canvasRadius, 0, 2 * Math.PI, false)

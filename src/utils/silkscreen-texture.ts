@@ -84,10 +84,14 @@ export function createSilkscreenTextureForLayer({
     return null
   }
 
-  const outlineBounds = calculateOutlineBounds(boardData)
+  const boardOutlineBounds = calculateOutlineBounds(boardData)
   const canvas = document.createElement("canvas")
-  const canvasWidth = Math.floor(outlineBounds.width * traceTextureResolution)
-  const canvasHeight = Math.floor(outlineBounds.height * traceTextureResolution)
+  const canvasWidth = Math.floor(
+    boardOutlineBounds.width * traceTextureResolution,
+  )
+  const canvasHeight = Math.floor(
+    boardOutlineBounds.height * traceTextureResolution,
+  )
   canvas.width = canvasWidth
   canvas.height = canvasHeight
   const ctx = canvas.getContext("2d")
@@ -102,10 +106,11 @@ export function createSilkscreenTextureForLayer({
   ctx.fillStyle = silkscreenColor
 
   // Helper functions for coordinate conversion using outline bounds
+  // Helper functions for coordinate conversion using outline bounds
   const canvasXFromPcb = (pcbX: number) =>
-    (pcbX - outlineBounds.minX) * traceTextureResolution
+    (pcbX - boardOutlineBounds.minX) * traceTextureResolution
   const canvasYFromPcb = (pcbY: number) =>
-    (outlineBounds.maxY - pcbY) * traceTextureResolution
+    (boardOutlineBounds.maxY - pcbY) * traceTextureResolution
 
   // Draw Silkscreen Lines
   linesOnLayer.forEach((lineEl: any) => {

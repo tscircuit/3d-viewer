@@ -163,11 +163,11 @@ export function JscadBoardTextures({
     ) => {
       if (!texture) return null
 
-      // Use outline bounds for plane geometry to match texture dimensions
-      const outlineBounds = calculateOutlineBounds(boardData)
+      // Use board outline bounds for plane geometry to match texture dimensions
+      const boardOutlineBounds = calculateOutlineBounds(boardData)
       const planeGeom = new THREE.PlaneGeometry(
-        outlineBounds.width,
-        outlineBounds.height,
+        boardOutlineBounds.width,
+        boardOutlineBounds.height,
       )
       const material = new THREE.MeshBasicMaterial({
         map: texture,
@@ -179,7 +179,11 @@ export function JscadBoardTextures({
         polygonOffsetUnits: usePolygonOffset ? -1 : 0,
       })
       const mesh = new THREE.Mesh(planeGeom, material)
-      mesh.position.set(outlineBounds.centerX, outlineBounds.centerY, zOffset)
+      mesh.position.set(
+        boardOutlineBounds.centerX,
+        boardOutlineBounds.centerY,
+        zOffset,
+      )
       if (isBottomLayer) {
         mesh.rotation.set(Math.PI, 0, 0)
       }
