@@ -61,11 +61,6 @@ const BoardMeshes = ({
       else if (mesh.name.includes("plated_hole") || mesh.name.includes("via")) {
         shouldShow = visibility.topCopper || visibility.bottomCopper
       }
-      // Copper pours
-      else if (mesh.name.includes("copper_pour")) {
-        // TODO: Add layer-specific visibility for copper pours
-        shouldShow = visibility.topCopper || visibility.bottomCopper
-      }
 
       if (shouldShow) {
         rootObject.add(mesh)
@@ -123,6 +118,14 @@ const BoardMeshes = ({
       }
       // Bottom copper text
       else if (mesh.name.includes("bottom-copper-text")) {
+        shouldShow = visibility.bottomCopper
+      }
+      // Top copper pours
+      else if (mesh.name.includes("top-copper-pours")) {
+        shouldShow = visibility.topCopper
+      }
+      // Bottom copper pours
+      else if (mesh.name.includes("bottom-copper-pours")) {
         shouldShow = visibility.bottomCopper
       }
       // Panel outlines
