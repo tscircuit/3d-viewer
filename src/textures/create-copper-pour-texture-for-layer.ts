@@ -256,7 +256,7 @@ export function createCopperPourTextureForLayer({
   }
 
   // Draw brep shapes using custom implementation
-  brepPours.forEach((pour) => {
+  for (const pour of brepPours) {
     // Set color based on soldermask coverage
     const covered = pour.covered_with_solder_mask !== false
     const colorArr = covered
@@ -267,7 +267,7 @@ export function createCopperPourTextureForLayer({
     ctx.fillStyle = copperColor
 
     drawBrepShape(ctx, pour, canvasXFromPcb, canvasYFromPcb)
-  })
+  }
 
   const texture = new THREE.CanvasTexture(canvas)
   texture.generateMipmaps = true

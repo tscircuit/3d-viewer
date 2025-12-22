@@ -23,6 +23,7 @@ import { createSoldermaskTextureForLayer } from "../utils/soldermask-texture"
 import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
 import { createCopperPourTextureForLayer } from "../textures"
+import type { LayerTextures } from "../textures"
 
 export interface ManifoldGeoms {
   board?: {
@@ -49,26 +50,9 @@ export interface ManifoldGeoms {
   // Copper pours now use texture-based rendering instead of geometry
 }
 
-export interface ManifoldTextures {
-  topTrace?: THREE.CanvasTexture | null
-  bottomTrace?: THREE.CanvasTexture | null
-  topTraceWithMask?: THREE.CanvasTexture | null
-  bottomTraceWithMask?: THREE.CanvasTexture | null
-  topSilkscreen?: THREE.CanvasTexture | null
-  bottomSilkscreen?: THREE.CanvasTexture | null
-  topSoldermask?: THREE.CanvasTexture | null
-  bottomSoldermask?: THREE.CanvasTexture | null
-  topCopperText?: THREE.CanvasTexture | null
-  bottomCopperText?: THREE.CanvasTexture | null
-  topPanelOutlines?: THREE.CanvasTexture | null
-  bottomPanelOutlines?: THREE.CanvasTexture | null
-  topCopper?: THREE.CanvasTexture | null
-  bottomCopper?: THREE.CanvasTexture | null
-}
-
 interface UseManifoldBoardBuilderResult {
   geoms: ManifoldGeoms | null
-  textures: ManifoldTextures | null
+  textures: LayerTextures | null
   pcbThickness: number | null
   error: string | null
   isLoading: boolean
@@ -81,7 +65,7 @@ export const useManifoldBoardBuilder = (
   circuitJson: AnyCircuitElement[],
 ): UseManifoldBoardBuilderResult => {
   const [geoms, setGeoms] = useState<ManifoldGeoms | null>(null)
-  const [textures, setTextures] = useState<ManifoldTextures | null>(null)
+  const [textures, setTextures] = useState<LayerTextures | null>(null)
   const [pcbThickness, setPcbThickness] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
@@ -173,7 +157,7 @@ export const useManifoldBoardBuilder = (
 
     let boardManifold: any = null
     const currentGeoms: ManifoldGeoms = {}
-    const currentTextures: ManifoldTextures = {}
+    const currentTextures: LayerTextures = {}
 
     try {
       const currentPcbThickness = boardData.thickness || 1.6
