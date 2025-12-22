@@ -4,11 +4,20 @@ import type { LayerTextures } from "./index"
 import { BOARD_SURFACE_OFFSET } from "../geoms/constants"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
 
+type TextureType =
+  | "trace"
+  | "trace-with-mask"
+  | "silkscreen"
+  | "soldermask"
+  | "copper-text"
+  | "copper"
+  | "panel-outlines"
+
 interface TexturePlaneConfig {
   texture: THREE.CanvasTexture | null | undefined
   yOffset: number
   isBottomLayer: boolean
-  keySuffix: string
+  textureType: TextureType
   usePolygonOffset?: boolean
   renderOrder?: number
 }
@@ -21,7 +30,7 @@ function createTexturePlane(
     texture,
     yOffset,
     isBottomLayer,
-    keySuffix,
+    textureType,
     usePolygonOffset = false,
     renderOrder = 0,
   } = config
@@ -38,7 +47,7 @@ function createTexturePlane(
     map: texture,
     transparent: true,
     side: THREE.DoubleSide,
-    depthWrite: keySuffix === "panel-outlines",
+    depthWrite: textureType === "panel-outlines",
     polygonOffset: usePolygonOffset,
     polygonOffsetFactor: usePolygonOffset ? -4 : 0, // Increased for better z-fighting prevention
     polygonOffsetUnits: usePolygonOffset ? -4 : 0,
@@ -52,7 +61,7 @@ function createTexturePlane(
   if (isBottomLayer) {
     mesh.rotation.set(Math.PI, 0, 0) // Flip for bottom layer
   }
-  mesh.name = `${isBottomLayer ? "bottom" : "top"}-${keySuffix}-texture-plane`
+  mesh.name = `${isBottomLayer ? "bottom" : "top"}-${textureType}-texture-plane`
   mesh.renderOrder = renderOrder
   return mesh
 }
@@ -70,7 +79,7 @@ export function createTextureMeshes(
       texture: textures.topTrace,
       yOffset: pcbThickness / 2 + BOARD_SURFACE_OFFSET.traces, // Use consistent copper offset
       isBottomLayer: false,
-      keySuffix: "trace",
+      textureType: "trace",
       usePolygonOffset: false,
       renderOrder: 2, // Render after soldermask
     },
@@ -84,7 +93,7 @@ export function createTextureMeshes(
       texture: textures.topTraceWithMask,
       yOffset: pcbThickness / 2 + BOARD_SURFACE_OFFSET.traces,
       isBottomLayer: false,
-      keySuffix: "trace-with-mask",
+      textureType: "trace-with-mask",
       usePolygonOffset: false,
       renderOrder: 2, // Render after soldermask
     },
@@ -97,7 +106,7 @@ export function createTextureMeshes(
       texture: textures.topSilkscreen,
       yOffset: pcbThickness / 2 + 0.003, // Slightly above soldermask
       isBottomLayer: false,
-      keySuffix: "silkscreen",
+      textureType: "silkscreen",
       usePolygonOffset: false,
       renderOrder: 3, // Render after traces
     },
@@ -110,7 +119,7 @@ export function createTextureMeshes(
       texture: textures.bottomTrace,
       yOffset: -pcbThickness / 2 - BOARD_SURFACE_OFFSET.traces, // Use consistent copper offset
       isBottomLayer: true,
-      keySuffix: "trace",
+      textureType: "trace",
       usePolygonOffset: false,
       renderOrder: 2, // Render after soldermask
     },
@@ -124,7 +133,7 @@ export function createTextureMeshes(
       texture: textures.bottomTraceWithMask,
       yOffset: -pcbThickness / 2 - BOARD_SURFACE_OFFSET.traces,
       isBottomLayer: true,
-      keySuffix: "trace-with-mask",
+      textureType: "trace-with-mask",
       usePolygonOffset: false,
       renderOrder: 2, // Render after soldermask
     },
@@ -137,7 +146,7 @@ export function createTextureMeshes(
       texture: textures.bottomSilkscreen,
       yOffset: -pcbThickness / 2 - 0.003,
       isBottomLayer: true,
-      keySuffix: "silkscreen",
+      textureType: "silkscreen",
       usePolygonOffset: false,
       renderOrder: 3, // Render after traces
     },
@@ -153,7 +162,7 @@ export function createTextureMeshes(
       texture: textures.topSoldermask,
       yOffset: pcbThickness / 2 + 0.001, // Just above board surface
       isBottomLayer: false,
-      keySuffix: "soldermask",
+      textureType: "soldermask",
       usePolygonOffset: true, // Enable polygon offset
       renderOrder: 1, // Render after board (renderOrder)
     },
@@ -166,7 +175,7 @@ export function createTextureMeshes(
       texture: textures.bottomSoldermask,
       yOffset: -pcbThickness / 2 - 0.001, // Just below board surface (bottom side)
       isBottomLayer: true,
-      keySuffix: "soldermask",
+      textureType: "soldermask",
       usePolygonOffset: true, // Enable polygon offset
       renderOrder: 1, // Render after board (renderOrder)
     },
@@ -180,7 +189,7 @@ export function createTextureMeshes(
       texture: textures.topCopperText,
       yOffset: pcbThickness / 2 + BOARD_SURFACE_OFFSET.copper,
       isBottomLayer: false,
-      keySuffix: "copper-text",
+      textureType: "copper-text",
       usePolygonOffset: false,
       renderOrder: 2, // Render after soldermask
     },
@@ -193,7 +202,7 @@ export function createTextureMeshes(
       texture: textures.bottomCopperText,
       yOffset: -pcbThickness / 2 - BOARD_SURFACE_OFFSET.copper,
       isBottomLayer: true,
-      keySuffix: "copper-text",
+      textureType: "copper-text",
       usePolygonOffset: false,
       renderOrder: 2, // Render after soldermask
     },
@@ -207,7 +216,7 @@ export function createTextureMeshes(
       texture: textures.topCopper,
       yOffset: pcbThickness / 2 + BOARD_SURFACE_OFFSET.copper,
       isBottomLayer: false,
-      keySuffix: "copper",
+      textureType: "copper",
       usePolygonOffset: false,
       renderOrder: 2, // Render after soldermask
     },
@@ -220,7 +229,7 @@ export function createTextureMeshes(
       texture: textures.bottomCopper,
       yOffset: -pcbThickness / 2 - BOARD_SURFACE_OFFSET.copper,
       isBottomLayer: true,
-      keySuffix: "copper",
+      textureType: "copper",
       usePolygonOffset: false,
       renderOrder: 2, // Render after soldermask
     },
@@ -233,7 +242,7 @@ export function createTextureMeshes(
       texture: textures.topPanelOutlines,
       yOffset: pcbThickness / 2 + 0.004, // Above silkscreen
       isBottomLayer: false,
-      keySuffix: "panel-outlines",
+      textureType: "panel-outlines",
       usePolygonOffset: false,
       renderOrder: 4,
     },
@@ -246,7 +255,7 @@ export function createTextureMeshes(
       texture: textures.bottomPanelOutlines,
       yOffset: -pcbThickness / 2 - 0.004, // Below bottom silkscreen
       isBottomLayer: true,
-      keySuffix: "panel-outlines",
+      textureType: "panel-outlines",
       usePolygonOffset: false,
       renderOrder: 4,
     },
