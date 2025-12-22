@@ -6,7 +6,7 @@ import { useThree } from "../react-three/ThreeContext"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import { createSoldermaskTextureForLayer } from "../utils/soldermask-texture"
 import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
-import { createCopperTextureForLayer } from "../textures/copper/texture"
+import { createCopperTextureForLayer } from "../textures/copper/createCopperTextureForLayer"
 import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
 import {

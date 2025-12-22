@@ -30,7 +30,7 @@ import { processViasForManifold } from "../utils/manifold/process-vias"
 import { manifoldMeshToThreeGeometry } from "../utils/manifold-mesh-to-three-geometry"
 import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
 import { createSoldermaskTextureForLayer } from "../utils/soldermask-texture"
-import { createCopperTextureForLayer } from "../textures/copper/texture"
+import { createCopperTextureForLayer } from "../textures/copper/createCopperTextureForLayer"
 import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
 

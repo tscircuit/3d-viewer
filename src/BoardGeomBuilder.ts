@@ -83,14 +83,12 @@ type BuilderState =
   | "processing_traces"
   | "processing_vias"
   | "processing_cutouts"
-  | "processing_copper_pours"
   | "finalizing"
   | "done"
 
 const buildStateOrder: BuilderState[] = [
   "initializing",
   "processing_pads",
-  "processing_copper_pours",
 
   "processing_plated_holes",
   "processing_holes",
@@ -301,10 +299,6 @@ export class BoardGeomBuilder {
           } else {
             this.goToNextState()
           }
-          break
-
-        case "processing_copper_pours":
-          this.goToNextState()
           break
 
         case "finalizing":
