@@ -53,6 +53,11 @@ export function createCopperTextureForLayer({
   const ctx = canvas.getContext("2d")
   if (!ctx) return null
 
+  if (layer === "bottom") {
+    ctx.translate(0, canvasHeight)
+    ctx.scale(1, -1)
+  }
+
   // Set up the circuit-to-canvas drawer
   const drawer = new CircuitToCanvasDrawer(ctx)
 
@@ -82,62 +87,44 @@ export function createCopperTextureForLayer({
     },
   })
 
-  // Prepare copper pour colors - we'll handle them in the second pass
-  const modifiedPours = poursOnLayer
-
-  // Draw traces and copper pours first (without vias to avoid overlap issues)
+  // Draw traces and copper pours using circuit-to-canvas (vias handled separately)
   const copperElements: AnyCircuitElement[] = [
     ...tracesOnLayer,
-    ...modifiedPours,
+    ...poursOnLayer,
   ]
 
   drawer.drawElements(copperElements, {
     layers: [`${layer}_copper`],
   })
 
-  // Draw plated hole copper for this layer (also always copper)
-  for (const ph of allPcbPlatedHoles) {
-    if (ph.layers.includes(layer) && ph.shape === "circle") {
-      const canvasX = (ph.x - boardOutlineBounds.minX) * traceTextureResolution
-      const canvasY = (boardOutlineBounds.maxY - ph.y) * traceTextureResolution
-      const outerRadius = (ph.outer_diameter / 2) * traceTextureResolution
-
-      ctx.beginPath()
-      ctx.arc(canvasX, canvasY, outerRadius, 0, 2 * Math.PI, false)
-      ctx.fill()
-    }
+  // Draw plated hole copper for this layer using circuit-to-canvas
+  const platedHolesForLayer = allPcbPlatedHoles.filter((ph) =>
+    ph.layers.includes(layer),
+  )
+  if (platedHolesForLayer.length > 0) {
+    drawer.drawElements(platedHolesForLayer, {
+      layers: [`${layer}_copper`],
+    })
   }
 
-  // Cut out drill holes from copper (make them transparent holes)
-  ctx.globalCompositeOperation = "destination-out"
-  ctx.fillStyle = "black"
+  // Cut out drill holes from copper using circuit-to-canvas
+  // Combine vias and plated holes for drill cutting
+  const holesToDrill = [
+    ...allPcbVias,
+    ...allPcbPlatedHoles.filter((ph) => ph.layers.includes(layer)),
+  ]
 
-  // Draw via holes (use outer diameter to make full transparent area)
-  for (const via of allPcbVias) {
-    const canvasX = (via.x - boardOutlineBounds.minX) * traceTextureResolution
-    const canvasY = (boardOutlineBounds.maxY - via.y) * traceTextureResolution
-    const holeRadius = (via.outer_diameter / 2) * traceTextureResolution
-    ctx.beginPath()
-    ctx.arc(canvasX, canvasY, holeRadius, 0, 2 * Math.PI, false)
-    ctx.fill()
+  if (holesToDrill.length > 0) {
+    ctx.globalCompositeOperation = "destination-out"
+    ctx.fillStyle = "black"
+    drawer.drawElements(holesToDrill, {
+      layers: [`${layer}_copper`],
+    })
+    ctx.globalCompositeOperation = "source-over"
   }
-
-  // Draw plated hole drill holes for this layer
-  for (const ph of allPcbPlatedHoles) {
-    if (ph.layers.includes(layer) && ph.shape === "circle") {
-      const canvasX = (ph.x - boardOutlineBounds.minX) * traceTextureResolution
-      const canvasY = (boardOutlineBounds.maxY - ph.y) * traceTextureResolution
-      const innerRadius = (ph.hole_diameter / 2) * traceTextureResolution
-      ctx.beginPath()
-      ctx.arc(canvasX, canvasY, innerRadius, 0, 2 * Math.PI, false)
-      ctx.fill()
-    }
-  }
-
-  // Reset composite operation
-  ctx.globalCompositeOperation = "source-over"
 
   // Handle copper pour colors manually since circuit-to-canvas doesn't support custom pour colors yet
+  // Keep this for now as circuit-to-canvas doesn't have this feature yet
   if (copperPourColors && poursOnLayer.length > 0) {
     // Redraw pours with correct colors using a second pass
     for (const pour of poursOnLayer) {
