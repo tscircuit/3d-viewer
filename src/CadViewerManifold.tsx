@@ -121,11 +121,11 @@ const BoardMeshes = ({
         shouldShow = visibility.bottomCopper
       }
       // Top copper pours
-      else if (mesh.name.includes("top-copper-pours")) {
+      else if (mesh.name.includes("top-copper")) {
         shouldShow = visibility.topCopper
       }
       // Bottom copper pours
-      else if (mesh.name.includes("bottom-copper-pours")) {
+      else if (mesh.name.includes("bottom-copper")) {
         shouldShow = visibility.bottomCopper
       }
       // Panel outlines
