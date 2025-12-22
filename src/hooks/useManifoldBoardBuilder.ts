@@ -1,43 +1,29 @@
 import { useState, useEffect, useMemo, useRef } from "react"
-import type {
-  AnyCircuitElement,
-  Point as CircuitPoint,
-  PcbBoard,
-  PcbHole,
-  PcbPanel,
-  PcbPlatedHole,
-  PcbSilkscreenPath,
-  PcbSilkscreenText,
-  PcbSmtPad,
-  PcbTrace,
-  PcbVia,
-} from "circuit-json"
+import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import * as THREE from "three"
 import {
   boardMaterialColors,
-  DEFAULT_SMT_PAD_THICKNESS,
   colors as defaultColors,
-  MANIFOLD_Z_OFFSET,
-  SMOOTH_CIRCLE_SEGMENTS,
   TRACE_TEXTURE_RESOLUTION,
   tracesMaterialColors,
   soldermaskColors,
 } from "../geoms/constants"
 import type { ManifoldToplevel } from "manifold-3d"
 import { createManifoldBoard } from "../utils/manifold/create-manifold-board"
-import { processCopperPoursForManifold } from "../utils/manifold/process-copper-pours"
 import { processCutoutsForManifold } from "../utils/manifold/process-cutouts"
 import { processNonPlatedHolesForManifold } from "../utils/manifold/process-non-plated-holes"
 import { processPlatedHolesForManifold } from "../utils/manifold/process-plated-holes"
 import { processSmtPadsForManifold } from "../utils/manifold/process-smt-pads"
 import { processViasForManifold } from "../utils/manifold/process-vias"
 import { manifoldMeshToThreeGeometry } from "../utils/manifold-mesh-to-three-geometry"
+import { createTraceTextureForLayer } from "../utils/trace-texture"
 import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
 import { createSoldermaskTextureForLayer } from "../utils/soldermask-texture"
-import { createTraceTextureForLayer } from "../utils/trace-texture"
 import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
+import { createCopperPourTextureForLayer } from "../textures"
+import type { LayerTextures } from "../textures"
 
 export interface ManifoldGeoms {
   board?: {
@@ -61,31 +47,12 @@ export interface ManifoldGeoms {
     geometry: THREE.BufferGeometry
     color: THREE.Color
   }>
-  copperPours?: Array<{
-    key: string
-    geometry: THREE.BufferGeometry
-    color: THREE.Color
-  }>
-}
-
-export interface ManifoldTextures {
-  topTrace?: THREE.CanvasTexture | null
-  bottomTrace?: THREE.CanvasTexture | null
-  topTraceWithMask?: THREE.CanvasTexture | null
-  bottomTraceWithMask?: THREE.CanvasTexture | null
-  topSilkscreen?: THREE.CanvasTexture | null
-  bottomSilkscreen?: THREE.CanvasTexture | null
-  topSoldermask?: THREE.CanvasTexture | null
-  bottomSoldermask?: THREE.CanvasTexture | null
-  topCopperText?: THREE.CanvasTexture | null
-  bottomCopperText?: THREE.CanvasTexture | null
-  topPanelOutlines?: THREE.CanvasTexture | null
-  bottomPanelOutlines?: THREE.CanvasTexture | null
+  // Copper pours now use texture-based rendering instead of geometry
 }
 
 interface UseManifoldBoardBuilderResult {
   geoms: ManifoldGeoms | null
-  textures: ManifoldTextures | null
+  textures: LayerTextures | null
   pcbThickness: number | null
   error: string | null
   isLoading: boolean
@@ -98,7 +65,7 @@ export const useManifoldBoardBuilder = (
   circuitJson: AnyCircuitElement[],
 ): UseManifoldBoardBuilderResult => {
   const [geoms, setGeoms] = useState<ManifoldGeoms | null>(null)
-  const [textures, setTextures] = useState<ManifoldTextures | null>(null)
+  const [textures, setTextures] = useState<LayerTextures | null>(null)
   const [pcbThickness, setPcbThickness] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
@@ -190,7 +157,7 @@ export const useManifoldBoardBuilder = (
 
     let boardManifold: any = null
     const currentGeoms: ManifoldGeoms = {}
-    const currentTextures: ManifoldTextures = {}
+    const layerTextureMap: LayerTextures = {}
 
     try {
       const currentPcbThickness = boardData.thickness || 1.6
@@ -370,18 +337,8 @@ export const useManifoldBoardBuilder = (
       )
       currentGeoms.smtPads = smtPadGeoms
 
-      // Process copper pours
-      const { copperPourGeoms } = processCopperPoursForManifold(
-        Manifold,
-        CrossSection,
-        circuitJson,
-        currentPcbThickness,
-        manifoldInstancesForCleanup.current,
-        boardData.material,
-        holeUnion,
-        boardClipVolume,
-      )
-      currentGeoms.copperPours = copperPourGeoms
+      // Process copper pours (now as textures instead of geometry)
+      // Copper pours are now handled by texture system
 
       setGeoms(currentGeoms)
 
@@ -389,14 +346,14 @@ export const useManifoldBoardBuilder = (
       // Create trace textures for when soldermask is OFF (tan/brown copper color)
       const traceColorWithoutMaskArr = defaultColors.fr4TracesWithoutMaskTan
       const traceColorWithoutMask = `rgb(${Math.round(traceColorWithoutMaskArr[0] * 255)}, ${Math.round(traceColorWithoutMaskArr[1] * 255)}, ${Math.round(traceColorWithoutMaskArr[2] * 255)})`
-      currentTextures.topTrace = createTraceTextureForLayer({
+      layerTextureMap.topTrace = createTraceTextureForLayer({
         layer: "top",
         circuitJson,
         boardData,
         traceColor: traceColorWithoutMask,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
-      currentTextures.bottomTrace = createTraceTextureForLayer({
+      layerTextureMap.bottomTrace = createTraceTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
@@ -407,14 +364,14 @@ export const useManifoldBoardBuilder = (
       // Create trace textures for when soldermask is ON (light green)
       const traceColorWithMaskArr = defaultColors.fr4TracesWithMaskGreen
       const traceColorWithMask = `rgb(${Math.round(traceColorWithMaskArr[0] * 255)}, ${Math.round(traceColorWithMaskArr[1] * 255)}, ${Math.round(traceColorWithMaskArr[2] * 255)})`
-      currentTextures.topTraceWithMask = createTraceTextureForLayer({
+      layerTextureMap.topTraceWithMask = createTraceTextureForLayer({
         layer: "top",
         circuitJson,
         boardData,
         traceColor: traceColorWithMask,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
-      currentTextures.bottomTraceWithMask = createTraceTextureForLayer({
+      layerTextureMap.bottomTraceWithMask = createTraceTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
@@ -424,14 +381,14 @@ export const useManifoldBoardBuilder = (
 
       // --- Process Silkscreen (as Textures) ---
       const silkscreenColor = "rgb(255,255,255)" // White
-      currentTextures.topSilkscreen = createSilkscreenTextureForLayer({
+      layerTextureMap.topSilkscreen = createSilkscreenTextureForLayer({
         layer: "top",
         circuitJson,
         boardData,
         silkscreenColor,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
-      currentTextures.bottomSilkscreen = createSilkscreenTextureForLayer({
+      layerTextureMap.bottomSilkscreen = createSilkscreenTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
@@ -443,14 +400,14 @@ export const useManifoldBoardBuilder = (
       const soldermaskColorArr =
         soldermaskColors[boardData.material] ?? defaultColors.fr4SolderMaskGreen
       const soldermaskColor = `rgb(${Math.round(soldermaskColorArr[0] * 255)}, ${Math.round(soldermaskColorArr[1] * 255)}, ${Math.round(soldermaskColorArr[2] * 255)})`
-      currentTextures.topSoldermask = createSoldermaskTextureForLayer({
+      layerTextureMap.topSoldermask = createSoldermaskTextureForLayer({
         layer: "top",
         circuitJson,
         boardData,
         soldermaskColor,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
-      currentTextures.bottomSoldermask = createSoldermaskTextureForLayer({
+      layerTextureMap.bottomSoldermask = createSoldermaskTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
@@ -461,14 +418,14 @@ export const useManifoldBoardBuilder = (
       // --- Process Copper Text (as Textures) ---
       const copperColorArr = defaultColors.copper
       const copperColor = `rgb(${Math.round(copperColorArr[0] * 255)}, ${Math.round(copperColorArr[1] * 255)}, ${Math.round(copperColorArr[2] * 255)})`
-      currentTextures.topCopperText = createCopperTextTextureForLayer({
+      layerTextureMap.topCopperText = createCopperTextTextureForLayer({
         layer: "top",
         circuitJson,
         boardData,
         copperColor,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
-      currentTextures.bottomCopperText = createCopperTextTextureForLayer({
+      layerTextureMap.bottomCopperText = createCopperTextTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
@@ -477,20 +434,34 @@ export const useManifoldBoardBuilder = (
       })
 
       // --- Process Panel Outlines (as Textures) ---
-      currentTextures.topPanelOutlines = createPanelOutlineTextureForLayer({
+      layerTextureMap.topPanelOutlines = createPanelOutlineTextureForLayer({
         layer: "top",
         circuitJson,
         panelData: boardData,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
-      currentTextures.bottomPanelOutlines = createPanelOutlineTextureForLayer({
+      layerTextureMap.bottomPanelOutlines = createPanelOutlineTextureForLayer({
         layer: "bottom",
         circuitJson,
         panelData: boardData,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
 
-      setTextures(currentTextures)
+      // --- Process Copper Pours (as Textures) ---
+      layerTextureMap.topCopper = createCopperPourTextureForLayer({
+        layer: "top",
+        circuitJson,
+        boardData,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      })
+      layerTextureMap.bottomCopper = createCopperPourTextureForLayer({
+        layer: "bottom",
+        circuitJson,
+        boardData,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      })
+
+      setTextures(layerTextureMap)
     } catch (e: any) {
       console.error("Error processing geometry with Manifold in hook:", e)
       setError(

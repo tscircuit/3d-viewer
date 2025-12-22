@@ -6,7 +6,7 @@ type PointWithBulge = { x: number; y: number; bulge?: number }
 type Ring = { vertices: PointWithBulge[] }
 
 // Convert a single arc segment (defined by two points and a bulge factor) to a series of points.
-function segmentToPoints(
+export function segmentToPoints(
   p1: Vec2,
   p2: Vec2,
   bulge: number,
@@ -57,7 +57,7 @@ function segmentToPoints(
 }
 
 // Convert a ring of vertices (with bulges) to a flat array of Vec2 points.
-function ringToPoints(ring: Ring, arcSegments: number): Vec2[] {
+export function ringToPoints(ring: Ring, arcSegments: number): Vec2[] {
   const allPoints: Vec2[] = []
   const vertices = ring.vertices
 

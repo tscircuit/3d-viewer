@@ -14,7 +14,7 @@ import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
-import { createTextureMeshes } from "./utils/manifold/create-three-texture-meshes"
+import { createTextureMeshes } from "./textures"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
 
 declare global {
@@ -59,11 +59,6 @@ const BoardMeshes = ({
       }
       // Plated holes and vias go through both layers
       else if (mesh.name.includes("plated_hole") || mesh.name.includes("via")) {
-        shouldShow = visibility.topCopper || visibility.bottomCopper
-      }
-      // Copper pours
-      else if (mesh.name.includes("copper_pour")) {
-        // TODO: Add layer-specific visibility for copper pours
         shouldShow = visibility.topCopper || visibility.bottomCopper
       }
 
@@ -123,6 +118,14 @@ const BoardMeshes = ({
       }
       // Bottom copper text
       else if (mesh.name.includes("bottom-copper-text")) {
+        shouldShow = visibility.bottomCopper
+      }
+      // Top copper pours
+      else if (mesh.name.includes("top-copper")) {
+        shouldShow = visibility.topCopper
+      }
+      // Bottom copper pours
+      else if (mesh.name.includes("bottom-copper")) {
         shouldShow = visibility.bottomCopper
       }
       // Panel outlines
