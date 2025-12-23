@@ -1,5 +1,6 @@
 import * as THREE from "three"
 import type { PcbBoard } from "circuit-json"
+import { FAUX_BOARD_OPACITY } from "../geoms/constants"
 
 type BoardMaterialType = PcbBoard["material"]
 
@@ -29,7 +30,7 @@ export const createBoardMaterial = ({
       sheen: 0.0,
       clearcoat: 0.0,
       transparent: isFaux,
-      opacity: isFaux ? 0.6 : 1.0,
+      opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
       flatShading: true,
     })
   }
@@ -41,6 +42,6 @@ export const createBoardMaterial = ({
     metalness: 0.1,
     roughness: 0.8,
     transparent: true,
-    opacity: isFaux ? 0.6 : 0.9,
+    opacity: isFaux ? FAUX_BOARD_OPACITY : 0.9,
   })
 }

@@ -14,17 +14,20 @@ import {
   soldermaskColors,
   TRACE_TEXTURE_RESOLUTION,
   BOARD_SURFACE_OFFSET,
+  FAUX_BOARD_OPACITY,
 } from "../geoms/constants"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
 
 interface JscadBoardTexturesProps {
   circuitJson: AnyCircuitElement[]
   pcbThickness: number
+  isFaux?: boolean
 }
 
 export function JscadBoardTextures({
   circuitJson,
   pcbThickness,
+  isFaux = false,
 }: JscadBoardTexturesProps) {
   const { rootObject } = useThree()
   const { visibility } = useLayerVisibility()
@@ -177,6 +180,7 @@ export function JscadBoardTextures({
         polygonOffset: usePolygonOffset,
         polygonOffsetFactor: usePolygonOffset ? -1 : 0,
         polygonOffsetUnits: usePolygonOffset ? -1 : 0,
+        opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
       })
       const mesh = new THREE.Mesh(planeGeom, material)
       mesh.position.set(

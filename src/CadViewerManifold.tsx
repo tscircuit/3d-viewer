@@ -271,12 +271,13 @@ try {
     error: builderError,
     isLoading: builderIsLoading,
     boardData,
+    isFauxBoard,
   } = useManifoldBoardBuilder(manifoldJSModule, circuitJson)
 
   const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
   const textureMeshes = useMemo(
-    () => createTextureMeshes(textures, boardData, pcbThickness),
-    [textures, boardData, pcbThickness],
+    () => createTextureMeshes(textures, boardData, pcbThickness, isFauxBoard),
+    [textures, boardData, pcbThickness, isFauxBoard],
   )
 
   const cadComponents = useMemo(

@@ -1,7 +1,7 @@
 import * as THREE from "three"
 import type { PcbBoard } from "circuit-json"
 import type { LayerTextures } from "./index"
-import { BOARD_SURFACE_OFFSET } from "../geoms/constants"
+import { BOARD_SURFACE_OFFSET, FAUX_BOARD_OPACITY } from "../geoms/constants"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
 
 type TextureType =
@@ -20,6 +20,7 @@ interface TexturePlaneConfig {
   textureType: TextureType
   usePolygonOffset?: boolean
   renderOrder?: number
+  isFaux?: boolean
 }
 
 function createTexturePlane(
@@ -33,6 +34,7 @@ function createTexturePlane(
     textureType,
     usePolygonOffset = false,
     renderOrder = 0,
+    isFaux = false,
   } = config
 
   if (!texture) return null
@@ -51,6 +53,7 @@ function createTexturePlane(
     polygonOffset: usePolygonOffset,
     polygonOffsetFactor: usePolygonOffset ? -4 : 0, // Increased for better z-fighting prevention
     polygonOffsetUnits: usePolygonOffset ? -4 : 0,
+    opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
   })
   const mesh = new THREE.Mesh(planeGeom, material)
   mesh.position.set(
@@ -70,6 +73,7 @@ export function createTextureMeshes(
   textures: LayerTextures | null,
   boardData: PcbBoard | null,
   pcbThickness: number | null,
+  isFaux: boolean = false,
 ): THREE.Mesh[] {
   const meshes: THREE.Mesh[] = []
   if (!textures || !boardData || pcbThickness === null) return meshes
@@ -82,6 +86,7 @@ export function createTextureMeshes(
       textureType: "trace",
       usePolygonOffset: false,
       renderOrder: 2, // Render after soldermask
+      isFaux,
     },
     boardData,
   )
@@ -96,6 +101,7 @@ export function createTextureMeshes(
       textureType: "trace-with-mask",
       usePolygonOffset: false,
       renderOrder: 2, // Render after soldermask
+      isFaux,
     },
     boardData,
   )
@@ -109,6 +115,7 @@ export function createTextureMeshes(
       textureType: "silkscreen",
       usePolygonOffset: false,
       renderOrder: 3, // Render after traces
+      isFaux,
     },
     boardData,
   )
@@ -122,6 +129,7 @@ export function createTextureMeshes(
       textureType: "trace",
       usePolygonOffset: false,
       renderOrder: 2, // Render after soldermask
+      isFaux,
     },
     boardData,
   )
@@ -136,6 +144,7 @@ export function createTextureMeshes(
       textureType: "trace-with-mask",
       usePolygonOffset: false,
       renderOrder: 2, // Render after soldermask
+      isFaux,
     },
     boardData,
   )
@@ -149,6 +158,7 @@ export function createTextureMeshes(
       textureType: "silkscreen",
       usePolygonOffset: false,
       renderOrder: 3, // Render after traces
+      isFaux,
     },
     boardData,
   )
@@ -165,6 +175,7 @@ export function createTextureMeshes(
       textureType: "soldermask",
       usePolygonOffset: true, // Enable polygon offset
       renderOrder: 1, // Render after board (renderOrder)
+      isFaux,
     },
     boardData,
   )
@@ -178,6 +189,7 @@ export function createTextureMeshes(
       textureType: "soldermask",
       usePolygonOffset: true, // Enable polygon offset
       renderOrder: 1, // Render after board (renderOrder)
+      isFaux,
     },
     boardData,
   )
@@ -192,6 +204,7 @@ export function createTextureMeshes(
       textureType: "copper-text",
       usePolygonOffset: false,
       renderOrder: 2, // Render after soldermask
+      isFaux,
     },
     boardData,
   )
@@ -205,6 +218,7 @@ export function createTextureMeshes(
       textureType: "copper-text",
       usePolygonOffset: false,
       renderOrder: 2, // Render after soldermask
+      isFaux,
     },
     boardData,
   )
@@ -219,6 +233,7 @@ export function createTextureMeshes(
       textureType: "copper",
       usePolygonOffset: false,
       renderOrder: 2, // Render after soldermask
+      isFaux,
     },
     boardData,
   )
@@ -232,6 +247,7 @@ export function createTextureMeshes(
       textureType: "copper",
       usePolygonOffset: false,
       renderOrder: 2, // Render after soldermask
+      isFaux,
     },
     boardData,
   )
@@ -245,6 +261,7 @@ export function createTextureMeshes(
       textureType: "panel-outlines",
       usePolygonOffset: false,
       renderOrder: 4,
+      isFaux,
     },
     boardData,
   )
@@ -258,6 +275,7 @@ export function createTextureMeshes(
       textureType: "panel-outlines",
       usePolygonOffset: false,
       renderOrder: 4,
+      isFaux,
     },
     boardData,
   )
