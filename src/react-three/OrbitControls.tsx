@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo } from "react"
+import * as THREE from "three"
 import { OrbitControls as ThreeOrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
 import { useFrame, useThree } from "./ThreeContext"
 
@@ -65,6 +66,13 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
     if (dampingFactor !== undefined) controls.dampingFactor = dampingFactor
 
     controls.zoomToCursor = true
+
+    // Configure mouse button mapping
+    controls.mouseButtons = {
+      LEFT: THREE.MOUSE.ROTATE, // Left click to rotate
+      MIDDLE: THREE.MOUSE.PAN, // Middle click to pan
+      RIGHT: null, // Right-click always disabled - only context menu
+    }
 
     if (target) {
       controls.target.set(target[0], target[1], target[2])
