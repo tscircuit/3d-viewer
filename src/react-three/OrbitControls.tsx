@@ -14,7 +14,6 @@ interface OrbitControlsProps {
   dampingFactor?: number
   target?: [number, number, number]
   onControlsChange?: (controls: ThreeOrbitControls | null) => void
-  disableRightClick?: boolean
 }
 
 export const OrbitControls: React.FC<OrbitControlsProps> = ({
@@ -28,7 +27,6 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
   dampingFactor,
   target,
   onControlsChange,
-  disableRightClick,
 }) => {
   const { camera, renderer } = useThree()
 
@@ -73,7 +71,7 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
     controls.mouseButtons = {
       LEFT: THREE.MOUSE.ROTATE, // Left click to rotate
       MIDDLE: THREE.MOUSE.PAN, // Middle click to pan
-      RIGHT: disableRightClick ? null : THREE.MOUSE.DOLLY, // Disable right-click if requested
+      RIGHT: null, // Right-click always disabled - only context menu
     }
 
     if (target) {
@@ -90,7 +88,6 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
     enableDamping,
     dampingFactor,
     target,
-    disableRightClick,
   ])
 
   useEffect(() => {
