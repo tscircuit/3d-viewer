@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo } from "react"
+import * as THREE from "three"
 import { OrbitControls as ThreeOrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
 import { useFrame, useThree } from "./ThreeContext"
 
@@ -13,6 +14,7 @@ interface OrbitControlsProps {
   dampingFactor?: number
   target?: [number, number, number]
   onControlsChange?: (controls: ThreeOrbitControls | null) => void
+  disableRightClick?: boolean
 }
 
 export const OrbitControls: React.FC<OrbitControlsProps> = ({
@@ -26,6 +28,7 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
   dampingFactor,
   target,
   onControlsChange,
+  disableRightClick,
 }) => {
   const { camera, renderer } = useThree()
 
@@ -66,6 +69,13 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
 
     controls.zoomToCursor = true
 
+    // Configure mouse button mapping
+    controls.mouseButtons = {
+      LEFT: THREE.MOUSE.ROTATE, // Left click to rotate
+      MIDDLE: THREE.MOUSE.PAN, // Middle click to pan
+      RIGHT: disableRightClick ? null : THREE.MOUSE.DOLLY, // Disable right-click if requested
+    }
+
     if (target) {
       controls.target.set(target[0], target[1], target[2])
       controls.update()
@@ -80,6 +90,7 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
     enableDamping,
     dampingFactor,
     target,
+    disableRightClick,
   ])
 
   useEffect(() => {

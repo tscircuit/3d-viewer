@@ -114,6 +114,7 @@ export const CadViewerContainer = forwardRef<
               enableDamping={true}
               dampingFactor={0.1}
               target={orbitTarget}
+              disableRightClick={true}
               onControlsChange={(controls) => {
                 handleControlsChange(controls)
                 handleSessionControlsChange()
