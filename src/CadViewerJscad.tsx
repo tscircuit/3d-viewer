@@ -144,6 +144,7 @@ export const CadViewerJscad = forwardRef<
         <JscadBoardTextures
           circuitJson={internalCircuitJson}
           pcbThickness={pcbThickness}
+          isFaux={isFauxBoard}
         />
         {cad_components.map((cad_component) => (
           <ThreeErrorBoundary
