@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react"
 import type { AnyCircuitElement } from "circuit-json"
 import * as THREE from "three"
-import { createPcbTextureFromCircuitJson, initResvgWasm } from "../utils/svg-texture-utils"
+import {
+  createPcbTextureFromCircuitJson,
+  initResvgWasm,
+} from "../utils/svg-texture-utils"
 
 interface UsePcbSvgTextureOptions {
   circuitJson: AnyCircuitElement[] | null
@@ -15,10 +18,13 @@ interface UsePcbSvgTextureResult {
   error: Error | null
 }
 
-export function usePcbSvgTexture(options: UsePcbSvgTextureOptions): UsePcbSvgTextureResult {
+export function usePcbSvgTexture(
+  options: UsePcbSvgTextureOptions,
+): UsePcbSvgTextureResult {
   const { circuitJson, enabled = true } = options
   const [topTexture, setTopTexture] = useState<THREE.CanvasTexture | null>(null)
-  const [bottomTexture, setBottomTexture] = useState<THREE.CanvasTexture | null>(null)
+  const [bottomTexture, setBottomTexture] =
+    useState<THREE.CanvasTexture | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
@@ -33,8 +39,12 @@ export function usePcbSvgTexture(options: UsePcbSvgTextureOptions): UsePcbSvgTex
         await initResvgWasm()
         if (cancelled) return
 
-        const top = await createPcbTextureFromCircuitJson(circuitJson!, { layer: "top" })
-        const bottom = await createPcbTextureFromCircuitJson(circuitJson!, { layer: "bottom" })
+        const top = await createPcbTextureFromCircuitJson(circuitJson!, {
+          layer: "top",
+        })
+        const bottom = await createPcbTextureFromCircuitJson(circuitJson!, {
+          layer: "bottom",
+        })
 
         if (!cancelled) {
           setTopTexture(top)
@@ -48,7 +58,9 @@ export function usePcbSvgTexture(options: UsePcbSvgTextureOptions): UsePcbSvgTex
     }
 
     generate()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [circuitJson, enabled])
 
   useEffect(() => {
