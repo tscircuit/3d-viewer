@@ -117,7 +117,6 @@ export class BoardGeomBuilder {
   private boardGeom: Geom3 | null = null
   private platedHoleGeoms: Geom3[] = []
   private padGeoms: Geom3[] = []
-  private traceGeoms: Geom3[] = []
   private viaGeoms: Geom3[] = [] // Combined with platedHoleGeoms
   private copperPourGeoms: Geom3[] = []
   private boardClipGeom: Geom3 | null = null
@@ -275,16 +274,6 @@ export class BoardGeomBuilder {
         case "processing_pads":
           if (this.currentIndex < this.pads.length) {
             this.processPad(this.pads[this.currentIndex]!)
-            this.currentIndex++
-          } else {
-            // Skip traces and vias for now
-            this.goToNextState()
-          }
-          break
-
-        case "processing_traces":
-          if (this.currentIndex < this.traces.length) {
-            this.processTrace(this.traces[this.currentIndex]!)
             this.currentIndex++
           } else {
             this.goToNextState()
@@ -795,127 +784,6 @@ export class BoardGeomBuilder {
     }
   }
 
-  private processTrace(trace: PcbTrace) {
-    const { route: mixedRoute } = trace
-    if (mixedRoute.length < 2) return
-
-    // Group route points into continuous wire segments on the same layer
-    let currentSegmentPoints: Vec2[] = []
-    let currentLayer: "top" | "bottom" | null = null
-    let currentWidth = 0.1 // Default width
-
-    const finishSegment = () => {
-      if (currentSegmentPoints.length >= 2 && currentLayer) {
-        const layerSign = currentLayer === "bottom" ? -1 : 1
-        // Place traces slightly closer to the board surface than
-        // BOARD_SURFACE_OFFSET.traces to sit a bit lower visually.
-        const traceOffset = BOARD_SURFACE_OFFSET.traces - 0.002
-        const zCenter =
-          (layerSign * this.ctx.pcbThickness) / 2 + layerSign * traceOffset
-
-        const linePath = line(currentSegmentPoints)
-        // Use the width of the starting point of the segment for consistency
-        const expandedPath = expand(
-          { delta: currentWidth / 2, corners: "round" },
-          linePath,
-        )
-        let traceGeom = translate(
-          [0, 0, zCenter - M / 2],
-          extrudeLinear({ height: M }, expandedPath),
-        )
-
-        // TODO: Subtract via/hole overlaps if needed for accuracy
-        const startPointCoords = currentSegmentPoints[0]!
-        const endPointCoords =
-          currentSegmentPoints[currentSegmentPoints.length - 1]!
-
-        const startHole = this.getHoleToCut(
-          startPointCoords[0],
-          startPointCoords[1],
-        )
-        if (startHole) {
-          const cuttingCylinder = cylinder({
-            center: [startPointCoords[0], startPointCoords[1], zCenter],
-            radius: startHole.diameter / 2 + M,
-            height: M,
-          })
-          traceGeom = subtract(traceGeom, cuttingCylinder)
-        }
-
-        const endHole = this.getHoleToCut(endPointCoords[0], endPointCoords[1])
-        if (endHole) {
-          const cuttingCylinder = cylinder({
-            center: [endPointCoords[0], endPointCoords[1], zCenter],
-            radius: endHole.diameter / 2 + M,
-            height: M,
-          })
-          traceGeom = subtract(traceGeom, cuttingCylinder)
-        }
-
-        const tracesMaterialColor =
-          tracesMaterialColors[this.board.material] ??
-          colors.fr4TracesWithoutMaskTan
-
-        if (this.boardClipGeom) {
-          traceGeom = intersect(this.boardClipGeom, traceGeom)
-        }
-        traceGeom = colorize(tracesMaterialColor, traceGeom)
-
-        this.traceGeoms.push(traceGeom)
-      }
-      currentSegmentPoints = []
-      currentLayer = null
-    }
-
-    for (let i = 0; i < mixedRoute.length; i++) {
-      const point = mixedRoute[i]!
-
-      if (point.route_type === "wire") {
-        if (currentLayer === null) {
-          // Start of a new segment
-          currentLayer = point.layer as any
-          currentWidth = point.width
-          currentSegmentPoints.push([point.x, point.y])
-        } else if (point.layer === currentLayer) {
-          // Continue existing segment
-          currentSegmentPoints.push([point.x, point.y])
-        } else {
-          // Layer change - finish previous segment and start new one
-          // Add the current point to finish the segment before starting new
-          currentSegmentPoints.push([point.x, point.y])
-          finishSegment()
-          currentLayer = point.layer as any
-          currentWidth = point.width
-          // Need the previous point to start the new segment correctly
-          const prevPoint = mixedRoute[i - 1]
-          if (prevPoint) {
-            // Start new segment with the via/transition point
-            currentSegmentPoints.push([point.x, point.y])
-          } else {
-            // Should not happen in a valid trace, but handle defensively
-            currentSegmentPoints.push([point.x, point.y])
-          }
-        }
-      } else if (point.route_type === "via") {
-        // Via encountered - finish the current wire segment
-        // Add the via's position as the end point of the current segment
-        currentSegmentPoints.push([point.x, point.y])
-        finishSegment()
-        // The via itself will be handled by processVia/processPlatedHole
-        // Start the next segment from the via point if followed by a wire
-        const nextPoint = mixedRoute[i + 1]
-        if (nextPoint && nextPoint.route_type === "wire") {
-          currentLayer = nextPoint.layer as any // Layer might change across via
-          currentWidth = nextPoint.width
-          currentSegmentPoints.push([point.x, point.y]) // Start next segment at via location
-        }
-      }
-    }
-
-    // Finish the last segment
-    finishSegment()
-  }
-
   private processVia(via: PcbVia) {
     if (!this.boardGeom) return
 
@@ -973,7 +841,6 @@ export class BoardGeomBuilder {
       this.boardGeom,
       ...this.platedHoleGeoms,
       ...this.padGeoms,
-      ...this.traceGeoms,
       ...this.viaGeoms,
       ...this.copperPourGeoms,
     ]
