@@ -78,13 +78,12 @@ const createCenteredRectPadGeom = (
 
 type BuilderState =
   | "initializing"
+  | "processing_pads"
+  | "processing_copper_pours"
   | "processing_plated_holes"
   | "processing_holes"
-  | "processing_pads"
-  | "processing_traces"
-  | "processing_vias"
   | "processing_cutouts"
-  | "processing_copper_pours"
+  | "processing_vias"
   | "finalizing"
   | "done"
 
@@ -97,7 +96,6 @@ const buildStateOrder: BuilderState[] = [
   "processing_holes",
   "processing_cutouts",
 
-  "processing_traces",
   "processing_vias",
   "finalizing",
   "done",
