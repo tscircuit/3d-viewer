@@ -2,12 +2,17 @@
 import * as THREE from "three"
 import type { AnyCircuitElement, PcbCopperPour, PcbBoard } from "circuit-json"
 import { CircuitToCanvasDrawer } from "circuit-to-canvas"
+import { su } from "@tscircuit/circuit-json-util"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
-import { segmentToPoints, ringToPoints } from "../geoms/brep-converter"
+import { ringToPoints } from "../geoms/brep-converter"
 import {
   colors as defaultColors,
   TRACE_TEXTURE_RESOLUTION,
 } from "../geoms/constants"
+import {
+  extractRectBorderRadius,
+  clampRectBorderRadius,
+} from "../utils/rect-border-radius"
 
 /**
  * Draw a polygon shape on canvas (for brep shapes - custom implementation)
@@ -87,23 +92,160 @@ function drawBrepShape({
   }
 }
 
+/**
+ * Draw SMT pad shapes on canvas (reused from soldermask-texture.ts)
+ */
+function drawPadShape({
+  ctx,
+  pad,
+  canvasXFromPcb,
+  canvasYFromPcb,
+  traceTextureResolution,
+}: {
+  ctx: CanvasRenderingContext2D
+  pad: any // Use any to handle different pad shape types
+  canvasXFromPcb: (x: number) => number
+  canvasYFromPcb: (y: number) => number
+  traceTextureResolution: number
+}) {
+  // Handle polygon pads differently - they don't have x, y coordinates
+  if (pad.shape === "polygon" && pad.points) {
+    ctx.beginPath()
+    pad.points.forEach((point: { x: number; y: number }, index: number) => {
+      const px = canvasXFromPcb(point.x)
+      const py = canvasYFromPcb(point.y)
+      if (index === 0) {
+        ctx.moveTo(px, py)
+      } else {
+        ctx.lineTo(px, py)
+      }
+    })
+    ctx.closePath()
+    ctx.fill()
+    return
+  }
+
+  // For non-polygon pads, use x and y coordinates
+  if (pad.x === undefined || pad.y === undefined) return
+
+  // Skip pads with invalid (NaN) coordinates
+  if (Number.isNaN(pad.x) || Number.isNaN(pad.y)) {
+    console.warn(
+      `[copper-pour-texture] Skipping pad ${pad.pcb_smtpad_id} with NaN coordinates`,
+    )
+    return
+  }
+
+  const x = pad.x as number
+  const y = pad.y as number
+  const canvasX = canvasXFromPcb(x)
+  const canvasY = canvasYFromPcb(y)
+
+  if (pad.shape === "rect") {
+    const width = (pad.width as number) * traceTextureResolution
+    const height = (pad.height as number) * traceTextureResolution
+    const rawRadius = extractRectBorderRadius(pad)
+    const borderRadius =
+      clampRectBorderRadius(
+        pad.width as number,
+        pad.height as number,
+        rawRadius,
+      ) * traceTextureResolution
+
+    if (borderRadius > 0) {
+      ctx.beginPath()
+      ctx.roundRect(
+        canvasX - width / 2,
+        canvasY - height / 2,
+        width,
+        height,
+        borderRadius,
+      )
+      ctx.fill()
+    } else {
+      ctx.fillRect(canvasX - width / 2, canvasY - height / 2, width, height)
+    }
+  } else if (pad.shape === "circle") {
+    const radius =
+      ((pad.radius ?? pad.width / 2) as number) * traceTextureResolution
+    ctx.beginPath()
+    ctx.arc(canvasX, canvasY, radius, 0, 2 * Math.PI)
+    ctx.fill()
+  } else if (pad.shape === "pill") {
+    const width = (pad.width as number) * traceTextureResolution
+    const height = (pad.height as number) * traceTextureResolution
+    const rawRadius = extractRectBorderRadius(pad)
+    const borderRadius =
+      clampRectBorderRadius(
+        pad.width as number,
+        pad.height as number,
+        rawRadius,
+      ) * traceTextureResolution
+
+    ctx.beginPath()
+    ctx.roundRect(
+      canvasX - width / 2,
+      canvasY - height / 2,
+      width,
+      height,
+      borderRadius,
+    )
+    ctx.fill()
+  } else if (pad.shape === "rotated_rect") {
+    const width = (pad.width as number) * traceTextureResolution
+    const height = (pad.height as number) * traceTextureResolution
+    const rawRadius = extractRectBorderRadius(pad)
+    const borderRadius =
+      clampRectBorderRadius(
+        pad.width as number,
+        pad.height as number,
+        rawRadius,
+      ) * traceTextureResolution
+
+    // For rotated_rect, always apply rotation transform
+    // Canvas rotation is clockwise-positive, but ccw_rotation is counter-clockwise
+    // Also canvas Y is inverted. Net effect: negate rotation to match 3D geometry
+    const ccwRotation = (pad.ccw_rotation as number) || 0
+    const rotation = -ccwRotation * (Math.PI / 180)
+
+    ctx.save()
+    ctx.translate(canvasX, canvasY)
+    ctx.rotate(rotation)
+    ctx.beginPath()
+    ctx.roundRect(-width / 2, -height / 2, width, height, borderRadius)
+    ctx.fill()
+    ctx.restore()
+  }
+}
+
 export function createCopperPourTextureForLayer({
   layer,
   circuitJson,
   boardData,
   traceTextureResolution = TRACE_TEXTURE_RESOLUTION,
+  includePads = true,
 }: {
   layer: "top" | "bottom"
   circuitJson: AnyCircuitElement[]
   boardData: PcbBoard
   traceTextureResolution?: number
+  includePads?: boolean
 }): THREE.CanvasTexture | null {
   const copperPours = circuitJson.filter(
     (e) => e.type === "pcb_copper_pour",
   ) as PcbCopperPour[]
 
   const poursOnLayer = copperPours.filter((p) => p.layer === layer)
-  if (poursOnLayer.length === 0) return null
+
+  // Also check for SMT pads if includePads is enabled
+  let smtPadsOnLayer: any[] = []
+  if (includePads) {
+    const pcbSmtPads = su(circuitJson).pcb_smtpad.list()
+    smtPadsOnLayer = pcbSmtPads.filter((pad) => pad.layer === layer)
+  }
+
+  // Return null if there's nothing to render
+  if (poursOnLayer.length === 0 && smtPadsOnLayer.length === 0) return null
 
   const boardOutlineBounds = calculateOutlineBounds(boardData)
   const canvas = document.createElement("canvas")
@@ -210,6 +352,23 @@ export function createCopperPourTextureForLayer({
     ctx.fillStyle = copperColor
 
     drawBrepShape({ ctx, pour, canvasXFromPcb, canvasYFromPcb })
+  }
+
+  // Draw SMT pads as copper (if enabled)
+  if (includePads && smtPadsOnLayer.length > 0) {
+    // SMT pads are always copper color (not affected by soldermask coverage)
+    const copperColor = `rgb(${defaultColors.copper[0] * 255}, ${defaultColors.copper[1] * 255}, ${defaultColors.copper[2] * 255})`
+    ctx.fillStyle = copperColor
+
+    smtPadsOnLayer.forEach((pad) => {
+      drawPadShape({
+        ctx,
+        pad,
+        canvasXFromPcb,
+        canvasYFromPcb,
+        traceTextureResolution,
+      })
+    })
   }
 
   const texture = new THREE.CanvasTexture(canvas)

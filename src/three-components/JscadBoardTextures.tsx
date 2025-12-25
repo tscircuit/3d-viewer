@@ -9,6 +9,7 @@ import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
 import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
+import { createCopperPourTextureForLayer } from "../textures/create-copper-pour-texture-for-layer"
 import {
   colors as defaultColors,
   soldermaskColors,
@@ -122,6 +123,20 @@ export function JscadBoardTextures({
         traceColor: traceColorWithMask,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       }),
+      topCopper: createCopperPourTextureForLayer({
+        layer: "top",
+        circuitJson,
+        boardData,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        includePads: true,
+      }),
+      bottomCopper: createCopperPourTextureForLayer({
+        layer: "bottom",
+        circuitJson,
+        boardData,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        includePads: true,
+      }),
       topCopperText: createCopperTextTextureForLayer({
         layer: "top",
         circuitJson,
@@ -233,7 +248,7 @@ export function JscadBoardTextures({
     if (visibility.topCopper && visibility.topMask) {
       const topTraceWithMaskMesh = createTexturePlane(
         textures.topTraceWithMask,
-        pcbThickness / 2 + BOARD_SURFACE_OFFSET.traces + 0.004,
+        pcbThickness / 2 + BOARD_SURFACE_OFFSET.traces,
         false,
         "jscad-top-trace-with-mask",
       )
@@ -247,13 +262,41 @@ export function JscadBoardTextures({
     if (visibility.bottomCopper && visibility.bottomMask) {
       const bottomTraceWithMaskMesh = createTexturePlane(
         textures.bottomTraceWithMask,
-        -pcbThickness / 2 - BOARD_SURFACE_OFFSET.traces - 0.005,
+        -pcbThickness / 2 - BOARD_SURFACE_OFFSET.traces,
         true,
         "jscad-bottom-trace-with-mask",
       )
       if (bottomTraceWithMaskMesh) {
         meshes.push(bottomTraceWithMaskMesh)
         rootObject.add(bottomTraceWithMaskMesh)
+      }
+    }
+
+    // Top copper (pads + copper pours)
+    if (visibility.topCopper) {
+      const topCopperMesh = createTexturePlane(
+        textures.topCopper,
+        pcbThickness / 2 + BOARD_SURFACE_OFFSET.copper,
+        false,
+        "jscad-top-copper",
+      )
+      if (topCopperMesh) {
+        meshes.push(topCopperMesh)
+        rootObject.add(topCopperMesh)
+      }
+    }
+
+    // Bottom copper (pads + copper pours)
+    if (visibility.bottomCopper) {
+      const bottomCopperMesh = createTexturePlane(
+        textures.bottomCopper,
+        -pcbThickness / 2 - BOARD_SURFACE_OFFSET.copper,
+        true,
+        "jscad-bottom-copper",
+      )
+      if (bottomCopperMesh) {
+        meshes.push(bottomCopperMesh)
+        rootObject.add(bottomCopperMesh)
       }
     }
 
