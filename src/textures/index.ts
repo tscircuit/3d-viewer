@@ -12,7 +12,6 @@ export {
 } from "./utils/coordinate-transform"
 export { getCopperColor, getCircuitToCanvasColors } from "./utils/colors"
 export { createOptimizedTexture, createCanvas } from "./utils/texture-config"
-export { drawPadShape } from "./drawing/pad-drawer"
 export { drawRectAndPolygonPours } from "./adapters/circuit-to-canvas-adapter"
 
 export interface LayerTextures {
