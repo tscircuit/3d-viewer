@@ -1,7 +1,18 @@
 import * as THREE from "three"
 
-export { createCopperPourTextureForLayer } from "./create-copper-pour-texture-for-layer"
+export { createCopperLayerTexture } from "./create-copper-layer-texture"
 export { createTextureMeshes } from "./create-three-texture-meshes"
+
+// Utility exports
+export {
+  createCoordinateTransform,
+  setupBottomLayerContext,
+  drawPolygon,
+  drawBrepShape,
+} from "./utils/coordinate-transform"
+export { getCopperColor, getCircuitToCanvasColors } from "./utils/colors"
+export { createOptimizedTexture, createCanvas } from "./utils/texture-config"
+export { drawRectAndPolygonPours } from "./adapters/circuit-to-canvas-adapter"
 
 export interface LayerTextures {
   topTrace?: THREE.CanvasTexture | null

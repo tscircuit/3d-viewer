@@ -49,7 +49,6 @@ export function createGeometryMeshes(
   }
 
   createMeshesFromArray(geoms.platedHoles)
-  createMeshesFromArray(geoms.smtPads)
   createMeshesFromArray(geoms.vias)
   // Copper pours now use texture-based rendering instead of geometry
   // Add other categories as they are defined in ManifoldGeoms
