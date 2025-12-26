@@ -22,7 +22,7 @@ import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
 import { createSoldermaskTextureForLayer } from "../utils/soldermask-texture"
 import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
-import { createCopperPourTextureForLayer } from "../textures"
+import { createCopperLayerTexture } from "../textures"
 import type { LayerTextures } from "../textures"
 
 export interface ManifoldGeoms {
@@ -434,13 +434,13 @@ export const useManifoldBoardBuilder = (
       })
 
       // --- Process Copper Pours (as Textures) ---
-      layerTextureMap.topCopper = createCopperPourTextureForLayer({
+      layerTextureMap.topCopper = createCopperLayerTexture({
         layer: "top",
         circuitJson,
         boardData,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
-      layerTextureMap.bottomCopper = createCopperPourTextureForLayer({
+      layerTextureMap.bottomCopper = createCopperLayerTexture({
         layer: "bottom",
         circuitJson,
         boardData,

@@ -9,7 +9,7 @@ import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
 import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
-import { createCopperPourTextureForLayer } from "../textures/create-copper-pour-texture-for-layer"
+import { createCopperLayerTexture } from "../textures"
 import {
   colors as defaultColors,
   soldermaskColors,
@@ -123,14 +123,14 @@ export function JscadBoardTextures({
         traceColor: traceColorWithMask,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       }),
-      topCopper: createCopperPourTextureForLayer({
+      topCopper: createCopperLayerTexture({
         layer: "top",
         circuitJson,
         boardData,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
         includePads: true,
       }),
-      bottomCopper: createCopperPourTextureForLayer({
+      bottomCopper: createCopperLayerTexture({
         layer: "bottom",
         circuitJson,
         boardData,
