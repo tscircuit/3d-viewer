@@ -95,9 +95,7 @@ export function createCopperLayerTexture({
       drawPadShape({
         ctx,
         pad,
-        canvasXFromPcb,
-        canvasYFromPcb,
-        traceTextureResolution,
+        boardOutlineBounds,
       })
     })
   }
