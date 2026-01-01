@@ -1,7 +1,12 @@
 import { useCallback, RefObject } from "react"
 import type { CameraPreset, CameraController } from "./cameraAnimation"
+import type { CustomCameraView } from "./useCustomCameraViews"
 
-interface UseCameraPresetProps {
+interface CameraPresetParams {
+  preset: CameraPreset
+}
+
+interface CameraPresetContext {
   setAutoRotate: (value: boolean) => void
   setAutoRotateUserToggled: (value: boolean) => void
   setCameraPreset: (preset: CameraPreset) => void
@@ -9,19 +14,25 @@ interface UseCameraPresetProps {
   cameraControllerRef: RefObject<CameraController | null>
   isAnimatingRef: RefObject<boolean>
   lastPresetSelectTime: RefObject<number>
+  customViews: CustomCameraView[]
 }
 
-export function useCameraPreset({
-  setAutoRotate,
-  setAutoRotateUserToggled,
-  setCameraPreset,
-  closeMenu,
-  cameraControllerRef,
-  isAnimatingRef,
-  lastPresetSelectTime,
-}: UseCameraPresetProps) {
+export function useCameraPreset(ctx: CameraPresetContext) {
+  const {
+    setAutoRotate,
+    setAutoRotateUserToggled,
+    setCameraPreset,
+    closeMenu,
+    cameraControllerRef,
+    isAnimatingRef,
+    lastPresetSelectTime,
+    customViews,
+  } = ctx
+
   const handleCameraPresetSelect = useCallback(
-    (preset: CameraPreset) => {
+    (params: CameraPresetParams) => {
+      const { preset } = params
+
       // Stop auto-rotate when a preset is selected
       setAutoRotate(false)
       setAutoRotateUserToggled(true)
@@ -33,7 +44,20 @@ export function useCameraPreset({
       if (preset === "Custom") return
 
       isAnimatingRef.current = true
-      cameraControllerRef.current?.animateToPreset(preset)
+
+      if (preset.startsWith("custom:")) {
+        const viewId = preset.slice(7)
+        const customView = customViews.find((v) => v.id === viewId)
+        if (customView) {
+          cameraControllerRef.current?.animateTo({
+            position: customView.position,
+            target: customView.target,
+            up: customView.up,
+          })
+        }
+      } else {
+        cameraControllerRef.current?.animateToPreset(preset)
+      }
 
       // Reset the animation flag after the animation would be complete
       setTimeout(() => {
@@ -48,10 +72,12 @@ export function useCameraPreset({
       cameraControllerRef,
       isAnimatingRef,
       lastPresetSelectTime,
+      customViews,
     ],
   )
 
   return {
-    handleCameraPresetSelect,
+    handleCameraPresetSelect: (preset: CameraPreset) =>
+      handleCameraPresetSelect({ preset }),
   }
 }

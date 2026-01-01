@@ -16,6 +16,7 @@ export type CameraPreset =
   | "Right Sideview"
   | "Front"
   | "Top Center Angled"
+  | `custom:${string}`
 
 export interface CameraAnimationConfig {
   position: readonly [number, number, number]
