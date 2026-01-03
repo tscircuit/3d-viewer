@@ -120,9 +120,7 @@ export function GltfModel({
         envMapIntensity: material.envMapIntensity ?? 1,
       })
 
-      if (!material.envMap) {
-        material.envMap = environmentMap
-      }
+      material.envMap = environmentMap
 
       if (
         typeof material.envMapIntensity !== "number" ||
