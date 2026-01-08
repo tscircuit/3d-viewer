@@ -1,22 +1,52 @@
 import "tscircuit"
 import { CadViewer } from "src/CadViewer"
-import stepModelUrl from "./assets/simple-box.step?url"
+import { Circuit } from "@tscircuit/core"
+import { getPlatformConfig } from "@tscircuit/eval"
+import { useEffect, useState } from "react"
+import stepModelUrl from "./assets/MachineContactMedium.step?url"
 
-export const CadComponentStepModel = () => (
-  <CadViewer>
+const createCircuit = async (modelUrl: string) => {
+  const circuit = new Circuit({
+    platform: getPlatformConfig(),
+  })
+  circuit.add(
     <board width="10mm" height="10mm">
       <chip
         name="U1"
         footprint="soic8"
         cadModel={
           <cadassembly>
-            <cadmodel modelUrl={stepModelUrl} />
+            <cadmodel modelUrl={modelUrl} />
           </cadassembly>
         }
       />
-    </board>
-  </CadViewer>
-)
+    </board>,
+  )
+  await circuit.renderUntilSettled()
+  return circuit.getCircuitJson()
+}
+
+export const CadComponentStepModel = () => {
+  const [circuitJson, setCircuitJson] = useState<any[] | null>(null)
+
+  useEffect(() => {
+    const renderCircuit = async () => {
+      const json = await createCircuit(stepModelUrl)
+      const cadComp = json.find((item) => item.type === "cad_component")
+      if (cadComp) {
+        cadComp.model_unit_to_mm_scale_factor = 1000
+      }
+      setCircuitJson(json)
+    }
+    renderCircuit()
+  }, [])
+
+  if (!circuitJson) {
+    return null
+  }
+
+  return <CadViewer circuitJson={circuitJson as any} />
+}
 
 CadComponentStepModel.storyName = "CAD Component STEP Model"
 
