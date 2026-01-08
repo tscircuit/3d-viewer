@@ -1,16 +1,141 @@
 import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
-import { useMemo, useState, useCallback } from "react"
-import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
-import { CadViewerContainer } from "./CadViewerContainer"
+import { useMemo, useState, useCallback, useEffect } from "react"
 import { MixedStlModel } from "./three-components/MixedStlModel"
-import { Euler } from "three"
+import {
+  BufferGeometry,
+  Color,
+  Float32BufferAttribute,
+  Group,
+  Mesh,
+  MeshStandardMaterial,
+} from "three"
 import { GltfModel } from "./three-components/GltfModel"
 import { JscadModel } from "./three-components/JscadModel"
 import { FootprinterModel } from "./three-components/FootprinterModel"
 import { tuple } from "./utils/tuple"
 import { Html } from "./react-three/Html"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
+import { GLTFExporter } from "three-stdlib"
+
+type OcctImportParams = {
+  linearUnit?: "millimeter" | "centimeter" | "meter" | "inch" | "foot"
+  linearDeflectionType?: "bounding_box_ratio" | "absolute_value"
+  linearDeflection?: number
+  angularDeflection?: number
+}
+
+type OcctMesh = {
+  name: string
+  color?: [number, number, number]
+  attributes: {
+    position: { array: number[] }
+    normal?: { array: number[] }
+  }
+  index: { array: number[] }
+}
+
+type OcctImportResult = {
+  success: boolean
+  meshes: OcctMesh[]
+}
+
+type OcctImport = {
+  ReadStepFile(
+    content: ArrayBufferView | ArrayBuffer,
+    params: OcctImportParams | null,
+  ): OcctImportResult
+}
+
+type OcctImportFactory = () => Promise<OcctImport>
+
+let occtImportPromise: Promise<OcctImport> | undefined
+
+function resolveOcctFactory(candidate: unknown): OcctImportFactory {
+  if (typeof candidate === "function") {
+    return candidate as OcctImportFactory
+  }
+  if (
+    candidate &&
+    typeof candidate === "object" &&
+    "default" in candidate &&
+    typeof (candidate as { default: unknown }).default === "function"
+  ) {
+    return (candidate as { default: unknown }).default as OcctImportFactory
+  }
+  throw new Error("Unable to resolve occt-import-js factory export")
+}
+
+async function loadOcctImport(): Promise<OcctImport> {
+  if (!occtImportPromise) {
+    const imported = await import(
+      /* @vite-ignore */ "https://cdn.jsdelivr.net/npm/occt-import-js@0.0.23/+esm"
+    )
+    occtImportPromise = resolveOcctFactory(imported)()
+  }
+  return occtImportPromise
+}
+
+function occtMeshesToGroup(meshes: OcctMesh[]): Group {
+  const group = new Group()
+  for (const mesh of meshes) {
+    const positions = mesh.attributes.position?.array ?? []
+    const indices = mesh.index?.array ?? []
+    if (!positions.length || !indices.length) {
+      continue
+    }
+    const geometry = new BufferGeometry()
+    geometry.setAttribute("position", new Float32BufferAttribute(positions, 3))
+    const normals = mesh.attributes.normal?.array ?? []
+    if (normals.length) {
+      geometry.setAttribute("normal", new Float32BufferAttribute(normals, 3))
+    } else {
+      geometry.computeVertexNormals()
+    }
+    geometry.setIndex(indices)
+    const material = new MeshStandardMaterial({
+      color: mesh.color
+        ? new Color(mesh.color[0], mesh.color[1], mesh.color[2])
+        : new Color(0.82, 0.82, 0.82),
+    })
+    const threeMesh = new Mesh(geometry, material)
+    threeMesh.name = mesh.name
+    group.add(threeMesh)
+  }
+  return group
+}
+
+async function convertStepUrlToGlbUrl(stepUrl: string): Promise<string> {
+  const response = await fetch(stepUrl)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch STEP file: ${response.statusText}`)
+  }
+  const buffer = await response.arrayBuffer()
+  const occt = await loadOcctImport()
+  const result = occt.ReadStepFile(new Uint8Array(buffer), null)
+  if (!result.success || !result.meshes.length) {
+    throw new Error("occt-import-js failed to convert STEP file")
+  }
+  const group = occtMeshesToGroup(result.meshes)
+  const exporter = new GLTFExporter()
+  const glb = await new Promise<ArrayBuffer>((resolve, reject) => {
+    exporter.parse(
+      group,
+      (output) => {
+        if (output instanceof ArrayBuffer) {
+          resolve(output)
+        } else {
+          reject(new Error("GLTFExporter did not return binary output"))
+        }
+      },
+      (error) => {
+        reject(error)
+      },
+      { binary: true },
+    )
+  })
+  return URL.createObjectURL(new Blob([glb], { type: "model/gltf-binary" }))
+}
 
 export const AnyCadComponent = ({
   cad_component,
@@ -24,6 +149,7 @@ export const AnyCadComponent = ({
   const [hoverPosition, setHoverPosition] = useState<
     [number, number, number] | null
   >(null)
+  const [stepGltfUrl, setStepGltfUrl] = useState<string | null>(null)
 
   const handleHover = useCallback((e: any) => {
     if (e?.mousePosition) {
@@ -62,6 +188,7 @@ export const AnyCadComponent = ({
     cad_component.model_wrl_url ??
     cad_component.model_stl_url
   const gltfUrl = cad_component.model_glb_url ?? cad_component.model_gltf_url
+  const stepUrl = cad_component.model_step_url
   const rotationOffset = cad_component.rotation
     ? tuple(
         (cad_component.rotation.x * Math.PI) / 180,
@@ -69,6 +196,43 @@ export const AnyCadComponent = ({
         (cad_component.rotation.z * Math.PI) / 180,
       )
     : undefined
+
+  const shouldLoadStep =
+    Boolean(stepUrl) &&
+    !url &&
+    !gltfUrl &&
+    !cad_component.model_jscad &&
+    !cad_component.footprinter_string
+
+  useEffect(() => {
+    if (!shouldLoadStep || !stepUrl) {
+      setStepGltfUrl(null)
+      return
+    }
+    let isActive = true
+    let objectUrl: string | null = null
+    void convertStepUrlToGlbUrl(stepUrl)
+      .then((generatedUrl) => {
+        if (!isActive) {
+          URL.revokeObjectURL(generatedUrl)
+          return
+        }
+        objectUrl = generatedUrl
+        setStepGltfUrl(generatedUrl)
+      })
+      .catch((error) => {
+        console.error("Failed to convert STEP file to GLB", error)
+        if (isActive) {
+          setStepGltfUrl(null)
+        }
+      })
+    return () => {
+      isActive = false
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl)
+      }
+    }
+  }, [shouldLoadStep, stepUrl])
 
   let modelComponent: React.ReactNode = null
 
@@ -94,11 +258,11 @@ export const AnyCadComponent = ({
         isTranslucent={cad_component.show_as_translucent_model}
       />
     )
-  } else if (gltfUrl) {
+  } else if (gltfUrl || stepGltfUrl) {
     modelComponent = (
       <GltfModel
         key={cad_component.cad_component_id}
-        gltfUrl={gltfUrl}
+        gltfUrl={stepGltfUrl ?? gltfUrl ?? ""}
         position={
           cad_component.position
             ? [
