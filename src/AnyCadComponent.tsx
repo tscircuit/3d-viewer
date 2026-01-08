@@ -47,9 +47,17 @@ type OcctImport = {
   ): OcctImportResult
 }
 
-type OcctImportFactory = () => Promise<OcctImport>
+type OcctImportModuleConfig = {
+  locateFile?: (path: string) => string
+}
+
+type OcctImportFactory = (
+  config?: OcctImportModuleConfig,
+) => Promise<OcctImport>
 
 let occtImportPromise: Promise<OcctImport> | undefined
+const OCCT_CDN_BASE_URL =
+  "https://cdn.jsdelivr.net/npm/occt-import-js@0.0.23/dist"
 
 function resolveOcctFactory(candidate: unknown): OcctImportFactory {
   if (typeof candidate === "function") {
@@ -71,7 +79,10 @@ async function loadOcctImport(): Promise<OcctImport> {
     const imported = await import(
       /* @vite-ignore */ "https://cdn.jsdelivr.net/npm/occt-import-js@0.0.23/+esm"
     )
-    occtImportPromise = resolveOcctFactory(imported)()
+    const factory = resolveOcctFactory(imported)
+    occtImportPromise = factory({
+      locateFile: (path: string) => `${OCCT_CDN_BASE_URL}/${path}`,
+    })
   }
   return occtImportPromise
 }
