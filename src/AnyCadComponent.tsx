@@ -1,16 +1,14 @@
 import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import { useMemo, useState, useCallback } from "react"
-import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
-import { CadViewerContainer } from "./CadViewerContainer"
 import { MixedStlModel } from "./three-components/MixedStlModel"
-import { Euler } from "three"
 import { GltfModel } from "./three-components/GltfModel"
 import { JscadModel } from "./three-components/JscadModel"
 import { FootprinterModel } from "./three-components/FootprinterModel"
 import { tuple } from "./utils/tuple"
 import { Html } from "./react-three/Html"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
+import { StepModel } from "./three-components/StepModel"
 
 export const AnyCadComponent = ({
   cad_component,
@@ -24,7 +22,6 @@ export const AnyCadComponent = ({
   const [hoverPosition, setHoverPosition] = useState<
     [number, number, number] | null
   >(null)
-
   const handleHover = useCallback((e: any) => {
     if (e?.mousePosition) {
       setIsHovered(true)
@@ -62,6 +59,7 @@ export const AnyCadComponent = ({
     cad_component.model_wrl_url ??
     cad_component.model_stl_url
   const gltfUrl = cad_component.model_glb_url ?? cad_component.model_gltf_url
+  const stepUrl = cad_component.model_step_url
   const rotationOffset = cad_component.rotation
     ? tuple(
         (cad_component.rotation.x * Math.PI) / 180,
@@ -99,6 +97,31 @@ export const AnyCadComponent = ({
       <GltfModel
         key={cad_component.cad_component_id}
         gltfUrl={gltfUrl}
+        position={
+          cad_component.position
+            ? [
+                cad_component.position.x,
+                cad_component.position.y,
+                cad_component.position.z,
+              ]
+            : undefined
+        }
+        rotation={rotationOffset}
+        scale={cad_component.model_unit_to_mm_scale_factor}
+        onHover={handleHover}
+        onUnhover={handleUnhover}
+        isHovered={isHovered}
+        isTranslucent={cad_component.show_as_translucent_model}
+      />
+    )
+  } else if (
+    stepUrl &&
+    !cad_component.model_jscad &&
+    !cad_component.footprinter_string
+  ) {
+    modelComponent = (
+      <StepModel
+        stepUrl={stepUrl}
         position={
           cad_component.position
             ? [
