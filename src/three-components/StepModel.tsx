@@ -140,6 +140,50 @@ async function convertStepUrlToGlbUrl(stepUrl: string): Promise<string> {
   return URL.createObjectURL(new Blob([glb], { type: "model/gltf-binary" }))
 }
 
+const CACHE_PREFIX = "step-glb-cache:"
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer)
+  const chunkSize = 0x8000
+  let binary = ""
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize)
+    binary += String.fromCharCode(...chunk)
+  }
+  return btoa(binary)
+}
+
+function base64ToArrayBuffer(base64: string): ArrayBuffer {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return bytes.buffer
+}
+
+function getCachedGlb(stepUrl: string): ArrayBuffer | null {
+  try {
+    const cached = localStorage.getItem(`${CACHE_PREFIX}${stepUrl}`)
+    if (!cached) {
+      return null
+    }
+    return base64ToArrayBuffer(cached)
+  } catch (error) {
+    console.warn("Failed to read STEP GLB cache", error)
+    return null
+  }
+}
+
+function setCachedGlb(stepUrl: string, glb: ArrayBuffer): void {
+  try {
+    const encoded = arrayBufferToBase64(glb)
+    localStorage.setItem(`${CACHE_PREFIX}${stepUrl}`, encoded)
+  } catch (error) {
+    console.warn("Failed to write STEP GLB cache", error)
+  }
+}
+
 type StepModelProps = {
   stepUrl: string
   position?: [number, number, number]
@@ -166,6 +210,19 @@ export const StepModel = ({
   useEffect(() => {
     let isActive = true
     let objectUrl: string | null = null
+    const cachedGlb = getCachedGlb(stepUrl)
+    if (cachedGlb) {
+      objectUrl = URL.createObjectURL(
+        new Blob([cachedGlb], { type: "model/gltf-binary" }),
+      )
+      setStepGltfUrl(objectUrl)
+      return () => {
+        isActive = false
+        if (objectUrl) {
+          URL.revokeObjectURL(objectUrl)
+        }
+      }
+    }
     void convertStepUrlToGlbUrl(stepUrl)
       .then((generatedUrl) => {
         if (!isActive) {
@@ -174,6 +231,14 @@ export const StepModel = ({
         }
         objectUrl = generatedUrl
         setStepGltfUrl(generatedUrl)
+        fetch(generatedUrl)
+          .then((response) => response.arrayBuffer())
+          .then((glbBuffer) => {
+            setCachedGlb(stepUrl, glbBuffer)
+          })
+          .catch((error) => {
+            console.warn("Failed to cache STEP GLB", error)
+          })
       })
       .catch((error) => {
         console.error("Failed to convert STEP file to GLB", error)
