@@ -272,7 +272,7 @@ export function createSilkscreenTextureForLayer({
       halfHeightPx,
     )
 
-    const hasStroke = rect.has_stroke ?? false
+    const hasStroke = rect.stroke_width ?? false
     const isFilled = rect.is_filled ?? true
     const isDashed = rect.is_stroke_dashed ?? false
     const strokeWidthPx = hasStroke
