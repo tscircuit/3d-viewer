@@ -32,10 +32,6 @@ export const CadComponentStepModel = () => {
   useEffect(() => {
     const renderCircuit = async () => {
       const json = await createCircuit(stepModelUrl)
-      const cadComp = json.find((item) => item.type === "cad_component")
-      if (cadComp) {
-        cadComp.model_unit_to_mm_scale_factor = 1000
-      }
       setCircuitJson(json)
     }
     renderCircuit()
