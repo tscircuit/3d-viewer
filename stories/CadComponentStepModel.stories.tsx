@@ -13,7 +13,7 @@ const createCircuit = async (modelUrl: string) => {
     <board width="10mm" height="10mm">
       <chip
         name="U1"
-        footprint="soic8"
+        footprint="pinrow1"
         cadModel={
           <cadassembly>
             <cadmodel modelUrl={modelUrl} />
