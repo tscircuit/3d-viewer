@@ -13,6 +13,7 @@ import { HoverProvider } from "./HoverContext"
 import { removeExistingCanvases } from "./remove-existing-canvases"
 import { configureRenderer } from "./configure-renderer"
 import { useCameraController } from "../contexts/CameraControllerContext"
+import { disposeObject3D, disposeRenderer } from "../utils/dispose-scene"
 
 declare global {
   interface Window {
@@ -180,11 +181,14 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
 
         window.removeEventListener("resize", handleResize)
         cancelAnimationFrame(animationFrameId)
+        disposeObject3D(rootObject.current)
+        scene.remove(rootObject.current)
+
         if (mountRef.current && renderer.domElement) {
           mountRef.current.removeChild(renderer.domElement)
         }
-        renderer.dispose()
-        scene.remove(rootObject.current)
+        disposeRenderer(renderer)
+
         if (window.__TSCIRCUIT_THREE_OBJECT === rootObject.current) {
           window.__TSCIRCUIT_THREE_OBJECT = undefined
         }

@@ -185,6 +185,7 @@ export const OrientationCubeCanvas = () => {
 
       scene.clear()
       renderer.dispose()
+      renderer.forceContextLoss()
 
       if (canvasRef.current && containerRef.current) {
         containerRef.current.removeChild(canvasRef.current)
