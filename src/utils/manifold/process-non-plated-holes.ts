@@ -18,10 +18,7 @@ function isCircleHole(hole: any): hole is {
   hole_shape?: string
   shape?: string
 } {
-  return (
-    (hole.shape === "circle" || hole.hole_shape === "circle") &&
-    typeof hole.hole_diameter === "number"
-  )
+  return hole.hole_shape === "circle" && typeof hole.hole_diameter === "number"
 }
 
 // Type guard for PcbHolePill
