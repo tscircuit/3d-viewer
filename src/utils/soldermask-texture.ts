@@ -1,6 +1,6 @@
 // Utility for creating soldermask textures for PCB layers
 import * as THREE from "three"
-import type { AnyCircuitElement, PcbBoard } from "circuit-json"
+import type { AnyCircuitElement, PcbBoard, PcbHole } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import {
   extractRectBorderRadius,
@@ -562,10 +562,10 @@ export function createSoldermaskTextureForLayer({
 
   // Get all non-plated holes (they go through both layers, so cut out on both)
   const pcbHoles = su(circuitJson).pcb_hole.list()
-  pcbHoles.forEach((hole: any) => {
-    // Skip holes that are fully covered with solder mask
-    if (hole.is_covered_with_solder_mask === true) return
+  // Skip holes that are fully covered with solder mask
 
+  pcbHoles.forEach((hole: PcbHole) => {
+    if (hole.is_covered_with_solder_mask === true) return
     const x = hole.x as number
     const y = hole.y as number
     const canvasX = canvasXFromPcb(x)
@@ -573,7 +573,7 @@ export function createSoldermaskTextureForLayer({
 
     const soldermaskMargin = hole.soldermask_margin || 0
 
-    const holeShape = hole.hole_shape || hole.shape
+    const holeShape = hole.hole_shape
 
     if (soldermaskMargin < 0) {
       ctx.globalCompositeOperation = "source-over"
@@ -597,7 +597,25 @@ export function createSoldermaskTextureForLayer({
       ctx.arc(canvasX, canvasY, canvasRadius, 0, 2 * Math.PI)
       ctx.fill()
     } else if (
-      (holeShape === "pill" || holeShape === "rotated_pill") &&
+      holeShape === "pill" &&
+      typeof hole.hole_width === "number" &&
+      typeof hole.hole_height === "number"
+    ) {
+      const width = hole.hole_width * traceTextureResolution
+      const height = hole.hole_height * traceTextureResolution
+      const radius = Math.min(width, height) / 2
+
+      ctx.beginPath()
+      ctx.roundRect(
+        canvasX - width / 2,
+        canvasY - height / 2,
+        width,
+        height,
+        radius,
+      )
+      ctx.fill()
+    } else if (
+      holeShape === "rotated_pill" &&
       typeof hole.hole_width === "number" &&
       typeof hole.hole_height === "number"
     ) {
