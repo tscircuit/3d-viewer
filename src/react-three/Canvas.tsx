@@ -77,7 +77,13 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
     }
 
     const rootObject = useRef(new THREE.Object3D())
+    const isUnmountingRef = useRef(false)
     useImperativeHandle(ref, () => rootObject.current)
+    useEffect(() => {
+      return () => {
+        isUnmountingRef.current = true
+      }
+    }, [])
 
     useEffect(() => {
       if (!mountRef.current) return
@@ -181,17 +187,19 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
 
         window.removeEventListener("resize", handleResize)
         cancelAnimationFrame(animationFrameId)
-        disposeObject3D(rootObject.current)
-        scene.remove(rootObject.current)
+        if (isUnmountingRef.current) {
+          disposeObject3D(rootObject.current)
+          scene.remove(rootObject.current)
+
+          if (window.__TSCIRCUIT_THREE_OBJECT === rootObject.current) {
+            window.__TSCIRCUIT_THREE_OBJECT = undefined
+          }
+        }
 
         if (mountRef.current && renderer.domElement) {
           mountRef.current.removeChild(renderer.domElement)
         }
         disposeRenderer(renderer)
-
-        if (window.__TSCIRCUIT_THREE_OBJECT === rootObject.current) {
-          window.__TSCIRCUIT_THREE_OBJECT = undefined
-        }
       }
     }, [scene, addFrameListener, removeFrameListener, cameraType])
 
