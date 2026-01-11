@@ -1,11 +1,18 @@
 import type React from "react"
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { AppearanceMenu } from "./AppearanceMenu"
 import type { CameraPreset } from "../hooks/cameraAnimation"
 import { useCameraController } from "../contexts/CameraControllerContext"
+import type { CustomCameraView } from "../hooks/useCustomCameraViews"
 import packageJson from "../../package.json"
-import { CheckIcon, ChevronRightIcon, DotIcon } from "./Icons"
+import {
+  CheckIcon,
+  ChevronRightIcon,
+  DotIcon,
+  TrashIcon,
+  SaveIcon,
+} from "./Icons"
 import { zIndexMap } from "../../lib/utils/z-index-map"
 
 interface ContextMenuProps {
@@ -19,9 +26,12 @@ interface ContextMenuProps {
   onAutoRotateToggle: () => void
   onDownloadGltf: () => void
   onOpenKeyboardShortcuts: () => void
+  customViews: CustomCameraView[]
+  onSaveCustomView: (name: string) => void
+  onDeleteCustomView: (id: string) => void
 }
 
-const cameraOptions: CameraPreset[] = [
+const builtInCameraOptions: CameraPreset[] = [
   "Custom",
   "Top Center Angled",
   "Top Down",
@@ -110,10 +120,47 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onAutoRotateToggle,
   onDownloadGltf,
   onOpenKeyboardShortcuts,
+  customViews,
+  onSaveCustomView,
+  onDeleteCustomView,
 }) => {
   const { cameraType, setCameraType } = useCameraController()
   const [cameraSubOpen, setCameraSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
+  const [isNamingView, setIsNamingView] = useState(false)
+  const [newViewName, setNewViewName] = useState("")
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Focus the input when naming mode is activated
+  useEffect(() => {
+    if (isNamingView && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [isNamingView])
+
+  const handleSaveNewView = () => {
+    const trimmedName = newViewName.trim()
+    if (trimmedName) {
+      onSaveCustomView(trimmedName)
+      setNewViewName("")
+      setIsNamingView(false)
+    }
+  }
+
+  // Build the list of camera options including custom views
+  const cameraOptions: CameraPreset[] = [
+    ...builtInCameraOptions,
+    ...customViews.map((view) => `custom:${view.id}` as CameraPreset),
+  ]
+
+  const getDisplayName = (preset: CameraPreset): string => {
+    if (preset.startsWith("custom:")) {
+      const id = preset.slice(7)
+      const view = customViews.find((v) => v.id === id)
+      return view?.name ?? "Custom View"
+    }
+    return preset
+  }
 
   return (
     <div
@@ -168,7 +215,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                   }}
                 >
                   <span style={{ opacity: 0.55, fontSize: 13 }}>
-                    {cameraPreset}
+                    {getDisplayName(cameraPreset)}
                   </span>
                   <ChevronRightIcon isOpen={cameraSubOpen} />
                 </div>
@@ -176,10 +223,11 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
 
               <DropdownMenu.Portal>
                 <DropdownMenu.SubContent
-                  style={{ ...contentStyles, marginLeft: -2 }}
+                  style={{ ...contentStyles, marginLeft: -2, minWidth: 200 }}
                   collisionPadding={10}
                   avoidCollisions={true}
                 >
+                  {/* Built-in camera presets */}
                   {cameraOptions.map((option) => (
                     <DropdownMenu.Item
                       key={option}
@@ -200,11 +248,98 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                       <span style={iconContainerStyles}>
                         {cameraPreset === option && <DotIcon />}
                       </span>
-                      <span style={{ display: "flex", alignItems: "center" }}>
-                        {option}
+                      <span
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          flex: 1,
+                        }}
+                      >
+                        {getDisplayName(option)}
                       </span>
+                      {/* Delete button for custom views */}
+                      {option.startsWith("custom:") && (
+                        <span
+                          style={{
+                            opacity: 0.6,
+                            cursor: "pointer",
+                            padding: "2px 4px",
+                            marginLeft: 8,
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onDeleteCustomView(option.slice(7))
+                          }}
+                          onPointerDown={(e) => e.stopPropagation()}
+                        >
+                          <TrashIcon />
+                        </span>
+                      )}
                     </DropdownMenu.Item>
                   ))}
+
+                  <DropdownMenu.Separator style={separatorStyles} />
+
+                  {/* Save Custom View with Name */}
+                  {isNamingView ? (
+                    <div
+                      style={{
+                        ...itemStyles,
+                        padding: "6px 8px",
+                      }}
+                    >
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        value={newViewName}
+                        onChange={(e) => setNewViewName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            handleSaveNewView()
+                          } else if (e.key === "Escape") {
+                            setIsNamingView(false)
+                            setNewViewName("")
+                          }
+                          e.stopPropagation()
+                        }}
+                        placeholder="Enter view name..."
+                        style={{
+                          background: "#333",
+                          border: "1px solid #555",
+                          borderRadius: 4,
+                          padding: "4px 8px",
+                          color: "#fff",
+                          fontSize: 13,
+                          width: "100%",
+                          outline: "none",
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <DropdownMenu.Item
+                      style={{
+                        ...itemStyles,
+                        backgroundColor:
+                          hoveredItem === "save-custom"
+                            ? "#404040"
+                            : "transparent",
+                      }}
+                      onSelect={(e) => {
+                        e.preventDefault()
+                        setIsNamingView(true)
+                      }}
+                      onMouseEnter={() => setHoveredItem("save-custom")}
+                      onMouseLeave={() => setHoveredItem(null)}
+                      onTouchStart={() => setHoveredItem("save-custom")}
+                    >
+                      <span style={iconContainerStyles}>
+                        <SaveIcon />
+                      </span>
+                      <span style={{ display: "flex", alignItems: "center" }}>
+                        Save View with Name...
+                      </span>
+                    </DropdownMenu.Item>
+                  )}
                 </DropdownMenu.SubContent>
               </DropdownMenu.Portal>
             </DropdownMenu.Sub>

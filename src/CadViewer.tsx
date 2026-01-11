@@ -9,6 +9,7 @@ import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
 import { useCameraPreset } from "./hooks/useCameraPreset"
+import { useCustomViewHandlers } from "./hooks/useCustomViewHandlers"
 import { useGlobalDownloadGltf } from "./hooks/useGlobalDownloadGltf"
 import {
   useRegisteredHotkey,
@@ -23,6 +24,10 @@ import {
   useCameraController,
 } from "./contexts/CameraControllerContext"
 import { ToastProvider, useToast } from "./contexts/ToastContext"
+import {
+  CustomCameraViewsProvider,
+  useCustomCameraViewsContext,
+} from "./contexts/CustomCameraViewsContext"
 import { ContextMenu } from "./components/ContextMenu"
 import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
 import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
@@ -41,9 +46,12 @@ const CadViewerInner = (props: any) => {
     return stored === "true"
   })
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>("Custom")
-  const { cameraType, setCameraType } = useCameraController()
+  const { cameraType, setCameraType, controlsRef, mainCameraRef } =
+    useCameraController()
   const { visibility, setLayerVisibility } = useLayerVisibility()
   const { showToast } = useToast()
+  const { customViews, saveCustomView, deleteCustomView } =
+    useCustomCameraViewsContext()
 
   const cameraControllerRef = useRef<CameraController | null>(null)
   const externalCameraControllerReady = props.onCameraControllerReady as
@@ -96,6 +104,16 @@ const CadViewerInner = (props: any) => {
     setMenuVisible(false)
   }, [setMenuVisible])
 
+  const { handleSaveCustomView, handleDeleteCustomView } =
+    useCustomViewHandlers({
+      mainCameraRef,
+      controlsRef,
+      saveCustomView,
+      deleteCustomView,
+      showToast,
+      closeMenu,
+    })
+
   const handleCameraControllerReady = useCallback(
     (controller: CameraController | null) => {
       cameraControllerRef.current = controller
@@ -115,6 +133,7 @@ const CadViewerInner = (props: any) => {
     cameraControllerRef,
     isAnimatingRef,
     lastPresetSelectTime,
+    customViews,
   })
 
   useRegisteredHotkey(
@@ -299,6 +318,9 @@ const CadViewerInner = (props: any) => {
             setIsKeyboardShortcutsDialogOpen(true)
             closeMenu()
           }}
+          customViews={customViews}
+          onSaveCustomView={handleSaveCustomView}
+          onDeleteCustomView={handleDeleteCustomView}
         />
       )}
       <KeyboardShortcutsDialog
@@ -317,7 +339,9 @@ export const CadViewer = (props: any) => {
     >
       <LayerVisibilityProvider>
         <ToastProvider>
-          <CadViewerInner {...props} />
+          <CustomCameraViewsProvider>
+            <CadViewerInner {...props} />
+          </CustomCameraViewsProvider>
         </ToastProvider>
       </LayerVisibilityProvider>
     </CameraControllerProvider>
