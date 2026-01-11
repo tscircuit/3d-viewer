@@ -4,6 +4,7 @@ import type {
   PcbHole,
   PcbHolePill,
   PcbHoleRotatedPill,
+  PcbHoleCircle
 } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import { createCircleHoleDrill } from "../hole-geoms"
@@ -11,13 +12,7 @@ import { SMOOTH_CIRCLE_SEGMENTS } from "../../geoms/constants"
 import { createRoundedRectPrism } from "../pad-geoms"
 
 // Type guard for PcbHole with hole_diameter
-function isCircleHole(hole: any): hole is {
-  x: number
-  y: number
-  hole_diameter: number
-  hole_shape?: string
-  shape?: string
-} {
+function isCircleHole(hole: any): hole is PcbHoleCircle {
   return hole.hole_shape === "circle" && typeof hole.hole_diameter === "number"
 }
 
