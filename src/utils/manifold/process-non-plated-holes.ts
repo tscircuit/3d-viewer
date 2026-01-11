@@ -24,7 +24,7 @@ function isCircleHole(hole: any): hole is {
 // Type guard for PcbHolePill
 function isPillHole(hole: any): hole is PcbHolePill {
   return (
-    (hole.shape === "pill" || hole.hole_shape === "pill") &&
+    hole.hole_shape === "pill" &&
     typeof hole.hole_width === "number" &&
     typeof hole.hole_height === "number"
   )
@@ -33,7 +33,7 @@ function isPillHole(hole: any): hole is PcbHolePill {
 // Type guard for PcbHoleRotatedPill
 function isRotatedPillHole(hole: any): hole is PcbHoleRotatedPill {
   return (
-    (hole.shape === "rotated_pill" || hole.hole_shape === "rotated_pill") &&
+    hole.hole_shape === "rotated_pill" &&
     typeof hole.hole_width === "number" &&
     typeof hole.hole_height === "number" &&
     typeof hole.ccw_rotation === "number"
