@@ -11,13 +11,13 @@ import { createCircleHoleDrill } from "../hole-geoms"
 import { SMOOTH_CIRCLE_SEGMENTS } from "../../geoms/constants"
 import { createRoundedRectPrism } from "../pad-geoms"
 
-// Type guard for PcbHole with hole_diameter
-function isCircleHole(hole: any): hole is PcbHoleCircle {
+// Type guard for PcbHoleCircle
+function isCircleHole(hole: PcbHole): hole is PcbHoleCircle {
   return hole.hole_shape === "circle" && typeof hole.hole_diameter === "number"
 }
 
 // Type guard for PcbHolePill
-function isPillHole(hole: any): hole is PcbHolePill {
+function isPillHole(hole: PcbHole): hole is PcbHolePill {
   return (
     hole.hole_shape === "pill" &&
     typeof hole.hole_width === "number" &&
@@ -26,7 +26,7 @@ function isPillHole(hole: any): hole is PcbHolePill {
 }
 
 // Type guard for PcbHoleRotatedPill
-function isRotatedPillHole(hole: any): hole is PcbHoleRotatedPill {
+function isRotatedPillHole(hole: PcbHole): hole is PcbHoleRotatedPill {
   return (
     hole.hole_shape === "rotated_pill" &&
     typeof hole.hole_width === "number" &&
