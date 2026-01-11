@@ -14,7 +14,7 @@ import { createManifoldBoard } from "../utils/manifold/create-manifold-board"
 import { processCutoutsForManifold } from "../utils/manifold/process-cutouts"
 import { processNonPlatedHolesForManifold } from "../utils/manifold/process-non-plated-holes"
 import { processPlatedHolesForManifold } from "../utils/manifold/process-plated-holes"
-import { processSmtPadsForManifold } from "../utils/manifold/process-smt-pads"
+
 import { processViasForManifold } from "../utils/manifold/process-vias"
 import { manifoldMeshToThreeGeometry } from "../utils/manifold-mesh-to-three-geometry"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
@@ -22,7 +22,7 @@ import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
 import { createSoldermaskTextureForLayer } from "../utils/soldermask-texture"
 import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
-import { createCopperPourTextureForLayer } from "../textures"
+import { createCopperLayerTexture } from "../textures"
 import type { LayerTextures } from "../textures"
 
 export interface ManifoldGeoms {
@@ -33,11 +33,6 @@ export interface ManifoldGeoms {
     isFaux?: boolean
   }
   platedHoles?: Array<{
-    key: string
-    geometry: THREE.BufferGeometry
-    color: THREE.Color
-  }>
-  smtPads?: Array<{
     key: string
     geometry: THREE.BufferGeometry
     color: THREE.Color
@@ -125,7 +120,7 @@ export const useManifoldBoardBuilder = (
     ) {
       // This is an empty board, manifold can't handle it, but we can just
       // render nothing for the board and show the components.
-      setGeoms({ platedHoles: [], smtPads: [], vias: [] })
+      setGeoms({ platedHoles: [], vias: [] })
       setTextures({})
       setPcbThickness(boardData.thickness ?? 0)
       setIsLoading(false)
@@ -326,16 +321,7 @@ export const useManifoldBoardBuilder = (
         }
       }
 
-      // Process SMT pads
-      const { smtPadGeoms } = processSmtPadsForManifold(
-        Manifold,
-        circuitJson,
-        currentPcbThickness,
-        manifoldInstancesForCleanup.current,
-        holeUnion,
-        boardClipVolume,
-      )
-      currentGeoms.smtPads = smtPadGeoms
+      // SMT pads are now handled by texture system in copper pour textures
 
       // Process copper pours (now as textures instead of geometry)
       // Copper pours are now handled by texture system
@@ -448,13 +434,13 @@ export const useManifoldBoardBuilder = (
       })
 
       // --- Process Copper Pours (as Textures) ---
-      layerTextureMap.topCopper = createCopperPourTextureForLayer({
+      layerTextureMap.topCopper = createCopperLayerTexture({
         layer: "top",
         circuitJson,
         boardData,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       })
-      layerTextureMap.bottomCopper = createCopperPourTextureForLayer({
+      layerTextureMap.bottomCopper = createCopperLayerTexture({
         layer: "bottom",
         circuitJson,
         boardData,
