@@ -639,8 +639,7 @@ export class BoardGeomBuilder {
     const holeDepth = this.ctx.pcbThickness * 1.5 // still cut through board fully
     const copperInset = 0.02 // tiny offset for plated hole copper cut
 
-    // @ts-expect-error TODO fix type PcbHole doesn't have hole_shape
-    if (hole.hole_shape === "round" || hole.hole_shape === "circle") {
+    if (hole.hole_shape === "circle") {
       const cyGeom = cylinder({
         center: [hole.x, hole.y, 0],
         radius: hole.hole_diameter / 2 + M,
@@ -715,7 +714,6 @@ export class BoardGeomBuilder {
         const rotationRadians = (hole.ccw_rotation * Math.PI) / 180
         pillHole = rotateZ(rotationRadians, pillHole)
       }
-
       this.boardGeom = subtract(this.boardGeom, pillHole)
       this.padGeoms = this.padGeoms.map((pg) =>
         colorize(colors.copper, subtract(pg, pillHole)),
