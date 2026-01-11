@@ -202,7 +202,7 @@ export function JscadBoardTextures({
     if (visibility.topMask) {
       const topSoldermaskMesh = createTexturePlane(
         textures.topSoldermask,
-        pcbThickness / 2 + SURFACE_OFFSET,
+        pcbThickness / 2 + SURFACE_OFFSET + 0.02,
         false,
         "jscad-top-soldermask",
         true,
@@ -217,7 +217,7 @@ export function JscadBoardTextures({
     if (visibility.bottomMask) {
       const bottomSoldermaskMesh = createTexturePlane(
         textures.bottomSoldermask,
-        -pcbThickness / 2 - SURFACE_OFFSET,
+        -pcbThickness / 2 - SURFACE_OFFSET - 0.02,
         true,
         "jscad-bottom-soldermask",
         true,
