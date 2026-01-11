@@ -4,7 +4,7 @@ import type {
   PcbHole,
   PcbHolePill,
   PcbHoleRotatedPill,
-  PcbHoleCircle
+  PcbHoleCircle,
 } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import { createCircleHoleDrill } from "../hole-geoms"
