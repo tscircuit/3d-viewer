@@ -2,6 +2,7 @@
 import * as THREE from "three"
 import type { AnyCircuitElement, PcbBoard } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
+import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import {
   extractRectBorderRadius,
   clampRectBorderRadius,
@@ -443,53 +444,20 @@ export function createSoldermaskTextureForLayer({
 
   // Get all non-plated holes (they go through both layers, so cut out on both)
   const pcbHoles = su(circuitJson).pcb_hole.list()
-  pcbHoles.forEach((hole: any) => {
-    const x = hole.x as number
-    const y = hole.y as number
-    const canvasX = canvasXFromPcb(x)
-    const canvasY = canvasYFromPcb(y)
+  if (pcbHoles.length > 0) {
+    const drawer = new CircuitToCanvasDrawer(ctx)
 
-    const holeShape = hole.hole_shape || hole.shape
+    // Set up camera bounds to match canvas coordinates
+    drawer.setCameraBounds({
+      minX: boardOutlineBounds.minX,
+      maxX: boardOutlineBounds.maxX,
+      minY: boardOutlineBounds.minY,
+      maxY: boardOutlineBounds.maxY,
+    })
 
-    if (holeShape === "circle" && typeof hole.hole_diameter === "number") {
-      const canvasRadius = (hole.hole_diameter / 2) * traceTextureResolution
-      ctx.beginPath()
-      ctx.arc(canvasX, canvasY, canvasRadius, 0, 2 * Math.PI)
-      ctx.fill()
-    } else if (
-      (holeShape === "pill" || holeShape === "rotated_pill") &&
-      typeof hole.hole_width === "number" &&
-      typeof hole.hole_height === "number"
-    ) {
-      const width = hole.hole_width * traceTextureResolution
-      const height = hole.hole_height * traceTextureResolution
-      const radius = Math.min(width, height) / 2
-      const ccwRotationDeg = hole.ccw_rotation || 0
-      // Canvas rotation is clockwise-positive, negate for ccw
-      const rotation = -ccwRotationDeg * (Math.PI / 180)
-
-      // Apply rotation if specified
-      if (rotation) {
-        ctx.save()
-        ctx.translate(canvasX, canvasY)
-        ctx.rotate(rotation)
-        ctx.beginPath()
-        ctx.roundRect(-width / 2, -height / 2, width, height, radius)
-        ctx.fill()
-        ctx.restore()
-      } else {
-        ctx.beginPath()
-        ctx.roundRect(
-          canvasX - width / 2,
-          canvasY - height / 2,
-          width,
-          height,
-          radius,
-        )
-        ctx.fill()
-      }
-    }
-  })
+    // Draw holes using circuit-to-canvas (composite operation is already set to "destination-out")
+    drawer.drawElements(pcbHoles, { layers: [layer] })
+  }
 
   // Get copper pours that are not covered with soldermask
   const pcbCopperPours = su(circuitJson).pcb_copper_pour.list()
