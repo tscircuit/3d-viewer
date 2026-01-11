@@ -170,7 +170,7 @@ export function createTextureMeshes(
   const topSoldermaskMesh = createTexturePlane(
     {
       texture: textures.topSoldermask,
-      yOffset: pcbThickness / 2 + 0.001, // Just above board surface
+      yOffset: pcbThickness / 2 + 0.001 + 0.02, // Just above board surface
       isBottomLayer: false,
       textureType: "soldermask",
       usePolygonOffset: true, // Enable polygon offset
@@ -184,7 +184,7 @@ export function createTextureMeshes(
   const bottomSoldermaskMesh = createTexturePlane(
     {
       texture: textures.bottomSoldermask,
-      yOffset: -pcbThickness / 2 - 0.001, // Just below board surface (bottom side)
+      yOffset: -pcbThickness / 2 - 0.001 - 0.02, // Just below board surface (bottom side)
       isBottomLayer: true,
       textureType: "soldermask",
       usePolygonOffset: true, // Enable polygon offset

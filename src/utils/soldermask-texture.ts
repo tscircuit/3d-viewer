@@ -7,6 +7,7 @@ import {
   clampRectBorderRadius,
 } from "./rect-border-radius"
 import { calculateOutlineBounds } from "./outline-bounds"
+import { darkenColor } from "./darken-color"
 
 export function createSoldermaskTextureForLayer({
   layer,
@@ -71,26 +72,73 @@ export function createSoldermaskTextureForLayer({
   const pcbSmtPads = su(circuitJson).pcb_smtpad.list()
   const smtPadsOnLayer = pcbSmtPads.filter((pad) => pad.layer === layer)
 
-  smtPadsOnLayer.forEach((pad: any) => {
-    // Handle polygon pads differently - they don't have x, y coordinates
-    if (pad.shape === "polygon" && pad.points) {
-      ctx.beginPath()
-      pad.points.forEach((point: { x: number; y: number }, index: number) => {
-        const px = canvasXFromPcb(point.x)
-        const py = canvasYFromPcb(point.y)
-        if (index === 0) {
-          ctx.moveTo(px, py)
-        } else {
-          ctx.lineTo(px, py)
-        }
-      })
-      ctx.closePath()
-      ctx.fill()
-      return
-    }
+  ctx.globalCompositeOperation = "source-over"
+  const darkerSoldermaskColor = darkenColor(soldermaskColor, 0.7) // 30% of original brightness for covered areas
+  ctx.fillStyle = darkerSoldermaskColor
 
-    // For non-polygon pads, use x and y coordinates
-    if (pad.x === undefined || pad.y === undefined) return
+  const coveredSmtPads = smtPadsOnLayer.filter(
+    (pad) => pad.is_covered_with_solder_mask === true,
+  )
+  const coveredPlatedHoles = su(circuitJson)
+    .pcb_plated_hole.list()
+    .filter(
+      (hole) =>
+        hole.is_covered_with_solder_mask === true &&
+        hole.layers?.includes(layer),
+    )
+  const coveredHoles = su(circuitJson)
+    .pcb_hole.list()
+    .filter((hole) => hole.is_covered_with_solder_mask === true)
+
+  const coveredElements = [
+    ...coveredSmtPads,
+    ...coveredPlatedHoles,
+    ...coveredHoles,
+  ]
+
+  coveredElements.forEach((element: any) => {
+    const x = element.x
+    const y = element.y
+    const canvasX = canvasXFromPcb(x)
+    const canvasY = canvasYFromPcb(y)
+
+    if (element.type === "pcb_smtpad") {
+      if (element.shape === "circle") {
+        const radius =
+          (element.radius ?? element.width / 2) * traceTextureResolution
+        ctx.beginPath()
+        ctx.arc(canvasX, canvasY, radius, 0, 2 * Math.PI)
+        ctx.fill()
+      } else if (element.shape === "rect") {
+        const width = element.width * traceTextureResolution
+        const height = element.height * traceTextureResolution
+        ctx.fillRect(canvasX - width / 2, canvasY - height / 2, width, height)
+      }
+    } else if (element.type === "pcb_plated_hole") {
+      if (element.shape === "circle") {
+        const outerDiameter = element.outer_diameter
+        const canvasRadius = (outerDiameter / 2) * traceTextureResolution
+        ctx.beginPath()
+        ctx.arc(canvasX, canvasY, canvasRadius, 0, 2 * Math.PI)
+        ctx.fill()
+      }
+    } else if (element.type === "pcb_hole") {
+      if (element.hole_shape === "circle") {
+        const canvasRadius =
+          (element.hole_diameter / 2) * traceTextureResolution
+        ctx.beginPath()
+        ctx.arc(canvasX, canvasY, canvasRadius, 0, 2 * Math.PI)
+        ctx.fill()
+      }
+    }
+  })
+
+  // Now cut out openings for pads, vias, and plated holes (expose copper)
+  ctx.globalCompositeOperation = "destination-out"
+  ctx.fillStyle = "black"
+
+  smtPadsOnLayer.forEach((pad: any) => {
+    if (pad.is_covered_with_solder_mask === true) return
 
     // Skip pads with invalid (NaN) coordinates
     if (Number.isNaN(pad.x) || Number.isNaN(pad.y)) {
@@ -105,9 +153,32 @@ export function createSoldermaskTextureForLayer({
     const canvasX = canvasXFromPcb(x)
     const canvasY = canvasYFromPcb(y)
 
+    const soldermaskMargin = pad.soldermask_margin || 0
+
+    if (soldermaskMargin < 0) {
+      ctx.globalCompositeOperation = "source-over"
+      ctx.fillStyle = darkerSoldermaskColor
+
+      if (pad.shape === "rect") {
+        const width = pad.width * traceTextureResolution
+        const height = pad.height * traceTextureResolution
+        ctx.fillRect(canvasX - width / 2, canvasY - height / 2, width, height)
+      } else if (pad.shape === "circle") {
+        const radius = (pad.radius ?? pad.width / 2) * traceTextureResolution
+        ctx.beginPath()
+        ctx.arc(canvasX, canvasY, radius, 0, 2 * Math.PI)
+        ctx.fill()
+      }
+
+      ctx.globalCompositeOperation = "destination-out"
+      ctx.fillStyle = "black"
+    }
+
     if (pad.shape === "rect") {
-      const width = (pad.width as number) * traceTextureResolution
-      const height = (pad.height as number) * traceTextureResolution
+      const width =
+        ((pad.width as number) + 2 * soldermaskMargin) * traceTextureResolution
+      const height =
+        ((pad.height as number) + 2 * soldermaskMargin) * traceTextureResolution
       const rawRadius = extractRectBorderRadius(pad)
       const borderRadius =
         clampRectBorderRadius(
@@ -131,13 +202,16 @@ export function createSoldermaskTextureForLayer({
       }
     } else if (pad.shape === "circle") {
       const radius =
-        ((pad.radius ?? pad.width / 2) as number) * traceTextureResolution
+        (((pad.radius ?? pad.width / 2) as number) + soldermaskMargin) *
+        traceTextureResolution
       ctx.beginPath()
       ctx.arc(canvasX, canvasY, radius, 0, 2 * Math.PI)
       ctx.fill()
     } else if (pad.shape === "pill") {
-      const width = (pad.width as number) * traceTextureResolution
-      const height = (pad.height as number) * traceTextureResolution
+      const width =
+        ((pad.width as number) + 2 * soldermaskMargin) * traceTextureResolution
+      const height =
+        ((pad.height as number) + 2 * soldermaskMargin) * traceTextureResolution
       const rawRadius = extractRectBorderRadius(pad)
       const borderRadius =
         clampRectBorderRadius(
@@ -156,8 +230,10 @@ export function createSoldermaskTextureForLayer({
       )
       ctx.fill()
     } else if (pad.shape === "rotated_rect") {
-      const width = (pad.width as number) * traceTextureResolution
-      const height = (pad.height as number) * traceTextureResolution
+      const width =
+        ((pad.width as number) + 2 * soldermaskMargin) * traceTextureResolution
+      const height =
+        ((pad.height as number) + 2 * soldermaskMargin) * traceTextureResolution
       const rawRadius = extractRectBorderRadius(pad)
       const borderRadius =
         clampRectBorderRadius(
@@ -198,26 +274,51 @@ export function createSoldermaskTextureForLayer({
   pcbPlatedHoles.forEach((hole: any) => {
     if (!hole.layers?.includes(layer)) return
 
+    if (hole.is_covered_with_solder_mask === true) return
+
     const x = hole.x as number
     const y = hole.y as number
     const canvasX = canvasXFromPcb(x)
     const canvasY = canvasYFromPcb(y)
 
+    const soldermaskMargin = hole.soldermask_margin || 0
+
+    if (soldermaskMargin < 0) {
+      ctx.globalCompositeOperation = "source-over"
+      ctx.fillStyle = darkerSoldermaskColor
+
+      if (hole.shape === "circle") {
+        const outerDiameter = hole.outer_diameter
+        const canvasRadius = (outerDiameter / 2) * traceTextureResolution
+        ctx.beginPath()
+        ctx.arc(canvasX, canvasY, canvasRadius, 0, 2 * Math.PI)
+        ctx.fill()
+      }
+
+      ctx.globalCompositeOperation = "destination-out"
+      ctx.fillStyle = "black"
+    }
+
     if (hole.shape === "circle") {
       const outerDiameter = hole.outer_diameter as number
-      const canvasRadius = (outerDiameter / 2) * traceTextureResolution
+      const canvasRadius =
+        (outerDiameter / 2 + soldermaskMargin) * traceTextureResolution
       ctx.beginPath()
       ctx.arc(canvasX, canvasY, canvasRadius, 0, 2 * Math.PI)
       ctx.fill()
     } else if (hole.shape === "pill") {
       const width =
-        ((hole.outer_width ??
+        (((hole.outer_width ??
           hole.outer_diameter ??
-          hole.hole_width) as number) * traceTextureResolution
+          hole.hole_width) as number) +
+          2 * soldermaskMargin) *
+        traceTextureResolution
       const height =
-        ((hole.outer_height ??
+        (((hole.outer_height ??
           hole.outer_diameter ??
-          hole.hole_height) as number) * traceTextureResolution
+          hole.hole_height) as number) +
+          2 * soldermaskMargin) *
+        traceTextureResolution
       const radius = Math.min(width, height) / 2
       const ccwRotationDeg = (hole.ccw_rotation as number) || 0
       // we need to negate the rotation to match the 3D geometry
@@ -245,13 +346,17 @@ export function createSoldermaskTextureForLayer({
       }
     } else if (hole.shape === "oval") {
       const width =
-        ((hole.outer_width ??
+        (((hole.outer_width ??
           hole.outer_diameter ??
-          hole.hole_width) as number) * traceTextureResolution
+          hole.hole_width) as number) +
+          2 * soldermaskMargin) *
+        traceTextureResolution
       const height =
-        ((hole.outer_height ??
+        (((hole.outer_height ??
           hole.outer_diameter ??
-          hole.hole_height) as number) * traceTextureResolution
+          hole.hole_height) as number) +
+          2 * soldermaskMargin) *
+        traceTextureResolution
       const radiusX = width / 2
       const radiusY = height / 2
       const ccwRotationDeg = (hole.ccw_rotation as number) || 0
@@ -283,13 +388,17 @@ export function createSoldermaskTextureForLayer({
 
       if (holeShape === "pill" || holeShape === "rotated_pill") {
         const width =
-          ((hole.outer_width ??
+          (((hole.outer_width ??
             hole.outer_diameter ??
-            hole.hole_width) as number) * traceTextureResolution
+            hole.hole_width) as number) +
+            2 * soldermaskMargin) *
+          traceTextureResolution
         const height =
-          ((hole.outer_height ??
+          (((hole.outer_height ??
             hole.outer_diameter ??
-            hole.hole_height) as number) * traceTextureResolution
+            hole.hole_height) as number) +
+            2 * soldermaskMargin) *
+          traceTextureResolution
         const radius = Math.min(width, height) / 2
         const ccwRotationDeg = (hole.ccw_rotation as number) || 0
         // Canvas rotation is clockwise-positive, negate for ccw
@@ -317,13 +426,17 @@ export function createSoldermaskTextureForLayer({
         }
       } else if (holeShape === "oval") {
         const width =
-          ((hole.outer_width ??
+          (((hole.outer_width ??
             hole.outer_diameter ??
-            hole.hole_width) as number) * traceTextureResolution
+            hole.hole_width) as number) +
+            2 * soldermaskMargin) *
+          traceTextureResolution
         const height =
-          ((hole.outer_height ??
+          (((hole.outer_height ??
             hole.outer_diameter ??
-            hole.hole_height) as number) * traceTextureResolution
+            hole.hole_height) as number) +
+            2 * soldermaskMargin) *
+          traceTextureResolution
         const radiusX = width / 2
         const radiusY = height / 2
         const ccwRotationDeg = (hole.ccw_rotation as number) || 0
@@ -354,7 +467,8 @@ export function createSoldermaskTextureForLayer({
         }
       } else if (holeShape === "circle") {
         const outerDiameter =
-          (hole.outer_diameter ?? hole.hole_diameter ?? 0) *
+          ((hole.outer_diameter ?? hole.hole_diameter ?? 0) +
+            2 * soldermaskMargin) *
           traceTextureResolution
         const canvasRadius = outerDiameter / 2
         ctx.beginPath()
@@ -364,10 +478,12 @@ export function createSoldermaskTextureForLayer({
     } else if (hole.shape === "circular_hole_with_rect_pad") {
       // Handle circular hole with rectangular pad
       const padWidth =
-        (hole.rect_pad_width ?? hole.hole_diameter ?? 0) *
+        ((hole.rect_pad_width ?? hole.hole_diameter ?? 0) +
+          2 * soldermaskMargin) *
         traceTextureResolution
       const padHeight =
-        (hole.rect_pad_height ?? hole.hole_diameter ?? 0) *
+        ((hole.rect_pad_height ?? hole.hole_diameter ?? 0) +
+          2 * soldermaskMargin) *
         traceTextureResolution
       const rawRadius = extractRectBorderRadius(hole)
       const borderRadius =
@@ -398,9 +514,12 @@ export function createSoldermaskTextureForLayer({
     } else if (hole.shape === "pill_hole_with_rect_pad") {
       // Handle pill-shaped hole with rectangular pad
       const padWidth =
-        (hole.rect_pad_width ?? hole.hole_width ?? 0) * traceTextureResolution
+        ((hole.rect_pad_width ?? hole.hole_width ?? 0) + 2 * soldermaskMargin) *
+        traceTextureResolution
       const padHeight =
-        (hole.rect_pad_height ?? hole.hole_height ?? 0) * traceTextureResolution
+        ((hole.rect_pad_height ?? hole.hole_height ?? 0) +
+          2 * soldermaskMargin) *
+        traceTextureResolution
       const rawRadius = extractRectBorderRadius(hole)
       const borderRadius =
         clampRectBorderRadius(
@@ -444,15 +563,36 @@ export function createSoldermaskTextureForLayer({
   // Get all non-plated holes (they go through both layers, so cut out on both)
   const pcbHoles = su(circuitJson).pcb_hole.list()
   pcbHoles.forEach((hole: any) => {
+    // Skip holes that are fully covered with solder mask
+    if (hole.is_covered_with_solder_mask === true) return
+
     const x = hole.x as number
     const y = hole.y as number
     const canvasX = canvasXFromPcb(x)
     const canvasY = canvasYFromPcb(y)
 
+    const soldermaskMargin = hole.soldermask_margin || 0
+
     const holeShape = hole.hole_shape || hole.shape
 
+    if (soldermaskMargin < 0) {
+      ctx.globalCompositeOperation = "source-over"
+      ctx.fillStyle = darkerSoldermaskColor
+
+      if (holeShape === "circle" && typeof hole.hole_diameter === "number") {
+        const canvasRadius = (hole.hole_diameter / 2) * traceTextureResolution
+        ctx.beginPath()
+        ctx.arc(canvasX, canvasY, canvasRadius, 0, 2 * Math.PI)
+        ctx.fill()
+      }
+
+      ctx.globalCompositeOperation = "destination-out"
+      ctx.fillStyle = "black"
+    }
+
     if (holeShape === "circle" && typeof hole.hole_diameter === "number") {
-      const canvasRadius = (hole.hole_diameter / 2) * traceTextureResolution
+      const canvasRadius =
+        (hole.hole_diameter / 2 + soldermaskMargin) * traceTextureResolution
       ctx.beginPath()
       ctx.arc(canvasX, canvasY, canvasRadius, 0, 2 * Math.PI)
       ctx.fill()
@@ -461,8 +601,10 @@ export function createSoldermaskTextureForLayer({
       typeof hole.hole_width === "number" &&
       typeof hole.hole_height === "number"
     ) {
-      const width = hole.hole_width * traceTextureResolution
-      const height = hole.hole_height * traceTextureResolution
+      const width =
+        (hole.hole_width + 2 * soldermaskMargin) * traceTextureResolution
+      const height =
+        (hole.hole_height + 2 * soldermaskMargin) * traceTextureResolution
       const radius = Math.min(width, height) / 2
       const ccwRotationDeg = hole.ccw_rotation || 0
       // Canvas rotation is clockwise-positive, negate for ccw
