@@ -1,4 +1,3 @@
-import type { PcbSmtPad } from "circuit-json"
 import {
   clampRectBorderRadius,
   extractRectBorderRadius,
@@ -57,44 +56,4 @@ export function createRoundedRectPrism({
   })
 
   return Manifold.union(shapes)
-}
-
-export function createPadManifoldOp({
-  Manifold,
-  pad,
-  padBaseThickness,
-}: {
-  Manifold: any
-  pad: PcbSmtPad
-  padBaseThickness: number
-}) {
-  if (pad.shape === "rect") {
-    const rectBorderRadius = extractRectBorderRadius(pad)
-    return createRoundedRectPrism({
-      Manifold,
-      width: pad.width,
-      height: pad.height,
-      thickness: padBaseThickness,
-      borderRadius: rectBorderRadius,
-    })
-  } else if (pad.shape === "rotated_rect") {
-    const rectBorderRadius = extractRectBorderRadius(pad)
-    let padOp = createRoundedRectPrism({
-      Manifold,
-      width: pad.width,
-      height: pad.height,
-      thickness: padBaseThickness,
-      borderRadius: rectBorderRadius,
-    })
-
-    const rotation = pad.ccw_rotation ?? 0
-    if (rotation) {
-      padOp = padOp.rotate([0, 0, rotation])
-    }
-
-    return padOp
-  } else if (pad.shape === "circle" && pad.radius) {
-    return Manifold.cylinder(padBaseThickness, pad.radius, -1, 32, true)
-  }
-  return null
 }
