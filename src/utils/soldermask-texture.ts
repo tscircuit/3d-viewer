@@ -7,7 +7,7 @@ import {
   clampRectBorderRadius,
 } from "./rect-border-radius"
 import { calculateOutlineBounds } from "./outline-bounds"
-import { darkenColor } from "./darken-color"
+import { adjustRgbColorBrightness } from "./adjust-rgb-color-brightness"
 
 export function createSoldermaskTextureForLayer({
   layer,
@@ -73,8 +73,8 @@ export function createSoldermaskTextureForLayer({
   const smtPadsOnLayer = pcbSmtPads.filter((pad) => pad.layer === layer)
 
   ctx.globalCompositeOperation = "source-over"
-  const darkerSoldermaskColor = darkenColor(soldermaskColor, 0.7) // 30% of original brightness for covered areas
-  ctx.fillStyle = darkerSoldermaskColor
+  const lighterSoldermaskColor = adjustRgbColorBrightness(soldermaskColor, 1.3) // 30% brighter for covered areas
+  ctx.fillStyle = lighterSoldermaskColor
 
   const coveredSmtPads = smtPadsOnLayer.filter(
     (pad) => pad.is_covered_with_solder_mask === true,
@@ -157,7 +157,7 @@ export function createSoldermaskTextureForLayer({
 
     if (soldermaskMargin < 0) {
       ctx.globalCompositeOperation = "source-over"
-      ctx.fillStyle = darkerSoldermaskColor
+      ctx.fillStyle = lighterSoldermaskColor
 
       if (pad.shape === "rect") {
         const width = pad.width * traceTextureResolution
@@ -285,7 +285,7 @@ export function createSoldermaskTextureForLayer({
 
     if (soldermaskMargin < 0) {
       ctx.globalCompositeOperation = "source-over"
-      ctx.fillStyle = darkerSoldermaskColor
+      ctx.fillStyle = lighterSoldermaskColor
 
       if (hole.shape === "circle") {
         const outerDiameter = hole.outer_diameter
@@ -577,7 +577,7 @@ export function createSoldermaskTextureForLayer({
 
     if (soldermaskMargin < 0) {
       ctx.globalCompositeOperation = "source-over"
-      ctx.fillStyle = darkerSoldermaskColor
+      ctx.fillStyle = lighterSoldermaskColor
 
       if (holeShape === "circle" && typeof hole.hole_diameter === "number") {
         const canvasRadius = (hole.hole_diameter / 2) * traceTextureResolution
