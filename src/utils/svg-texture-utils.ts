@@ -47,8 +47,8 @@ export async function generatePcbTexture(
     const pngBuffer = pngData.asPng()
 
     // Convert to data URL
-    const blob = new Blob([pngBuffer], { type: "image/png" })
-    return URL.createObjectURL(blob)
+  const blob = new Blob([new Uint8Array(pngBuffer)], { type: "image/png" }) 
+      return URL.createObjectURL(blob)
   } catch (error) {
     console.error("Error generating PCB texture:", error)
     throw new Error("Failed to generate PCB texture")
