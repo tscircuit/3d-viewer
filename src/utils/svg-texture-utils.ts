@@ -1,6 +1,6 @@
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
-import { initWasm, Resvg } from "@resvg/resvg-wasm
-  "import type { AnyCircuitElement } from "circuit-json"
+import { initWasm, Resvg } from "@resvg/resvg-wasm"
+  import type { AnyCircuitElement } from "circuit-json"
 
 let wasmInitialized = false
 let wasmInitPromise: Promise<void> | null = null
