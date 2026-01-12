@@ -1,6 +1,6 @@
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { initWasm, Resvg } from "@resvg/resvg-wasm"
-  import type { AnyCircuitElement } from "circuit-json"
+import type { AnyCircuitElement } from "circuit-json"
 
 let wasmInitialized = false
 let wasmInitPromise: Promise<void> | null = null
@@ -12,16 +12,15 @@ export async function initializeResvg(): Promise<void> {
   if (!wasmInitialized) {
     if (!wasmInitPromise) {
       wasmInitPromise = (async () => {
-                try {
-
-                    await initWasm(fetch("https://unpkg.com/@resvg/resvg-wasm/index_bg.wasm"))
+      try {
+        await initWasm(
+          fetch("https://unpkg.com/@resvg/resvg-wasm/index_bg.wasm"),
+        )
         wasmInitialized = true
-                          } catch (error) {
-                            wasmInitPromise = null  // Reset to allow retry
-                            throw error
-                          }
-      })()
-    }
+      } catch (error) {
+        wasmInitPromise = null // Reset to allow retry
+        throw error
+      }    }
     await wasmInitPromise
   }
 }
