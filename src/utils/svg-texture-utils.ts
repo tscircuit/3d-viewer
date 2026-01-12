@@ -3,14 +3,22 @@ import initWasm, { Resvg } from "@resvg/resvg-wasm"
 import type { AnyCircuitElement } from "circuit-json"
 
 let wasmInitialized = false
+let wasmInitPromise: Promise<void> | null = null
 
 /**
  * Initialize resvg-wasm
  */
 export async function initializeResvg(): Promise<void> {
   if (!wasmInitialized) {
-        await initWasm(fetch("https://unpkg.com/@resvg/resvg-wasm/index_bg.wasm"))
-    wasmInitialized = true
+    if (!wasmInitPromise) {
+      wasmInitPromise = (async () => {
+        const wasmResponse = await fetch("https://unpkg.com/@resvg/resvg-wasm/index_bg.wasm")
+        await initWasm(wasmResponse)
+        wasmInitialized = true
+      })()
+    }
+    await wasmInitPromise
+  }
 }
 
 /**
@@ -23,7 +31,7 @@ export async function initializeResvg(): Promise<void> {
 export async function generatePcbTexture(
   circuitElements: AnyCircuitElement[],
   width = 1024,
-  height = 1024
+  height = 1024,
 ): Promise<string> {
   try {
     // Initialize WASM if needed
