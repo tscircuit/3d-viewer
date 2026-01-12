@@ -12,9 +12,14 @@ export async function initializeResvg(): Promise<void> {
   if (!wasmInitialized) {
     if (!wasmInitPromise) {
       wasmInitPromise = (async () => {
+                try {
         const wasmResponse = await fetch("https://unpkg.com/@resvg/resvg-wasm/index_bg.wasm")
         await initWasm(wasmResponse)
         wasmInitialized = true
+                          } catch (error) {
+                            wasmInitPromise = null  // Reset to allow retry
+                            throw error
+                          }
       })()
     }
     await wasmInitPromise
