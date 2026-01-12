@@ -9,8 +9,9 @@ let wasmInitialized = false
  */
 export async function initializeResvg(): Promise<void> {
   if (!wasmInitialized) {
-    await initWasm(fetch("https://unpkg.com/@resvg/resvg-wasm/index_bg.wasm"))
-    wasmInitialized = true
+    const wasmResponse = await fetch("https://unpkg.com/@resvg/resvg-wasm/index_bg.wasm")
+    await initWasm(wasmResponse)
+      wasmInitialized = true
   }
 }
 
