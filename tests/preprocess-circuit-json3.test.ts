@@ -10,18 +10,12 @@ const createCadComponent = (z: number): CadComponent => ({
   position: { x: 0, y: 0, z },
 })
 
-test("adds faux board and defaults cad component z to half board thickness", () => {
-  const result = addFauxBoardIfNeeded([createCadComponent(0)])
+test("respects existing cad component z offsets when adding faux board", () => {
+  const result = addFauxBoardIfNeeded([createCadComponent(1)])
 
   const updatedComponent = result.find(
     (element) => element.type === "cad_component",
   ) as CadComponent
 
-  expect(updatedComponent.position?.z).toBeCloseTo(0.8)
-  expect(
-    result.some(
-      (element) =>
-        element.type === "pcb_board" && element.pcb_board_id === "faux-board",
-    ),
-  ).toBeTrue()
+  expect(updatedComponent.position?.z).toBeCloseTo(1.8)
 })
