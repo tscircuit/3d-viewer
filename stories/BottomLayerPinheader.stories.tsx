@@ -28,6 +28,6 @@ export const BottomLayerPinheader = () => {
 }
 
 export default {
-  title: "Bugs/BottomLayerPinheader",
+  title: "BottomLayerPinheader",
   component: BottomLayerPinheader,
 }
