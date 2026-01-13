@@ -24,17 +24,21 @@ export function addFauxBoardIfNeeded(
     return circuitJson
   }
 
-  // For faux boards, adjust component z positions to sit on top of the board
-  // (same as real boards where components are at boardThickness/2)
+  // For faux boards, adjust component z positions to sit on the correct side
+  // Top layer components sit on top (+boardThickness/2)
+  // Bottom layer components sit on bottom (-boardThickness/2)
   const boardThickness = fauxBoard.thickness
-  const componentZ = boardThickness / 2
+  const topComponentZ = boardThickness / 2
+  const bottomComponentZ = -boardThickness / 2
 
   const processedCircuitJson = circuitJson.map((element) => {
     if (element.type === "cad_component") {
       const cadComponent = element as CadComponent
       if (cadComponent.position) {
         const positionZOffset = cadComponent.position.z ?? 0
-        // Set z position to componentZ, preserving x and y
+        // Determine which side of the board the component should be on
+        const isBottomLayer = cadComponent.layer === "bottom"
+        const componentZ = isBottomLayer ? bottomComponentZ : topComponentZ
         return {
           ...cadComponent,
           position: {
