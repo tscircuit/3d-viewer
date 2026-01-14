@@ -12,15 +12,17 @@ export async function initializeResvg(): Promise<void> {
   if (!wasmInitialized) {
     if (!wasmInitPromise) {
       wasmInitPromise = (async () => {
-      try {
-        await initWasm(
-          fetch("https://unpkg.com/@resvg/resvg-wasm/index_bg.wasm"),
-        )
-        wasmInitialized = true
-      } catch (error) {
-        wasmInitPromise = null // Reset to allow retry
-        throw error
-      }    }
+        try {
+          await initWasm(
+            fetch("https://unpkg.com/@resvg/resvg-wasm/index_bg.wasm"),
+          )
+          wasmInitialized = true
+        } catch (error) {
+          wasmInitPromise = null
+          throw error
+        }
+      })()
+    }
     await wasmInitPromise
   }
 }
@@ -38,13 +40,10 @@ export async function generatePcbTexture(
   height = 1024,
 ): Promise<string> {
   try {
-    // Initialize WASM if needed
     await initializeResvg()
 
-    // Convert circuit to SVG
     const svgString = convertCircuitJsonToPcbSvg(circuitElements)
 
-    // Convert SVG to PNG using resvg-wasm
     const resvg = new Resvg(svgString, {
       fitTo: {
         mode: "width",
@@ -55,7 +54,6 @@ export async function generatePcbTexture(
     const pngData = resvg.render()
     const pngBuffer = pngData.asPng()
 
-    // Convert to data URL
     const blob = new Blob([new Uint8Array(pngBuffer)], { type: "image/png" })
     return URL.createObjectURL(blob)
   } catch (error) {
@@ -66,7 +64,6 @@ export async function generatePcbTexture(
 
 /**
  * Clean up texture URL to prevent memory leaks
- * @param textureUrl - URL to revoke
  */
 export function cleanupTextureUrl(textureUrl: string): void {
   if (textureUrl.startsWith("blob:")) {
