@@ -44,10 +44,10 @@ const createCircuitWithTexture = async () => {
 }
 
 export const PcbTextureDemo = () => {
-  const [circuitJson, setCircuitJson] = useState(null)
-  const [textureUrl, setTextureUrl] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [circuitJson, setCircuitJson] = useState<any | null>(null)
+  const [textureUrl, setTextureUrl] = useState<string | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const renderCircuitWithTexture = async () => {
