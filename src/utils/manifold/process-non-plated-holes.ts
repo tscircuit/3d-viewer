@@ -96,6 +96,24 @@ export function processNonPlatedHolesForManifold(
       const translatedPillDrill = pillDrillOp.translate([hole.x, hole.y, 0])
       manifoldInstancesForCleanup.push(translatedPillDrill)
       nonPlatedHoleBoardDrills.push(translatedPillDrill)
+    } else if (hole.hole_shape === "oval") {
+      const holeW = hole.hole_width
+      const holeH = hole.hole_height
+      const drillDepth = pcbThickness * 1.2 // Ensure cut-through
+
+      // Create a cylinder and scale it to form an oval
+      const ovalDrillOp = Manifold.cylinder(
+        drillDepth,
+        1,
+        1,
+        SMOOTH_CIRCLE_SEGMENTS,
+        true,
+      ).scale([holeW / 2, holeH / 2, 1])
+      manifoldInstancesForCleanup.push(ovalDrillOp)
+
+      const translatedOvalDrill = ovalDrillOp.translate([hole.x, hole.y, 0])
+      manifoldInstancesForCleanup.push(translatedOvalDrill)
+      nonPlatedHoleBoardDrills.push(translatedOvalDrill)
     }
   })
   return { nonPlatedHoleBoardDrills }
