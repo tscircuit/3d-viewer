@@ -19,6 +19,7 @@ import {
   line,
   polygon as jscadPolygon,
   roundedRectangle,
+  ellipse,
 } from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
 import {
@@ -723,6 +724,39 @@ export class BoardGeomBuilder {
       const copperPill = expand({ delta: -copperInset }, pillHole)
       this.platedHoleGeoms = this.platedHoleGeoms.map((phg) =>
         colorize(colors.copper, subtract(phg, copperPill)),
+      )
+    } else if (hole.hole_shape === "oval") {
+      const holeWidth = hole.hole_width
+      const holeHeight = hole.hole_height
+
+      // Create elliptical hole
+      const ellipseGeom = extrudeLinear(
+        { height: holeDepth },
+        ellipse({ radius: [holeWidth / 2, holeHeight / 2] }),
+      )
+      const positionedEllipse = translate([hole.x, hole.y, 0], ellipseGeom)
+
+      // normal cut for board
+      this.boardGeom = subtract(this.boardGeom, positionedEllipse)
+
+      // normal pad cut
+      this.padGeoms = this.padGeoms.map((pg) =>
+        colorize(colors.copper, subtract(pg, positionedEllipse)),
+      )
+
+      // smaller ellipse for plated hole copper cut
+      const copperEllipse = extrudeLinear(
+        { height: holeDepth },
+        ellipse({
+          radius: [holeWidth / 2 - copperInset, holeHeight / 2 - copperInset],
+        }),
+      )
+      const positionedCopperEllipse = translate(
+        [hole.x, hole.y, 0],
+        copperEllipse,
+      )
+      this.platedHoleGeoms = this.platedHoleGeoms.map((phg) =>
+        colorize(colors.copper, subtract(phg, positionedCopperEllipse)),
       )
     }
   }
