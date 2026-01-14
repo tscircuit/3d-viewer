@@ -1,0 +1,72 @@
+import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
+import { initWasm, Resvg } from "@resvg/resvg-wasm"
+import type { AnyCircuitElement } from "circuit-json"
+
+let wasmInitialized = false
+let wasmInitPromise: Promise<void> | null = null
+
+/**
+ * Initialize resvg-wasm
+ */
+export async function initializeResvg(): Promise<void> {
+  if (!wasmInitialized) {
+    if (!wasmInitPromise) {
+      wasmInitPromise = (async () => {
+        try {
+          await initWasm(
+            fetch("https://unpkg.com/@resvg/resvg-wasm/index_bg.wasm"),
+          )
+          wasmInitialized = true
+        } catch (error) {
+          wasmInitPromise = null
+          throw error
+        }
+      })()
+    }
+    await wasmInitPromise
+  }
+}
+
+/**
+ * Generate PNG texture from circuit elements using circuit-to-svg and resvg-wasm
+ * @param circuitElements - Array of circuit elements
+ * @param width - Output width in pixels
+ * @param height - Output height in pixels
+ * @returns PNG data URL
+ */
+export async function generatePcbTexture(
+  circuitElements: AnyCircuitElement[],
+  width = 1024,
+  height = 1024,
+): Promise<string> {
+  try {
+    await initializeResvg()
+
+    const svgString = convertCircuitJsonToPcbSvg(circuitElements)
+
+    const resvg = new Resvg(svgString, {
+      fitTo: {
+        mode: "width",
+        value: width,
+      },
+    })
+
+    const pngData = resvg.render()
+    const pngBuffer = pngData.asPng()
+
+    const blob = new Blob([new Uint8Array(pngBuffer)], { type: "image/png" })
+    return URL.createObjectURL(blob)
+  } catch (error) {
+    console.error("Error generating PCB texture:", error)
+    throw new Error("Failed to generate PCB texture")
+  }
+}
+
+/**
+ * Clean up texture URL to prevent memory leaks
+ */
+export function cleanupTextureUrl(textureUrl: string): void {
+  if (textureUrl.startsWith("blob:")) {
+    URL.revokeObjectURL(textureUrl)
+  }
+}
