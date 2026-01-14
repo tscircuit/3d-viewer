@@ -73,54 +73,34 @@ export const PcbTextureDemo = () => {
   }, [])
 
   if (loading) {
-    return (
-      <div>
-        Loading circuit and generating PCB texture...
-      </div>
-    )
+    return <div>Loading circuit and generating PCB texture...</div>
   }
 
   if (error) {
-    return (
-      <div>
-        Error: {error}
-      </div>
-    )
+    return <div>Error: {error}</div>
   }
 
   if (!circuitJson) {
-    return (
-      <div>
-        No circuit data
-      </div>
-    )
+    return <div>No circuit data</div>
   }
 
   return (
     <div>
-      <div
-        style={{ marginBottom: "20px", padding: "10px", background: "#f0f0f0" }}
-      >
-        <h3>PCB Texture Proof of Work</h3>
-        <p>
-          This story demonstrates the PCB texture generation feature using
-          circuit-to-svg and resvg-wasm.
-        </p>
-        {textureUrl && (
-          <div>
-            <p>✅ Texture generated successfully!</p>
-            <details>
-              <summary>View Generated Texture (Click to expand)</summary>
-              <img
-                src={textureUrl}
-                alt="Generated PCB Texture"
-                style={{ maxWidth: "100%", border: "1px solid #ccc" }}
-              />
-            </details>
-          </div>
-        )}
-      </div>
-      <CadViewer circuitJson={circuitJson} />
+      <h3>PCB Texture Proof of Work</h3>
+      <p>
+        This story demonstrates the PCB texture generation feature using
+        circuit-to-svg and resvg-wasm.
+      </p>
+
+      {textureUrl && (
+        <div>
+          <p>✅ Texture generated successfully!</p>
+          <details>
+            <summary>View Generated Texture (Click to expand)</summary>
+            <img src={textureUrl} alt="Generated PCB Texture" />
+          </details>
+        </div>
+      )}
     </div>
   )
 }
