@@ -1,12 +1,13 @@
 // Utility for creating soldermask textures for PCB layers
-import * as THREE from "three"
-import type { AnyCircuitElement, PcbBoard, PcbHole } from "circuit-json"
+
 import { su } from "@tscircuit/circuit-json-util"
-import {
-  extractRectBorderRadius,
-  clampRectBorderRadius,
-} from "./rect-border-radius"
+import type { AnyCircuitElement, PcbBoard, PcbHole } from "circuit-json"
+import * as THREE from "three"
 import { calculateOutlineBounds } from "./outline-bounds"
+import {
+  clampRectBorderRadius,
+  extractRectBorderRadius,
+} from "./rect-border-radius"
 
 export function createSoldermaskTextureForLayer({
   layer,
@@ -359,6 +360,24 @@ export function createSoldermaskTextureForLayer({
         const canvasRadius = outerDiameter / 2
         ctx.beginPath()
         ctx.arc(adjustedCanvasX, adjustedCanvasY, canvasRadius, 0, 2 * Math.PI)
+        ctx.fill()
+      }
+
+      // Also cut out the polygon pad shape for soldermask
+      if (hole.pad_outline && hole.pad_outline.length >= 3) {
+        ctx.beginPath()
+        hole.pad_outline.forEach(
+          (point: { x: number; y: number }, index: number) => {
+            const px = canvasXFromPcb(hole.x + point.x)
+            const py = canvasYFromPcb(hole.y + point.y)
+            if (index === 0) {
+              ctx.moveTo(px, py)
+            } else {
+              ctx.lineTo(px, py)
+            }
+          },
+        )
+        ctx.closePath()
         ctx.fill()
       }
     } else if (hole.shape === "circular_hole_with_rect_pad") {
