@@ -525,6 +525,19 @@ export function createSoldermaskTextureForLayer({
         )
         ctx.fill()
       }
+    } else if (
+      holeShape === "oval" &&
+      typeof hole.hole_width === "number" &&
+      typeof hole.hole_height === "number"
+    ) {
+      const width = hole.hole_width * traceTextureResolution
+      const height = hole.hole_height * traceTextureResolution
+      const radiusX = width / 2
+      const radiusY = height / 2
+
+      ctx.beginPath()
+      ctx.ellipse(canvasX, canvasY, radiusX, radiusY, 0, 0, 2 * Math.PI)
+      ctx.fill()
     }
   })
 

@@ -1,6 +1,11 @@
 // Utility for creating copper pour textures for PCB layers
 import * as THREE from "three"
-import type { AnyCircuitElement, PcbCopperPour, PcbBoard } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  PcbCopperPour,
+  PcbBoard,
+  PcbRenderLayer,
+} from "circuit-json"
 import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
 import { segmentToPoints, ringToPoints } from "../geoms/brep-converter"
@@ -101,6 +106,8 @@ export function createCopperPourTextureForLayer({
   const copperPours = circuitJson.filter(
     (e) => e.type === "pcb_copper_pour",
   ) as PcbCopperPour[]
+  const pcbRenderLayer: PcbRenderLayer =
+    layer === "top" ? "top_copper" : "bottom_copper"
 
   const poursOnLayer = copperPours.filter((p) => p.layer === layer)
   if (poursOnLayer.length === 0) return null
@@ -175,7 +182,7 @@ export function createCopperPourTextureForLayer({
           },
         },
       })
-      drawer.drawElements(coveredPours, { layers: [layer] })
+      drawer.drawElements(coveredPours, { layers: [pcbRenderLayer] })
     }
 
     // Draw uncovered pours
@@ -194,7 +201,7 @@ export function createCopperPourTextureForLayer({
           },
         },
       })
-      drawer.drawElements(uncoveredPours, { layers: [layer] })
+      drawer.drawElements(uncoveredPours, { layers: [pcbRenderLayer] })
     }
   }
 
