@@ -1,18 +1,18 @@
-import { su } from "@tscircuit/circuit-json-util"
-import type { AnyCircuitElement, PcbPlatedHole } from "circuit-json"
 import type { ManifoldToplevel } from "manifold-3d"
+import type { AnyCircuitElement, PcbPlatedHole } from "circuit-json"
+import { su } from "@tscircuit/circuit-json-util"
 import * as THREE from "three"
+import { createCircleHoleDrill, createPlatedHoleDrill } from "../hole-geoms"
+import { createRoundedRectPrism } from "../pad-geoms"
+import { manifoldMeshToThreeGeometry } from "../manifold-mesh-to-three-geometry"
 import {
-  BOARD_SURFACE_OFFSET,
-  DEFAULT_SMT_PAD_THICKNESS,
   colors as defaultColors,
-  M,
   MANIFOLD_Z_OFFSET,
   SMOOTH_CIRCLE_SEGMENTS,
+  DEFAULT_SMT_PAD_THICKNESS,
+  M,
+  BOARD_SURFACE_OFFSET,
 } from "../../geoms/constants"
-import { createCircleHoleDrill, createPlatedHoleDrill } from "../hole-geoms"
-import { manifoldMeshToThreeGeometry } from "../manifold-mesh-to-three-geometry"
-import { createRoundedRectPrism } from "../pad-geoms"
 import { extractRectBorderRadius } from "../rect-border-radius"
 
 const arePointsClockwise = (points: Array<[number, number]>): boolean => {
@@ -312,10 +312,6 @@ export function processPlatedHolesForManifold(
         color: COPPER_COLOR,
       })
     } else if (ph.shape === "pill_hole_with_rect_pad") {
-      if (ph.hole_shape !== "pill" || ph.pad_shape !== "rect") {
-        // Skip if not matching the expected shapes
-        return
-      }
       const holeW = ph.hole_width!
       const holeH = ph.hole_height!
       const holeOffsetX = ph.hole_offset_x || 0
@@ -330,11 +326,9 @@ export function processPlatedHolesForManifold(
       const drillH = holeH + 2 * MANIFOLD_Z_OFFSET
       const drillDepth = pcbThickness * 1.2
 
-      const boardPillDrillOp = createPillOp(
-        drillW,
-        drillH,
-        drillDepth,
-      ).translate([holeOffsetX, holeOffsetY, 0])
+      let boardPillDrillOp = createPillOp(drillW, drillH, drillDepth).translate(
+        [holeOffsetX, holeOffsetY, 0],
+      )
 
       const translatedBoardPillDrill = boardPillDrillOp.translate([
         ph.x,
@@ -576,7 +570,7 @@ export function processPlatedHolesForManifold(
       }
       const outerCrossSection = CrossSection.ofPolygons([outerPoints])
       manifoldInstancesForCleanup.push(outerCrossSection)
-      const outerCopperOp = Manifold.extrude(
+      let outerCopperOp = Manifold.extrude(
         outerCrossSection,
         copperPartThickness,
         0,
@@ -597,7 +591,7 @@ export function processPlatedHolesForManifold(
       }
       const innerCrossSection = CrossSection.ofPolygons([innerPoints])
       manifoldInstancesForCleanup.push(innerCrossSection)
-      const innerDrillOp = Manifold.extrude(
+      let innerDrillOp = Manifold.extrude(
         innerCrossSection,
         copperPartThickness * 1.05,
         0,
@@ -644,10 +638,6 @@ export function processPlatedHolesForManifold(
         color: COPPER_COLOR,
       })
     } else if (ph.shape === "circular_hole_with_rect_pad") {
-      if (ph.hole_shape !== "circle" || ph.pad_shape !== "rect") {
-        // Skip if not matching the expected shapes
-        return
-      }
       // Get hole offsets (default to 0 if not specified)
       const holeOffsetX = ph.hole_offset_x || 0
       const holeOffsetY = ph.hole_offset_y || 0
@@ -763,7 +753,7 @@ export function processPlatedHolesForManifold(
   })
 
   // NEW: build a single subtraction op from all plated-hole copper ops
-  let platedHoleSubtractOp: any
+  let platedHoleSubtractOp: any = undefined
   if (platedHoleCopperOpsForSubtract.length > 0) {
     platedHoleSubtractOp = Manifold.union(platedHoleCopperOpsForSubtract)
     manifoldInstancesForCleanup.push(platedHoleSubtractOp)
