@@ -339,6 +339,11 @@ export const platedHole = (
     // biome-ignore lint/style/noUselessElse: <explanation>
   }
   if (plated_hole.shape === "pill_hole_with_rect_pad") {
+    if (plated_hole.hole_shape !== "pill" || plated_hole.pad_shape !== "rect") {
+      throw new Error(
+        `Invalid hole_shape or pad_shape for pill_hole_with_rect_pad`,
+      )
+    }
     const holeOffsetX = plated_hole.hole_offset_x || 0
     const holeOffsetY = plated_hole.hole_offset_y || 0
     const shouldRotate = plated_hole.hole_height! > plated_hole.hole_width!
