@@ -454,7 +454,10 @@ export class BoardGeomBuilder {
       let cyGeom: Geom3 | null = null
 
       if (ph.shape === "circular_hole_with_rect_pad") {
-        if (ph.hole_shape !== "circle" || ph.pad_shape !== "rect") {
+        if (
+          (ph.hole_shape && ph.hole_shape !== "circle") ||
+          (ph.pad_shape && ph.pad_shape !== "rect")
+        ) {
           return
         }
         cyGeom = cylinder({
@@ -539,7 +542,10 @@ export class BoardGeomBuilder {
       })
       this.platedHoleGeoms.push(platedHoleGeom)
     } else if (ph.shape === "pill_hole_with_rect_pad") {
-      if (ph.hole_shape !== "pill" || ph.pad_shape !== "rect") {
+      if (
+        (ph.hole_shape && ph.hole_shape !== "pill") ||
+        (ph.pad_shape && ph.pad_shape !== "rect")
+      ) {
         return
       }
       const shouldRotate = ph.hole_height! > ph.hole_width!

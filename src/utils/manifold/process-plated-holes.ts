@@ -312,7 +312,10 @@ export function processPlatedHolesForManifold(
         color: COPPER_COLOR,
       })
     } else if (ph.shape === "pill_hole_with_rect_pad") {
-      if (ph.hole_shape !== "pill" || ph.pad_shape !== "rect") {
+      if (
+        (ph.hole_shape && ph.hole_shape !== "pill") ||
+        (ph.pad_shape && ph.pad_shape !== "rect")
+      ) {
         // Skip if not matching the expected shapes
         return
       }
@@ -644,7 +647,10 @@ export function processPlatedHolesForManifold(
         color: COPPER_COLOR,
       })
     } else if (ph.shape === "circular_hole_with_rect_pad") {
-      if (ph.hole_shape !== "circle" || ph.pad_shape !== "rect") {
+      if (
+        (ph.hole_shape && ph.hole_shape !== "circle") ||
+        (ph.pad_shape && ph.pad_shape !== "rect")
+      ) {
         // Skip if not matching the expected shapes
         return
       }
