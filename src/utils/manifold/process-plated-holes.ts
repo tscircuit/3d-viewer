@@ -526,20 +526,16 @@ export function processPlatedHolesForManifold(
       manifoldInstancesForCleanup.push(topPad, bottomPad)
 
       // Create the plated barrel at the offset position with hole rotation
-      const barrelPill = createPillOp(
+      let barrelPill = createPillOp(
         holeW,
         holeH,
         pcbThickness * 1.02, // Slightly taller than board
       ).translate([holeOffsetX, holeOffsetY, 0])
 
       if (ph.hole_ccw_rotation) {
-        const rotatedDrill = boardPillDrillOp.rotate([
-          0,
-          0,
-          ph.hole_ccw_rotation,
-        ])
-        manifoldInstancesForCleanup.push(rotatedDrill)
-        boardPillDrillOp = rotatedDrill
+        const rotatedBarrel = barrelPill.rotate([0, 0, ph.hole_ccw_rotation])
+        manifoldInstancesForCleanup.push(rotatedBarrel)
+        barrelPill = rotatedBarrel
       }
 
       manifoldInstancesForCleanup.push(barrelPill)
