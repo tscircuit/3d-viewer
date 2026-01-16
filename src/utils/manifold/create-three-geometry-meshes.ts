@@ -4,6 +4,7 @@ import { createBoardMaterial } from "../create-board-material"
 
 export function createGeometryMeshes(
   geoms: ManifoldGeoms | null,
+  pcbTexture?: THREE.Texture | null,
 ): THREE.Mesh[] {
   const meshes: THREE.Mesh[] = []
   if (!geoms) return meshes
@@ -16,6 +17,7 @@ export function createGeometryMeshes(
         color: geoms.board.color,
         side: THREE.DoubleSide,
         isFaux: geoms.board.isFaux,
+        pcbTexture,
       }),
     )
     mesh.name = "board-geom"

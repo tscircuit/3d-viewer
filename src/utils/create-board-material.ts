@@ -9,6 +9,7 @@ interface CreateBoardMaterialOptions {
   color: THREE.ColorRepresentation
   side?: THREE.Side
   isFaux?: boolean
+  pcbTexture?: THREE.Texture | null
 }
 
 const DEFAULT_SIDE = THREE.DoubleSide
@@ -18,10 +19,12 @@ export const createBoardMaterial = ({
   color,
   side = DEFAULT_SIDE,
   isFaux = false,
+  pcbTexture = null,
 }: CreateBoardMaterialOptions): THREE.MeshStandardMaterial => {
   if (material === "fr4") {
     return new THREE.MeshPhysicalMaterial({
-      color,
+      map: pcbTexture,
+      color: pcbTexture ? "white" : color,
       side,
       metalness: 0.0,
       roughness: 0.8,
