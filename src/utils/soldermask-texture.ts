@@ -457,6 +457,49 @@ export function createSoldermaskTextureForLayer({
         )
         ctx.fill()
       }
+    } else if (hole.shape === "rotated_pill_hole_with_rect_pad") {
+      // Handle rotated pill-shaped hole with rotated rectangular pad
+      const padWidth =
+        (hole.rect_pad_width ?? hole.hole_width ?? 0) * traceTextureResolution
+      const padHeight =
+        (hole.rect_pad_height ?? hole.hole_height ?? 0) * traceTextureResolution
+      const rawRadius = extractRectBorderRadius(hole)
+      const borderRadius =
+        clampRectBorderRadius(
+          hole.rect_pad_width ?? hole.hole_width ?? 0,
+          hole.rect_pad_height ?? hole.hole_height ?? 0,
+          rawRadius,
+        ) * traceTextureResolution
+
+      const rectCcwRotationDeg = (hole.rect_ccw_rotation as number) || 0
+      // Canvas rotation is clockwise-positive, negate for ccw
+      const rectRotation = -rectCcwRotationDeg
+
+      if (rectRotation) {
+        ctx.save()
+        ctx.translate(canvasX, canvasY)
+        ctx.rotate((rectRotation * Math.PI) / 180)
+        ctx.beginPath()
+        ctx.roundRect(
+          -padWidth / 2,
+          -padHeight / 2,
+          padWidth,
+          padHeight,
+          borderRadius,
+        )
+        ctx.fill()
+        ctx.restore()
+      } else {
+        ctx.beginPath()
+        ctx.roundRect(
+          canvasX - padWidth / 2,
+          canvasY - padHeight / 2,
+          padWidth,
+          padHeight,
+          borderRadius,
+        )
+        ctx.fill()
+      }
     }
   })
 
