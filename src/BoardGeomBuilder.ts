@@ -611,6 +611,77 @@ export class BoardGeomBuilder {
         clipGeom: this.boardClipGeom,
       })
       this.platedHoleGeoms.push(platedHoleGeom)
+    } else if (ph.shape === "rotated_pill_hole_with_rect_pad") {
+      if (
+        (ph.hole_shape && ph.hole_shape !== "rotated_pill") ||
+        (ph.pad_shape && ph.pad_shape !== "rect")
+      ) {
+        return
+      }
+      const rphHoleWidth = ph.hole_width!
+      const rphHoleHeight = ph.hole_height!
+      const rphIsHorizontal = rphHoleWidth >= rphHoleHeight
+      const rphLongDim = rphIsHorizontal ? rphHoleWidth : rphHoleHeight
+      const rphShortDim = rphIsHorizontal ? rphHoleHeight : rphHoleWidth
+      const rphHoleRadius = rphShortDim / 2
+      const rphRectLength = Math.abs(rphLongDim - rphShortDim)
+      const rphHoleOffsetX = ph.hole_offset_x || 0
+      const rphHoleOffsetY = ph.hole_offset_y || 0
+
+      // Create the hole geometry at origin, then rotate and translate
+      let rphPillHole = union(
+        cuboid({
+          center: [0, 0, 0],
+          size: rphIsHorizontal
+            ? [rphRectLength, rphShortDim, this.ctx.pcbThickness * 1.5]
+            : [rphShortDim, rphRectLength, this.ctx.pcbThickness * 1.5],
+        }),
+        cylinder({
+          center: rphIsHorizontal
+            ? [-rphRectLength / 2, 0, 0]
+            : [0, -rphRectLength / 2, 0],
+          radius: rphHoleRadius,
+          height: this.ctx.pcbThickness * 1.5,
+        }),
+        cylinder({
+          center: rphIsHorizontal
+            ? [rphRectLength / 2, 0, 0]
+            : [0, rphRectLength / 2, 0],
+          radius: rphHoleRadius,
+          height: this.ctx.pcbThickness * 1.5,
+        }),
+      )
+
+      // Apply hole rotation
+      const rphHoleRotationRadians =
+        ((ph.hole_ccw_rotation || 0) * Math.PI) / 180
+      const rphRotatedOffsetX =
+        rphHoleOffsetX * Math.cos(rphHoleRotationRadians) -
+        rphHoleOffsetY * Math.sin(rphHoleRotationRadians)
+      const rphRotatedOffsetY =
+        rphHoleOffsetX * Math.sin(rphHoleRotationRadians) +
+        rphHoleOffsetY * Math.cos(rphHoleRotationRadians)
+
+      rphPillHole = rotateZ(rphHoleRotationRadians, rphPillHole)
+
+      // Translate to final position
+      const pillHole = translate(
+        [ph.x + rphRotatedOffsetX, ph.y + rphRotatedOffsetY, 0],
+        rphPillHole,
+      )
+
+      if (!opts.dontCutBoard) {
+        this.boardGeom = subtract(this.boardGeom, pillHole)
+      }
+
+      this.padGeoms = this.padGeoms.map((pg) =>
+        colorize(colors.copper, subtract(pg, pillHole)),
+      )
+
+      const platedHoleGeom = platedHole(ph, this.ctx, {
+        clipGeom: this.boardClipGeom,
+      })
+      this.platedHoleGeoms.push(platedHoleGeom)
     } else if (ph.shape === "hole_with_polygon_pad") {
       const padOutline = ph.pad_outline
       if (!Array.isArray(padOutline) || padOutline.length < 3) {

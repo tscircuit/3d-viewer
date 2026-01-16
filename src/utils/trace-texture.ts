@@ -112,6 +112,38 @@ export function createTraceTextureForLayer({
       ctx.beginPath()
       ctx.arc(canvasX, canvasY, canvasRadius, 0, 2 * Math.PI, false)
       ctx.fill()
+    } else if (
+      ph.layers.includes(layer) &&
+      ph.shape === "rotated_pill_hole_with_rect_pad"
+    ) {
+      const canvasX = (ph.x - boardOutlineBounds.minX) * traceTextureResolution
+      const canvasY = (boardOutlineBounds.maxY - ph.y) * traceTextureResolution
+      const padWidth =
+        (ph.rect_pad_width ?? ph.hole_width ?? 0) * traceTextureResolution
+      const padHeight =
+        (ph.rect_pad_height ?? ph.hole_height ?? 0) * traceTextureResolution
+
+      const rectCcwRotationDeg = (ph.rect_ccw_rotation as number) || 0
+      const rectRotation = -rectCcwRotationDeg // Canvas rotation is clockwise-positive
+
+      if (rectRotation) {
+        ctx.save()
+        ctx.translate(canvasX, canvasY)
+        ctx.rotate((rectRotation * Math.PI) / 180)
+        ctx.beginPath()
+        ctx.rect(-padWidth / 2, -padHeight / 2, padWidth, padHeight)
+        ctx.fill()
+        ctx.restore()
+      } else {
+        ctx.beginPath()
+        ctx.rect(
+          canvasX - padWidth / 2,
+          canvasY - padHeight / 2,
+          padWidth,
+          padHeight,
+        )
+        ctx.fill()
+      }
     }
   })
   ctx.globalCompositeOperation = "source-over"
