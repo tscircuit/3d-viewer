@@ -19,6 +19,7 @@ import {
   line,
   polygon as jscadPolygon,
   roundedRectangle,
+  ellipse,
 } from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
 import {
@@ -453,6 +454,12 @@ export class BoardGeomBuilder {
       let cyGeom: Geom3 | null = null
 
       if (ph.shape === "circular_hole_with_rect_pad") {
+        if (
+          (ph.hole_shape && ph.hole_shape !== "circle") ||
+          (ph.pad_shape && ph.pad_shape !== "rect")
+        ) {
+          return
+        }
         cyGeom = cylinder({
           center: [
             ph.x + (ph.hole_offset_x || 0),
@@ -535,6 +542,12 @@ export class BoardGeomBuilder {
       })
       this.platedHoleGeoms.push(platedHoleGeom)
     } else if (ph.shape === "pill_hole_with_rect_pad") {
+      if (
+        (ph.hole_shape && ph.hole_shape !== "pill") ||
+        (ph.pad_shape && ph.pad_shape !== "rect")
+      ) {
+        return
+      }
       const shouldRotate = ph.hole_height! > ph.hole_width!
       const holeWidth = shouldRotate ? ph.hole_height! : ph.hole_width!
       const holeHeight = shouldRotate ? ph.hole_width! : ph.hole_height!
@@ -639,8 +652,7 @@ export class BoardGeomBuilder {
     const holeDepth = this.ctx.pcbThickness * 1.5 // still cut through board fully
     const copperInset = 0.02 // tiny offset for plated hole copper cut
 
-    // @ts-expect-error TODO fix type PcbHole doesn't have hole_shape
-    if (hole.hole_shape === "round" || hole.hole_shape === "circle") {
+    if (hole.hole_shape === "circle") {
       const cyGeom = cylinder({
         center: [hole.x, hole.y, 0],
         radius: hole.hole_diameter / 2 + M,
@@ -666,66 +678,81 @@ export class BoardGeomBuilder {
       )
     } else if (
       hole.hole_shape === "pill" ||
-      hole.hole_shape === "rotated_pill"
+      hole.hole_shape === "rotated_pill" ||
+      hole.hole_shape === "oval"
     ) {
-      const holeWidth = hole.hole_width
-      const holeHeight = hole.hole_height
-      const holeRadius = Math.min(holeWidth, holeHeight) / 2
-      const rectLength = Math.abs(holeWidth - holeHeight)
-      const isRotated = hole.hole_shape === "rotated_pill"
+      const holeWidth = (hole as any).hole_width ?? (hole as any).hole_diameter
+      const holeHeight =
+        (hole as any).hole_height ?? (hole as any).hole_diameter
+      const rotation = (hole as any).ccw_rotation ?? (hole as any).rotation ?? 0
+      const copperInset = 0.02
 
-      let pillHole: Geom3
-      if (holeWidth > holeHeight) {
-        pillHole = union(
-          cuboid({
-            center: [hole.x, hole.y, 0],
-            size: [rectLength, holeHeight, holeDepth],
-          }),
-          cylinder({
-            center: [hole.x - rectLength / 2, hole.y, 0],
-            radius: holeRadius,
-            height: holeDepth,
-          }),
-          cylinder({
-            center: [hole.x + rectLength / 2, hole.y, 0],
-            radius: holeRadius,
-            height: holeDepth,
-          }),
-        )
-      } else {
-        pillHole = union(
-          cuboid({
-            center: [hole.x, hole.y, 0],
-            size: [holeWidth, rectLength, holeDepth],
-          }),
-          cylinder({
-            center: [hole.x, hole.y - rectLength / 2, 0],
-            radius: holeRadius,
-            height: holeDepth,
-          }),
-          cylinder({
-            center: [hole.x, hole.y + rectLength / 2, 0],
-            radius: holeRadius,
-            height: holeDepth,
-          }),
+      const createHoleGeom = (
+        w: number,
+        h: number,
+        depth: number,
+        isOval: boolean,
+      ) => {
+        if (w <= 0 || h <= 0) return null
+        if (isOval) {
+          return translate(
+            [0, 0, -depth / 2],
+            extrudeLinear(
+              { height: depth },
+              ellipse({ radius: [w / 2, h / 2] }),
+            ),
+          )
+        }
+        const radius = Math.min(w, h) / 2
+        const length = Math.abs(w - h)
+        if (w > h) {
+          return union(
+            cuboid({ center: [0, 0, 0], size: [length, h, depth] }),
+            cylinder({ center: [-length / 2, 0, 0], radius, height: depth }),
+            cylinder({ center: [length / 2, 0, 0], radius, height: depth }),
+          )
+        }
+        return union(
+          cuboid({ center: [0, 0, 0], size: [w, length, depth] }),
+          cylinder({ center: [0, -length / 2, 0], radius, height: depth }),
+          cylinder({ center: [0, length / 2, 0], radius, height: depth }),
         )
       }
 
-      if (isRotated) {
-        const rotationRadians = (hole.ccw_rotation * Math.PI) / 180
-        pillHole = rotateZ(rotationRadians, pillHole)
+      let boardHole = createHoleGeom(
+        holeWidth,
+        holeHeight,
+        holeDepth,
+        hole.hole_shape === "oval",
+      )
+      let copperCut = createHoleGeom(
+        holeWidth - 2 * copperInset,
+        holeHeight - 2 * copperInset,
+        holeDepth,
+        hole.hole_shape === "oval",
+      )
+
+      if (boardHole && rotation !== 0) {
+        boardHole = rotateZ((rotation * Math.PI) / 180, boardHole)
+      }
+      if (copperCut && rotation !== 0) {
+        copperCut = rotateZ((rotation * Math.PI) / 180, copperCut)
       }
 
-      this.boardGeom = subtract(this.boardGeom, pillHole)
-      this.padGeoms = this.padGeoms.map((pg) =>
-        colorize(colors.copper, subtract(pg, pillHole)),
-      )
+      if (boardHole) {
+        const positionedBoardHole = translate([hole.x, hole.y, 0], boardHole)
+        this.boardGeom = subtract(this.boardGeom, positionedBoardHole)
+        this.padGeoms = this.padGeoms.map((pg) =>
+          colorize(colors.copper, subtract(pg, positionedBoardHole)),
+        )
+      }
 
-      // smaller pill for plated hole copper cut
-      const copperPill = expand({ delta: -copperInset }, pillHole)
-      this.platedHoleGeoms = this.platedHoleGeoms.map((phg) =>
-        colorize(colors.copper, subtract(phg, copperPill)),
-      )
+      if (copperCut) {
+        const positionedCopperCut = translate([hole.x, hole.y, 0], copperCut)
+        this.platedHoleGeoms = this.platedHoleGeoms.map((phg) =>
+          colorize(colors.copper, subtract(phg, positionedCopperCut)),
+        )
+      }
     }
   }
 

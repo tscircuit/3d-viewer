@@ -1,47 +1,9 @@
 import type { ManifoldToplevel } from "manifold-3d"
-import type {
-  AnyCircuitElement,
-  PcbHole,
-  PcbHolePill,
-  PcbHoleRotatedPill,
-} from "circuit-json"
+import type { AnyCircuitElement, PcbHole } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import { createCircleHoleDrill } from "../hole-geoms"
 import { SMOOTH_CIRCLE_SEGMENTS } from "../../geoms/constants"
 import { createRoundedRectPrism } from "../pad-geoms"
-
-// Type guard for PcbHole with hole_diameter
-function isCircleHole(hole: any): hole is {
-  x: number
-  y: number
-  hole_diameter: number
-  hole_shape?: string
-  shape?: string
-} {
-  return (
-    (hole.shape === "circle" || hole.hole_shape === "circle") &&
-    typeof hole.hole_diameter === "number"
-  )
-}
-
-// Type guard for PcbHolePill
-function isPillHole(hole: any): hole is PcbHolePill {
-  return (
-    (hole.shape === "pill" || hole.hole_shape === "pill") &&
-    typeof hole.hole_width === "number" &&
-    typeof hole.hole_height === "number"
-  )
-}
-
-// Type guard for PcbHoleRotatedPill
-function isRotatedPillHole(hole: any): hole is PcbHoleRotatedPill {
-  return (
-    (hole.shape === "rotated_pill" || hole.hole_shape === "rotated_pill") &&
-    typeof hole.hole_width === "number" &&
-    typeof hole.hole_height === "number" &&
-    typeof hole.ccw_rotation === "number"
-  )
-}
 
 export interface ProcessNonPlatedHolesResult {
   nonPlatedHoleBoardDrills: any[]
@@ -49,6 +11,7 @@ export interface ProcessNonPlatedHolesResult {
 
 export function processNonPlatedHolesForManifold(
   Manifold: ManifoldToplevel["Manifold"],
+  CrossSection: ManifoldToplevel["CrossSection"],
   circuitJson: AnyCircuitElement[],
   pcbThickness: number,
   manifoldInstancesForCleanup: any[],
@@ -68,42 +31,77 @@ export function processNonPlatedHolesForManifold(
     return pillOp
   }
 
+  const createEllipsePoints = (w: number, h: number, segments: number) => {
+    const points: Array<[number, number]> = []
+    for (let i = 0; i < segments; i++) {
+      const theta = (2 * Math.PI * i) / segments
+      points.push([(w / 2) * Math.cos(theta), (h / 2) * Math.sin(theta)])
+    }
+    return points
+  }
+
   pcbHoles.forEach((hole: PcbHole) => {
-    if (isCircleHole(hole)) {
-      const translatedDrill = createCircleHoleDrill({
+    const holeShape = hole.hole_shape
+    const holeX = hole.x
+    const holeY = hole.y
+    const drillDepth = pcbThickness * 1.2
+    const rotation = (hole as any).ccw_rotation ?? (hole as any).rotation ?? 0
+    const holeW = (hole as any).hole_width ?? (hole as any).hole_diameter
+    const holeH = (hole as any).hole_height ?? (hole as any).hole_diameter
+
+    let holeOp: any = null
+
+    if (holeShape === "circle") {
+      holeOp = createCircleHoleDrill({
         Manifold,
-        x: hole.x,
-        y: hole.y,
-        diameter: hole.hole_diameter,
+        x: holeX,
+        y: holeY,
+        diameter: (hole as any).hole_diameter,
         thickness: pcbThickness,
         segments: SMOOTH_CIRCLE_SEGMENTS,
       })
-      manifoldInstancesForCleanup.push(translatedDrill)
-      nonPlatedHoleBoardDrills.push(translatedDrill)
-    } else if (isPillHole(hole)) {
-      const holeW = hole.hole_width
-      const holeH = hole.hole_height
-      const drillDepth = pcbThickness * 1.2 // Ensure cut-through
+      nonPlatedHoleBoardDrills.push(holeOp)
+      manifoldInstancesForCleanup.push(holeOp)
+      return
+    }
 
-      const pillDrillOp = createPillOp(holeW, holeH, drillDepth)
-      const translatedPillDrill = pillDrillOp.translate([hole.x, hole.y, 0])
-      manifoldInstancesForCleanup.push(translatedPillDrill)
-      nonPlatedHoleBoardDrills.push(translatedPillDrill)
-    } else if (isRotatedPillHole(hole)) {
-      const holeW = hole.hole_width
-      const holeH = hole.hole_height
-      const drillDepth = pcbThickness * 1.2 // Ensure cut-through
+    if (holeShape === "pill" || holeShape === "rotated_pill") {
+      holeOp = createPillOp(holeW, holeH, drillDepth)
+    } else if (holeShape === "oval") {
+      let points = createEllipsePoints(holeW, holeH, SMOOTH_CIRCLE_SEGMENTS)
+      // Ensure correct winding order
+      let area = 0
+      for (let i = 0; i < points.length; i++) {
+        const j = (i + 1) % points.length
+        area += points[i]![0] * points[j]![1]
+        area -= points[j]![0] * points[i]![1]
+      }
+      if (area <= 0) {
+        points = points.reverse()
+      }
+      const crossSection = CrossSection.ofPolygons([points])
+      manifoldInstancesForCleanup.push(crossSection)
+      holeOp = Manifold.extrude(
+        crossSection,
+        drillDepth,
+        0,
+        0,
+        [1, 1],
+        true, // center
+      )
+      manifoldInstancesForCleanup.push(holeOp)
+    }
 
-      let pillDrillOp = createPillOp(holeW, holeH, drillDepth)
+    if (holeOp) {
+      if (rotation !== 0) {
+        const rotatedOp = holeOp.rotate([0, 0, rotation])
+        manifoldInstancesForCleanup.push(rotatedOp)
+        holeOp = rotatedOp
+      }
 
-      // Apply rotation for rotated_pill shape
-      const rotatedOp = pillDrillOp.rotate([0, 0, hole.ccw_rotation])
-      manifoldInstancesForCleanup.push(rotatedOp)
-      pillDrillOp = rotatedOp
-
-      const translatedPillDrill = pillDrillOp.translate([hole.x, hole.y, 0])
-      manifoldInstancesForCleanup.push(translatedPillDrill)
-      nonPlatedHoleBoardDrills.push(translatedPillDrill)
+      const translatedHole = holeOp.translate([holeX, holeY, 0])
+      manifoldInstancesForCleanup.push(translatedHole)
+      nonPlatedHoleBoardDrills.push(translatedHole)
     }
   })
   return { nonPlatedHoleBoardDrills }

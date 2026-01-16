@@ -222,6 +222,7 @@ export const useManifoldBoardBuilder = (
       // Process non-plated holes
       const { nonPlatedHoleBoardDrills } = processNonPlatedHolesForManifold(
         Manifold,
+        CrossSection,
         circuitJson,
         currentPcbThickness,
         manifoldInstancesForCleanup.current,
