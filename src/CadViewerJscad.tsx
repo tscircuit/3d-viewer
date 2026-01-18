@@ -34,7 +34,6 @@ export const CadViewerJscad = forwardRef<
 >(
   (
     {
-      soup,
       circuitJson,
       children,
       autoRotateDisabled,
@@ -46,9 +45,10 @@ export const CadViewerJscad = forwardRef<
   ) => {
     const childrenSoup = useConvertChildrenToCircuitJson(children)
     const internalCircuitJson = useMemo(() => {
-      const cj = soup ?? circuitJson
-      return addFauxBoardIfNeeded(cj ?? childrenSoup) as AnyCircuitElement[]
-    }, [soup, circuitJson, childrenSoup])
+      return addFauxBoardIfNeeded(
+        circuitJson ?? childrenSoup,
+      ) as AnyCircuitElement[]
+    }, [circuitJson, childrenSoup])
 
     // Use the new hook to manage board geometry building
     const boardGeom = useBoardGeomBuilder(internalCircuitJson)

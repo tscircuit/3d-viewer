@@ -225,7 +225,6 @@ const CadViewerInner = (props: any) => {
   const viewerKey = props.circuitJson
     ? JSON.stringify(props.circuitJson)
     : undefined
-
   return (
     <div
       key={viewerKey}
