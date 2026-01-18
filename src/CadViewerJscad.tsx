@@ -118,8 +118,6 @@ export const CadViewerJscad = forwardRef<
     // Use the state `boardGeom` which starts simplified and gets updated
     const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
 
-    console.log(internalCircuitJson.find((e) => e.type === "cad_component"))
-
     const cad_components = su(internalCircuitJson).cad_component.list()
 
     return (
@@ -158,6 +156,7 @@ export const CadViewerJscad = forwardRef<
               key={cad_component.cad_component_id}
               cad_component={cad_component}
               circuitJson={internalCircuitJson}
+              boardThickness={pcbThickness}
             />
           </ThreeErrorBoundary>
         ))}

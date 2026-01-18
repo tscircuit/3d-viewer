@@ -17,7 +17,7 @@ import { tuple } from "./utils/tuple"
 export const AnyCadComponent = ({
   cad_component,
   circuitJson,
-  boardThickness = 1.6,
+  boardThickness,
 }: {
   cad_component: CadComponent
   circuitJson: AnyCircuitElement[]
@@ -93,12 +93,12 @@ export const AnyCadComponent = ({
   // Adjust position based on layer to place components on top/bottom of board
   const adjustedPosition = useMemo(() => {
     if (!cad_component.position) return undefined
-    const layerOffset = 0.1 // Small offset from board surface
+    const bottomLayerOffset = 0.55 // Small offset from board surface
     let z: number
     if (layer === "top") {
-      z = boardThickness / 2 + layerOffset
+      z = boardThickness / 2
     } else if (layer === "bottom") {
-      z = -boardThickness
+      z = -(boardThickness / 2) - bottomLayerOffset
     } else {
       z = cad_component.position.z // Fallback
     }
