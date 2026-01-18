@@ -1,18 +1,18 @@
+import { su } from "@tscircuit/circuit-json-util"
 import type {
   AnyCircuitElement,
   CadComponent,
   PcbComponent,
 } from "circuit-json"
-import { su } from "@tscircuit/circuit-json-util"
-import { useMemo, useState, useCallback } from "react"
-import { MixedStlModel } from "./three-components/MixedStlModel"
+import { useCallback, useMemo, useState } from "react"
+import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
+import { Html } from "./react-three/Html"
+import { FootprinterModel } from "./three-components/FootprinterModel"
 import { GltfModel } from "./three-components/GltfModel"
 import { JscadModel } from "./three-components/JscadModel"
-import { FootprinterModel } from "./three-components/FootprinterModel"
-import { tuple } from "./utils/tuple"
-import { Html } from "./react-three/Html"
-import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
+import { MixedStlModel } from "./three-components/MixedStlModel"
 import { StepModel } from "./three-components/StepModel"
+import { tuple } from "./utils/tuple"
 
 export const AnyCadComponent = ({
   cad_component,
@@ -98,7 +98,7 @@ export const AnyCadComponent = ({
     if (layer === "top") {
       z = boardThickness / 2 + layerOffset
     } else if (layer === "bottom") {
-      z = -boardThickness / 2 - layerOffset
+      z = -boardThickness
     } else {
       z = cad_component.position.z // Fallback
     }
