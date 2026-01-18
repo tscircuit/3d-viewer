@@ -1,4 +1,8 @@
-import type { AnyCircuitElement, CadComponent } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  CadComponent,
+  PcbComponent,
+} from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import { useMemo, useState, useCallback } from "react"
 import { MixedStlModel } from "./three-components/MixedStlModel"
@@ -13,9 +17,11 @@ import { StepModel } from "./three-components/StepModel"
 export const AnyCadComponent = ({
   cad_component,
   circuitJson,
+  boardThickness = 1.6,
 }: {
   cad_component: CadComponent
   circuitJson: AnyCircuitElement[]
+  boardThickness: number
 }) => {
   const [isHovered, setIsHovered] = useState(false)
   const { visibility } = useLayerVisibility()
@@ -60,13 +66,48 @@ export const AnyCadComponent = ({
     cad_component.model_stl_url
   const gltfUrl = cad_component.model_glb_url ?? cad_component.model_gltf_url
   const stepUrl = cad_component.model_step_url
-  const rotationOffset = cad_component.rotation
-    ? tuple(
-        (cad_component.rotation.x * Math.PI) / 180,
-        (cad_component.rotation.y * Math.PI) / 180,
-        (cad_component.rotation.z * Math.PI) / 180,
-      )
-    : undefined
+  const pcbComponent = circuitJson.find(
+    (elm) =>
+      elm.type === "pcb_component" &&
+      elm.source_component_id === cad_component.source_component_id,
+  ) as PcbComponent | undefined
+  const layer = pcbComponent?.layer ?? "top"
+
+  // For bottom layer, flip component 180° around X axis
+  const rotationOffset = useMemo(() => {
+    const baseRotation = cad_component.rotation
+      ? tuple(
+          (cad_component.rotation.x * Math.PI) / 180,
+          (cad_component.rotation.y * Math.PI) / 180,
+          (cad_component.rotation.z * Math.PI) / 180,
+        )
+      : tuple(0, 0, 0)
+
+    if (layer === "bottom") {
+      // Flip 180° around X axis for bottom layer components
+      return tuple(baseRotation[0] + Math.PI, baseRotation[1], baseRotation[2])
+    }
+    return baseRotation
+  }, [cad_component.rotation, layer])
+
+  // Adjust position based on layer to place components on top/bottom of board
+  const adjustedPosition = useMemo(() => {
+    if (!cad_component.position) return undefined
+    const layerOffset = 0.1 // Small offset from board surface
+    let z: number
+    if (layer === "top") {
+      z = boardThickness / 2 + layerOffset
+    } else if (layer === "bottom") {
+      z = -boardThickness / 2 - layerOffset
+    } else {
+      z = cad_component.position.z // Fallback
+    }
+    return [cad_component.position.x, cad_component.position.y, z] as [
+      number,
+      number,
+      number,
+    ]
+  }, [cad_component.position, layer, boardThickness])
 
   let modelComponent: React.ReactNode = null
 
@@ -75,15 +116,7 @@ export const AnyCadComponent = ({
       <MixedStlModel
         key={cad_component.cad_component_id}
         url={url}
-        position={
-          cad_component.position
-            ? [
-                cad_component.position.x,
-                cad_component.position.y,
-                cad_component.position.z,
-              ]
-            : undefined
-        }
+        position={adjustedPosition}
         rotation={rotationOffset}
         scale={cad_component.model_unit_to_mm_scale_factor}
         onHover={handleHover}
@@ -97,15 +130,7 @@ export const AnyCadComponent = ({
       <GltfModel
         key={cad_component.cad_component_id}
         gltfUrl={gltfUrl}
-        position={
-          cad_component.position
-            ? [
-                cad_component.position.x,
-                cad_component.position.y,
-                cad_component.position.z,
-              ]
-            : undefined
-        }
+        position={adjustedPosition}
         rotation={rotationOffset}
         scale={cad_component.model_unit_to_mm_scale_factor}
         onHover={handleHover}
@@ -122,15 +147,7 @@ export const AnyCadComponent = ({
     modelComponent = (
       <StepModel
         stepUrl={stepUrl}
-        position={
-          cad_component.position
-            ? [
-                cad_component.position.x,
-                cad_component.position.y,
-                cad_component.position.z,
-              ]
-            : undefined
-        }
+        position={adjustedPosition}
         rotation={rotationOffset}
         scale={cad_component.model_unit_to_mm_scale_factor}
         onHover={handleHover}
@@ -144,6 +161,7 @@ export const AnyCadComponent = ({
       <JscadModel
         key={cad_component.cad_component_id}
         jscadPlan={cad_component.model_jscad as any}
+        positionOffset={adjustedPosition}
         rotationOffset={rotationOffset}
         scale={cad_component.model_unit_to_mm_scale_factor}
         onHover={handleHover}
@@ -155,15 +173,7 @@ export const AnyCadComponent = ({
   } else if (cad_component.footprinter_string) {
     modelComponent = (
       <FootprinterModel
-        positionOffset={
-          cad_component.position
-            ? [
-                cad_component.position.x,
-                cad_component.position.y,
-                cad_component.position.z,
-              ]
-            : undefined
-        }
+        positionOffset={adjustedPosition}
         rotationOffset={rotationOffset}
         footprint={cad_component.footprinter_string}
         scale={cad_component.model_unit_to_mm_scale_factor}
