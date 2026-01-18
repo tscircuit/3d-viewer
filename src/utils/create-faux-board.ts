@@ -68,7 +68,7 @@ export function createFauxBoard(
     center: { x: 0, y: 0 }, // Always center at origin like real boards
     width,
     height,
-    thickness: 1.6, // standard thickness
+    thickness: 1.4, // standard thickness
     material: "fr4",
     num_layers: 2,
     // No outline - will use rectangular shape
