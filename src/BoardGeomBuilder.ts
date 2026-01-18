@@ -176,7 +176,7 @@ export class BoardGeomBuilder {
         center: panel.center,
         width: panel.width,
         height: panel.height,
-        thickness: firstBoardInPanel?.thickness ?? 1.6,
+        thickness: firstBoardInPanel?.thickness ?? 1.4,
         material: firstBoardInPanel?.material ?? "fr4",
         num_layers: firstBoardInPanel?.num_layers ?? 2,
       } as PcbBoard
