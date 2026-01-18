@@ -156,7 +156,6 @@ export const CadViewerJscad = forwardRef<
               key={cad_component.cad_component_id}
               cad_component={cad_component}
               circuitJson={internalCircuitJson}
-              boardThickness={pcbThickness}
             />
           </ThreeErrorBoundary>
         ))}

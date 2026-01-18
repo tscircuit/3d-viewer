@@ -13,16 +13,16 @@ import { JscadModel } from "./three-components/JscadModel"
 import { MixedStlModel } from "./three-components/MixedStlModel"
 import { StepModel } from "./three-components/StepModel"
 import { tuple } from "./utils/tuple"
+import { usePcbThickness } from "./hooks/usePcbThickness"
 
 export const AnyCadComponent = ({
   cad_component,
   circuitJson,
-  boardThickness,
 }: {
   cad_component: CadComponent
   circuitJson: AnyCircuitElement[]
-  boardThickness: number
 }) => {
+  const pcbThickness = usePcbThickness(circuitJson)
   const [isHovered, setIsHovered] = useState(false)
   const { visibility } = useLayerVisibility()
   const [hoverPosition, setHoverPosition] = useState<
@@ -96,9 +96,9 @@ export const AnyCadComponent = ({
     const bottomLayerOffset = 0.55 // Small offset from board surface
     let z: number
     if (layer === "top") {
-      z = boardThickness / 2
+      z = pcbThickness / 2
     } else if (layer === "bottom") {
-      z = -(boardThickness / 2) - bottomLayerOffset
+      z = -(pcbThickness / 2) - bottomLayerOffset
     } else {
       z = cad_component.position.z // Fallback
     }
@@ -107,7 +107,7 @@ export const AnyCadComponent = ({
       number,
       number,
     ]
-  }, [cad_component.position, layer, boardThickness])
+  }, [cad_component.position, layer, pcbThickness])
 
   let modelComponent: React.ReactNode = null
 

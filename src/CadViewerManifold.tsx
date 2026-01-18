@@ -370,7 +370,6 @@ try {
           <AnyCadComponent
             cad_component={cad_component}
             circuitJson={circuitJson}
-            boardThickness={pcbThickness!}
           />
         </ThreeErrorBoundary>
       ))}
