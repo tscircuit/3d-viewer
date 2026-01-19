@@ -6,6 +6,7 @@ import type {
 } from "circuit-json"
 import { useCallback, useMemo, useState } from "react"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
+import { usePcbThickness } from "./hooks/usePcbThickness"
 import { Html } from "./react-three/Html"
 import { FootprinterModel } from "./three-components/FootprinterModel"
 import { GltfModel } from "./three-components/GltfModel"
@@ -13,7 +14,6 @@ import { JscadModel } from "./three-components/JscadModel"
 import { MixedStlModel } from "./three-components/MixedStlModel"
 import { StepModel } from "./three-components/StepModel"
 import { tuple } from "./utils/tuple"
-import { usePcbThickness } from "./hooks/usePcbThickness"
 
 export const AnyCadComponent = ({
   cad_component,
@@ -85,7 +85,7 @@ export const AnyCadComponent = ({
 
     if (layer === "bottom") {
       // Flip 180° around X axis for bottom layer components
-      return tuple(baseRotation[0] + Math.PI, baseRotation[1], baseRotation[2])
+      return tuple(baseRotation[0] + Math.PI, baseRotation[1], -baseRotation[2])
     }
     return baseRotation
   }, [cad_component.rotation, layer])
