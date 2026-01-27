@@ -48,7 +48,10 @@ export const KicadResistor = () => {
   )
 }
 
+
+
 export default {
   title: "KicadResistor",
   component: KicadResistor,
 }
+

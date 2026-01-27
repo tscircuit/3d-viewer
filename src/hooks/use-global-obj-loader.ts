@@ -26,97 +26,97 @@ export function useGlobalObjLoader(
   const [obj, setObj] = useState<Object3D | null | Error>(null)
 
   useEffect(() => {
-    if (!url) return
+  if (!url) return
+  if (typeof window === "undefined") return
 
-    const cleanUrl = url.replace(/&cachebust_origin=$/, "")
+  const cleanUrl = url.split("&cachebust_origin=")[0] ?? url
 
-    const cache = window.TSCIRCUIT_OBJ_LOADER_CACHE
-    let hasUrlChanged = false
+  const cache = window.TSCIRCUIT_OBJ_LOADER_CACHE
+  let cancelled = false
 
-    async function loadAndParseObj() {
-      try {
-        if (cleanUrl.endsWith(".wrl")) {
-          return await loadVrml(cleanUrl)
-        }
-
-        const response = await fetch(cleanUrl)
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch "${cleanUrl}": ${response.status} ${response.statusText}`,
-          )
-        }
-        const text = await response.text()
-
-        const mtlContentArr = text.match(/newmtl[\s\S]*?endmtl/g)
-
-        const objLoader = new OBJLoader()
-
-        if (mtlContentArr?.length) {
-          const mtlContent = mtlContentArr.join("\n").replace(/d 0\./g, "d 1.")
-          const objContent = text
-            .replace(/newmtl[\s\S]*?endmtl/g, "")
-            .replace(/^mtllib.*/gm, "")
-
-          const mtlLoader = new MTLLoader()
-          mtlLoader.setMaterialOptions({
-            invertTrProperty: true,
-          })
-          const materials = mtlLoader.parse(
-            mtlContent.replace(
-              /Kd\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/g,
-              "Kd $2 $2 $2",
-            ),
-            "embedded.mtl",
-          )
-          objLoader.setMaterials(materials)
-          return objLoader.parse(objContent)
-        }
-
-        return objLoader.parse(text.replace(/^mtllib.*/gm, ""))
-      } catch (error) {
-        return error as Error
+  async function loadAndParseObj(): Promise<Object3D | Error> {
+    try {
+      if (cleanUrl.endsWith(".wrl")) {
+        return await loadVrml(cleanUrl)
       }
-    }
 
-    function loadUrl() {
-      if (cache.has(cleanUrl)) {
-        const cacheItem = cache.get(cleanUrl)!
-        if (cacheItem.result) {
-          // If we have a result, clone it
-          return Promise.resolve(cacheItem.result.clone())
-        }
-        // If we're still loading, return the existing promise
-        return cacheItem.promise.then((result) => {
-          if (result instanceof Error) return result
-          return result.clone()
-        })
+      const response = await fetch(cleanUrl)
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch "${cleanUrl}": ${response.status} ${response.statusText}`,
+        )
       }
-      // If it's not in the cache, create a new promise and cache it
-      const promise = loadAndParseObj().then((result) => {
-        if (result instanceof Error) {
-          // If the result is an Error, return it
-          return result
-        }
-        cache.set(cleanUrl, { ...cache.get(cleanUrl)!, result })
-        return result
-      })
-      cache.set(cleanUrl, { promise, result: null })
-      return promise
+
+      const text = await response.text()
+      const objLoader = new OBJLoader()
+
+      const mtlContentArr = text.match(/newmtl[\s\S]*?endmtl/g)
+
+      if (mtlContentArr?.length) {
+        const mtlContent = mtlContentArr.join("\n").replace(/d 0\./g, "d 1.")
+
+        const objContent = text
+          .replace(/newmtl[\s\S]*?endmtl/g, "")
+          .replace(/^mtllib.*/gm, "")
+
+        const mtlLoader = new MTLLoader()
+        mtlLoader.setMaterialOptions({ invertTrProperty: true })
+
+        const materials = mtlLoader.parse(
+          mtlContent.replace(
+            /Kd\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/g,
+            "Kd $2 $2 $2",
+          ),
+          "embedded.mtl",
+        )
+
+        objLoader.setMaterials(materials)
+        return objLoader.parse(objContent)
+      }
+
+      return objLoader.parse(text.replace(/^mtllib.*/gm, ""))
+    } catch (error) {
+      return error as Error
+    }
+  }
+
+  function loadUrl(): Promise<Object3D | Error> {
+  if (cache.has(cleanUrl)) {
+
+    const cached = cache.get(cleanUrl)!
+    if (cached.result) {
+      return Promise.resolve(cached.result.clone())
     }
 
-    loadUrl()
-      .then((result) => {
-        if (hasUrlChanged) return
-        setObj(result)
-      })
-      .catch((error) => {
-        console.error(error)
-      })
+    return cached.promise.then((result) => {
+      if (result instanceof Error) return result
+      return result.clone()
+    })
+  }
 
-    return () => {
-      hasUrlChanged = true
+  const promise = loadAndParseObj().then((result) => {
+    if (!(result instanceof Error)) {
+      cache.set(cleanUrl, { promise, result })
     }
-  }, [url])
+    return result
+  })
+
+  cache.set(cleanUrl, { promise, result: null })
+  return promise
+}
+
+
+  loadUrl().then((result) => {
+    if (!cancelled) {
+      setObj(result)
+    }
+  })
+
+  return () => {
+    cancelled = true
+  }
+}, [url])
+
 
   return obj
 }
