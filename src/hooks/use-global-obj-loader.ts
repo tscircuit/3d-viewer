@@ -96,6 +96,9 @@ export function useGlobalObjLoader(
       const promise = loadAndParseObj().then((result) => {
         if (!(result instanceof Error)) {
           cache.set(cleanUrl, { promise, result })
+        } else {
+          // Remove failed entry so future calls can retry
+          cache.delete(cleanUrl)
         }
         return result
       })
