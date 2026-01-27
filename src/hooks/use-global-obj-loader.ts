@@ -29,7 +29,7 @@ export function useGlobalObjLoader(
     if (!url) return
     if (typeof window === "undefined") return
 
-    const cleanUrl = url.split("&cachebust_origin=")[0] ?? url
+    const cleanUrl = url.split("&cachebust_origin=")[0] || url
 
     const cache = window.TSCIRCUIT_OBJ_LOADER_CACHE
     let cancelled = false
