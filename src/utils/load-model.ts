@@ -7,15 +7,11 @@ import { loadVrml } from "./vrml"
 // ✅ Global cache to prevent duplicate model loading
 const modelCache = new Map<string, THREE.Object3D>()
 
-export async function load3DModel(
-  url: string,
-): Promise<THREE.Object3D | null> {
-
+export async function load3DModel(url: string): Promise<THREE.Object3D | null> {
   // ✅ Cache HIT
   if (modelCache.has(url)) {
     return modelCache.get(url)!.clone()
-}
-
+  }
 
   // STL
   if (url.endsWith(".stl")) {
@@ -67,4 +63,3 @@ export async function load3DModel(
   console.error("Unsupported file format or failed to load 3D model.")
   return null
 }
-
