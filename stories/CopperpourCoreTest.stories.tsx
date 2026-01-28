@@ -39,7 +39,7 @@ const createCircuit = () => {
       />
 
       <resistor name="R1" resistance="1k" footprint="0603" layer="top" />
-      <resistor name="R2" resistance="1k" footprint="0603" layer="bottom"  />
+      <resistor name="R2" resistance="1k" footprint="0603" layer="bottom" />
       <capacitor name="C1" capacitance="1uF" footprint="0603" layer="top" />
       <capacitor name="C2" capacitance="1uF" footprint="0603" layer="bottom" />
     </board>,
