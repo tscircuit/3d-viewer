@@ -8,16 +8,12 @@ import React, {
   useMemo,
 } from "react"
 import * as THREE from "three"
-import {
-  ThreeContext,
-  ThreeContextState,
-  RendererType,
-  WebGPURendererInterface,
-} from "./ThreeContext"
+import { ThreeContext, ThreeContextState, RendererType } from "./ThreeContext"
 import { HoverProvider } from "./HoverContext"
 import { removeExistingCanvases } from "./remove-existing-canvases"
 import { configureRenderer } from "./configure-renderer"
 import { useCameraController } from "../contexts/CameraControllerContext"
+import { createRenderer } from "./createRenderer"
 
 declare global {
   interface Window {
@@ -102,18 +98,7 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
 
         removeExistingCanvases(mountRef.current)
 
-        if (useWebGPU) {
-          const { default: WebGPURenderer } = await import(
-            "three/examples/jsm/renderers/webgpu/WebGPURenderer.js"
-          )
-          renderer = new WebGPURenderer({
-            antialias: true,
-            alpha: true,
-          }) as unknown as WebGPURendererInterface
-          await (renderer as WebGPURendererInterface).init()
-        } else {
-          renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-        }
+        renderer = await createRenderer(useWebGPU ?? false)
 
         if (isCleanedUp) {
           renderer.dispose()
