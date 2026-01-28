@@ -39,6 +39,7 @@ interface Props {
   boardCenter?: { x: number; y: number }
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
+  useWebGPU?: boolean
 }
 
 export const CadViewerContainer = forwardRef<
@@ -55,6 +56,7 @@ export const CadViewerContainer = forwardRef<
       boardCenter,
       onUserInteraction,
       onCameraControllerReady,
+      useWebGPU,
     },
     ref,
   ) => {
@@ -96,6 +98,7 @@ export const CadViewerContainer = forwardRef<
           ref={ref}
           scene={{ up: new THREE.Vector3(0, 0, 1) }}
           camera={{ up: [0, 0, 1], position: initialCameraPosition }}
+          useWebGPU={useWebGPU}
           onCreated={({ camera }) => {
             mainCameraRef.current = camera
             handleCameraCreated(camera)

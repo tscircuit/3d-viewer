@@ -161,6 +161,7 @@ type CadViewerManifoldProps = {
   clickToInteractEnabled?: boolean
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
+  useWebGPU?: boolean
 } & (
   | { circuitJson: AnyCircuitElement[]; children?: React.ReactNode }
   | { circuitJson?: never; children: React.ReactNode }
@@ -175,6 +176,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   onUserInteraction,
   children,
   onCameraControllerReady,
+  useWebGPU,
 }) => {
   const childrenCircuitJson = useConvertChildrenToCircuitJson(children)
   const circuitJson = useMemo(() => {
@@ -355,6 +357,7 @@ try {
       boardCenter={boardCenter}
       onUserInteraction={onUserInteraction}
       onCameraControllerReady={onCameraControllerReady}
+      useWebGPU={useWebGPU}
     >
       <BoardMeshes
         geometryMeshes={geometryMeshes}

@@ -26,6 +26,7 @@ interface Props {
   clickToInteractEnabled?: boolean
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
+  useWebGPU?: boolean
 }
 
 export const CadViewerJscad = forwardRef<
@@ -40,6 +41,7 @@ export const CadViewerJscad = forwardRef<
       clickToInteractEnabled,
       onUserInteraction,
       onCameraControllerReady,
+      useWebGPU,
     },
     ref,
   ) => {
@@ -131,6 +133,7 @@ export const CadViewerJscad = forwardRef<
         boardCenter={boardCenter}
         onUserInteraction={onUserInteraction}
         onCameraControllerReady={onCameraControllerReady}
+        useWebGPU={useWebGPU}
       >
         {boardStls.map(({ stlData, color, layerType }, index) => (
           <VisibleSTLModel
