@@ -17,6 +17,7 @@ import {
   FAUX_BOARD_OPACITY,
 } from "../geoms/constants"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
+import { createCopperPourTextureForLayer } from "src/textures"
 
 interface JscadBoardTexturesProps {
   circuitJson: AnyCircuitElement[]
@@ -146,6 +147,18 @@ export function JscadBoardTextures({
         layer: "bottom",
         circuitJson,
         panelData: boardData,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      }),
+      topCopper: createCopperPourTextureForLayer({
+        layer: "top",
+        circuitJson,
+        boardData,
+        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+      }),
+      bottomCopper: createCopperPourTextureForLayer({
+        layer: "bottom",
+        circuitJson,
+        boardData,
         traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
       }),
     }
@@ -310,6 +323,34 @@ export function JscadBoardTextures({
       if (bottomCopperTextMesh) {
         meshes.push(bottomCopperTextMesh)
         rootObject.add(bottomCopperTextMesh)
+      }
+    }
+
+    // Top copper pours
+    if (visibility.topCopper) {
+      const topCopperMesh = createTexturePlane(
+        textures.topCopper,
+        pcbThickness / 2 + BOARD_SURFACE_OFFSET.copper,
+        false,
+        "jscad-top-copper-pour",
+      )
+      if (topCopperMesh) {
+        meshes.push(topCopperMesh)
+        rootObject.add(topCopperMesh)
+      }
+    }
+
+    // Bottom copper pours
+    if (visibility.bottomCopper) {
+      const bottomCopperMesh = createTexturePlane(
+        textures.bottomCopper,
+        -pcbThickness / 2 - BOARD_SURFACE_OFFSET.copper,
+        true,
+        "jscad-bottom-copper-pour",
+      )
+      if (bottomCopperMesh) {
+        meshes.push(bottomCopperMesh)
+        rootObject.add(bottomCopperMesh)
       }
     }
 
