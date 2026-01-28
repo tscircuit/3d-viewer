@@ -110,6 +110,7 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
           )
           renderer = new WebGPURenderer({
             antialias: true,
+            alpha: true,
           }) as unknown as WebGPURendererInterface
           await (renderer as WebGPURendererInterface).init()
         } else {
