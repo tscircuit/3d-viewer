@@ -1,10 +1,21 @@
 import React, { createContext, useContext } from "react"
 import * as THREE from "three"
 
+export interface WebGPURenderer extends THREE.Renderer {
+  outputColorSpace: THREE.ColorSpace
+  toneMapping: THREE.ToneMapping
+  toneMappingExposure: number
+  setPixelRatio(value: number): void
+  dispose(): void
+  init(): Promise<void>
+}
+
+export type RendererType = THREE.WebGLRenderer | WebGPURenderer
+
 export interface ThreeContextState {
   scene: THREE.Scene
   camera: THREE.Camera
-  renderer: THREE.WebGLRenderer
+  renderer: RendererType
   rootObject: THREE.Object3D
   addFrameListener: (listener: (time: number, delta: number) => void) => void
   removeFrameListener: (listener: (time: number, delta: number) => void) => void
