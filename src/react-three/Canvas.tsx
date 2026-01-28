@@ -8,8 +8,6 @@ import React, {
   useMemo,
 } from "react"
 import * as THREE from "three"
-// WebGPURenderer is dynamically imported when useWebGPU is true to avoid
-// loading browser-only code in Node.js environments
 import {
   ThreeContext,
   ThreeContextState,
