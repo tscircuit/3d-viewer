@@ -31,9 +31,7 @@ export const useBoardGeomBuilder = (
     setBoardGeom(simplifiedGeom)
 
     // Start the detailed builder
-    const builder = new BoardGeomBuilder(circuitJson, (finalGeoms) => {}, {
-      includeCopperPours: false,
-    })
+    const builder = new BoardGeomBuilder(circuitJson, (finalGeoms) => {})
 
     const runBuilderSteps = async () => {
       if (isProcessingRef.current) return // Prevent concurrent runs
