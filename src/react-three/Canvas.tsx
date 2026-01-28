@@ -8,7 +8,8 @@ import React, {
   useMemo,
 } from "react"
 import * as THREE from "three"
-import WebGPURenderer from "three/examples/jsm/renderers/webgpu/WebGPURenderer.js"
+// WebGPURenderer is dynamically imported when useWebGPU is true to avoid
+// loading browser-only code in Node.js environments
 import {
   ThreeContext,
   ThreeContextState,
@@ -103,14 +104,16 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
 
         removeExistingCanvases(mountRef.current)
 
-        renderer = useWebGPU
-          ? (new WebGPURenderer({
-              antialias: true,
-            }) as unknown as WebGPURendererInterface)
-          : new THREE.WebGLRenderer({ antialias: true, alpha: true })
-
         if (useWebGPU) {
+          const { default: WebGPURenderer } = await import(
+            "three/examples/jsm/renderers/webgpu/WebGPURenderer.js"
+          )
+          renderer = new WebGPURenderer({
+            antialias: true,
+          }) as unknown as WebGPURendererInterface
           await (renderer as WebGPURendererInterface).init()
+        } else {
+          renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
         }
 
         if (isCleanedUp) {
