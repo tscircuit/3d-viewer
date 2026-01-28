@@ -1,23 +1,23 @@
-import { useEffect, useMemo } from "react"
-import * as THREE from "three"
-import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
-import { useThree } from "../react-three/ThreeContext"
+import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
+import { useEffect, useMemo } from "react"
+import { createCopperPourTextureForLayer } from "src/textures"
+import * as THREE from "three"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
-import { createSoldermaskTextureForLayer } from "../utils/soldermask-texture"
-import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
-import { createTraceTextureForLayer } from "../utils/trace-texture"
-import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
-import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
 import {
+  BOARD_SURFACE_OFFSET,
   colors as defaultColors,
+  FAUX_BOARD_OPACITY,
   soldermaskColors,
   TRACE_TEXTURE_RESOLUTION,
-  BOARD_SURFACE_OFFSET,
-  FAUX_BOARD_OPACITY,
 } from "../geoms/constants"
+import { useThree } from "../react-three/ThreeContext"
+import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
-import { createCopperPourTextureForLayer } from "src/textures"
+import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
+import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
+import { createSoldermaskTextureForLayer } from "../utils/soldermask-texture"
+import { createTraceTextureForLayer } from "../utils/trace-texture"
 
 interface JscadBoardTexturesProps {
   circuitJson: AnyCircuitElement[]
@@ -191,8 +191,8 @@ export function JscadBoardTextures({
         side: THREE.DoubleSide,
         depthWrite,
         polygonOffset: usePolygonOffset,
-        polygonOffsetFactor: usePolygonOffset ? -1 : 0,
-        polygonOffsetUnits: usePolygonOffset ? -1 : 0,
+        polygonOffsetFactor: usePolygonOffset ? -4 : 0,
+        polygonOffsetUnits: usePolygonOffset ? -4 : 0,
         opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
       })
       const mesh = new THREE.Mesh(planeGeom, material)
@@ -305,6 +305,7 @@ export function JscadBoardTextures({
         pcbThickness / 2 + BOARD_SURFACE_OFFSET.copper,
         false,
         "jscad-top-copper-text",
+        true,
       )
       if (topCopperTextMesh) {
         meshes.push(topCopperTextMesh)
@@ -319,6 +320,7 @@ export function JscadBoardTextures({
         -pcbThickness / 2 - BOARD_SURFACE_OFFSET.copper,
         true,
         "jscad-bottom-copper-text",
+        true,
       )
       if (bottomCopperTextMesh) {
         meshes.push(bottomCopperTextMesh)
@@ -333,6 +335,7 @@ export function JscadBoardTextures({
         pcbThickness / 2 + BOARD_SURFACE_OFFSET.copper,
         false,
         "jscad-top-copper-pour",
+        true,
       )
       if (topCopperMesh) {
         meshes.push(topCopperMesh)
@@ -347,6 +350,7 @@ export function JscadBoardTextures({
         -pcbThickness / 2 - BOARD_SURFACE_OFFSET.copper,
         true,
         "jscad-bottom-copper-pour",
+        true,
       )
       if (bottomCopperMesh) {
         meshes.push(bottomCopperMesh)

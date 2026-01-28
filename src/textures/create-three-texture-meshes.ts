@@ -1,8 +1,8 @@
-import * as THREE from "three"
 import type { PcbBoard } from "circuit-json"
-import type { LayerTextures } from "./index"
+import * as THREE from "three"
 import { BOARD_SURFACE_OFFSET, FAUX_BOARD_OPACITY } from "../geoms/constants"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
+import type { LayerTextures } from "./index"
 
 type TextureType =
   | "trace"
@@ -202,7 +202,7 @@ export function createTextureMeshes(
       yOffset: pcbThickness / 2 + BOARD_SURFACE_OFFSET.copper,
       isBottomLayer: false,
       textureType: "copper-text",
-      usePolygonOffset: false,
+      usePolygonOffset: true,
       renderOrder: 2, // Render after soldermask
       isFaux,
     },
@@ -216,7 +216,7 @@ export function createTextureMeshes(
       yOffset: -pcbThickness / 2 - BOARD_SURFACE_OFFSET.copper,
       isBottomLayer: true,
       textureType: "copper-text",
-      usePolygonOffset: false,
+      usePolygonOffset: true,
       renderOrder: 2, // Render after soldermask
       isFaux,
     },
@@ -231,7 +231,7 @@ export function createTextureMeshes(
       yOffset: pcbThickness / 2 + BOARD_SURFACE_OFFSET.copper,
       isBottomLayer: false,
       textureType: "copper",
-      usePolygonOffset: false,
+      usePolygonOffset: true,
       renderOrder: 2, // Render after soldermask
       isFaux,
     },
@@ -245,7 +245,7 @@ export function createTextureMeshes(
       yOffset: -pcbThickness / 2 - BOARD_SURFACE_OFFSET.copper,
       isBottomLayer: true,
       textureType: "copper",
-      usePolygonOffset: false,
+      usePolygonOffset: true,
       renderOrder: 2, // Render after soldermask
       isFaux,
     },
