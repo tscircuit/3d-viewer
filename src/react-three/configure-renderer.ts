@@ -1,5 +1,5 @@
 import * as THREE from "three"
-import type { RendererType, WebGPURenderer } from "./ThreeContext"
+import type { RendererType, WebGPURendererInterface } from "./ThreeContext"
 
 /**
  * Applies renderer configuration that ensures GLTF/GLB assets are rendered
@@ -12,7 +12,7 @@ export const configureRenderer = (renderer: RendererType) => {
     renderer.toneMapping = THREE.ACESFilmicToneMapping
     renderer.toneMappingExposure = 1
   } else {
-    const gpuRenderer = renderer as WebGPURenderer
+    const gpuRenderer = renderer as WebGPURendererInterface
     gpuRenderer.outputColorSpace = THREE.SRGBColorSpace
     gpuRenderer.toneMapping = THREE.ACESFilmicToneMapping
     gpuRenderer.toneMappingExposure = 1

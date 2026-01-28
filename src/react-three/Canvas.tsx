@@ -13,7 +13,7 @@ import {
   ThreeContext,
   ThreeContextState,
   RendererType,
-  WebGPURenderer as WebGPURendererType,
+  WebGPURendererInterface,
 } from "./ThreeContext"
 import { HoverProvider } from "./HoverContext"
 import { removeExistingCanvases } from "./remove-existing-canvases"
@@ -104,11 +104,11 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
         removeExistingCanvases(mountRef.current)
 
         renderer = useWebGPU
-          ? new WebGPURenderer({ antialias: true })
+          ? (new WebGPURenderer({ antialias: true }) as unknown as WebGPURendererInterface)
           : new THREE.WebGLRenderer({ antialias: true, alpha: true })
 
         if (useWebGPU) {
-          await (renderer as WebGPURendererType).init()
+          await (renderer as WebGPURendererInterface).init()
         }
 
         if (isCleanedUp) {
