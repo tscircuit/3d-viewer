@@ -104,7 +104,9 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
         removeExistingCanvases(mountRef.current)
 
         renderer = useWebGPU
-          ? (new WebGPURenderer({ antialias: true }) as unknown as WebGPURendererInterface)
+          ? (new WebGPURenderer({
+              antialias: true,
+            }) as unknown as WebGPURendererInterface)
           : new THREE.WebGLRenderer({ antialias: true, alpha: true })
 
         if (useWebGPU) {
