@@ -60,6 +60,7 @@ export function createSilkscreenTextureForLayer({
   const pcbFabricationNoteRects =
     su(circuitJson).pcb_fabrication_note_rect.list()
   const pcbNoteLines = su(circuitJson).pcb_note_line.list()
+  const pcbSilkscreenOvals = su(circuitJson).pcb_silkscreen_oval.list()
 
   const textsOnLayer = pcbSilkscreenTexts.filter((t) => t.layer === layer)
   const pathsOnLayer = pcbSilkscreenPaths.filter((p) => p.layer === layer)
@@ -72,6 +73,7 @@ export function createSilkscreenTextureForLayer({
   const noteLinesOnLayer = pcbNoteLines.filter(
     (l) => (l as any).layer === layer,
   )
+  const ovalsOnLayer = pcbSilkscreenOvals.filter((c) => c.layer === layer)
   if (
     textsOnLayer.length === 0 &&
     pathsOnLayer.length === 0 &&
@@ -79,7 +81,8 @@ export function createSilkscreenTextureForLayer({
     rectsOnLayer.length === 0 &&
     circlesOnLayer.length === 0 &&
     fabricationNoteRectsOnLayer.length === 0 &&
-    noteLinesOnLayer.length === 0
+    noteLinesOnLayer.length === 0 &&
+    ovalsOnLayer.length === 0
   ) {
     return null
   }
@@ -234,6 +237,46 @@ export function createSilkscreenTextureForLayer({
       // Draw filled circle
       ctx.beginPath()
       ctx.arc(0, 0, radiusPx, 0, 2 * Math.PI)
+      ctx.fill()
+    }
+
+    ctx.restore()
+  })
+
+  // Draw Silkscreen Ovals
+  ovalsOnLayer.forEach((ovalEl: any) => {
+    const radiusX = coerceDimensionToMm(ovalEl.radius_x, 0)
+    const radiusY = coerceDimensionToMm(ovalEl.radius_y, 0)
+    if (radiusX <= 0 || radiusY <= 0) return
+
+    const strokeWidth = coerceDimensionToMm(ovalEl.stroke_width, 0.12)
+    const hasStroke = strokeWidth > 0
+
+    const centerXmm = parseDimensionToMm(ovalEl.center?.x) ?? 0
+    const centerYmm = parseDimensionToMm(ovalEl.center?.y) ?? 0
+
+    const canvasCenterX = canvasXFromPcb(centerXmm)
+    const canvasCenterY = canvasYFromPcb(centerYmm)
+    const radiusXPx = radiusX * traceTextureResolution
+    const radiusYPx = radiusY * traceTextureResolution
+
+    const rotation = ovalEl.rotation ?? 0
+    const rotationRad = (rotation * Math.PI) / 180
+
+    ctx.save()
+    ctx.translate(canvasCenterX, canvasCenterY)
+    ctx.rotate(rotationRad)
+
+    if (hasStroke) {
+      ctx.lineWidth = strokeWidth * traceTextureResolution
+      ctx.strokeStyle = silkscreenColor
+      ctx.beginPath()
+      ctx.ellipse(0, 0, radiusXPx, radiusYPx, 0, 0, 2 * Math.PI)
+      ctx.stroke()
+    } else {
+      ctx.fillStyle = silkscreenColor
+      ctx.beginPath()
+      ctx.ellipse(0, 0, radiusXPx, radiusYPx, 0, 0, 2 * Math.PI)
       ctx.fill()
     }
 

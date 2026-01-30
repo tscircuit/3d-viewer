@@ -29,6 +29,7 @@
   "dependencies": {
     "@jscad/regl-renderer": "^2.6.12",
     "@jscad/stl-serializer": "^2.1.20",
+    "circuit-json": "^0.0.372",
     "circuit-to-canvas": "^0.0.49",
     "react-hot-toast": "^2.6.0",
     "three": "^0.165.0",
