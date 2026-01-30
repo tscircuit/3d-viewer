@@ -8,6 +8,7 @@ const createCadComponent = (z: number): CadComponent => ({
   pcb_component_id: "pcb-1",
   source_component_id: "source-1",
   position: { x: 0, y: 0, z },
+  anchor_alignment: "center",
 })
 
 test("adds faux board and defaults cad component z to half board thickness", () => {
