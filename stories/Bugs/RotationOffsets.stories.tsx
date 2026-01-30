@@ -163,6 +163,7 @@ const circuitJson: AnyCircuitElement[] = [
     layer: "top",
     model_obj_url:
       "https://modelcdn.tscircuit.com/easyeda_models/download?uuid=c7acac53bcbc44d68fbab8f60a747688&pn=C17414",
+    anchor_alignment: "center",
   },
   {
     type: "source_component",
@@ -325,6 +326,7 @@ const circuitJson: AnyCircuitElement[] = [
     layer: "top",
     model_obj_url:
       "https://modelcdn.tscircuit.com/easyeda_models/download?uuid=c7acac53bcbc44d68fbab8f60a747688&pn=C17414",
+    anchor_alignment: "center",
   },
   {
     type: "source_trace",

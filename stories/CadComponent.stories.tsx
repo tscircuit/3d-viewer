@@ -10,6 +10,7 @@ const cad_component: CadComponent = {
   rotation: { x: 0, y: 0, z: 0 },
   pcb_component_id: "todo",
   source_component_id: "todo",
+  anchor_alignment: "center",
 }
 
 const wrlComponent: CadComponent = {
@@ -21,6 +22,7 @@ const wrlComponent: CadComponent = {
   rotation: { x: 0, y: 0, z: 0 },
   pcb_component_id: "todo",
   source_component_id: "todo",
+  anchor_alignment: "center",
 }
 
 export const Default = () => (
@@ -48,6 +50,7 @@ export const BottomLayer = () => (
           z: 0,
         },
         model_obj_url: "/easyeda-models/47443b588a77418ba6b4ea51975c36c0",
+        anchor_alignment: "center",
       },
     ])}
   />
@@ -72,6 +75,7 @@ export const SSOPRotated = () => (
           z: 90,
         },
         model_obj_url: "/easyeda-models/47443b588a77418ba6b4ea51975c36c0",
+        anchor_alignment: "center",
       },
     ])}
   />
