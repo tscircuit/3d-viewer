@@ -17,6 +17,7 @@ const cad_component: CadComponent = {
   rotation: { x: 0, y: 0, z: 0 },
   pcb_component_id: "todo",
   source_component_id: "todo",
+  anchor_alignment: "center",
 }
 
 export const BadGlbUrl = () => {
