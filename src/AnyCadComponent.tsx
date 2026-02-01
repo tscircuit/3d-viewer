@@ -85,7 +85,8 @@ export const AnyCadComponent = ({
 
     if (layer === "bottom") {
       // Flip 180° around X axis for bottom layer components
-      return tuple(baseRotation[0] + Math.PI, baseRotation[1], -baseRotation[2])
+      // tscircuit/core already rotates the components
+      // return tuple(baseRotation[0] + Math.PI, baseRotation[1], -baseRotation[2])
     }
     return baseRotation
   }, [cad_component.rotation, layer])
