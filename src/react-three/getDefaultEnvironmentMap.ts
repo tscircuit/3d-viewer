@@ -1,7 +1,7 @@
 import * as THREE from "three"
 import { RoomEnvironment } from "three-stdlib"
 
-type RendererLike = THREE.WebGLRenderer | (Record<string, unknown> & object)
+type RendererLike = THREE.WebGLRenderer | THREE.Renderer
 
 const environmentCache = new WeakMap<object, THREE.Texture>()
 

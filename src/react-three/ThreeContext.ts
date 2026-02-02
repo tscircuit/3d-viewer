@@ -1,10 +1,17 @@
 import React, { createContext, useContext } from "react"
 import * as THREE from "three"
 
+export interface RendererWithExtras extends THREE.Renderer {
+  setPixelRatio(value: number): void
+  dispose(): void
+}
+
+export type RendererType = THREE.WebGLRenderer | RendererWithExtras
+
 export interface ThreeContextState {
   scene: THREE.Scene
   camera: THREE.Camera
-  renderer: THREE.WebGLRenderer
+  renderer: RendererType
   rootObject: THREE.Object3D
   addFrameListener: (listener: (time: number, delta: number) => void) => void
   removeFrameListener: (listener: (time: number, delta: number) => void) => void
