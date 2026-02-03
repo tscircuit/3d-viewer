@@ -40,6 +40,14 @@ const CadViewerInner = (props: any) => {
     const stored = window.localStorage.getItem("cadViewerAutoRotateUserToggled")
     return stored === "true"
   })
+  const isWebGPUPropProvided = typeof props.useWebGPU === "boolean"
+  const [useWebGPUOverride, setUseWebGPUOverride] = useState(() => {
+    if (isWebGPUPropProvided) {
+      return props.useWebGPU as boolean
+    }
+    const stored = window.localStorage.getItem("cadViewerUseWebGPU")
+    return stored === "true"
+  })
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>("Custom")
   const { cameraType, setCameraType } = useCameraController()
   const { visibility, setLayerVisibility } = useLayerVisibility()
@@ -209,6 +217,15 @@ const CadViewerInner = (props: any) => {
     )
   }, [autoRotateUserToggled])
 
+  useEffect(() => {
+    if (!isWebGPUPropProvided) {
+      window.localStorage.setItem(
+        "cadViewerUseWebGPU",
+        String(useWebGPUOverride),
+      )
+    }
+  }, [isWebGPUPropProvided, useWebGPUOverride])
+
   // Initialize camera type from localStorage
   useEffect(() => {
     const stored = window.localStorage.getItem("cadViewerCameraType")
@@ -221,6 +238,10 @@ const CadViewerInner = (props: any) => {
   useEffect(() => {
     window.localStorage.setItem("cadViewerCameraType", cameraType)
   }, [cameraType])
+
+  const resolvedUseWebGPU = isWebGPUPropProvided
+    ? (props.useWebGPU as boolean)
+    : useWebGPUOverride
 
   const viewerKey = props.circuitJson
     ? JSON.stringify(props.circuitJson)
@@ -248,6 +269,7 @@ const CadViewerInner = (props: any) => {
           cameraType={cameraType}
           onUserInteraction={handleUserInteraction}
           onCameraControllerReady={handleCameraControllerReady}
+          useWebGPU={resolvedUseWebGPU}
         />
       ) : (
         <CadViewerManifold
@@ -256,6 +278,7 @@ const CadViewerInner = (props: any) => {
           cameraType={cameraType}
           onUserInteraction={handleUserInteraction}
           onCameraControllerReady={handleCameraControllerReady}
+          useWebGPU={resolvedUseWebGPU}
         />
       )}
       <div
@@ -281,6 +304,11 @@ const CadViewerInner = (props: any) => {
           engine={engine}
           cameraPreset={cameraPreset}
           autoRotate={autoRotate}
+          showWebGPUToggle={!isWebGPUPropProvided}
+          useWebGPU={resolvedUseWebGPU}
+          onWebGPUToggle={() => {
+            setUseWebGPUOverride((prev) => !prev)
+          }}
           onEngineSwitch={(newEngine) => {
             setEngine(newEngine)
             closeMenu()

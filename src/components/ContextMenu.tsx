@@ -14,6 +14,9 @@ interface ContextMenuProps {
   engine: "jscad" | "manifold"
   cameraPreset: CameraPreset
   autoRotate: boolean
+  showWebGPUToggle: boolean
+  useWebGPU: boolean
+  onWebGPUToggle: () => void
   onEngineSwitch: (engine: "jscad" | "manifold") => void
   onCameraPresetSelect: (preset: CameraPreset) => void
   onAutoRotateToggle: () => void
@@ -105,6 +108,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   engine,
   cameraPreset,
   autoRotate,
+  showWebGPUToggle,
+  useWebGPU,
+  onWebGPUToggle,
   onEngineSwitch,
   onCameraPresetSelect,
   onAutoRotateToggle,
@@ -314,6 +320,32 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 {engine === "jscad" ? "experimental" : "default"}
               </div>
             </DropdownMenu.Item>
+
+            {showWebGPUToggle && (
+              <DropdownMenu.Item
+                style={{
+                  ...itemStyles,
+                  ...itemPaddingStyles,
+                  backgroundColor:
+                    hoveredItem === "webgpu" ? "#404040" : "transparent",
+                }}
+                onSelect={(e) => e.preventDefault()}
+                onPointerDown={(e) => {
+                  e.preventDefault()
+                  onWebGPUToggle()
+                }}
+                onMouseEnter={() => setHoveredItem("webgpu")}
+                onMouseLeave={() => setHoveredItem(null)}
+                onTouchStart={() => setHoveredItem("webgpu")}
+              >
+                <span style={iconContainerStyles}>
+                  {useWebGPU && <CheckIcon />}
+                </span>
+                <span style={{ display: "flex", alignItems: "center" }}>
+                  Use WebGPU Renderer
+                </span>
+              </DropdownMenu.Item>
+            )}
 
             <DropdownMenu.Separator style={separatorStyles} />
 
