@@ -18,6 +18,7 @@ import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-textur
 import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
 import { createSoldermaskTextureForLayer } from "../utils/soldermask-texture"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
+import { getLayerTextureResolution } from "../utils/layer-texture-resolution"
 
 interface JscadBoardTexturesProps {
   circuitJson: AnyCircuitElement[]
@@ -65,6 +66,11 @@ export function JscadBoardTextures({
     return boardsNotInPanel.length > 0 ? boardsNotInPanel[0]! : null
   }, [circuitJson])
 
+  const traceTextureResolution = useMemo(() => {
+    if (!boardData) return TRACE_TEXTURE_RESOLUTION
+    return getLayerTextureResolution(boardData, TRACE_TEXTURE_RESOLUTION)
+  }, [boardData])
+
   const textures = useMemo(() => {
     if (!boardData || !boardData.width || !boardData.height) return null
 
@@ -86,83 +92,83 @@ export function JscadBoardTextures({
         circuitJson,
         boardData,
         soldermaskColor,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       }),
       bottomSoldermask: createSoldermaskTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
         soldermaskColor,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       }),
       topSilkscreen: createSilkscreenTextureForLayer({
         layer: "top",
         circuitJson,
         boardData,
         silkscreenColor,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       }),
       bottomSilkscreen: createSilkscreenTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
         silkscreenColor,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       }),
       topTraceWithMask: createTraceTextureForLayer({
         layer: "top",
         circuitJson,
         boardData,
         traceColor: traceColorWithMask,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       }),
       bottomTraceWithMask: createTraceTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
         traceColor: traceColorWithMask,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       }),
       topCopperText: createCopperTextTextureForLayer({
         layer: "top",
         circuitJson,
         boardData,
         copperColor: `rgb(${Math.round(defaultColors.copper[0] * 255)}, ${Math.round(defaultColors.copper[1] * 255)}, ${Math.round(defaultColors.copper[2] * 255)})`,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       }),
       bottomCopperText: createCopperTextTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
         copperColor: `rgb(${Math.round(defaultColors.copper[0] * 255)}, ${Math.round(defaultColors.copper[1] * 255)}, ${Math.round(defaultColors.copper[2] * 255)})`,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       }),
       topPanelOutlines: createPanelOutlineTextureForLayer({
         layer: "top",
         circuitJson,
         panelData: boardData,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       }),
       bottomPanelOutlines: createPanelOutlineTextureForLayer({
         layer: "bottom",
         circuitJson,
         panelData: boardData,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       }),
       topCopper: createCopperPourTextureForLayer({
         layer: "top",
         circuitJson,
         boardData,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       }),
       bottomCopper: createCopperPourTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       }),
     }
-  }, [circuitJson, boardData])
+  }, [circuitJson, boardData, traceTextureResolution])
 
   useEffect(() => {
     if (!rootObject || !boardData || !textures) return

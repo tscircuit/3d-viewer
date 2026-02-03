@@ -24,6 +24,7 @@ import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
 import { createCopperPourTextureForLayer } from "../textures"
 import type { LayerTextures } from "../textures"
+import { getLayerTextureResolution } from "../utils/layer-texture-resolution"
 
 export interface ManifoldGeoms {
   board?: {
@@ -108,6 +109,11 @@ export const useManifoldBoardBuilder = (
     // We can identify it by checking if it has the faux board ID
     return boards.length > 0 && boards[0]!.pcb_board_id === "faux-board"
   }, [circuitJson])
+
+  const traceTextureResolution = useMemo(() => {
+    if (!boardData) return TRACE_TEXTURE_RESOLUTION
+    return getLayerTextureResolution(boardData, TRACE_TEXTURE_RESOLUTION)
+  }, [boardData])
 
   useEffect(() => {
     if (!manifoldJSModule || !boardData) {
@@ -352,14 +358,14 @@ export const useManifoldBoardBuilder = (
         circuitJson,
         boardData,
         traceColor: traceColorWithoutMask,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       })
       layerTextureMap.bottomTrace = createTraceTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
         traceColor: traceColorWithoutMask,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       })
 
       // Create trace textures for when soldermask is ON (light green)
@@ -370,14 +376,14 @@ export const useManifoldBoardBuilder = (
         circuitJson,
         boardData,
         traceColor: traceColorWithMask,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       })
       layerTextureMap.bottomTraceWithMask = createTraceTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
         traceColor: traceColorWithMask,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       })
 
       // --- Process Silkscreen (as Textures) ---
@@ -387,14 +393,14 @@ export const useManifoldBoardBuilder = (
         circuitJson,
         boardData,
         silkscreenColor,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       })
       layerTextureMap.bottomSilkscreen = createSilkscreenTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
         silkscreenColor,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       })
 
       // --- Process Soldermask (as Textures) ---
@@ -406,14 +412,14 @@ export const useManifoldBoardBuilder = (
         circuitJson,
         boardData,
         soldermaskColor,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       })
       layerTextureMap.bottomSoldermask = createSoldermaskTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
         soldermaskColor,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       })
 
       // --- Process Copper Text (as Textures) ---
@@ -424,14 +430,14 @@ export const useManifoldBoardBuilder = (
         circuitJson,
         boardData,
         copperColor,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       })
       layerTextureMap.bottomCopperText = createCopperTextTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
         copperColor,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       })
 
       // --- Process Panel Outlines (as Textures) ---
@@ -439,13 +445,13 @@ export const useManifoldBoardBuilder = (
         layer: "top",
         circuitJson,
         panelData: boardData,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       })
       layerTextureMap.bottomPanelOutlines = createPanelOutlineTextureForLayer({
         layer: "bottom",
         circuitJson,
         panelData: boardData,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       })
 
       // --- Process Copper Pours (as Textures) ---
@@ -453,13 +459,13 @@ export const useManifoldBoardBuilder = (
         layer: "top",
         circuitJson,
         boardData,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       })
       layerTextureMap.bottomCopper = createCopperPourTextureForLayer({
         layer: "bottom",
         circuitJson,
         boardData,
-        traceTextureResolution: TRACE_TEXTURE_RESOLUTION,
+        traceTextureResolution,
       })
 
       setTextures(layerTextureMap)
@@ -481,7 +487,7 @@ export const useManifoldBoardBuilder = (
       manifoldInstancesForCleanup.current = []
       // boardManifold is part of manifoldInstancesForCleanup if it was assigned
     }
-  }, [manifoldJSModule, circuitJson, boardData])
+  }, [manifoldJSModule, circuitJson, boardData, traceTextureResolution])
 
   return {
     geoms,

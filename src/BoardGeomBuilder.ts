@@ -274,6 +274,10 @@ export class BoardGeomBuilder {
             this.goToNextState()
           }
           break
+        case "processing_copper_pours":
+          // Copper pours are rendered as textures in the JSCAD viewer.
+          this.goToNextState()
+          break
 
         case "processing_vias":
           if (this.currentIndex < this.pcb_vias.length) {
