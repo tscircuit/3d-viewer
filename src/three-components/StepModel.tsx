@@ -108,7 +108,7 @@ function occtMeshesToGroup(meshes: OcctMesh[]): Group {
   return group
 }
 
-async function convertStepUrlToGlbUrl(stepUrl: string): Promise<string> {
+async function convertStepUrlToGlb(stepUrl: string): Promise<ArrayBuffer> {
   const response = await fetch(stepUrl)
   if (!response.ok) {
     throw new Error(`Failed to fetch STEP file: ${response.statusText}`)
@@ -137,7 +137,7 @@ async function convertStepUrlToGlbUrl(stepUrl: string): Promise<string> {
       { binary: true },
     )
   })
-  return URL.createObjectURL(new Blob([glb], { type: "model/gltf-binary" }))
+  return glb
 }
 
 const CACHE_PREFIX = "step-glb-cache:"
@@ -184,6 +184,29 @@ function setCachedGlb(stepUrl: string, glb: ArrayBuffer): void {
   }
 }
 
+type ConvertedStepFile = {
+  arrayBuffer: ArrayBuffer
+  blobUrl: string
+}
+
+type StepUrlConversionRegistry = {
+  inProgress: Map<string, Promise<ConvertedStepFile>>
+  completed: Map<string, ConvertedStepFile>
+}
+
+function getStepUrlConversionRegistry(): StepUrlConversionRegistry {
+  const globalScope = globalThis as {
+    stepUrlToGltfModelConversions?: StepUrlConversionRegistry
+  }
+  if (!globalScope.stepUrlToGltfModelConversions) {
+    globalScope.stepUrlToGltfModelConversions = {
+      inProgress: new Map(),
+      completed: new Map(),
+    }
+  }
+  return globalScope.stepUrlToGltfModelConversions
+}
+
 type StepModelProps = {
   stepUrl: string
   position?: [number, number, number]
@@ -210,35 +233,69 @@ export const StepModel = ({
   useEffect(() => {
     let isActive = true
     let objectUrl: string | null = null
+    let shouldRevokeObjectUrl = true
+    const registry = getStepUrlConversionRegistry()
     const cachedGlb = getCachedGlb(stepUrl)
     if (cachedGlb) {
-      objectUrl = URL.createObjectURL(
-        new Blob([cachedGlb], { type: "model/gltf-binary" }),
-      )
-      setStepGltfUrl(objectUrl)
+      const cachedConverted: ConvertedStepFile = {
+        arrayBuffer: cachedGlb,
+        blobUrl: URL.createObjectURL(
+          new Blob([cachedGlb], { type: "model/gltf-binary" }),
+        ),
+      }
+      registry.completed.set(stepUrl, cachedConverted)
+      objectUrl = cachedConverted.blobUrl
+      shouldRevokeObjectUrl = false
+      setStepGltfUrl(cachedConverted.blobUrl)
       return () => {
         isActive = false
-        if (objectUrl) {
+        if (objectUrl && shouldRevokeObjectUrl) {
           URL.revokeObjectURL(objectUrl)
         }
       }
     }
-    void convertStepUrlToGlbUrl(stepUrl)
-      .then((generatedUrl) => {
+    const existingCompleted = registry.completed.get(stepUrl)
+    if (existingCompleted) {
+      objectUrl = existingCompleted.blobUrl
+      shouldRevokeObjectUrl = false
+      setStepGltfUrl(existingCompleted.blobUrl)
+      setCachedGlb(stepUrl, existingCompleted.arrayBuffer)
+      return () => {
+        isActive = false
+        if (objectUrl && shouldRevokeObjectUrl) {
+          URL.revokeObjectURL(objectUrl)
+        }
+      }
+    }
+    let conversionPromise = registry.inProgress.get(stepUrl)
+    if (!conversionPromise) {
+      conversionPromise = convertStepUrlToGlb(stepUrl)
+        .then((glbBuffer) => {
+          const converted: ConvertedStepFile = {
+            arrayBuffer: glbBuffer,
+            blobUrl: URL.createObjectURL(
+              new Blob([glbBuffer], { type: "model/gltf-binary" }),
+            ),
+          }
+          registry.completed.set(stepUrl, converted)
+          registry.inProgress.delete(stepUrl)
+          return converted
+        })
+        .catch((error) => {
+          registry.inProgress.delete(stepUrl)
+          throw error
+        })
+      registry.inProgress.set(stepUrl, conversionPromise)
+    }
+    void conversionPromise
+      .then((converted) => {
         if (!isActive) {
-          URL.revokeObjectURL(generatedUrl)
           return
         }
-        objectUrl = generatedUrl
-        setStepGltfUrl(generatedUrl)
-        fetch(generatedUrl)
-          .then((response) => response.arrayBuffer())
-          .then((glbBuffer) => {
-            setCachedGlb(stepUrl, glbBuffer)
-          })
-          .catch((error) => {
-            console.warn("Failed to cache STEP GLB", error)
-          })
+        objectUrl = converted.blobUrl
+        shouldRevokeObjectUrl = false
+        setStepGltfUrl(converted.blobUrl)
+        setCachedGlb(stepUrl, converted.arrayBuffer)
       })
       .catch((error) => {
         console.error("Failed to convert STEP file to GLB", error)
@@ -248,7 +305,7 @@ export const StepModel = ({
       })
     return () => {
       isActive = false
-      if (objectUrl) {
+      if (objectUrl && shouldRevokeObjectUrl) {
         URL.revokeObjectURL(objectUrl)
       }
     }
