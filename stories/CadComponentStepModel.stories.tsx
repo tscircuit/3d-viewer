@@ -32,16 +32,19 @@ const createManyStepCircuit = async (modelUrl: string) => {
   })
   const gridSize = 10
   const pitchMm = 10
+  const offsetMm = ((gridSize - 1) * pitchMm) / 2
   const chips = Array.from({ length: gridSize * gridSize }, (_, index) => {
     const row = Math.floor(index / gridSize)
     const col = index % gridSize
+    const xMm = col * pitchMm - offsetMm
+    const yMm = row * pitchMm - offsetMm
     return (
       <chip
         key={`U${index + 1}`}
         name={`U${index + 1}`}
         footprint="pinrow1"
-        pcbX={`${col * pitchMm}mm`}
-        pcbY={`${row * pitchMm}mm`}
+        pcbX={`${xMm}mm`}
+        pcbY={`${yMm}mm`}
         cadModel={
           <cadassembly>
             <cadmodel modelUrl={modelUrl} />
