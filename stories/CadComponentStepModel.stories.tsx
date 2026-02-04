@@ -30,20 +30,29 @@ const createManyStepCircuit = async (modelUrl: string) => {
   const circuit = new Circuit({
     platform: getPlatformConfig(),
   })
-  const chips = Array.from({ length: 100 }, (_, index) => (
-    <chip
-      key={`U${index + 1}`}
-      name={`U${index + 1}`}
-      footprint="pinrow1"
-      cadModel={
-        <cadassembly>
-          <cadmodel modelUrl={modelUrl} />
-        </cadassembly>
-      }
-    />
-  ))
+  const gridSize = 10
+  const pitchMm = 10
+  const chips = Array.from({ length: gridSize * gridSize }, (_, index) => {
+    const row = Math.floor(index / gridSize)
+    const col = index % gridSize
+    return (
+      <chip
+        key={`U${index + 1}`}
+        name={`U${index + 1}`}
+        footprint="pinrow1"
+        pcbX={`${col * pitchMm}mm`}
+        pcbY={`${row * pitchMm}mm`}
+        cadModel={
+          <cadassembly>
+            <cadmodel modelUrl={modelUrl} />
+          </cadassembly>
+        }
+      />
+    )
+  })
+  const boardSizeMm = gridSize * pitchMm
   circuit.add(
-    <board width="10mm" height="10mm">
+    <board width={`${boardSizeMm}mm`} height={`${boardSizeMm}mm`}>
       {chips}
     </board>,
   )
