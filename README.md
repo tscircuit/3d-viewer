@@ -122,6 +122,7 @@ Props:
 
 - `circuit-json`: (optional) An array of AnyCircuitElement objects representing the PCB layout.
 - `children`: (optional) React children elements describing the PCB layout (alternative to using `circuit-json`).
+- `resolveStaticAsset`: (optional) Function that receives each component model URL (`obj`, `wrl`, `stl`, `gltf`, `glb`, `step`) and returns the resolved URL to load.
 
 ### `<board>`
 

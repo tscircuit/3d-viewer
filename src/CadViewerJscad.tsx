@@ -24,8 +24,10 @@ interface Props {
   circuitJson?: AnyCircuitElement[]
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
+  cameraType?: "orthographic" | "perspective"
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
+  resolveStaticAsset?: (modelUrl: string) => string
 }
 
 export const CadViewerJscad = forwardRef<
@@ -40,6 +42,7 @@ export const CadViewerJscad = forwardRef<
       clickToInteractEnabled,
       onUserInteraction,
       onCameraControllerReady,
+      resolveStaticAsset,
     },
     ref,
   ) => {
@@ -157,6 +160,7 @@ export const CadViewerJscad = forwardRef<
               key={cad_component.cad_component_id}
               cad_component={cad_component}
               circuitJson={internalCircuitJson}
+              resolveStaticAsset={resolveStaticAsset}
             />
           </ThreeErrorBoundary>
         ))}

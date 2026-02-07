@@ -13,14 +13,17 @@ import { GltfModel } from "./three-components/GltfModel"
 import { JscadModel } from "./three-components/JscadModel"
 import { MixedStlModel } from "./three-components/MixedStlModel"
 import { StepModel } from "./three-components/StepModel"
+import { resolveModelUrl } from "./utils/resolve-model-url"
 import { tuple } from "./utils/tuple"
 
 export const AnyCadComponent = ({
   cad_component,
   circuitJson,
+  resolveStaticAsset,
 }: {
   cad_component: CadComponent
   circuitJson: AnyCircuitElement[]
+  resolveStaticAsset?: (modelUrl: string) => string
 }) => {
   const pcbThickness = usePcbThickness(circuitJson)
   const [isHovered, setIsHovered] = useState(false)
@@ -60,12 +63,22 @@ export const AnyCadComponent = ({
     return platedHoles.length > 0
   }, [circuitJson, cad_component.pcb_component_id])
 
-  const url =
+  const resolveModelUrlWithStaticResolver = useCallback(
+    (modelUrl?: string) => resolveModelUrl(modelUrl, resolveStaticAsset),
+    [resolveStaticAsset],
+  )
+
+  const url = resolveModelUrlWithStaticResolver(
     cad_component.model_obj_url ??
-    cad_component.model_wrl_url ??
-    cad_component.model_stl_url
-  const gltfUrl = cad_component.model_glb_url ?? cad_component.model_gltf_url
-  const stepUrl = cad_component.model_step_url
+      cad_component.model_wrl_url ??
+      cad_component.model_stl_url,
+  )
+  const gltfUrl = resolveModelUrlWithStaticResolver(
+    cad_component.model_glb_url ?? cad_component.model_gltf_url,
+  )
+  const stepUrl = resolveModelUrlWithStaticResolver(
+    cad_component.model_step_url,
+  )
   const pcbComponent = circuitJson.find(
     (elm) =>
       elm.type === "pcb_component" &&
