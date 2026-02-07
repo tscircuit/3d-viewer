@@ -159,8 +159,10 @@ const BoardMeshes = ({
 type CadViewerManifoldProps = {
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
+  cameraType?: "orthographic" | "perspective"
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
+  resolveStaticAsset?: (modelUrl: string) => string
 } & (
   | { circuitJson: AnyCircuitElement[]; children?: React.ReactNode }
   | { circuitJson?: never; children: React.ReactNode }
@@ -175,6 +177,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   onUserInteraction,
   children,
   onCameraControllerReady,
+  resolveStaticAsset,
 }) => {
   const childrenCircuitJson = useConvertChildrenToCircuitJson(children)
   const circuitJson = useMemo(() => {
@@ -370,6 +373,7 @@ try {
           <AnyCadComponent
             cad_component={cad_component}
             circuitJson={circuitJson}
+            resolveStaticAsset={resolveStaticAsset}
           />
         </ThreeErrorBoundary>
       ))}
