@@ -104,23 +104,16 @@ export const AnyCadComponent = ({
     return baseRotation
   }, [cad_component.rotation, layer])
 
-  // Adjust position based on layer to place components on top/bottom of board
+  // Use position.z from circuit-json directly — core already calculates the
+  // correct z including board thickness offset and zOffsetFromSurface
   const adjustedPosition = useMemo(() => {
     if (!cad_component.position) return undefined
-    let z: number
-    if (layer === "top") {
-      z = pcbThickness / 2
-    } else if (layer === "bottom") {
-      z = -(pcbThickness / 2)
-    } else {
-      z = cad_component.position.z // Fallback
-    }
-    return [cad_component.position.x, cad_component.position.y, z] as [
-      number,
-      number,
-      number,
-    ]
-  }, [cad_component.position, layer, pcbThickness])
+    return [
+      cad_component.position.x,
+      cad_component.position.y,
+      cad_component.position.z,
+    ] as [number, number, number]
+  }, [cad_component.position])
 
   let modelComponent: React.ReactNode = null
 
