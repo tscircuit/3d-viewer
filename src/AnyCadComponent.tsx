@@ -109,9 +109,9 @@ export const AnyCadComponent = ({
     if (!cad_component.position) return undefined
     let z: number
     if (layer === "top") {
-      z = pcbThickness / 2
+      z = cad_component.position.z
     } else if (layer === "bottom") {
-      z = -(pcbThickness / 2)
+      z = -(cad_component.position.z + pcbThickness) // Place on bottom side, accounting for PCB thickness
     } else {
       z = cad_component.position.z // Fallback
     }
