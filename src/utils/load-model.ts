@@ -55,18 +55,18 @@ async function loadModelFromUrl(url: string): Promise<THREE.Object3D | null> {
 export async function load3DModel(url: string): Promise<THREE.Object3D | null> {
   // Clean the URL (remove cache busting parameters)
   const cleanUrl = url.replace(/&cachebust_origin=$/, "")
-  
+
   const cache = window.TSCIRCUIT_3D_MODEL_CACHE
 
   // Check if model is already in cache
   if (cache.has(cleanUrl)) {
     const cacheItem = cache.get(cleanUrl)!
-    
+
     // If we have a cached result, clone it to avoid sharing the same object
     if (cacheItem.result) {
       return cacheItem.result.clone()
     }
-    
+
     // If we're still loading, wait for the existing promise and clone the result
     return cacheItem.promise.then((result) => {
       return result ? result.clone() : null
