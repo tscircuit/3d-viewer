@@ -3,7 +3,7 @@ import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import type { ManifoldToplevel } from "manifold-3d"
 import type React from "react"
 import { useEffect, useMemo, useState } from "react"
-import type * as THREE from "three"
+import * as THREE from "three"
 import { useThree } from "./react-three/ThreeContext"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
@@ -34,6 +34,43 @@ const BoardMeshes = ({
 }) => {
   const { rootObject } = useThree()
   const { visibility } = useLayerVisibility()
+
+  const disposeTextureMesh = (mesh: THREE.Mesh) => {
+    mesh.geometry.dispose()
+    const materials = Array.isArray(mesh.material)
+      ? mesh.material
+      : [mesh.material]
+
+    for (const material of materials) {
+      if (!material) continue
+
+      const textureProps = [
+        "map",
+        "alphaMap",
+        "aoMap",
+        "bumpMap",
+        "displacementMap",
+        "emissiveMap",
+        "lightMap",
+        "metalnessMap",
+        "normalMap",
+        "roughnessMap",
+        "specularMap",
+      ] as const
+      const typedMaterial = material as THREE.Material &
+        Record<(typeof textureProps)[number], THREE.Texture | null | undefined>
+
+      for (const prop of textureProps) {
+        const texture = typedMaterial[prop]
+        if (texture && texture instanceof THREE.Texture) {
+          texture.dispose()
+          typedMaterial[prop] = null
+        }
+      }
+
+      material.dispose()
+    }
+  }
 
   useEffect(() => {
     if (!rootObject) return
@@ -68,74 +105,7 @@ const BoardMeshes = ({
     })
 
     textureMeshes.forEach((mesh) => {
-      let shouldShow = true
-
-      // Top trace layer (without mask - tan/brown color)
-      if (
-        mesh.name.includes("top-trace-texture-plane") &&
-        !mesh.name.includes("with-mask")
-      ) {
-        // Show tan/brown trace when soldermask is OFF
-        shouldShow = visibility.topCopper && !visibility.topMask
-      }
-      // Top trace with mask (light green color)
-      else if (mesh.name.includes("top-trace-with-mask")) {
-        // Show light green trace when soldermask is ON
-        shouldShow = visibility.topCopper && visibility.topMask
-      }
-      // Bottom trace layer (without mask - tan/brown color)
-      else if (
-        mesh.name.includes("bottom-trace-texture-plane") &&
-        !mesh.name.includes("with-mask")
-      ) {
-        // Show tan/brown trace when soldermask is OFF
-        shouldShow = visibility.bottomCopper && !visibility.bottomMask
-      }
-      // Bottom trace with mask (light green color)
-      else if (mesh.name.includes("bottom-trace-with-mask")) {
-        // Show light green trace when soldermask is ON
-        shouldShow = visibility.bottomCopper && visibility.bottomMask
-      }
-      // Top silkscreen
-      else if (mesh.name.includes("top-silkscreen")) {
-        shouldShow = visibility.topSilkscreen
-      }
-      // Bottom silkscreen
-      else if (mesh.name.includes("bottom-silkscreen")) {
-        shouldShow = visibility.bottomSilkscreen
-      }
-      // Top soldermask
-      else if (mesh.name.includes("top-soldermask")) {
-        shouldShow = visibility.topMask
-      }
-      // Bottom soldermask
-      else if (mesh.name.includes("bottom-soldermask")) {
-        shouldShow = visibility.bottomMask
-      }
-      // Top copper text
-      else if (mesh.name.includes("top-copper-text")) {
-        shouldShow = visibility.topCopper
-      }
-      // Bottom copper text
-      else if (mesh.name.includes("bottom-copper-text")) {
-        shouldShow = visibility.bottomCopper
-      }
-      // Top copper pours
-      else if (mesh.name.includes("top-copper")) {
-        shouldShow = visibility.topCopper
-      }
-      // Bottom copper pours
-      else if (mesh.name.includes("bottom-copper")) {
-        shouldShow = visibility.bottomCopper
-      }
-      // Panel outlines
-      else if (mesh.name.includes("panel-outlines")) {
-        shouldShow = visibility.boardBody
-      }
-
-      if (shouldShow) {
-        rootObject.add(mesh)
-      }
+      rootObject.add(mesh)
     })
 
     return () => {
@@ -149,6 +119,7 @@ const BoardMeshes = ({
         if (mesh.parent === rootObject) {
           rootObject.remove(mesh)
         }
+        disposeTextureMesh(mesh)
       })
     }
   }, [rootObject, geometryMeshes, textureMeshes, visibility])
@@ -189,6 +160,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   const [manifoldLoadingError, setManifoldLoadingError] = useState<
     string | null
   >(null)
+  const { visibility } = useLayerVisibility()
 
   useEffect(() => {
     if (
@@ -275,7 +247,7 @@ try {
     isLoading: builderIsLoading,
     boardData,
     isFauxBoard,
-  } = useManifoldBoardBuilder(manifoldJSModule, circuitJson)
+  } = useManifoldBoardBuilder(manifoldJSModule, circuitJson, visibility)
 
   const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
   const textureMeshes = useMemo(
