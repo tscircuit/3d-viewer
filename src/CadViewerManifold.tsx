@@ -4,18 +4,18 @@ import type { ManifoldToplevel } from "manifold-3d"
 import type React from "react"
 import { useEffect, useMemo, useState } from "react"
 import * as THREE from "three"
-import { useThree } from "./react-three/ThreeContext"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
+import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
 import type { CameraController } from "./hooks/cameraAnimation"
 import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
 import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
-import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
+import { useThree } from "./react-three/ThreeContext"
+import { createTextureMeshes } from "./textures"
 import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
-import { createTextureMeshes } from "./textures"
-import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
+import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 
 declare global {
   interface Window {
@@ -82,17 +82,6 @@ const BoardMeshes = ({
       // Board body
       if (mesh.name === "board-geom") {
         shouldShow = visibility.boardBody
-      }
-      // SMT Pads - check layer-specific visibility
-      else if (mesh.name.includes("smt_pad")) {
-        if (mesh.name.includes("smt_pad-top")) {
-          shouldShow = visibility.topCopper
-        } else if (mesh.name.includes("smt_pad-bottom")) {
-          shouldShow = visibility.bottomCopper
-        } else {
-          // Fallback for pads without layer info
-          shouldShow = visibility.topCopper || visibility.bottomCopper
-        }
       }
       // Plated holes and vias go through both layers
       else if (mesh.name.includes("plated_hole") || mesh.name.includes("via")) {

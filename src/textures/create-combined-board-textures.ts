@@ -4,6 +4,7 @@ import type { LayerVisibilityState } from "../contexts/LayerVisibilityContext"
 import { colors as defaultColors, soldermaskColors } from "../geoms/constants"
 import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
+import { createPadTextureForLayer } from "../utils/pad-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
 import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
 import { createSoldermaskTextureForLayer } from "../utils/soldermask-texture"
@@ -135,6 +136,16 @@ export function createCombinedBoardTextures({
         })
       : null
 
+    const padTexture = showCopper
+      ? createPadTextureForLayer({
+          layer,
+          circuitJson,
+          boardData,
+          copperColor,
+          traceTextureResolution,
+        })
+      : null
+
     const silkscreenTexture = showSilkscreen
       ? createSilkscreenTextureForLayer({
           layer,
@@ -160,6 +171,7 @@ export function createCombinedBoardTextures({
         copperPourTexture,
         traceTexture,
         copperTextTexture,
+        padTexture,
         silkscreenTexture,
         panelOutlineTexture,
       ],
