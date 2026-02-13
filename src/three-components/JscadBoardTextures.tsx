@@ -112,6 +112,7 @@ export function JscadBoardTextures({
       name: string,
       usePolygonOffset = false,
       depthWrite = false,
+      renderOrder = 1,
     ) => {
       if (!texture) return null
 
@@ -140,6 +141,8 @@ export function JscadBoardTextures({
         mesh.rotation.set(Math.PI, 0, 0)
       }
       mesh.name = name
+      mesh.renderOrder = renderOrder
+      mesh.frustumCulled = false
       return mesh
     }
 
