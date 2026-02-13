@@ -135,9 +135,9 @@ type CadViewerManifoldProps = {
   onCameraControllerReady?: (controller: CameraController | null) => void
   resolveStaticAsset?: (modelUrl: string) => string
 } & (
-    | { circuitJson: AnyCircuitElement[]; children?: React.ReactNode }
-    | { circuitJson?: never; children: React.ReactNode }
-  )
+  | { circuitJson: AnyCircuitElement[]; children?: React.ReactNode }
+  | { circuitJson?: never; children: React.ReactNode }
+)
 
 const MANIFOLD_CDN_BASE_URL = "https://cdn.jsdelivr.net/npm/manifold-3d@3.2.1"
 
