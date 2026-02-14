@@ -523,22 +523,92 @@ export function createSilkscreenTextureForLayer({
     }
     const finalTransformMatrix =
       transformMatrices.length > 0 ? compose(...transformMatrices) : undefined
-    processedTextOutlines.forEach((segment) => {
-      ctx.beginPath()
-      segment.forEach((p, index) => {
-        let transformedP = { x: p[0], y: p[1] }
-        if (finalTransformMatrix) {
-          transformedP = applyToPoint(finalTransformMatrix, transformedP)
-        }
-        const pcbX = transformedP.x + xOff + textS.anchor_position.x
-        const pcbY = transformedP.y + yOff + textS.anchor_position.y
-        const canvasX = canvasXFromPcb(pcbX)
-        const canvasY = canvasYFromPcb(pcbY)
-        if (index === 0) ctx.moveTo(canvasX, canvasY)
-        else ctx.lineTo(canvasX, canvasY)
+
+    if (textS.is_knockout) {
+      // Knockout: draw a filled rectangle, then cut out the text
+      const textWidth = textBounds.maxX - textBounds.minX
+      const textHeight = textBounds.maxY - textBounds.minY
+
+      const padLeft = coerceDimensionToMm(
+        textS.knockout_padding?.left,
+        fontSize * 0.5,
+      )
+      const padRight = coerceDimensionToMm(
+        textS.knockout_padding?.right,
+        fontSize * 0.5,
+      )
+      const padTop = coerceDimensionToMm(
+        textS.knockout_padding?.top,
+        fontSize * 0.3,
+      )
+      const padBottom = coerceDimensionToMm(
+        textS.knockout_padding?.bottom,
+        fontSize * 0.3,
+      )
+
+      const rectWidth = textWidth + padLeft + padRight
+      const rectHeight = textHeight + padTop + padBottom
+      const rectCenterCanvasX = canvasXFromPcb(textS.anchor_position.x)
+      const rectCenterCanvasY = canvasYFromPcb(textS.anchor_position.y)
+      const rectWidthPx = rectWidth * traceTextureResolution
+      const rectHeightPx = rectHeight * traceTextureResolution
+
+      // Draw the filled rectangle (apply rotation if any)
+      ctx.save()
+      ctx.fillStyle = silkscreenColor
+      const rotRad = ((textS.ccw_rotation ?? 0) * Math.PI) / 180
+      ctx.translate(rectCenterCanvasX, rectCenterCanvasY)
+      ctx.rotate(-rotRad)
+      ctx.fillRect(
+        -rectWidthPx / 2,
+        -rectHeightPx / 2,
+        rectWidthPx,
+        rectHeightPx,
+      )
+      ctx.restore()
+
+      // For knockout, always center the text in the rectangle
+      const knockoutXOff = -textCenterX
+      const knockoutYOff = -textCenterY
+
+      // Cut out the text strokes using destination-out compositing
+      ctx.globalCompositeOperation = "destination-out"
+      processedTextOutlines.forEach((segment) => {
+        ctx.beginPath()
+        segment.forEach((p, index) => {
+          let transformedP = { x: p[0], y: p[1] }
+          if (finalTransformMatrix) {
+            transformedP = applyToPoint(finalTransformMatrix, transformedP)
+          }
+          const pcbX = transformedP.x + knockoutXOff + textS.anchor_position.x
+          const pcbY = transformedP.y + knockoutYOff + textS.anchor_position.y
+          const canvasX = canvasXFromPcb(pcbX)
+          const canvasY = canvasYFromPcb(pcbY)
+          if (index === 0) ctx.moveTo(canvasX, canvasY)
+          else ctx.lineTo(canvasX, canvasY)
+        })
+        ctx.stroke()
       })
-      ctx.stroke()
-    })
+      ctx.globalCompositeOperation = "source-over"
+    } else {
+      // Normal text rendering
+      processedTextOutlines.forEach((segment) => {
+        ctx.beginPath()
+        segment.forEach((p, index) => {
+          let transformedP = { x: p[0], y: p[1] }
+          if (finalTransformMatrix) {
+            transformedP = applyToPoint(finalTransformMatrix, transformedP)
+          }
+          const pcbX = transformedP.x + xOff + textS.anchor_position.x
+          const pcbY = transformedP.y + yOff + textS.anchor_position.y
+          const canvasX = canvasXFromPcb(pcbX)
+          const canvasY = canvasYFromPcb(pcbY)
+          if (index === 0) ctx.moveTo(canvasX, canvasY)
+          else ctx.lineTo(canvasX, canvasY)
+        })
+        ctx.stroke()
+      })
+    }
   })
   const texture = new THREE.CanvasTexture(canvas)
   texture.generateMipmaps = true
