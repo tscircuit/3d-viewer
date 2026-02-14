@@ -112,6 +112,7 @@ export function JscadBoardTextures({
       name: string,
       usePolygonOffset = false,
       depthWrite = false,
+      renderOrder = 1,
     ) => {
       if (!texture) return null
 
@@ -127,7 +128,7 @@ export function JscadBoardTextures({
         side: THREE.DoubleSide,
         depthWrite,
         polygonOffset: usePolygonOffset,
-        polygonOffsetUnits: usePolygonOffset ? -0.8 : 0,
+        polygonOffsetUnits: usePolygonOffset ? -4 : 0,
         opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
       })
       const mesh = new THREE.Mesh(planeGeom, material)
@@ -140,6 +141,8 @@ export function JscadBoardTextures({
         mesh.rotation.set(Math.PI, 0, 0)
       }
       mesh.name = name
+      mesh.renderOrder = renderOrder
+      mesh.frustumCulled = false
       return mesh
     }
 
