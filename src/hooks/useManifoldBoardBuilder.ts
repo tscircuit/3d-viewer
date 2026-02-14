@@ -1,28 +1,27 @@
-import { useState, useEffect, useMemo, useRef } from "react"
-import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
+import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
+import type { ManifoldToplevel } from "manifold-3d"
+import { useEffect, useMemo, useRef, useState } from "react"
+import type { LayerVisibilityState } from "src/contexts/LayerVisibilityContext"
+import {
+  type CombinedBoardTextures,
+  createCombinedBoardTextures,
+} from "src/textures"
 import * as THREE from "three"
 import {
   boardMaterialColors,
   colors as defaultColors,
+  soldermaskColors,
   TRACE_TEXTURE_RESOLUTION,
   tracesMaterialColors,
-  soldermaskColors,
 } from "../geoms/constants"
-import type { ManifoldToplevel } from "manifold-3d"
+import { getLayerTextureResolution } from "../utils/layer-texture-resolution"
 import { createManifoldBoard } from "../utils/manifold/create-manifold-board"
 import { processCutoutsForManifold } from "../utils/manifold/process-cutouts"
 import { processNonPlatedHolesForManifold } from "../utils/manifold/process-non-plated-holes"
 import { processPlatedHolesForManifold } from "../utils/manifold/process-plated-holes"
-import { processSmtPadsForManifold } from "../utils/manifold/process-smt-pads"
 import { processViasForManifold } from "../utils/manifold/process-vias"
 import { manifoldMeshToThreeGeometry } from "../utils/manifold-mesh-to-three-geometry"
-import { getLayerTextureResolution } from "../utils/layer-texture-resolution"
-import {
-  CombinedBoardTextures,
-  createCombinedBoardTextures,
-} from "src/textures"
-import { LayerVisibilityState } from "src/contexts/LayerVisibilityContext"
 
 export interface ManifoldGeoms {
   board?: {
@@ -36,17 +35,13 @@ export interface ManifoldGeoms {
     geometry: THREE.BufferGeometry
     color: THREE.Color
   }>
-  smtPads?: Array<{
-    key: string
-    geometry: THREE.BufferGeometry
-    color: THREE.Color
-  }>
   vias?: Array<{
     key: string
     geometry: THREE.BufferGeometry
     color: THREE.Color
   }>
   // Copper pours now use texture-based rendering instead of geometry
+  // SMT pads now use texture-based rendering instead of geometry
 }
 
 interface UseManifoldBoardBuilderResult {
@@ -128,7 +123,7 @@ export const useManifoldBoardBuilder = (
     ) {
       // This is an empty board, manifold can't handle it, but we can just
       // render nothing for the board and show the components.
-      setGeoms({ platedHoles: [], smtPads: [], vias: [] })
+      setGeoms({ platedHoles: [], vias: [] })
       setPcbThickness(boardData.thickness ?? 0)
       setIsLoading(false)
       return
@@ -327,16 +322,7 @@ export const useManifoldBoardBuilder = (
         }
       }
 
-      // Process SMT pads
-      const { smtPadGeoms } = processSmtPadsForManifold(
-        Manifold,
-        circuitJson,
-        currentPcbThickness,
-        manifoldInstancesForCleanup.current,
-        holeUnion,
-        boardClipVolume,
-      )
-      currentGeoms.smtPads = smtPadGeoms
+      // SMT pads are now rendered as textures instead of 3D geometry
 
       // Process copper pours (now as textures instead of geometry)
       // Copper pours are now handled by texture system

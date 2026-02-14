@@ -1,85 +1,51 @@
+import { colorize } from "@jscad/modeling/src/colors"
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
-import type {
-  AnyCircuitElement,
-  PcbPlatedHole,
-  PcbBoard,
-  PcbHole,
-  PcbSmtPad,
-  PcbTrace,
-  PcbVia,
-  PcbCutout,
-  PcbCopperPour,
-  PcbPanel,
-} from "circuit-json"
-import { su } from "@tscircuit/circuit-json-util"
-import { translate, rotateZ } from "@jscad/modeling/src/operations/transforms"
+import type { Vec2 } from "@jscad/modeling/src/maths/types"
+import {
+  intersect,
+  subtract,
+  union,
+} from "@jscad/modeling/src/operations/booleans"
+import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
+import { rotateZ, translate } from "@jscad/modeling/src/operations/transforms"
 import {
   cuboid,
   cylinder,
-  line,
+  ellipse,
   polygon as jscadPolygon,
   roundedRectangle,
-  ellipse,
 } from "@jscad/modeling/src/primitives"
-import { colorize } from "@jscad/modeling/src/colors"
-import {
-  subtract,
-  union,
-  intersect,
-} from "@jscad/modeling/src/operations/booleans"
-import { platedHole } from "./geoms/plated-hole"
-import {
-  M,
-  colors,
-  boardMaterialColors,
-  tracesMaterialColors,
-  BOARD_SURFACE_OFFSET,
-} from "./geoms/constants"
-import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
-import { expand } from "@jscad/modeling/src/operations/expansions"
-import {
-  createBoardGeomWithOutline,
-  arePointsClockwise,
-} from "./geoms/create-board-with-outline"
-import type { Vec2 } from "@jscad/modeling/src/maths/types"
-
-import { createGeom2FromBRep } from "./geoms/brep-converter"
+import { su } from "@tscircuit/circuit-json-util"
+import type {
+  AnyCircuitElement,
+  PcbBoard,
+  PcbCutout,
+  PcbHole,
+  PcbPanel,
+  PcbPlatedHole,
+  PcbTrace,
+  PcbVia,
+} from "circuit-json"
 import type { GeomContext } from "./GeomContext"
+import { boardMaterialColors, colors, M } from "./geoms/constants"
+import {
+  arePointsClockwise,
+  createBoardGeomWithOutline,
+} from "./geoms/create-board-with-outline"
+import { createHoleWithPolygonPadHoleGeom } from "./geoms/create-hole-with-polygon-pad"
+import { platedHole } from "./geoms/plated-hole"
+import { createViaBoardDrill, createViaCopper } from "./geoms/via-geoms"
 import {
   clampRectBorderRadius,
   extractRectBorderRadius,
 } from "./utils/rect-border-radius"
-import { createHoleWithPolygonPadHoleGeom } from "./geoms/create-hole-with-polygon-pad"
-import { createViaCopper, createViaBoardDrill } from "./geoms/via-geoms"
 
 const PAD_ROUNDED_SEGMENTS = 64
 const BOARD_CLIP_Z_MARGIN = 1
 const BOARD_CLIP_XY_OUTSET = 0.05
 
-const createCenteredRectPadGeom = (
-  width: number,
-  height: number,
-  thickness: number,
-  rectBorderRadius?: number | null,
-) => {
-  const clampedRadius = clampRectBorderRadius(width, height, rectBorderRadius)
-
-  if (clampedRadius <= 0) {
-    return cuboid({ center: [0, 0, 0], size: [width, height, thickness] })
-  }
-
-  const rect2d = roundedRectangle({
-    size: [width, height],
-    roundRadius: clampedRadius,
-    segments: PAD_ROUNDED_SEGMENTS,
-  })
-  const extruded = extrudeLinear({ height: thickness }, rect2d)
-  return translate([0, 0, -thickness / 2], extruded)
-}
-
 type BuilderState =
   | "initializing"
-  | "processing_pads"
   | "processing_copper_pours"
   | "processing_plated_holes"
   | "processing_holes"
@@ -90,7 +56,6 @@ type BuilderState =
 
 const buildStateOrder: BuilderState[] = [
   "initializing",
-  "processing_pads",
   "processing_copper_pours",
 
   "processing_plated_holes",
@@ -107,14 +72,12 @@ export class BoardGeomBuilder {
   private board: PcbBoard
   private plated_holes: PcbPlatedHole[]
   private holes: PcbHole[]
-  private pads: PcbSmtPad[]
   private traces: PcbTrace[]
   private pcb_vias: PcbVia[]
   private pcb_cutouts: PcbCutout[]
 
   private boardGeom: Geom3 | null = null
   private platedHoleGeoms: Geom3[] = []
-  private padGeoms: Geom3[] = []
   private viaGeoms: Geom3[] = [] // Combined with platedHoleGeoms
   private copperPourGeoms: Geom3[] = []
   private boardClipGeom: Geom3 | null = null
@@ -187,7 +150,6 @@ export class BoardGeomBuilder {
 
     this.plated_holes = su(circuitJson).pcb_plated_hole.list()
     this.holes = su(circuitJson).pcb_hole.list()
-    this.pads = su(circuitJson).pcb_smtpad.list()
     this.traces = su(circuitJson).pcb_trace.list()
     this.pcb_vias = su(circuitJson).pcb_via.list()
     this.pcb_cutouts = su(circuitJson).pcb_cutout.list()
@@ -229,7 +191,7 @@ export class BoardGeomBuilder {
         center: [this.board.center.x, this.board.center.y, 0],
       })
     }
-    this.state = "processing_pads"
+    this.state = "processing_copper_pours"
     this.currentIndex = 0
   }
 
@@ -266,16 +228,9 @@ export class BoardGeomBuilder {
           }
           break
 
-        case "processing_pads":
-          if (this.currentIndex < this.pads.length) {
-            this.processPad(this.pads[this.currentIndex]!)
-            this.currentIndex++
-          } else {
-            this.goToNextState()
-          }
-          break
         case "processing_copper_pours":
           // Copper pours are rendered as textures in the JSCAD viewer.
+          // SMT pads are also rendered as textures.
           this.goToNextState()
           break
 
@@ -413,9 +368,6 @@ export class BoardGeomBuilder {
       if (!opts.dontCutBoard) {
         this.boardGeom = subtract(this.boardGeom, cyGeom)
       }
-      this.padGeoms = this.padGeoms.map((pg) =>
-        colorize(colors.copper, subtract(pg, cyGeom)),
-      )
 
       const platedHoleGeom = platedHole(ph, this.ctx, {
         clipGeom: this.boardClipGeom,
@@ -464,11 +416,6 @@ export class BoardGeomBuilder {
       if (!opts.dontCutBoard) {
         this.boardGeom = subtract(this.boardGeom, pillHole)
       }
-      // Drill through pads
-
-      this.padGeoms = this.padGeoms.map((pg) =>
-        colorize(colors.copper, subtract(pg, pillHole)),
-      )
 
       const platedHoleGeom = platedHole(ph, this.ctx, {
         clipGeom: this.boardClipGeom,
@@ -535,10 +482,6 @@ export class BoardGeomBuilder {
       if (!opts.dontCutBoard) {
         this.boardGeom = subtract(this.boardGeom, pillHole)
       }
-
-      this.padGeoms = this.padGeoms.map((pg) =>
-        colorize(colors.copper, subtract(pg, pillHole)),
-      )
 
       const platedHoleGeom = platedHole(ph, this.ctx, {
         clipGeom: this.boardClipGeom,
@@ -607,10 +550,6 @@ export class BoardGeomBuilder {
         this.boardGeom = subtract(this.boardGeom, pillHole)
       }
 
-      this.padGeoms = this.padGeoms.map((pg) =>
-        colorize(colors.copper, subtract(pg, pillHole)),
-      )
-
       const platedHoleGeom = platedHole(ph, this.ctx, {
         clipGeom: this.boardClipGeom,
       })
@@ -634,10 +573,6 @@ export class BoardGeomBuilder {
       if (!opts.dontCutBoard) {
         this.boardGeom = subtract(this.boardGeom, boardHole)
       }
-
-      this.padGeoms = this.padGeoms.map((pg) =>
-        colorize(colors.copper, subtract(pg, boardHole)),
-      )
 
       this.platedHoleGeoms = this.platedHoleGeoms.map((phg) =>
         colorize(colors.copper, subtract(phg, copperHole)),
@@ -665,11 +600,6 @@ export class BoardGeomBuilder {
 
       // normal cut for board
       this.boardGeom = subtract(this.boardGeom, cyGeom)
-
-      // normal pad cut
-      this.padGeoms = this.padGeoms.map((pg) =>
-        colorize(colors.copper, subtract(pg, cyGeom)),
-      )
 
       // slightly smaller cut from plated holes (copper overlap)
       const copperCut = cylinder({
@@ -746,9 +676,6 @@ export class BoardGeomBuilder {
       if (boardHole) {
         const positionedBoardHole = translate([hole.x, hole.y, 0], boardHole)
         this.boardGeom = subtract(this.boardGeom, positionedBoardHole)
-        this.padGeoms = this.padGeoms.map((pg) =>
-          colorize(colors.copper, subtract(pg, positionedBoardHole)),
-        )
       }
 
       if (copperCut) {
@@ -757,59 +684,6 @@ export class BoardGeomBuilder {
           colorize(colors.copper, subtract(phg, positionedCopperCut)),
         )
       }
-    }
-  }
-
-  private processPad(pad: PcbSmtPad) {
-    const layerSign = pad.layer === "bottom" ? -1 : 1
-    const zPos =
-      (layerSign * this.ctx.pcbThickness) / 2 +
-      layerSign * BOARD_SURFACE_OFFSET.copper // Slightly offset from board surface
-
-    const rectBorderRadius = extractRectBorderRadius(pad)
-
-    if (pad.shape === "rect") {
-      const basePadGeom = createCenteredRectPadGeom(
-        pad.width,
-        pad.height,
-        M,
-        rectBorderRadius,
-      )
-      const positionedPadGeom = translate([pad.x, pad.y, zPos], basePadGeom)
-      let finalPadGeom: Geom3 = positionedPadGeom
-      if (this.boardClipGeom) {
-        finalPadGeom = intersect(this.boardClipGeom, finalPadGeom)
-      }
-      finalPadGeom = colorize(colors.copper, finalPadGeom)
-      this.padGeoms.push(finalPadGeom)
-    } else if (pad.shape === "rotated_rect") {
-      let basePadGeom = createCenteredRectPadGeom(
-        pad.width,
-        pad.height,
-        M,
-        rectBorderRadius,
-      )
-      const rotationRadians = (pad.ccw_rotation * Math.PI) / 180
-      basePadGeom = rotateZ(rotationRadians, basePadGeom)
-      // Translate to final position
-      const positionedPadGeom = translate([pad.x, pad.y, zPos], basePadGeom)
-      let finalPadGeom: Geom3 = positionedPadGeom
-      if (this.boardClipGeom) {
-        finalPadGeom = intersect(this.boardClipGeom, finalPadGeom)
-      }
-      finalPadGeom = colorize(colors.copper, finalPadGeom)
-      this.padGeoms.push(finalPadGeom)
-    } else if (pad.shape === "circle") {
-      let padGeom = cylinder({
-        center: [pad.x, pad.y, zPos],
-        radius: pad.radius,
-        height: M,
-      })
-      if (this.boardClipGeom) {
-        padGeom = intersect(this.boardClipGeom, padGeom)
-      }
-      padGeom = colorize(colors.copper, padGeom)
-      this.padGeoms.push(padGeom)
     }
   }
 
@@ -851,11 +725,6 @@ export class BoardGeomBuilder {
 
       // Subtract drill from board
       this.boardGeom = subtract(this.boardGeom, viaDrill)
-
-      // Cut drill through any existing pads
-      this.padGeoms = this.padGeoms.map((pg) =>
-        colorize(colors.copper, subtract(pg, viaDrill)),
-      )
     }
   }
 
@@ -869,7 +738,6 @@ export class BoardGeomBuilder {
     this.finalGeoms = [
       this.boardGeom,
       ...this.platedHoleGeoms,
-      ...this.padGeoms,
       ...this.viaGeoms,
       ...this.copperPourGeoms,
     ]
