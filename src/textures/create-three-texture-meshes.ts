@@ -37,8 +37,9 @@ function createTexturePlane(
   const material = new THREE.MeshBasicMaterial({
     map: texture,
     transparent: true,
+    alphaTest: 0.08,
     side: THREE.DoubleSide,
-    depthWrite: false,
+    depthWrite: true,
     polygonOffset: usePolygonOffset,
     polygonOffsetFactor: usePolygonOffset ? -4 : 0, // Increased for better z-fighting prevention
     polygonOffsetUnits: usePolygonOffset ? -4 : 0,
@@ -66,11 +67,12 @@ export function createTextureMeshes(
 ): THREE.Mesh[] {
   const meshes: THREE.Mesh[] = []
   if (!textures || !boardData || pcbThickness === null) return meshes
+  const SURFACE_OFFSET = 0.005
 
   const topBoardMesh = createTexturePlane(
     {
       texture: textures.topBoard,
-      yOffset: pcbThickness / 2 + 0.001,
+      yOffset: pcbThickness / 2 + SURFACE_OFFSET,
       isBottomLayer: false,
       usePolygonOffset: true,
       renderOrder: 1,
@@ -83,7 +85,7 @@ export function createTextureMeshes(
   const bottomBoardMesh = createTexturePlane(
     {
       texture: textures.bottomBoard,
-      yOffset: -pcbThickness / 2 - 0.001,
+      yOffset: -pcbThickness / 2 - SURFACE_OFFSET,
       isBottomLayer: true,
       usePolygonOffset: true,
       renderOrder: 1,

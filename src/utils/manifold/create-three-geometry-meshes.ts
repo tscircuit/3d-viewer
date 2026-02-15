@@ -37,9 +37,6 @@ export function createGeometryMeshes(
             color: comp.color,
             side: THREE.DoubleSide,
             flatShading: true, // Consistent with board
-            polygonOffset: true,
-            polygonOffsetFactor: -1,
-            polygonOffsetUnits: -1,
           }),
         )
         mesh.name = comp.key // Use provided key for identification
