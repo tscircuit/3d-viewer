@@ -180,8 +180,10 @@ export function createCombinedBoardTextures({
     })
   }
 
+  const numLayers = boardData.num_layers ?? 2
+
   return {
     topBoard: buildForLayer("top"),
-    bottomBoard: buildForLayer("bottom"),
+    bottomBoard: numLayers === 1 ? null : buildForLayer("bottom"),
   }
 }
