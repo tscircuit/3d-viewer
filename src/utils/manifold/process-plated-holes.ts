@@ -43,6 +43,9 @@ const createEllipsePoints = (
 
 const COPPER_COLOR = new THREE.Color(...defaultColors.copper)
 const PLATED_HOLE_LIP_HEIGHT = 0.05
+const PLATED_HOLE_PAD_THICKNESS = 0.003
+const PLATED_HOLE_SURFACE_CLEARANCE = 0.0005
+const PLATED_HOLE_FILL_CLEARANCE = 0.004
 
 export interface ProcessPlatedHolesResult {
   platedHoleBoardDrills: any[]
@@ -326,7 +329,7 @@ export function processPlatedHolesForManifold(
       const padWidth = ph.rect_pad_width!
       const padHeight = ph.rect_pad_height!
       const rectBorderRadius = extractRectBorderRadius(ph)
-      const padThickness = DEFAULT_SMT_PAD_THICKNESS
+      const padThickness = PLATED_HOLE_PAD_THICKNESS
 
       // Board Drill with hole offset
       const drillW = holeW + 2 * MANIFOLD_Z_OFFSET
@@ -352,11 +355,14 @@ export function processPlatedHolesForManifold(
         Manifold,
         width: padWidth,
         height: padHeight,
-        thickness:
+        thickness: Math.max(
           pcbThickness -
-          2 * padThickness -
-          2 * BOARD_SURFACE_OFFSET.copper +
-          0.1, // Fill between pads
+            2 *
+              (padThickness +
+                PLATED_HOLE_SURFACE_CLEARANCE +
+                PLATED_HOLE_FILL_CLEARANCE),
+          M,
+        ), // Fill between pads (recessed from board surfaces)
         borderRadius: rectBorderRadius,
       })
       manifoldInstancesForCleanup.push(mainFill)
@@ -368,7 +374,11 @@ export function processPlatedHolesForManifold(
         height: padHeight,
         thickness: padThickness,
         borderRadius: rectBorderRadius,
-      }).translate([0, 0, pcbThickness / 2 / 2 + BOARD_SURFACE_OFFSET.copper])
+      }).translate([
+        0,
+        0,
+        pcbThickness / 2 + PLATED_HOLE_SURFACE_CLEARANCE + padThickness / 2,
+      ])
 
       const bottomPad = createRoundedRectPrism({
         Manifold,
@@ -376,14 +386,18 @@ export function processPlatedHolesForManifold(
         height: padHeight,
         thickness: padThickness,
         borderRadius: rectBorderRadius,
-      }).translate([0, 0, -pcbThickness / 2 / 2 - BOARD_SURFACE_OFFSET.copper])
+      }).translate([
+        0,
+        0,
+        -pcbThickness / 2 - PLATED_HOLE_SURFACE_CLEARANCE - padThickness / 2,
+      ])
       manifoldInstancesForCleanup.push(topPad, bottomPad)
 
       // Create the plated barrel at the offset position
       const barrelPill = createPillOp(
         holeW,
         holeH,
-        pcbThickness * 1.02, // Slightly taller than board
+        pcbThickness * 0.8, // Slightly taller than board
       ).translate([holeOffsetX, holeOffsetY, 0])
       manifoldInstancesForCleanup.push(barrelPill)
 
@@ -445,7 +459,7 @@ export function processPlatedHolesForManifold(
       const padWidth = ph.rect_pad_width!
       const padHeight = ph.rect_pad_height!
       const rectBorderRadius = extractRectBorderRadius(ph)
-      const padThickness = DEFAULT_SMT_PAD_THICKNESS
+      const padThickness = PLATED_HOLE_PAD_THICKNESS
 
       // Board Drill with hole offset and rotation
       const drillW = holeW + 2 * MANIFOLD_Z_OFFSET
@@ -479,11 +493,14 @@ export function processPlatedHolesForManifold(
         Manifold,
         width: padWidth,
         height: padHeight,
-        thickness:
+        thickness: Math.max(
           pcbThickness -
-          2 * padThickness -
-          2 * BOARD_SURFACE_OFFSET.copper +
-          0.1, // Fill between pads
+            2 *
+              (padThickness +
+                PLATED_HOLE_SURFACE_CLEARANCE +
+                PLATED_HOLE_FILL_CLEARANCE),
+          M,
+        ), // Fill between pads (recessed from board surfaces)
         borderRadius: rectBorderRadius,
       })
       manifoldInstancesForCleanup.push(mainFill)
@@ -501,7 +518,11 @@ export function processPlatedHolesForManifold(
         height: padHeight,
         thickness: padThickness,
         borderRadius: rectBorderRadius,
-      }).translate([0, 0, pcbThickness / 2 / 2 + BOARD_SURFACE_OFFSET.copper])
+      }).translate([
+        0,
+        0,
+        pcbThickness / 2 + PLATED_HOLE_SURFACE_CLEARANCE + padThickness / 2,
+      ])
 
       if (ph.rect_ccw_rotation) {
         const rotatedTopPad = topPad.rotate([0, 0, ph.rect_ccw_rotation])
@@ -515,7 +536,11 @@ export function processPlatedHolesForManifold(
         height: padHeight,
         thickness: padThickness,
         borderRadius: rectBorderRadius,
-      }).translate([0, 0, -pcbThickness / 2 / 2 - BOARD_SURFACE_OFFSET.copper])
+      }).translate([
+        0,
+        0,
+        -pcbThickness / 2 - PLATED_HOLE_SURFACE_CLEARANCE - padThickness / 2,
+      ])
 
       if (ph.rect_ccw_rotation) {
         const rotatedBottomPad = bottomPad.rotate([0, 0, ph.rect_ccw_rotation])
@@ -529,7 +554,7 @@ export function processPlatedHolesForManifold(
       let barrelPill = createPillOp(
         holeW,
         holeH,
-        pcbThickness * 1.02, // Slightly taller than board
+        pcbThickness * 0.8, // Slightly taller than board
       ).translate([holeOffsetX, holeOffsetY, 0])
 
       if (ph.hole_ccw_rotation) {
@@ -607,9 +632,13 @@ export function processPlatedHolesForManifold(
       manifoldInstancesForCleanup.push(translatedBoardHole)
       platedHoleBoardDrills.push(translatedBoardHole)
 
-      const padThickness = DEFAULT_SMT_PAD_THICKNESS
+      const padThickness = PLATED_HOLE_PAD_THICKNESS
       const fillThickness = Math.max(
-        pcbThickness - 2 * padThickness - 2 * BOARD_SURFACE_OFFSET.copper + 0.1,
+        pcbThickness -
+          2 *
+            (padThickness +
+              PLATED_HOLE_SURFACE_CLEARANCE +
+              PLATED_HOLE_FILL_CLEARANCE),
         M,
       )
 
@@ -627,12 +656,12 @@ export function processPlatedHolesForManifold(
       const topTranslated = topPad.translate([
         0,
         0,
-        pcbThickness / 2 / 2 + BOARD_SURFACE_OFFSET.copper,
+        pcbThickness / 2 + PLATED_HOLE_SURFACE_CLEARANCE + padThickness / 2,
       ])
       const bottomTranslated = bottomPad.translate([
         0,
         0,
-        -pcbThickness / 2 / 2 - BOARD_SURFACE_OFFSET.copper,
+        -pcbThickness / 2 - PLATED_HOLE_SURFACE_CLEARANCE - padThickness / 2,
       ])
       manifoldInstancesForCleanup.push(topTranslated, bottomTranslated)
 
@@ -645,7 +674,7 @@ export function processPlatedHolesForManifold(
       const holeCutOp =
         createHoleOpForPolygonPad({
           ph,
-          depth: pcbThickness * 1.2,
+          depth: pcbThickness * 0.8,
           sizeDelta: -2 * M,
         }) || barrelOp
 
@@ -834,7 +863,7 @@ export function processPlatedHolesForManifold(
       const padWidth = ph.rect_pad_width ?? ph.hole_diameter
       const padHeight = ph.rect_pad_height ?? ph.hole_diameter
       const rectBorderRadius = extractRectBorderRadius(ph)
-      const padThickness = DEFAULT_SMT_PAD_THICKNESS
+      const padThickness = PLATED_HOLE_PAD_THICKNESS
       const holeRadius = ph.hole_diameter / 2
 
       // Create the main fill between pads (centered on the pad, not the hole)
@@ -842,11 +871,14 @@ export function processPlatedHolesForManifold(
         Manifold,
         width: padWidth!,
         height: padHeight!,
-        thickness:
+        thickness: Math.max(
           pcbThickness -
-          2 * padThickness -
-          2 * BOARD_SURFACE_OFFSET.copper +
-          0.1, // Fill between pads
+            2 *
+              (padThickness +
+                PLATED_HOLE_SURFACE_CLEARANCE +
+                PLATED_HOLE_FILL_CLEARANCE),
+          M,
+        ), // Fill between pads (recessed from board surfaces)
         borderRadius: rectBorderRadius,
       })
       manifoldInstancesForCleanup.push(mainFill)
@@ -858,7 +890,11 @@ export function processPlatedHolesForManifold(
         height: padHeight!,
         thickness: padThickness,
         borderRadius: rectBorderRadius,
-      }).translate([0, 0, pcbThickness / 2 / 2 + BOARD_SURFACE_OFFSET.copper])
+      }).translate([
+        0,
+        0,
+        pcbThickness / 2 + PLATED_HOLE_SURFACE_CLEARANCE + padThickness / 2,
+      ])
 
       const bottomPad = createRoundedRectPrism({
         Manifold,
@@ -866,12 +902,16 @@ export function processPlatedHolesForManifold(
         height: padHeight!,
         thickness: padThickness,
         borderRadius: rectBorderRadius,
-      }).translate([0, 0, -pcbThickness / 2 / 2 - BOARD_SURFACE_OFFSET.copper])
+      }).translate([
+        0,
+        0,
+        -pcbThickness / 2 - PLATED_HOLE_SURFACE_CLEARANCE - padThickness / 2,
+      ])
       manifoldInstancesForCleanup.push(topPad, bottomPad)
 
       // Create the plated barrel at the offset position
       const barrelCylinder = Manifold.cylinder(
-        pcbThickness * 1.02, // Slightly taller than board
+        pcbThickness * 0.8, // Slightly taller than board
         holeRadius,
         holeRadius,
         SMOOTH_CIRCLE_SEGMENTS,

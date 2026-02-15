@@ -32,6 +32,9 @@ export const createBoardMaterial = ({
       transparent: isFaux,
       opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
       flatShading: true,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1,
     })
   }
 
@@ -43,5 +46,8 @@ export const createBoardMaterial = ({
     roughness: 0.8,
     transparent: true,
     opacity: isFaux ? FAUX_BOARD_OPACITY : 0.9,
+    polygonOffset: true,
+    polygonOffsetFactor: 1,
+    polygonOffsetUnits: 1,
   })
 }
