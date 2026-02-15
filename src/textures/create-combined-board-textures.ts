@@ -184,6 +184,6 @@ export function createCombinedBoardTextures({
 
   return {
     topBoard: buildForLayer("top"),
-    bottomBoard: numLayers === 1 ? null : buildForLayer("bottom"),
+    bottomBoard: numLayers < 2 ? null : buildForLayer("bottom"),
   }
 }
