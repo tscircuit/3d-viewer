@@ -2,7 +2,7 @@ import { CadViewer } from "src/CadViewer"
 
 export const SingleLayerBoard = () => (
   <CadViewer>
-     <board width="20mm" height="20mm" layers={1}>
+    <board width="20mm" height="20mm" layers={1}>
       <resistor
         name="R1"
         resistance="1k"
