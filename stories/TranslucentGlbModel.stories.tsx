@@ -75,6 +75,23 @@ export const TranslucentGlbWithCadAssembly = () => (
 )
 TranslucentGlbWithCadAssembly.storyName = "Translucent GLB with CAD Assembly"
 
+export const InnerTranslucentGlbModel = () => (
+  <CadViewer>
+    <board width="10mm" height="10mm">
+      <chip
+        name="U1"
+        footprint="soic8"
+        cadModel={
+          <cadassembly>
+            <cadmodel showAsTranslucentModel modelUrl={myGlbUrl} />
+          </cadassembly>
+        }
+      />
+    </board>
+  </CadViewer>
+)
+InnerTranslucentGlbModel.storyName = "Inner Translucent GLB Model"
+
 export default {
   title: "Translucent/GLB Models",
 }
