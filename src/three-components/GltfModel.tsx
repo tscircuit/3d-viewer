@@ -5,7 +5,7 @@ import { useThree } from "src/react-three/ThreeContext"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { getDefaultEnvironmentMap } from "src/react-three/getDefaultEnvironmentMap"
 
-const DEFAULT_ENV_MAP_INTENSITY = 1.25
+const DEFAULT_ENV_MAP_INTENSITY = 1.75
 
 export function GltfModel({
   gltfUrl,

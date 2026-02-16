@@ -8,5 +8,6 @@ import * as THREE from "three"
 export const configureRenderer = (renderer: THREE.WebGLRenderer) => {
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
-  renderer.toneMappingExposure = 1
+  // Controls overall scene brightness for tone mapping
+  renderer.toneMappingExposure = 1.2
 }
