@@ -12,6 +12,7 @@ import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to
 import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
 import { useThree } from "./react-three/ThreeContext"
 import { createTextureMeshes } from "./textures"
+import { usePcbTexture } from "./hooks/usePcbTexture"
 import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
@@ -238,7 +239,12 @@ try {
     isFauxBoard,
   } = useManifoldBoardBuilder(manifoldJSModule, circuitJson, visibility)
 
-  const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
+  const pcbTexture = usePcbTexture(circuitJson)
+
+  const geometryMeshes = useMemo(
+    () => createGeometryMeshes(geoms, boardData, pcbTexture),
+    [geoms, boardData, pcbTexture],
+  )
   const textureMeshes = useMemo(
     () => createTextureMeshes(textures, boardData, pcbThickness, isFauxBoard),
     [textures, boardData, pcbThickness, isFauxBoard],

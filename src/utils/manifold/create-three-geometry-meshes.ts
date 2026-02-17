@@ -1,14 +1,24 @@
+import type { PcbBoard } from "circuit-json"
 import * as THREE from "three"
 import type { ManifoldGeoms } from "../../hooks/useManifoldBoardBuilder"
 import { createBoardMaterial } from "../create-board-material"
+import { generateBoardUVs } from "../generate-board-uvs"
 
 export function createGeometryMeshes(
   geoms: ManifoldGeoms | null,
+  boardData?: PcbBoard | null,
+  pcbTexture?: THREE.Texture | null,
 ): THREE.Mesh[] {
   const meshes: THREE.Mesh[] = []
   if (!geoms) return meshes
 
   if (geoms.board && geoms.board.geometry) {
+    // Generate UV coordinates when a texture is provided
+    if (pcbTexture && boardData) {
+      generateBoardUVs(geoms.board.geometry, boardData)
+      geoms.board.geometry.computeVertexNormals()
+    }
+
     const mesh = new THREE.Mesh(
       geoms.board.geometry,
       createBoardMaterial({
@@ -16,6 +26,7 @@ export function createGeometryMeshes(
         color: geoms.board.color,
         side: THREE.DoubleSide,
         isFaux: geoms.board.isFaux,
+        map: pcbTexture,
       }),
     )
     mesh.name = "board-geom"
@@ -36,13 +47,13 @@ export function createGeometryMeshes(
           new THREE.MeshStandardMaterial({
             color: comp.color,
             side: THREE.DoubleSide,
-            flatShading: true, // Consistent with board
+            flatShading: true,
             polygonOffset: true,
             polygonOffsetFactor: -1,
             polygonOffsetUnits: -1,
           }),
         )
-        mesh.name = comp.key // Use provided key for identification
+        mesh.name = comp.key
         meshes.push(mesh)
       })
     }
@@ -50,8 +61,6 @@ export function createGeometryMeshes(
 
   createMeshesFromArray(geoms.platedHoles)
   createMeshesFromArray(geoms.vias)
-  // Copper pours now use texture-based rendering instead of geometry
-  // Add other categories as they are defined in ManifoldGeoms
 
   return meshes
 }
