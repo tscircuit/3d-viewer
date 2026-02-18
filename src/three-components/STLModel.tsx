@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react"
 import * as THREE from "three"
 import { STLLoader } from "three-stdlib"
 import { useThree } from "src/react-three/ThreeContext"
+import type { LayerType } from "../hooks/use-stls-from-geom"
 
 export function STLModel({
   stlUrl,
@@ -9,12 +10,14 @@ export function STLModel({
   mtlUrl,
   color,
   opacity = 1,
+  layerType,
 }: {
   stlUrl?: string
   stlData?: ArrayBuffer
   color?: any
   mtlUrl?: string
   opacity?: number
+  layerType?: LayerType
 }) {
   const { rootObject } = useThree()
   const [geom, setGeom] = useState<THREE.BufferGeometry | null>(null)
@@ -40,15 +43,21 @@ export function STLModel({
 
   const mesh = useMemo(() => {
     if (!geom) return null
+    const isBoardLayer = layerType === "board"
     const material = new THREE.MeshStandardMaterial({
       color: Array.isArray(color)
         ? new THREE.Color(color[0], color[1], color[2])
         : color,
       transparent: opacity !== 1,
       opacity: opacity,
+      polygonOffset: isBoardLayer,
+      polygonOffsetFactor: isBoardLayer ? 6 : 0,
+      polygonOffsetUnits: isBoardLayer ? 6 : 0,
     })
-    return new THREE.Mesh(geom, material)
-  }, [geom, color, opacity])
+    const createdMesh = new THREE.Mesh(geom, material)
+    createdMesh.renderOrder = isBoardLayer ? -1 : 1
+    return createdMesh
+  }, [geom, color, opacity, layerType])
 
   useEffect(() => {
     if (!rootObject || !mesh) return

@@ -111,7 +111,7 @@ export function JscadBoardTextures({
       isBottomLayer: boolean,
       name: string,
       usePolygonOffset = false,
-      depthWrite = false,
+      depthWrite = true,
       renderOrder = 1,
     ) => {
       if (!texture) return null
@@ -125,9 +125,11 @@ export function JscadBoardTextures({
       const material = new THREE.MeshBasicMaterial({
         map: texture,
         transparent: true,
+        alphaTest: 0.08,
         side: THREE.DoubleSide,
         depthWrite,
         polygonOffset: usePolygonOffset,
+        polygonOffsetFactor: usePolygonOffset ? -4 : 0,
         polygonOffsetUnits: usePolygonOffset ? -4 : 0,
         opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
       })
@@ -147,7 +149,7 @@ export function JscadBoardTextures({
     }
 
     // Small offset to place textures just above board surface (same as Manifold)
-    const SURFACE_OFFSET = 0.001
+    const SURFACE_OFFSET = 0.005
 
     const topBoardMesh = createTexturePlane(
       textures.topBoard,

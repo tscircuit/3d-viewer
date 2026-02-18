@@ -13,7 +13,7 @@ import {
   union,
 } from "@jscad/modeling/src/operations/booleans"
 import { scale } from "@jscad/modeling/src/operations/transforms"
-import { BOARD_SURFACE_OFFSET, M, colors } from "./constants"
+import { M, colors } from "./constants"
 import type { GeomContext } from "../GeomContext"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { rotate, translate } from "@jscad/modeling/src/operations/transforms"
@@ -23,7 +23,7 @@ import {
 } from "../utils/rect-border-radius"
 import { createHoleWithPolygonPadHoleGeom } from "./create-hole-with-polygon-pad"
 
-const platedHoleLipHeight = 0.02
+const PLATED_HOLE_DRILL_OVERREACH = 0.05
 const RECT_PAD_SEGMENTS = 64
 
 const maybeClip = (geom: Geom3, clipGeom?: Geom3 | null) =>
@@ -69,14 +69,25 @@ export const platedHole = (
 ): Geom3 => {
   const { clipGeom } = options
   if (!(plated_hole as PCBPlatedHole).shape) plated_hole.shape = "circle"
-  const throughDrillHeight = ctx.pcbThickness + 2 * platedHoleLipHeight + 4 * M
-  const topSurfaceZ = ctx.pcbThickness / 2 + BOARD_SURFACE_OFFSET.copper
-  const bottomSurfaceZ = -ctx.pcbThickness / 2 - BOARD_SURFACE_OFFSET.copper
-  const copperSpan = topSurfaceZ - bottomSurfaceZ
+  // Derive plated-hole stack dimensions from board thickness
+  const padThickness = Math.max(ctx.pcbThickness * 0.002, M / 5)
+  const surfaceClearance = Math.max(ctx.pcbThickness * 0.0003, M / 20)
+  const fillClearance = Math.max(ctx.pcbThickness * 0.0025, M / 4)
+  const throughDrillHeight =
+    ctx.pcbThickness + 2 * PLATED_HOLE_DRILL_OVERREACH + 4 * M
+  const topSurfaceZ = ctx.pcbThickness / 2 + surfaceClearance + padThickness / 2
+  const bottomSurfaceZ =
+    -ctx.pcbThickness / 2 - surfaceClearance - padThickness / 2
+  const copperSurfaceSpan = ctx.pcbThickness + 2 * surfaceClearance
+  const copperFillHeight = Math.max(
+    ctx.pcbThickness - 2 * (padThickness + surfaceClearance + fillClearance),
+    M,
+  )
+  const barrelHeight = Math.max(copperFillHeight, M)
   if (plated_hole.shape === "circle") {
     const outerDiameter =
       plated_hole.outer_diameter ?? Math.max(plated_hole.hole_diameter, 0)
-    const copperHeight = copperSpan + 0.01
+    const copperHeight = copperSurfaceSpan
     const copperBody = cylinder({
       center: [plated_hole.x, plated_hole.y, 0],
       radius: outerDiameter / 2,
@@ -107,7 +118,7 @@ export const platedHole = (
       const circle = cylinder({
         center: [0, 0, 0],
         radius: 1,
-        height: copperSpan + 0.01,
+        height: copperSurfaceSpan,
         segments: 64, // High segment count for smooth ellipse
       })
       // Scale the circle to create an ellipse
@@ -148,7 +159,7 @@ export const platedHole = (
         createRectPadGeom({
           width: padWidth,
           height: padHeight,
-          thickness: platedHoleLipHeight, // Slightly thicker to ensure connection
+          thickness: padThickness,
           center: [plated_hole.x, plated_hole.y, topSurfaceZ],
           borderRadius: rectBorderRadius,
         }),
@@ -156,24 +167,20 @@ export const platedHole = (
         createRectPadGeom({
           width: padWidth,
           height: padHeight,
-          thickness: platedHoleLipHeight, // Slightly thicker to ensure connection
+          thickness: padThickness,
           center: [plated_hole.x, plated_hole.y, bottomSurfaceZ],
           borderRadius: rectBorderRadius,
         }),
         // Main copper fill between pads with rounded corners
         (() => {
-          const height = Math.max(copperSpan - platedHoleLipHeight * 2, M)
-          const topPadBottom = topSurfaceZ
-          const bottomPadTop = bottomSurfaceZ
-          const centerZ = (topPadBottom + bottomPadTop) / 2
           const rect2d = roundedRectangle({
             size: [padWidth, padHeight],
             roundRadius: rectBorderRadius || 0,
             segments: RECT_PAD_SEGMENTS,
           })
-          const extruded = extrudeLinear({ height }, rect2d)
+          const extruded = extrudeLinear({ height: copperFillHeight }, rect2d)
           return translate(
-            [plated_hole.x, plated_hole.y, centerZ - height / 2],
+            [plated_hole.x, plated_hole.y, -copperFillHeight / 2],
             extruded,
           )
         })(),
@@ -185,7 +192,7 @@ export const platedHole = (
             0,
           ],
           radius: plated_hole.hole_diameter / 2,
-          height: copperSpan,
+          height: barrelHeight,
         }),
       ),
       clipGeom,
@@ -201,35 +208,16 @@ export const platedHole = (
       height: throughDrillHeight,
     })
 
-    // Create the barrel with offset
-    const barrel = cylinder({
-      center: [
-        plated_hole.x + (holeOffsetX || 0),
-        plated_hole.y + (holeOffsetY || 0),
-        0,
-      ],
-      radius: plated_hole.hole_diameter / 2,
-      height: copperSpan,
-    })
+    const copperWithDrill = subtract(copperSolid, drill)
 
-    // Create the final copper solid with the offset barrel and hole
-    let finalCopper = union(
-      subtract(copperSolid, barrel), // Subtract the barrel from the main shape
-      barrel, // Add the barrel back to ensure proper connection
-    )
-
-    // Apply clip geometry if provided to ensure we don't extend beyond board boundaries
     if (options.clipGeom) {
-      // First, subtract the drill from the copper
-      finalCopper = subtract(finalCopper, drill)
-
-      // Then clip to the board boundaries
-      finalCopper = intersect(finalCopper, options.clipGeom)
-
-      return colorize(colors.copper, finalCopper)
+      return colorize(
+        colors.copper,
+        intersect(copperWithDrill, options.clipGeom),
+      )
     }
 
-    return colorize(colors.copper, subtract(finalCopper, drill))
+    return colorize(colors.copper, copperWithDrill)
   }
 
   if (plated_hole.shape === "pill") {
@@ -259,7 +247,7 @@ export const platedHole = (
     const outerRadius = outerPillHeight / 2
     const rectLength = Math.abs(holeWidth - holeHeight)
     const outerRectLength = Math.abs(outerPillWidth - outerPillHeight)
-    const copperHeight = copperSpan + 0.01
+    const copperHeight = copperSurfaceSpan
 
     const createPillSection = (
       width: number,
@@ -373,12 +361,12 @@ export const platedHole = (
           ? [
               holeHeight + 2 * barrelMargin,
               rectLength + 2 * barrelMargin,
-              copperSpan,
+              barrelHeight,
             ]
           : [
               rectLength + 2 * barrelMargin,
               holeHeight + 2 * barrelMargin,
-              copperSpan,
+              barrelHeight,
             ],
       }),
       cylinder({
@@ -394,7 +382,7 @@ export const platedHole = (
               0,
             ],
         radius: holeRadius + barrelMargin,
-        height: copperSpan,
+        height: barrelHeight,
       }),
       cylinder({
         center: shouldRotate
@@ -409,7 +397,7 @@ export const platedHole = (
               0,
             ],
         radius: holeRadius + barrelMargin,
-        height: copperSpan,
+        height: barrelHeight,
       }),
     )
 
@@ -418,8 +406,8 @@ export const platedHole = (
       cuboid({
         center: [plated_hole.x + holeOffsetX, plated_hole.y + holeOffsetY, 0],
         size: shouldRotate
-          ? [holeHeight, rectLength, throughDrillHeight * 1.1]
-          : [rectLength, holeHeight, throughDrillHeight * 1.1],
+          ? [holeHeight, rectLength, throughDrillHeight]
+          : [rectLength, holeHeight, throughDrillHeight],
       }),
       cylinder({
         center: shouldRotate
@@ -434,7 +422,7 @@ export const platedHole = (
               0,
             ],
         radius: holeRadius,
-        height: throughDrillHeight * 1.1,
+        height: throughDrillHeight,
       }),
       cylinder({
         center: shouldRotate
@@ -449,7 +437,7 @@ export const platedHole = (
               0,
             ],
         radius: holeRadius,
-        height: throughDrillHeight * 1.1,
+        height: throughDrillHeight,
       }),
     )
 
@@ -457,7 +445,7 @@ export const platedHole = (
     const copperTopPad = createRectPadGeom({
       width: padWidth,
       height: padHeight,
-      thickness: platedHoleLipHeight,
+      thickness: padThickness,
       center: [plated_hole.x, plated_hole.y, topSurfaceZ],
       borderRadius: rectBorderRadius,
     })
@@ -465,24 +453,20 @@ export const platedHole = (
     const copperBottomPad = createRectPadGeom({
       width: padWidth,
       height: padHeight,
-      thickness: platedHoleLipHeight,
+      thickness: padThickness,
       center: [plated_hole.x, plated_hole.y, bottomSurfaceZ],
       borderRadius: rectBorderRadius,
     })
 
     const copperFill = (() => {
-      const height = Math.max(copperSpan - platedHoleLipHeight * 2, M)
-      const topPadBottom = topSurfaceZ
-      const bottomPadTop = bottomSurfaceZ
-      const centerZ = (topPadBottom + bottomPadTop) / 2
       const rect2d = roundedRectangle({
         size: [padWidth, padHeight],
         roundRadius: rectBorderRadius || 0,
         segments: RECT_PAD_SEGMENTS,
       })
-      const extruded = extrudeLinear({ height }, rect2d)
+      const extruded = extrudeLinear({ height: copperFillHeight }, rect2d)
       return translate(
-        [plated_hole.x, plated_hole.y, centerZ - height / 2],
+        [plated_hole.x, plated_hole.y, -copperFillHeight / 2],
         extruded,
       )
     })()
@@ -497,8 +481,8 @@ export const platedHole = (
       cuboid({
         center: [plated_hole.x + holeOffsetX, plated_hole.y + holeOffsetY, 0],
         size: shouldRotate
-          ? [holeHeight - 2 * M, rectLength - 2 * M, throughDrillHeight * 1.1]
-          : [rectLength - 2 * M, holeHeight - 2 * M, throughDrillHeight * 1.1],
+          ? [holeHeight - 2 * M, rectLength - 2 * M, throughDrillHeight]
+          : [rectLength - 2 * M, holeHeight - 2 * M, throughDrillHeight],
       }),
       cylinder({
         center: shouldRotate
@@ -513,7 +497,7 @@ export const platedHole = (
               0,
             ],
         radius: holeRadius - M,
-        height: throughDrillHeight * 1.1,
+        height: throughDrillHeight,
       }),
       cylinder({
         center: shouldRotate
@@ -528,7 +512,7 @@ export const platedHole = (
               0,
             ],
         radius: holeRadius - M,
-        height: throughDrillHeight * 1.1,
+        height: throughDrillHeight,
       }),
     )
 
@@ -603,12 +587,12 @@ export const platedHole = (
             ? [
                 rectLength + 2 * barrelMargin,
                 shortDim + 2 * barrelMargin,
-                copperSpan,
+                barrelHeight,
               ]
             : [
                 shortDim + 2 * barrelMargin,
                 rectLength + 2 * barrelMargin,
-                copperSpan,
+                barrelHeight,
               ],
         }),
         cylinder({
@@ -616,14 +600,14 @@ export const platedHole = (
             ? [-rectLength / 2, 0, 0]
             : [0, -rectLength / 2, 0],
           radius: holeRadius + barrelMargin,
-          height: copperSpan,
+          height: barrelHeight,
         }),
         cylinder({
           center: isHorizontal
             ? [rectLength / 2, 0, 0]
             : [0, rectLength / 2, 0],
           radius: holeRadius + barrelMargin,
-          height: copperSpan,
+          height: barrelHeight,
         }),
       ),
     )
@@ -634,22 +618,22 @@ export const platedHole = (
         cuboid({
           center: [0, 0, 0],
           size: isHorizontal
-            ? [rectLength, shortDim, throughDrillHeight * 1.1]
-            : [shortDim, rectLength, throughDrillHeight * 1.1],
+            ? [rectLength, shortDim, throughDrillHeight]
+            : [shortDim, rectLength, throughDrillHeight],
         }),
         cylinder({
           center: isHorizontal
             ? [-rectLength / 2, 0, 0]
             : [0, -rectLength / 2, 0],
           radius: holeRadius,
-          height: throughDrillHeight * 1.1,
+          height: throughDrillHeight,
         }),
         cylinder({
           center: isHorizontal
             ? [rectLength / 2, 0, 0]
             : [0, rectLength / 2, 0],
           radius: holeRadius,
-          height: throughDrillHeight * 1.1,
+          height: throughDrillHeight,
         }),
       ),
     )
@@ -659,7 +643,7 @@ export const platedHole = (
       createRectPadGeom({
         width: padWidth,
         height: padHeight,
-        thickness: platedHoleLipHeight,
+        thickness: padThickness,
         center: [plated_hole.x, plated_hole.y, topSurfaceZ],
         borderRadius: rectBorderRadius,
       }),
@@ -669,7 +653,7 @@ export const platedHole = (
       createRectPadGeom({
         width: padWidth,
         height: padHeight,
-        thickness: platedHoleLipHeight,
+        thickness: padThickness,
         center: [plated_hole.x, plated_hole.y, bottomSurfaceZ],
         borderRadius: rectBorderRadius,
       }),
@@ -677,18 +661,14 @@ export const platedHole = (
 
     const copperFill = rotateRectPad(
       (() => {
-        const height = Math.max(copperSpan - platedHoleLipHeight * 2, M)
-        const topPadBottom = topSurfaceZ
-        const bottomPadTop = bottomSurfaceZ
-        const centerZ = (topPadBottom + bottomPadTop) / 2
         const rect2d = roundedRectangle({
           size: [padWidth, padHeight],
           roundRadius: rectBorderRadius || 0,
           segments: RECT_PAD_SEGMENTS,
         })
-        const extruded = extrudeLinear({ height }, rect2d)
+        const extruded = extrudeLinear({ height: copperFillHeight }, rect2d)
         return translate(
-          [plated_hole.x, plated_hole.y, centerZ - height / 2],
+          [plated_hole.x, plated_hole.y, -copperFillHeight / 2],
           extruded,
         )
       })(),
@@ -705,22 +685,22 @@ export const platedHole = (
         cuboid({
           center: [0, 0, 0],
           size: isHorizontal
-            ? [rectLength - 2 * M, shortDim - 2 * M, throughDrillHeight * 1.1]
-            : [shortDim - 2 * M, rectLength - 2 * M, throughDrillHeight * 1.1],
+            ? [rectLength - 2 * M, shortDim - 2 * M, throughDrillHeight]
+            : [shortDim - 2 * M, rectLength - 2 * M, throughDrillHeight],
         }),
         cylinder({
           center: isHorizontal
             ? [-rectLength / 2, 0, 0]
             : [0, -rectLength / 2, 0],
           radius: holeRadius - M,
-          height: throughDrillHeight * 1.1,
+          height: throughDrillHeight,
         }),
         cylinder({
           center: isHorizontal
             ? [rectLength / 2, 0, 0]
             : [0, rectLength / 2, 0],
           radius: holeRadius - M,
-          height: throughDrillHeight * 1.1,
+          height: throughDrillHeight,
         }),
       ),
     )
@@ -747,7 +727,7 @@ export const platedHole = (
       point.y,
     ])
     const polygon2d = jscadPolygon({ points: polygonPoints as any })
-    const centerZ = (topSurfaceZ + bottomSurfaceZ) / 2
+    const centerZ = 0
 
     const createPolygonPad = (thickness: number, zCenter: number) => {
       const safeThickness = Math.max(thickness, M)
@@ -758,15 +738,12 @@ export const platedHole = (
       )
     }
 
-    const mainFill = createPolygonPad(
-      Math.max(copperSpan - platedHoleLipHeight * 2, M),
-      centerZ,
-    )
-    const topPad = createPolygonPad(platedHoleLipHeight, topSurfaceZ)
-    const bottomPad = createPolygonPad(platedHoleLipHeight, bottomSurfaceZ)
+    const mainFill = createPolygonPad(copperFillHeight, centerZ)
+    const topPad = createPolygonPad(padThickness, topSurfaceZ)
+    const bottomPad = createPolygonPad(padThickness, bottomSurfaceZ)
 
     const copperSolid = maybeClip(union(mainFill, topPad, bottomPad), clipGeom)
-    const barrel = createHoleWithPolygonPadHoleGeom(plated_hole, copperSpan)
+    const barrel = createHoleWithPolygonPadHoleGeom(plated_hole, barrelHeight)
     if (!barrel) return colorize(colors.copper, copperSolid)
 
     const drill =
