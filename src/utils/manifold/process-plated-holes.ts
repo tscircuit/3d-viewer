@@ -397,7 +397,7 @@ export function processPlatedHolesForManifold(
       const barrelPill = createPillOp(
         holeW,
         holeH,
-        pcbThickness * 0.8, // Slightly taller than board
+        pcbThickness * 0.8, // Slightly shorter than board
       ).translate([holeOffsetX, holeOffsetY, 0])
       manifoldInstancesForCleanup.push(barrelPill)
 
