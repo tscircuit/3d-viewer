@@ -95,5 +95,40 @@ export function createTextureMeshes(
   )
   if (bottomBoardMesh) meshes.push(bottomBoardMesh)
 
+  // Apply texture to the box mesh
+  const boardOutlineBounds = calculateOutlineBounds(boardData)
+  const boxGeom = new THREE.BoxGeometry(
+    boardOutlineBounds.width,
+    boardOutlineBounds.height,
+    pcbThickness,
+  )
+
+  // Create materials for the box: right, left, top, bottom, front, back
+  // We apply the board texture to the top (index 2) and bottom (index 3) faces
+  const sideMaterial = new THREE.MeshBasicMaterial({ color: 0x333333 })
+  const topMaterial = textures.topBoard
+    ? new THREE.MeshBasicMaterial({ map: textures.topBoard })
+    : sideMaterial
+  const bottomMaterial = textures.bottomBoard
+    ? new THREE.MeshBasicMaterial({ map: textures.bottomBoard })
+    : sideMaterial
+
+  const boxMesh = new THREE.Mesh(boxGeom, [
+    sideMaterial, // right
+    sideMaterial, // left
+    topMaterial, // top
+    bottomMaterial, // bottom
+    sideMaterial, // front
+    sideMaterial, // back
+  ])
+
+  boxMesh.position.set(
+    boardOutlineBounds.centerX,
+    boardOutlineBounds.centerY,
+    0,
+  )
+  boxMesh.name = "board-texture-box"
+  meshes.push(boxMesh)
+
   return meshes
 }
