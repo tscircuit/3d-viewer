@@ -69,7 +69,7 @@ export const platedHole = (
 ): Geom3 => {
   const { clipGeom } = options
   if (!(plated_hole as PCBPlatedHole).shape) plated_hole.shape = "circle"
-  // Derive plated-hole stack dimensions from board thicknes
+  // Derive plated-hole stack dimensions from board thickness
   const padThickness = Math.max(ctx.pcbThickness * 0.002, M / 5)
   const surfaceClearance = Math.max(ctx.pcbThickness * 0.0003, M / 20)
   const fillClearance = Math.max(ctx.pcbThickness * 0.0025, M / 4)
