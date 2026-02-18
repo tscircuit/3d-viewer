@@ -149,7 +149,7 @@ export function JscadBoardTextures({
     }
 
     // Small offset to place textures just above board surface (same as Manifold)
-    const SURFACE_OFFSET = 0.001
+    const SURFACE_OFFSET = 0.005
 
     const topBoardMesh = createTexturePlane(
       textures.topBoard,
