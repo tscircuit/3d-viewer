@@ -108,6 +108,32 @@ export function createPadTextureForLayer({
       ctx.beginPath()
       ctx.arc(canvasX, canvasY, radius, 0, 2 * Math.PI)
       ctx.fill()
+    } else if (pad.shape === "pill" || pad.shape === "rotated_pill") {
+      const width = (pad.width as number) * traceTextureResolution
+      const height = (pad.height as number) * traceTextureResolution
+      const borderRadius = Math.min(width, height) / 2
+      const ccwRotation = (pad.ccw_rotation as number) || 0
+      const rotation = -ccwRotation * (Math.PI / 180)
+
+      if (rotation) {
+        ctx.save()
+        ctx.translate(canvasX, canvasY)
+        ctx.rotate(rotation)
+        ctx.beginPath()
+        ctx.roundRect(-width / 2, -height / 2, width, height, borderRadius)
+        ctx.fill()
+        ctx.restore()
+      } else {
+        ctx.beginPath()
+        ctx.roundRect(
+          canvasX - width / 2,
+          canvasY - height / 2,
+          width,
+          height,
+          borderRadius,
+        )
+        ctx.fill()
+      }
     } else if (pad.shape === "rotated_rect") {
       const width = (pad.width as number) * traceTextureResolution
       const height = (pad.height as number) * traceTextureResolution
