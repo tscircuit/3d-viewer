@@ -33,7 +33,7 @@ const createSilkscreenRectCircuit = (): AnyCircuitElement[] => {
     {
       type: "pcb_silkscreen_rect",
       pcb_silkscreen_rect_id: "pcb_silkscreen_rect_stroke",
-      pcb_component_id: "pcb_component_2",
+      pcb_component_id: "pcb_component_1",
       center: { x: 0, y: -1 },
       width: 4,
       height: 2.2,
@@ -48,7 +48,7 @@ const createSilkscreenRectCircuit = (): AnyCircuitElement[] => {
     {
       type: "pcb_silkscreen_rect",
       pcb_silkscreen_rect_id: "pcb_silkscreen_rect_bottom",
-      pcb_component_id: "pcb_component_3",
+      pcb_component_id: "pcb_component_1",
       center: { x: 0, y: 0 },
       width: 3,
       height: 3,
