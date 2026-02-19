@@ -6,9 +6,9 @@ import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
 import { createPadTextureForLayer } from "../utils/pad-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
-import { createSilkscreenTextureForLayer } from "../utils/silkscreen-texture"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
 import { createCopperPourTextureForLayer } from "./create-copper-pour-texture-for-layer"
+import { createSilkscreenTextureForLayer } from "./create-silkscreen-texture-for-layer"
 import { createSoldermaskTextureForLayer } from "./create-soldermask-texture-for-layer"
 
 export interface CombinedBoardTextures {
