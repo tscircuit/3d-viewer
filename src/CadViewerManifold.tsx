@@ -35,7 +35,7 @@ const BoardMeshes = ({
   const { rootObject } = useThree()
   const { visibility } = useLayerVisibility()
 
-  const disposeTextureMesh = (mesh: THREE.Mesh) => {
+  const disposeMesh = (mesh: THREE.Mesh) => {
     mesh.geometry.dispose()
     const materials = Array.isArray(mesh.material)
       ? mesh.material
@@ -75,16 +75,14 @@ const BoardMeshes = ({
   useEffect(() => {
     if (!rootObject) return
 
-    // Filter and add meshes based on visibility settings
     geometryMeshes.forEach((mesh) => {
       let shouldShow = true
-
-      // Board body
       if (mesh.name === "board-geom") {
         shouldShow = visibility.boardBody
-      }
-      // Plated holes and vias go through both layers
-      else if (mesh.name.includes("plated_hole") || mesh.name.includes("via")) {
+      } else if (
+        mesh.name.includes("plated_hole") ||
+        mesh.name.includes("via")
+      ) {
         shouldShow = visibility.topCopper || visibility.bottomCopper
       }
 
@@ -93,25 +91,32 @@ const BoardMeshes = ({
       }
     })
 
+    return () => {
+      geometryMeshes.forEach((mesh) => {
+        if (mesh.parent === rootObject) {
+          rootObject.remove(mesh)
+        }
+        disposeMesh(mesh)
+      })
+    }
+  }, [rootObject, geometryMeshes, visibility])
+
+  useEffect(() => {
+    if (!rootObject) return
+
     textureMeshes.forEach((mesh) => {
       rootObject.add(mesh)
     })
 
     return () => {
-      // Only remove meshes that were actually added
-      geometryMeshes.forEach((mesh) => {
-        if (mesh.parent === rootObject) {
-          rootObject.remove(mesh)
-        }
-      })
       textureMeshes.forEach((mesh) => {
         if (mesh.parent === rootObject) {
           rootObject.remove(mesh)
         }
-        disposeTextureMesh(mesh)
+        disposeMesh(mesh)
       })
     }
-  }, [rootObject, geometryMeshes, textureMeshes, visibility])
+  }, [rootObject, textureMeshes])
 
   return null
 }
