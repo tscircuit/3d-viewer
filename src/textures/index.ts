@@ -1,5 +1,6 @@
 export type { CombinedBoardTextures } from "./create-combined-board-textures"
 export { createCombinedBoardTextures } from "./create-combined-board-textures"
 export { createCopperPourTextureForLayer } from "./create-copper-pour-texture-for-layer"
+export { createSilkscreenTextureForLayer } from "./create-silkscreen-texture-for-layer"
 export { createSoldermaskTextureForLayer } from "./create-soldermask-texture-for-layer"
 export { createTextureMeshes } from "./create-three-texture-meshes"
