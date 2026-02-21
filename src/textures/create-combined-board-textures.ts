@@ -119,7 +119,6 @@ export function createCombinedBoardTextures({
           layer,
           circuitJson,
           boardData,
-          copperColor,
           traceTextureResolution,
         })
       : null

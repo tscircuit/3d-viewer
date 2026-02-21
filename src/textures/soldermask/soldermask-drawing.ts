@@ -1,10 +1,11 @@
-import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import type {
   AnyCircuitElement,
+  PcbCopperText as CircuitJsonPcbCopperText,
   PcbBoard,
   PcbCopperPour,
   PcbRenderLayer,
 } from "circuit-json"
+import { CircuitToCanvasDrawer, drawPcbCopperText } from "circuit-to-canvas"
 import {
   colors as defaultColors,
   soldermaskColors,
@@ -140,6 +141,56 @@ export const drawSoldermaskLayer = ({
     })
     setDrawerBounds(cutoutDrawer, bounds)
     cutoutDrawer.drawElements(uncoveredPours, { layers: [copperRenderLayer] })
+    ctx.restore()
+  }
+
+  const copperTexts = elements.filter(
+    (e) => e.type === "pcb_copper_text" && (e as any).layer === layer,
+  ) as CircuitJsonPcbCopperText[]
+  if (copperTexts.length > 0) {
+    ctx.save()
+    ctx.globalCompositeOperation = "destination-out"
+    const canvas = ctx.canvas
+    const resolution = canvas.width / bounds.width
+    const realToCanvasMat = {
+      a: resolution,
+      b: 0,
+      c: 0,
+      d: -resolution,
+      e: -bounds.minX * resolution,
+      f: bounds.maxY * resolution,
+    }
+    const colorMap = {
+      copper: {
+        top: "white",
+        bottom: "white",
+        inner1: "white",
+        inner2: "white",
+        inner3: "white",
+        inner4: "white",
+        inner5: "white",
+        inner6: "white",
+      },
+      copperPour: { top: "white", bottom: "white" },
+      drill: "white",
+      silkscreen: { top: "white", bottom: "white" },
+      soldermask: { top: "white", bottom: "white" },
+      soldermaskOverCopper: { top: "white", bottom: "white" },
+      soldermaskWithCopperUnderneath: { top: "white", bottom: "white" },
+      boardOutline: "white",
+      substrate: "white",
+      keepout: "white",
+      fabricationNote: "white",
+      courtyard: { top: "white", bottom: "white" },
+    }
+    copperTexts.forEach((text) => {
+      drawPcbCopperText({
+        ctx,
+        text,
+        realToCanvasMat,
+        colorMap,
+      })
+    })
     ctx.restore()
   }
 }
