@@ -11,9 +11,7 @@ const isSilkscreenElement = (
   if (!("layer" in element) || element.layer !== layer) return false
   const elementType = element.type as string
 
-  return (
-    elementType.startsWith("pcb_silkscreen_")
-  )
+  return elementType.startsWith("pcb_silkscreen_")
 }
 
 export function createSilkscreenTextureForLayer({

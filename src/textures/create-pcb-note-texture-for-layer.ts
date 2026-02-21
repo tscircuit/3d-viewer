@@ -23,7 +23,9 @@ export function createPcbNoteTextureForLayer({
   boardData: PcbBoard
   traceTextureResolution?: number
 }): THREE.CanvasTexture | null {
-  const elements = circuitJson.filter((element) => isPcbNoteElement(element, layer))
+  const elements = circuitJson.filter((element) =>
+    isPcbNoteElement(element, layer),
+  )
   if (elements.length === 0) return null
 
   const bounds = getSoldermaskRenderBounds(circuitJson, boardData)
