@@ -8,6 +8,7 @@ import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-textur
 import { createTraceTextureForLayer } from "../utils/trace-texture"
 import { createCopperTextTextureForLayer } from "./create-copper-text-texture-for-layer"
 import { createCopperPourTextureForLayer } from "./create-copper-pour-texture-for-layer"
+import { createFabricationNoteTextureForLayer } from "./create-fabrication-note-texture-for-layer"
 import { createSilkscreenTextureForLayer } from "./create-silkscreen-texture-for-layer"
 import { createSoldermaskTextureForLayer } from "./create-soldermask-texture-for-layer"
 
@@ -153,6 +154,15 @@ export function createCombinedBoardTextures({
         })
       : null
 
+    const fabricationNoteTexture = showSilkscreen
+      ? createFabricationNoteTextureForLayer({
+          layer,
+          circuitJson,
+          boardData,
+          traceTextureResolution,
+        })
+      : null
+
     const panelOutlineTexture = showBoardBody
       ? createPanelOutlineTextureForLayer({
           layer,
@@ -170,6 +180,7 @@ export function createCombinedBoardTextures({
         soldermaskTexture,
         copperTextTexture,
         silkscreenTexture,
+        fabricationNoteTexture,
         panelOutlineTexture,
       ],
       boardData,

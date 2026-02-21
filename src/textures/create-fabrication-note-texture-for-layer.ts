@@ -1,36 +1,30 @@
 import type { AnyCircuitElement, PcbBoard } from "circuit-json"
 import * as THREE from "three"
 import { TRACE_TEXTURE_RESOLUTION } from "../geoms/constants"
+import { drawFabricationNoteLayer } from "./fabrication-note/fabrication-note-drawing"
 import { getSoldermaskRenderBounds } from "./soldermask/soldermask-bounds"
-import { drawSilkscreenLayer } from "./silkscreen/silkscreen-drawing"
 
-const isSilkscreenElement = (
+const isFabricationNoteElement = (
   element: AnyCircuitElement,
   layer: "top" | "bottom",
 ) => {
   if (!("layer" in element) || element.layer !== layer) return false
-  const elementType = element.type as string
-
-  return (
-    elementType.startsWith("pcb_silkscreen_") || elementType === "pcb_note_line"
-  )
+  return (element.type as string).startsWith("pcb_fabrication_note_")
 }
 
-export function createSilkscreenTextureForLayer({
+export function createFabricationNoteTextureForLayer({
   layer,
   circuitJson,
   boardData,
   traceTextureResolution = TRACE_TEXTURE_RESOLUTION,
-  silkscreenColor = "rgb(255,255,255)",
 }: {
   layer: "top" | "bottom"
   circuitJson: AnyCircuitElement[]
   boardData: PcbBoard
   traceTextureResolution?: number
-  silkscreenColor?: string
 }): THREE.CanvasTexture | null {
   const elements = circuitJson.filter((element) =>
-    isSilkscreenElement(element, layer),
+    isFabricationNoteElement(element, layer),
   )
   if (elements.length === 0) return null
 
@@ -50,12 +44,11 @@ export function createSilkscreenTextureForLayer({
     ctx.scale(1, -1)
   }
 
-  drawSilkscreenLayer({
+  drawFabricationNoteLayer({
     ctx,
     layer,
     bounds,
     elements,
-    silkscreenColor,
   })
 
   const texture = new THREE.CanvasTexture(canvas)
