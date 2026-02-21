@@ -2,11 +2,11 @@ import type { AnyCircuitElement, PcbBoard } from "circuit-json"
 import * as THREE from "three"
 import type { LayerVisibilityState } from "../contexts/LayerVisibilityContext"
 import { colors as defaultColors } from "../geoms/constants"
-import { createCopperTextTextureForLayer } from "../utils/copper-text-texture"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
 import { createPadTextureForLayer } from "../utils/pad-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
+import { createCopperTextTextureForLayer } from "./create-copper-text-texture-for-layer"
 import { createCopperPourTextureForLayer } from "./create-copper-pour-texture-for-layer"
 import { createSilkscreenTextureForLayer } from "./create-silkscreen-texture-for-layer"
 import { createSoldermaskTextureForLayer } from "./create-soldermask-texture-for-layer"
@@ -166,9 +166,9 @@ export function createCombinedBoardTextures({
       textures: [
         copperPourTexture,
         traceTexture,
-        copperTextTexture,
         padTexture,
         soldermaskTexture,
+        copperTextTexture,
         silkscreenTexture,
         panelOutlineTexture,
       ],
