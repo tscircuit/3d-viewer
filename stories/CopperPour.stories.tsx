@@ -20,6 +20,7 @@ const soup: AnyCircuitElement[] = [
     layer: "top",
     shape: "brep",
     source_net_id: "net1",
+    covered_with_solder_mask: true,
     brep_shape: {
       outer_ring: {
         vertices: [
@@ -48,6 +49,7 @@ const soup: AnyCircuitElement[] = [
     layer: "top",
     shape: "brep",
     source_net_id: "net2",
+    covered_with_solder_mask: true,
     brep_shape: {
       outer_ring: {
         vertices: [
@@ -85,6 +87,7 @@ const soup: AnyCircuitElement[] = [
     layer: "top",
     shape: "brep",
     source_net_id: "net3",
+    covered_with_solder_mask: true,
     brep_shape: {
       outer_ring: {
         vertices: [
@@ -111,6 +114,7 @@ const soup: AnyCircuitElement[] = [
     layer: "bottom",
     shape: "brep",
     source_net_id: "net4",
+    covered_with_solder_mask: true,
     brep_shape: {
       outer_ring: {
         vertices: [
@@ -133,6 +137,7 @@ const soup: AnyCircuitElement[] = [
     width: 20,
     height: 10,
     rotation: 15,
+    covered_with_solder_mask: true,
   } as PcbCopperPour,
   // pour_polygon_1: A polygon pour (triangle)
   {
@@ -146,6 +151,7 @@ const soup: AnyCircuitElement[] = [
       { x: 50, y: -30 },
       { x: 30, y: -30 },
     ],
+    covered_with_solder_mask: true,
   } as PcbCopperPour,
   // pour_rect_2: A rect pour without solder mask
   {
@@ -157,7 +163,7 @@ const soup: AnyCircuitElement[] = [
     center: { x: 70, y: 0 },
     width: 20,
     height: 10,
-    covered_with_solder_mask: false,
+    covered_with_solder_mask: true,
   } as PcbCopperPour,
   {
     type: "pcb_copper_pour",
@@ -168,6 +174,7 @@ const soup: AnyCircuitElement[] = [
     center: { x: 0, y: 0 },
     width: 198,
     height: 98,
+    covered_with_solder_mask: true,
   } as PcbCopperPour,
 ]
 export const Default = () => <CadViewer circuitJson={soup} />
