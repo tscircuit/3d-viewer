@@ -1,5 +1,9 @@
 import { CircuitToCanvasDrawer } from "circuit-to-canvas"
-import type { AnyCircuitElement, PcbRenderLayer } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  PcbRenderLayer,
+  PcbSilkscreenText,
+} from "circuit-json"
 import type { OutlineBounds } from "../../utils/outline-bounds"
 
 const FABRICATION_NOTE_COLOR = "rgb(255,243,204)"
@@ -81,4 +85,42 @@ export const drawSilkscreenLayer = ({
   drawer.drawElements(elements, {
     layers: [renderLayer],
   })
+
+  // Handle knockout silkscreen text using destination-out approach
+  const knockoutTexts = elements.filter(
+    (element): element is PcbSilkscreenText =>
+      element.type === "pcb_silkscreen_text" && element.is_knockout === true,
+  )
+  if (knockoutTexts.length === 0) return
+
+  const maskCanvas = document.createElement("canvas")
+  maskCanvas.width = ctx.canvas.width
+  maskCanvas.height = ctx.canvas.height
+  const maskCtx = maskCanvas.getContext("2d")
+  if (!maskCtx) return
+
+  const knockoutCutoutDrawer = new CircuitToCanvasDrawer(maskCtx)
+  knockoutCutoutDrawer.configure({
+    colorOverrides: {
+      silkscreen: {
+        top: "rgb(255,255,255)",
+        bottom: "rgb(255,255,255)",
+      },
+    },
+  })
+  setDrawerBounds(knockoutCutoutDrawer, bounds)
+  knockoutCutoutDrawer.drawElements(
+    knockoutTexts.map((text) => ({
+      ...text,
+      is_knockout: false,
+    })),
+    {
+      layers: [renderLayer],
+    },
+  )
+
+  ctx.save()
+  ctx.globalCompositeOperation = "destination-out"
+  ctx.drawImage(maskCanvas, 0, 0)
+  ctx.restore()
 }
