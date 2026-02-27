@@ -1,13 +1,12 @@
 // Utility for creating trace textures for PCB layers
 import * as THREE from "three"
+import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import type {
   AnyCircuitElement,
   PcbTrace,
   PcbBoard,
-  PcbVia,
-  PcbPlatedHole,
+  PcbRenderLayer,
 } from "circuit-json"
-import { su } from "@tscircuit/circuit-json-util"
 import { calculateOutlineBounds } from "./outline-bounds"
 
 export function isWireRoutePoint(
@@ -34,12 +33,9 @@ export function createTraceTextureForLayer({
   traceColor: string
   traceTextureResolution: number
 }): THREE.CanvasTexture | null {
-  const pcbTraces = su(circuitJson).pcb_trace.list()
-  const allPcbVias = su(circuitJson).pcb_via.list() as PcbVia[]
-  const allPcbPlatedHoles = su(
-    circuitJson,
-  ).pcb_plated_hole.list() as PcbPlatedHole[]
-
+  const pcbTraces = circuitJson.filter(
+    (e): e is PcbTrace => e.type === "pcb_trace",
+  )
   const tracesOnLayer = pcbTraces.filter((t) =>
     t.route.some((p) => isWireRoutePoint(p) && p.layer === layer),
   )
@@ -63,90 +59,31 @@ export function createTraceTextureForLayer({
     ctx.scale(1, -1)
   }
 
-  tracesOnLayer.forEach((trace: PcbTrace) => {
-    let firstPoint = true
-    ctx.beginPath()
-    ctx.strokeStyle = traceColor
-    ctx.lineCap = "round"
-    ctx.lineJoin = "round"
-    let currentLineWidth = 0
-    for (const point of trace.route) {
-      if (!isWireRoutePoint(point) || point.layer !== layer) {
-        if (!firstPoint) ctx.stroke()
-        firstPoint = true
-        continue
-      }
-      const pcbX = point.x
-      const pcbY = point.y
-      currentLineWidth = point.width * traceTextureResolution
-      ctx.lineWidth = currentLineWidth
-      const canvasX = (pcbX - boardOutlineBounds.minX) * traceTextureResolution
-      const canvasY = (boardOutlineBounds.maxY - pcbY) * traceTextureResolution
-      if (firstPoint) {
-        ctx.moveTo(canvasX, canvasY)
-        firstPoint = false
-      } else {
-        ctx.lineTo(canvasX, canvasY)
-      }
-    }
-    if (!firstPoint) {
-      ctx.stroke()
-    }
+  const pcbRenderLayer: PcbRenderLayer =
+    layer === "top" ? "top_copper" : "bottom_copper"
+  const drawer = new CircuitToCanvasDrawer(ctx)
+  drawer.configure({
+    colorOverrides: {
+      copper: {
+        top: traceColor,
+        bottom: traceColor,
+        inner1: traceColor,
+        inner2: traceColor,
+        inner3: traceColor,
+        inner4: traceColor,
+        inner5: traceColor,
+        inner6: traceColor,
+      },
+    },
   })
-
-  ctx.globalCompositeOperation = "destination-out"
-  ctx.fillStyle = "black"
-  allPcbVias.forEach((via) => {
-    const canvasX = (via.x - boardOutlineBounds.minX) * traceTextureResolution
-    const canvasY = (boardOutlineBounds.maxY - via.y) * traceTextureResolution
-    const canvasRadius = (via.outer_diameter / 2) * traceTextureResolution
-    ctx.beginPath()
-    ctx.arc(canvasX, canvasY, canvasRadius, 0, 2 * Math.PI, false)
-    ctx.fill()
+  drawer.setCameraBounds({
+    minX: boardOutlineBounds.minX,
+    maxX: boardOutlineBounds.maxX,
+    minY: boardOutlineBounds.minY,
+    maxY: boardOutlineBounds.maxY,
   })
-  allPcbPlatedHoles.forEach((ph) => {
-    if (ph.layers.includes(layer) && ph.shape === "circle") {
-      const canvasX = (ph.x - boardOutlineBounds.minX) * traceTextureResolution
-      const canvasY = (boardOutlineBounds.maxY - ph.y) * traceTextureResolution
-      const canvasRadius = (ph.outer_diameter / 2) * traceTextureResolution
-      ctx.beginPath()
-      ctx.arc(canvasX, canvasY, canvasRadius, 0, 2 * Math.PI, false)
-      ctx.fill()
-    } else if (
-      ph.layers.includes(layer) &&
-      ph.shape === "rotated_pill_hole_with_rect_pad"
-    ) {
-      const canvasX = (ph.x - boardOutlineBounds.minX) * traceTextureResolution
-      const canvasY = (boardOutlineBounds.maxY - ph.y) * traceTextureResolution
-      const padWidth =
-        (ph.rect_pad_width ?? ph.hole_width ?? 0) * traceTextureResolution
-      const padHeight =
-        (ph.rect_pad_height ?? ph.hole_height ?? 0) * traceTextureResolution
+  drawer.drawElements(tracesOnLayer, { layers: [pcbRenderLayer] })
 
-      const rectCcwRotationDeg = (ph.rect_ccw_rotation as number) || 0
-      const rectRotation = -rectCcwRotationDeg // Canvas rotation is clockwise-positive
-
-      if (rectRotation) {
-        ctx.save()
-        ctx.translate(canvasX, canvasY)
-        ctx.rotate((rectRotation * Math.PI) / 180)
-        ctx.beginPath()
-        ctx.rect(-padWidth / 2, -padHeight / 2, padWidth, padHeight)
-        ctx.fill()
-        ctx.restore()
-      } else {
-        ctx.beginPath()
-        ctx.rect(
-          canvasX - padWidth / 2,
-          canvasY - padHeight / 2,
-          padWidth,
-          padHeight,
-        )
-        ctx.fill()
-      }
-    }
-  })
-  ctx.globalCompositeOperation = "source-over"
   const texture = new THREE.CanvasTexture(canvas)
   texture.generateMipmaps = true
   texture.minFilter = THREE.LinearMipmapLinearFilter
