@@ -38,26 +38,7 @@ export function GltfModel({
       gltfUrl,
       (gltf) => {
         if (!isMounted) return
-        const scene = gltf.scene
-
-        scene.traverse((child) => {
-          if (child instanceof THREE.Mesh && child.material) {
-            const setMaterialTransparency = (mat: THREE.Material) => {
-              mat.transparent = isTranslucent
-              mat.opacity = isTranslucent ? 0.5 : 1
-              mat.depthWrite = !isTranslucent
-              mat.needsUpdate = true
-            }
-
-            if (Array.isArray(child.material)) {
-              child.material.forEach(setMaterialTransparency)
-            } else {
-              setMaterialTransparency(child.material)
-            }
-          }
-        })
-
-        setModel(scene)
+        setModel(gltf.scene)
       },
       undefined,
       (error) => {
@@ -73,7 +54,30 @@ export function GltfModel({
     return () => {
       isMounted = false
     }
-  }, [gltfUrl, isTranslucent])
+  }, [gltfUrl])
+
+  useEffect(() => {
+    if (!model) return
+
+    const setMaterialTransparency = (material: THREE.Material) => {
+      material.transparent = isTranslucent
+      material.opacity = isTranslucent ? 0.5 : 1
+      material.depthWrite = !isTranslucent
+      material.needsUpdate = true
+    }
+
+    model.traverse((child) => {
+      if (!(child instanceof THREE.Mesh) || !child.material) {
+        return
+      }
+
+      if (Array.isArray(child.material)) {
+        child.material.forEach(setMaterialTransparency)
+      } else {
+        setMaterialTransparency(child.material)
+      }
+    })
+  }, [model, isTranslucent])
 
   useEffect(() => {
     if (!model) return
