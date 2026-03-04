@@ -16,7 +16,7 @@ import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { JscadBoardTextures } from "./three-components/JscadBoardTextures"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 
-interface Props {
+export interface Props {
   /**
    * @deprecated Use circuitJson instead.
    */
