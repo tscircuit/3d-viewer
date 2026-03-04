@@ -108,6 +108,7 @@ The `convert3dCircuitToSvg` function accepts the following options:
 - `backgroundColor`: Background color in hex format (default: "#ffffff")
 - `padding`: Padding around the board (default: 20)
 - `zoom`: Zoom level (default: 1.5)
+- `showPcbNotes`: Whether to render `pcb_note_*` elements (default: `false`)
 - `camera`: Camera position and lookAt configuration
   - `position`: {x, y, z} coordinates for camera position
   - `lookAt`: {x, y, z} coordinates for camera target
@@ -123,6 +124,7 @@ Props:
 - `circuit-json`: (optional) An array of AnyCircuitElement objects representing the PCB layout.
 - `children`: (optional) React children elements describing the PCB layout (alternative to using `circuit-json`).
 - `resolveStaticAsset`: (optional) Function that receives each component model URL (`obj`, `wrl`, `stl`, `gltf`, `glb`, `step`) and returns the resolved URL to load.
+- `showPcbNotes`: (optional) Show `pcb_note_*` graphics in 3D output. Defaults to `false`.
 
 ### `<board>`
 

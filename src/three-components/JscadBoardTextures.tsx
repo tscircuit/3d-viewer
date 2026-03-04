@@ -16,12 +16,14 @@ interface JscadBoardTexturesProps {
   circuitJson: AnyCircuitElement[]
   pcbThickness: number
   isFaux?: boolean
+  showPcbNotes?: boolean
 }
 
 export function JscadBoardTextures({
   circuitJson,
   pcbThickness,
   isFaux = false,
+  showPcbNotes = false,
 }: JscadBoardTexturesProps) {
   const { rootObject } = useThree()
   const { visibility } = useLayerVisibility()
@@ -70,8 +72,9 @@ export function JscadBoardTextures({
       boardData,
       traceTextureResolution,
       visibility,
+      showPcbNotes,
     })
-  }, [circuitJson, boardData, traceTextureResolution, visibility])
+  }, [circuitJson, boardData, traceTextureResolution, visibility, showPcbNotes])
 
   useEffect(() => {
     if (!rootObject || !boardData || !textures) return
@@ -176,17 +179,19 @@ export function JscadBoardTextures({
     }
 
     return () => {
-      meshes.forEach((mesh) => {
+      for (const mesh of meshes) {
         if (mesh.parent === rootObject) {
           rootObject.remove(mesh)
         }
         mesh.geometry.dispose()
         if (Array.isArray(mesh.material)) {
-          mesh.material.forEach((material) => disposeTextureMaterial(material))
+          for (const material of mesh.material) {
+            disposeTextureMaterial(material)
+          }
         } else if (mesh.material instanceof THREE.Material) {
           disposeTextureMaterial(mesh.material)
         }
-      })
+      }
 
       textures.topBoard?.dispose()
       textures.bottomBoard?.dispose()

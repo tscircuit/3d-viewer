@@ -128,6 +128,7 @@ type CadViewerManifoldProps = {
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
   resolveStaticAsset?: (modelUrl: string) => string
+  showPcbNotes?: boolean
 } & (
   | { circuitJson: AnyCircuitElement[]; children?: React.ReactNode }
   | { circuitJson?: never; children: React.ReactNode }
@@ -143,6 +144,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   children,
   onCameraControllerReady,
   resolveStaticAsset,
+  showPcbNotes = false,
 }) => {
   const childrenCircuitJson = useConvertChildrenToCircuitJson(children)
   const circuitJson = useMemo(() => {
@@ -241,7 +243,12 @@ try {
     isLoading: builderIsLoading,
     boardData,
     isFauxBoard,
-  } = useManifoldBoardBuilder(manifoldJSModule, circuitJson, visibility)
+  } = useManifoldBoardBuilder(
+    manifoldJSModule,
+    circuitJson,
+    visibility,
+    showPcbNotes,
+  )
 
   const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
   const textureMeshes = useMemo(

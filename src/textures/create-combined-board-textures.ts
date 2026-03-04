@@ -72,11 +72,13 @@ export function createCombinedBoardTextures({
   boardData,
   traceTextureResolution,
   visibility,
+  showPcbNotes = false,
 }: {
   circuitJson: AnyCircuitElement[]
   boardData: PcbBoard
   traceTextureResolution: number
   visibility?: Partial<LayerVisibilityState>
+  showPcbNotes?: boolean
 }): CombinedBoardTextures {
   const traceColorWithMask = toRgb(defaultColors.fr4TracesWithMaskGreen)
   const traceColorWithoutMask = toRgb(defaultColors.fr4TracesWithoutMaskTan)
@@ -154,7 +156,7 @@ export function createCombinedBoardTextures({
         })
       : null
 
-    const pcbNoteTexture = showSilkscreen
+    const pcbNoteTexture = showPcbNotes
       ? createPcbNoteTextureForLayer({
           layer,
           circuitJson,

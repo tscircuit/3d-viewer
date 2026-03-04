@@ -1,4 +1,5 @@
 import { CadViewer } from "src/CadViewer"
+import type { Meta, StoryObj } from "@storybook/react"
 
 const pcbNoteLineCircuit = [
   {
@@ -143,11 +144,23 @@ const pcbNoteLineCircuit = [
   },
 ]
 
-export const PcbNoteLines = () => (
-  <CadViewer circuitJson={pcbNoteLineCircuit as any} />
-)
-
-export default {
+const meta = {
   title: "PCB Note Line",
-  component: PcbNoteLines,
+  component: CadViewer,
+  argTypes: {
+    showPcbNotes: {
+      control: "boolean",
+      description: "Show/hide pcb_note_* elements in the 3D view",
+    },
+  },
+} satisfies Meta<typeof CadViewer>
+
+export default meta
+type Story = StoryObj<typeof meta>
+
+export const PcbNoteLines: Story = {
+  args: {
+    circuitJson: pcbNoteLineCircuit as any,
+    showPcbNotes: true,
+  },
 }
