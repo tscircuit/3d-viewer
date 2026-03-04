@@ -58,6 +58,7 @@ export const useManifoldBoardBuilder = (
   manifoldJSModule: ManifoldToplevel | null,
   circuitJson: AnyCircuitElement[],
   visibility: LayerVisibilityState,
+  showPcbNotes = false,
 ): UseManifoldBoardBuilderResult => {
   const [geoms, setGeoms] = useState<ManifoldGeoms | null>(null)
   const [pcbThickness, setPcbThickness] = useState<number | null>(null)
@@ -354,8 +355,9 @@ export const useManifoldBoardBuilder = (
       boardData,
       traceTextureResolution,
       visibility,
+      showPcbNotes,
     })
-  }, [circuitJson, boardData, traceTextureResolution, visibility])
+  }, [circuitJson, boardData, traceTextureResolution, visibility, showPcbNotes])
 
   return {
     geoms,

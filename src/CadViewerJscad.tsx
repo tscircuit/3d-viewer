@@ -28,6 +28,7 @@ interface Props {
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
   resolveStaticAsset?: (modelUrl: string) => string
+  showPcbNotes?: boolean
 }
 
 export const CadViewerJscad = forwardRef<
@@ -43,6 +44,7 @@ export const CadViewerJscad = forwardRef<
       onUserInteraction,
       onCameraControllerReady,
       resolveStaticAsset,
+      showPcbNotes = false,
     },
     ref,
   ) => {
@@ -148,6 +150,7 @@ export const CadViewerJscad = forwardRef<
           circuitJson={internalCircuitJson}
           pcbThickness={pcbThickness}
           isFaux={isFauxBoard}
+          showPcbNotes={showPcbNotes}
         />
         {cad_components.map((cad_component) => (
           <ThreeErrorBoundary

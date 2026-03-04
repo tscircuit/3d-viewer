@@ -16,6 +16,7 @@ interface CircuitToSvgOptions {
   backgroundColor?: string
   padding?: number
   zoom?: number
+  showPcbNotes?: boolean
   camera?: {
     position: {
       x: number
@@ -42,7 +43,14 @@ export async function convertCircuitJsonTo3dSvg(
     backgroundColor = "#ffffff",
     padding = 20,
     zoom = 1.5,
+    showPcbNotes = false,
   } = options
+
+  const filteredCircuitJson = showPcbNotes
+    ? circuitJson
+    : circuitJson.filter(
+        (element) => !(element.type as string).startsWith("pcb_note_"),
+      )
 
   // Initialize scene and renderer
   const scene = new THREE.Scene()
@@ -88,15 +96,15 @@ export async function convertCircuitJsonTo3dSvg(
   scene.add(pointLight)
 
   // Add components
-  const components = su(circuitJson).cad_component.list()
+  const components = su(filteredCircuitJson).cad_component.list()
   for (const component of components) {
     await renderComponent(component, scene)
   }
 
-  const boardData = su(circuitJson).pcb_board.list()[0]
+  const boardData = su(filteredCircuitJson).pcb_board.list()[0]
 
   // Add board geometry after components
-  const boardGeom = createBoardGeomFromCircuitJson(circuitJson)
+  const boardGeom = createBoardGeomFromCircuitJson(filteredCircuitJson)
   if (boardGeom) {
     // Use green solder mask color for the board
     const solderMaskColor = colors.fr4SolderMaskGreen
