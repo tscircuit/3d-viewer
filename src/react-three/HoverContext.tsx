@@ -10,6 +10,9 @@ import React, {
 import * as THREE from "three"
 import { useThree } from "./ThreeContext"
 
+const HOVER_UPDATE_THROTTLE_MS = 33
+const HOVER_POINT_EPSILON_SQ = 1e-6
+
 export interface HoverableObject {
   object: THREE.Object3D
   onHover: (event: { mousePosition: [number, number, number] }) => void
@@ -41,6 +44,17 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
   hoverablesRef.current = hoverables
 
   const hoveredObjectRef = useRef<HoverableObject | null>(null)
+  const lastHoverPointRef = useRef<THREE.Vector3 | null>(null)
+  const lastHoverUpdateTimeRef = useRef(0)
+
+  const clearHoveredObject = useCallback(() => {
+    if (hoveredObjectRef.current) {
+      hoveredObjectRef.current.onUnhover()
+      hoveredObjectRef.current = null
+    }
+    lastHoverPointRef.current = null
+    lastHoverUpdateTimeRef.current = 0
+  }, [])
 
   const addHoverable = useCallback((hoverable: HoverableObject) => {
     setHoverables((prev) => [...prev, hoverable])
@@ -60,12 +74,11 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (isAncestor) {
         // The object being removed contains the hovered object.
-        hoveredObjectRef.current.onUnhover()
-        hoveredObjectRef.current = null
+        clearHoveredObject()
       }
     }
     setHoverables((prev) => prev.filter((h) => h.object !== object))
-  }, [])
+  }, [clearHoveredObject])
 
   const findHoverable = useCallback(
     (object: THREE.Object3D): HoverableObject | undefined => {
@@ -91,10 +104,7 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
       const objectsToIntersect = hoverablesRef.current.map((h) => h.object)
 
       if (objectsToIntersect.length === 0) {
-        if (hoveredObjectRef.current) {
-          hoveredObjectRef.current.onUnhover()
-          hoveredObjectRef.current = null
-        }
+        clearHoveredObject()
         return
       }
 
@@ -116,23 +126,32 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
             hoveredObjectRef.current?.onUnhover()
             newHovered.onHover(eventPayload)
             hoveredObjectRef.current = newHovered
+            lastHoverPointRef.current = firstIntersect.point.clone()
+            lastHoverUpdateTimeRef.current = Date.now()
           } else {
-            newHovered.onHover(eventPayload)
+            const lastPoint = lastHoverPointRef.current
+            const hasMovedEnough =
+              !lastPoint ||
+              lastPoint.distanceToSquared(firstIntersect.point) >
+                HOVER_POINT_EPSILON_SQ
+            const now = Date.now()
+            const shouldUpdate =
+              hasMovedEnough &&
+              now - lastHoverUpdateTimeRef.current >= HOVER_UPDATE_THROTTLE_MS
+            if (shouldUpdate) {
+              newHovered.onHover(eventPayload)
+              lastHoverPointRef.current = firstIntersect.point.clone()
+              lastHoverUpdateTimeRef.current = now
+            }
           }
         } else {
-          if (hoveredObjectRef.current) {
-            hoveredObjectRef.current.onUnhover()
-            hoveredObjectRef.current = null
-          }
+          clearHoveredObject()
         }
       } else {
-        if (hoveredObjectRef.current) {
-          hoveredObjectRef.current.onUnhover()
-          hoveredObjectRef.current = null
-        }
+        clearHoveredObject()
       }
     },
-    [camera, renderer, raycaster, mouse, findHoverable],
+    [camera, renderer, raycaster, mouse, findHoverable, clearHoveredObject],
   )
 
   useEffect(() => {
