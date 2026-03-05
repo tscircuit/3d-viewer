@@ -17,15 +17,7 @@ const resolvePanelIdForTexture = (
   }
 
   if (panels.length === 1) return panels[0]!.pcb_panel_id
-
-  const matchingByGeometry = panels.find(
-    (p) =>
-      p.center.x === panelData.center.x &&
-      p.center.y === panelData.center.y &&
-      p.width === panelData.width &&
-      p.height === panelData.height,
-  )
-  return matchingByGeometry?.pcb_panel_id ?? null
+  return null
 }
 
 export function createPanelOutlineTextureForLayer({
