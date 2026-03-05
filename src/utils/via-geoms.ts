@@ -8,7 +8,6 @@ export function createViaCopper({
   zOffset = 0.001,
   segments = 32,
 }) {
-  const padThickness = zOffset // Visual thickness for the annular rings
   const platingThickness = zOffset // Visual thickness for the barrel wall
 
   if (outerDiameter < holeDiameter) {
@@ -26,29 +25,11 @@ export function createViaCopper({
   // Central barrel connecting the pads
   const barrel = Manifold.cylinder(thickness, barrelRadius, -1, segments, true)
 
-  // Top annular ring
-  const topPad = Manifold.cylinder(
-    padThickness,
-    outerDiameter / 2,
-    -1,
-    segments,
-    true,
-  ).translate([0, 0, thickness / 2])
-
-  // Bottom annular ring
-  const bottomPad = Manifold.cylinder(
-    padThickness,
-    outerDiameter / 2,
-    -1,
-    segments,
-    true,
-  ).translate([0, 0, -thickness / 2])
-
-  // Combine solids
-  const viaSolid = Manifold.union([barrel, topPad, bottomPad])
+  // Keep only through-board barrel; top/bottom annular copper is rendered in texture
+  const viaSolid = barrel
 
   // Create the hole to drill through
-  const drillHeight = thickness + padThickness * 2 // Ensure it clears the pads with a reasonable margin
+  const drillHeight = thickness + 2 * zOffset
   const drill = Manifold.cylinder(
     drillHeight,
     holeDiameter / 2,

@@ -1,11 +1,11 @@
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
-import { subtract, union } from "@jscad/modeling/src/operations/booleans"
+import { subtract } from "@jscad/modeling/src/operations/booleans"
 import { translate } from "@jscad/modeling/src/operations/transforms"
 import { cylinder } from "@jscad/modeling/src/primitives"
 import { M, SMOOTH_CIRCLE_SEGMENTS } from "./constants"
 
 /**
- * Creates a 3D geometry for via copper (barrel and annular rings).
+ * Creates a 3D geometry for via copper barrel.
  *
  * @param x - X coordinate of via center
  * @param y - Y coordinate of via center
@@ -33,7 +33,6 @@ export function createViaCopper({
     )
   }
 
-  const padThickness = M // Visual thickness for annular rings
   const platingThickness = M // Visual thickness for barrel wall
 
   // Ensure barrel isn't wider than pads
@@ -50,27 +49,11 @@ export function createViaCopper({
     segments: SMOOTH_CIRCLE_SEGMENTS,
   })
 
-  // Top annular ring
-  const topPad = cylinder({
-    center: [0, 0, thickness / 2],
-    radius: outerDiameter / 2,
-    height: padThickness,
-    segments: SMOOTH_CIRCLE_SEGMENTS,
-  })
-
-  // Bottom annular ring
-  const bottomPad = cylinder({
-    center: [0, 0, -thickness / 2],
-    radius: outerDiameter / 2,
-    height: padThickness,
-    segments: SMOOTH_CIRCLE_SEGMENTS,
-  })
-
-  // Combine barrel and pads
-  const viaSolid = union([barrel, topPad, bottomPad])
+  // Keep only through-board barrel; top/bottom annular copper is rendered in texture
+  const viaSolid = barrel
 
   // Create drill hole to subtract
-  const drillHeight = thickness + padThickness * 2 // Ensure it clears pads
+  const drillHeight = thickness + 2 * M
   const drill = cylinder({
     center: [0, 0, 0],
     radius: holeDiameter / 2,

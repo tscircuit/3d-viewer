@@ -17,10 +17,7 @@ import { M, colors } from "./constants"
 import type { GeomContext } from "../GeomContext"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { rotate, translate } from "@jscad/modeling/src/operations/transforms"
-import {
-  clampRectBorderRadius,
-  extractRectBorderRadius,
-} from "../utils/rect-border-radius"
+import { extractRectBorderRadius } from "../utils/rect-border-radius"
 import { createHoleWithPolygonPadHoleGeom } from "./create-hole-with-polygon-pad"
 
 const PLATED_HOLE_DRILL_OVERREACH = 0.05
@@ -28,35 +25,6 @@ const RECT_PAD_SEGMENTS = 64
 
 const maybeClip = (geom: Geom3, clipGeom?: Geom3 | null) =>
   clipGeom ? intersect(clipGeom, geom) : geom
-
-const createRectPadGeom = ({
-  width,
-  height,
-  thickness,
-  center,
-  borderRadius,
-}: {
-  width: number
-  height: number
-  thickness: number
-  center: [number, number, number]
-  borderRadius?: number | null
-}) => {
-  const clampedRadius = clampRectBorderRadius(width, height, borderRadius)
-
-  if (clampedRadius <= 0) {
-    return cuboid({ center, size: [width, height, thickness] })
-  }
-
-  const rect2d = roundedRectangle({
-    size: [width, height],
-    roundRadius: clampedRadius,
-    segments: RECT_PAD_SEGMENTS,
-  })
-  const extruded = extrudeLinear({ height: thickness }, rect2d)
-  const offsetZ = center[2] - thickness / 2
-  return translate([center[0], center[1], offsetZ], extruded)
-}
 
 type PlatedHoleOptions = {
   clipGeom?: Geom3 | null
@@ -75,10 +43,6 @@ export const platedHole = (
   const fillClearance = Math.max(ctx.pcbThickness * 0.0025, M / 4)
   const throughDrillHeight =
     ctx.pcbThickness + 2 * PLATED_HOLE_DRILL_OVERREACH + 4 * M
-  const topSurfaceZ = ctx.pcbThickness / 2 + surfaceClearance + padThickness / 2
-  const bottomSurfaceZ =
-    -ctx.pcbThickness / 2 - surfaceClearance - padThickness / 2
-  const copperSurfaceSpan = ctx.pcbThickness + 2 * surfaceClearance
   const copperFillHeight = Math.max(
     ctx.pcbThickness - 2 * (padThickness + surfaceClearance + fillClearance),
     M,
@@ -87,7 +51,7 @@ export const platedHole = (
   if (plated_hole.shape === "circle") {
     const outerDiameter =
       plated_hole.outer_diameter ?? Math.max(plated_hole.hole_diameter, 0)
-    const copperHeight = copperSurfaceSpan
+    const copperHeight = copperFillHeight
     const copperBody = cylinder({
       center: [plated_hole.x, plated_hole.y, 0],
       radius: outerDiameter / 2,
@@ -118,7 +82,7 @@ export const platedHole = (
       const circle = cylinder({
         center: [0, 0, 0],
         radius: 1,
-        height: copperSurfaceSpan,
+        height: copperFillHeight,
         segments: 64, // High segment count for smooth ellipse
       })
       // Scale the circle to create an ellipse
@@ -155,22 +119,6 @@ export const platedHole = (
     // Create a solid copper shape that connects the top and bottom pads
     const copperSolid = maybeClip(
       union(
-        // Top rectangular pad (thicker to ensure connection)
-        createRectPadGeom({
-          width: padWidth,
-          height: padHeight,
-          thickness: padThickness,
-          center: [plated_hole.x, plated_hole.y, topSurfaceZ],
-          borderRadius: rectBorderRadius,
-        }),
-        // Bottom rectangular pad (thicker to ensure connection)
-        createRectPadGeom({
-          width: padWidth,
-          height: padHeight,
-          thickness: padThickness,
-          center: [plated_hole.x, plated_hole.y, bottomSurfaceZ],
-          borderRadius: rectBorderRadius,
-        }),
         // Main copper fill between pads with rounded corners
         (() => {
           const rect2d = roundedRectangle({
@@ -247,7 +195,7 @@ export const platedHole = (
     const outerRadius = outerPillHeight / 2
     const rectLength = Math.abs(holeWidth - holeHeight)
     const outerRectLength = Math.abs(outerPillWidth - outerPillHeight)
-    const copperHeight = copperSurfaceSpan
+    const copperHeight = copperFillHeight
 
     const createPillSection = (
       width: number,
@@ -442,22 +390,6 @@ export const platedHole = (
     )
 
     // --- Pads and fill ---
-    const copperTopPad = createRectPadGeom({
-      width: padWidth,
-      height: padHeight,
-      thickness: padThickness,
-      center: [plated_hole.x, plated_hole.y, topSurfaceZ],
-      borderRadius: rectBorderRadius,
-    })
-
-    const copperBottomPad = createRectPadGeom({
-      width: padWidth,
-      height: padHeight,
-      thickness: padThickness,
-      center: [plated_hole.x, plated_hole.y, bottomSurfaceZ],
-      borderRadius: rectBorderRadius,
-    })
-
     const copperFill = (() => {
       const rect2d = roundedRectangle({
         size: [padWidth, padHeight],
@@ -471,9 +403,6 @@ export const platedHole = (
       )
     })()
 
-    // --- Cut pads with the hole ---
-    const copperTopPadCut = subtract(copperTopPad, holeCut)
-    const copperBottomPadCut = subtract(copperBottomPad, holeCut)
     const copperFillCut = subtract(copperFill, holeCut)
 
     // --- Barrel internal cut (keeps thin copper rim) ---
@@ -520,7 +449,7 @@ export const platedHole = (
 
     // --- Combine all copper pieces ---
     const finalCopper = maybeClip(
-      union(copperTopPadCut, copperBottomPadCut, copperFillCut, barrelWithHole),
+      union(copperFillCut, barrelWithHole),
       clipGeom,
     )
 
@@ -639,26 +568,6 @@ export const platedHole = (
     )
 
     // --- Pads and fill ---
-    const copperTopPad = rotateRectPad(
-      createRectPadGeom({
-        width: padWidth,
-        height: padHeight,
-        thickness: padThickness,
-        center: [plated_hole.x, plated_hole.y, topSurfaceZ],
-        borderRadius: rectBorderRadius,
-      }),
-    )
-
-    const copperBottomPad = rotateRectPad(
-      createRectPadGeom({
-        width: padWidth,
-        height: padHeight,
-        thickness: padThickness,
-        center: [plated_hole.x, plated_hole.y, bottomSurfaceZ],
-        borderRadius: rectBorderRadius,
-      }),
-    )
-
     const copperFill = rotateRectPad(
       (() => {
         const rect2d = roundedRectangle({
@@ -674,9 +583,6 @@ export const platedHole = (
       })(),
     )
 
-    // --- Cut pads with the hole ---
-    const copperTopPadCut = subtract(copperTopPad, holeCut)
-    const copperBottomPadCut = subtract(copperBottomPad, holeCut)
     const copperFillCut = subtract(copperFill, holeCut)
 
     // --- Barrel internal cut (keeps thin copper rim) ---
@@ -709,7 +615,7 @@ export const platedHole = (
 
     // --- Combine all copper pieces ---
     const finalCopper = maybeClip(
-      union(copperTopPadCut, copperBottomPadCut, copperFillCut, barrelWithHole),
+      union(copperFillCut, barrelWithHole),
       clipGeom,
     )
 
@@ -739,10 +645,7 @@ export const platedHole = (
     }
 
     const mainFill = createPolygonPad(copperFillHeight, centerZ)
-    const topPad = createPolygonPad(padThickness, topSurfaceZ)
-    const bottomPad = createPolygonPad(padThickness, bottomSurfaceZ)
-
-    const copperSolid = maybeClip(union(mainFill, topPad, bottomPad), clipGeom)
+    const copperSolid = maybeClip(mainFill, clipGeom)
     const barrel = createHoleWithPolygonPadHoleGeom(plated_hole, barrelHeight)
     if (!barrel) return colorize(colors.copper, copperSolid)
 

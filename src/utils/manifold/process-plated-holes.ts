@@ -184,6 +184,15 @@ export function processPlatedHolesForManifold(
   }
 
   pcbPlatedHoles.forEach((ph: PcbPlatedHole, index: number) => {
+    const internalCopperThickness = Math.max(
+      pcbThickness -
+        2 *
+          (PLATED_HOLE_PAD_THICKNESS +
+            PLATED_HOLE_SURFACE_CLEARANCE +
+            PLATED_HOLE_FILL_CLEARANCE),
+      M,
+    )
+
     if (ph.shape === "circle") {
       // Board cut for plated holes
       const translatedDrill = createPlatedHoleDrill({
@@ -199,7 +208,7 @@ export function processPlatedHolesForManifold(
       platedHoleBoardDrills.push(translatedDrill)
 
       // Copper part of plated holes
-      const copperPartThickness = pcbThickness + 2 * MANIFOLD_Z_OFFSET
+      const copperPartThickness = internalCopperThickness
       const platedPart = Manifold.cylinder(
         copperPartThickness,
         ph.outer_diameter / 2,
@@ -269,7 +278,7 @@ export function processPlatedHolesForManifold(
       platedHoleBoardDrills.push(translatedBoardPillDrill)
 
       // Copper Part
-      const copperPartThickness = pcbThickness + 2 * MANIFOLD_Z_OFFSET
+      const copperPartThickness = internalCopperThickness
 
       const outerCopperOpUnrotated = createPillOp(
         outerW,
@@ -367,32 +376,6 @@ export function processPlatedHolesForManifold(
       })
       manifoldInstancesForCleanup.push(mainFill)
 
-      // Create and position the top pad with hole offset
-      const topPad = createRoundedRectPrism({
-        Manifold,
-        width: padWidth,
-        height: padHeight,
-        thickness: padThickness,
-        borderRadius: rectBorderRadius,
-      }).translate([
-        0,
-        0,
-        pcbThickness / 2 + PLATED_HOLE_SURFACE_CLEARANCE + padThickness / 2,
-      ])
-
-      const bottomPad = createRoundedRectPrism({
-        Manifold,
-        width: padWidth,
-        height: padHeight,
-        thickness: padThickness,
-        borderRadius: rectBorderRadius,
-      }).translate([
-        0,
-        0,
-        -pcbThickness / 2 - PLATED_HOLE_SURFACE_CLEARANCE - padThickness / 2,
-      ])
-      manifoldInstancesForCleanup.push(topPad, bottomPad)
-
       // Create the plated barrel at the offset position
       const barrelPill = createPillOp(
         holeW,
@@ -402,12 +385,7 @@ export function processPlatedHolesForManifold(
       manifoldInstancesForCleanup.push(barrelPill)
 
       // Combine all copper parts
-      const copperUnion = Manifold.union([
-        mainFill,
-        topPad,
-        bottomPad,
-        barrelPill,
-      ])
+      const copperUnion = Manifold.union([mainFill, barrelPill])
       manifoldInstancesForCleanup.push(copperUnion)
 
       // Create hole for drilling at the offset position
@@ -511,45 +489,6 @@ export function processPlatedHolesForManifold(
         mainFill = rotatedMainFill
       }
 
-      // Create and position the top pad with rect rotation
-      let topPad = createRoundedRectPrism({
-        Manifold,
-        width: padWidth,
-        height: padHeight,
-        thickness: padThickness,
-        borderRadius: rectBorderRadius,
-      }).translate([
-        0,
-        0,
-        pcbThickness / 2 + PLATED_HOLE_SURFACE_CLEARANCE + padThickness / 2,
-      ])
-
-      if (ph.rect_ccw_rotation) {
-        const rotatedTopPad = topPad.rotate([0, 0, ph.rect_ccw_rotation])
-        manifoldInstancesForCleanup.push(rotatedTopPad)
-        topPad = rotatedTopPad
-      }
-
-      let bottomPad = createRoundedRectPrism({
-        Manifold,
-        width: padWidth,
-        height: padHeight,
-        thickness: padThickness,
-        borderRadius: rectBorderRadius,
-      }).translate([
-        0,
-        0,
-        -pcbThickness / 2 - PLATED_HOLE_SURFACE_CLEARANCE - padThickness / 2,
-      ])
-
-      if (ph.rect_ccw_rotation) {
-        const rotatedBottomPad = bottomPad.rotate([0, 0, ph.rect_ccw_rotation])
-        manifoldInstancesForCleanup.push(rotatedBottomPad)
-        bottomPad = rotatedBottomPad
-      }
-
-      manifoldInstancesForCleanup.push(topPad, bottomPad)
-
       // Create the plated barrel at the offset position with hole rotation
       let barrelPill = createPillOp(
         holeW,
@@ -566,12 +505,7 @@ export function processPlatedHolesForManifold(
       manifoldInstancesForCleanup.push(barrelPill)
 
       // Combine all copper parts
-      const copperUnion = Manifold.union([
-        mainFill,
-        topPad,
-        bottomPad,
-        barrelPill,
-      ])
+      const copperUnion = Manifold.union([mainFill, barrelPill])
       manifoldInstancesForCleanup.push(copperUnion)
 
       // Create hole for drilling at the offset position with hole rotation
@@ -646,24 +580,7 @@ export function processPlatedHolesForManifold(
         padOutline,
         thickness: fillThickness,
       })
-      const topPad = createPolygonPadOp({ padOutline, thickness: padThickness })
-      const bottomPad = createPolygonPadOp({
-        padOutline,
-        thickness: padThickness,
-      })
-      if (!mainFill || !topPad || !bottomPad) return
-
-      const topTranslated = topPad.translate([
-        0,
-        0,
-        pcbThickness / 2 + PLATED_HOLE_SURFACE_CLEARANCE + padThickness / 2,
-      ])
-      const bottomTranslated = bottomPad.translate([
-        0,
-        0,
-        -pcbThickness / 2 - PLATED_HOLE_SURFACE_CLEARANCE - padThickness / 2,
-      ])
-      manifoldInstancesForCleanup.push(topTranslated, bottomTranslated)
+      if (!mainFill) return
 
       const barrelOp = createHoleOpForPolygonPad({
         ph,
@@ -678,12 +595,7 @@ export function processPlatedHolesForManifold(
           sizeDelta: -2 * M,
         }) || barrelOp
 
-      const copperUnion = Manifold.union([
-        mainFill,
-        topTranslated,
-        bottomTranslated,
-        barrelOp,
-      ])
+      const copperUnion = Manifold.union([mainFill, barrelOp])
       manifoldInstancesForCleanup.push(copperUnion)
 
       const finalCopper = copperUnion.subtract(holeCutOp)
@@ -755,7 +667,7 @@ export function processPlatedHolesForManifold(
       platedHoleBoardDrills.push(translatedDrill)
 
       // Copper Part
-      const copperPartThickness = pcbThickness + 2 * MANIFOLD_Z_OFFSET
+      const copperPartThickness = internalCopperThickness
 
       // Create outer copper ellipse
       let outerPoints = createEllipsePoints(
@@ -884,31 +796,6 @@ export function processPlatedHolesForManifold(
       manifoldInstancesForCleanup.push(mainFill)
 
       // Create top and bottom pads (slightly thicker to ensure connection)
-      const topPad = createRoundedRectPrism({
-        Manifold,
-        width: padWidth!,
-        height: padHeight!,
-        thickness: padThickness,
-        borderRadius: rectBorderRadius,
-      }).translate([
-        0,
-        0,
-        pcbThickness / 2 + PLATED_HOLE_SURFACE_CLEARANCE + padThickness / 2,
-      ])
-
-      const bottomPad = createRoundedRectPrism({
-        Manifold,
-        width: padWidth!,
-        height: padHeight!,
-        thickness: padThickness,
-        borderRadius: rectBorderRadius,
-      }).translate([
-        0,
-        0,
-        -pcbThickness / 2 - PLATED_HOLE_SURFACE_CLEARANCE - padThickness / 2,
-      ])
-      manifoldInstancesForCleanup.push(topPad, bottomPad)
-
       // Create the plated barrel at the offset position
       const barrelCylinder = Manifold.cylinder(
         pcbThickness * 0.8, // Slightly taller than board
@@ -920,12 +807,7 @@ export function processPlatedHolesForManifold(
       manifoldInstancesForCleanup.push(barrelCylinder)
 
       // Combine all copper parts
-      const copperUnion = Manifold.union([
-        mainFill,
-        topPad,
-        bottomPad,
-        barrelCylinder,
-      ])
+      const copperUnion = Manifold.union([mainFill, barrelCylinder])
       manifoldInstancesForCleanup.push(copperUnion)
 
       // Create hole for drilling at the offset position
