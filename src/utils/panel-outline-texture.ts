@@ -4,17 +4,11 @@ import * as THREE from "three"
 
 const resolvePanelIdForTexture = (
   circuitJson: AnyCircuitElement[],
-  panelData: PcbBoard,
 ): string | null => {
   const panels = circuitJson.filter(
     (e): e is PcbPanel => e.type === "pcb_panel",
   )
   if (panels.length === 0) return null
-
-  const candidateId = panelData.pcb_panel_id ?? panelData.pcb_board_id
-  if (candidateId && panels.some((p) => p.pcb_panel_id === candidateId)) {
-    return candidateId
-  }
 
   if (panels.length === 1) return panels[0]!.pcb_panel_id
   return null
@@ -33,7 +27,7 @@ export function createPanelOutlineTextureForLayer({
   outlineColor?: string
   traceTextureResolution: number
 }): THREE.CanvasTexture | null {
-  const panelId = resolvePanelIdForTexture(circuitJson, panelData)
+  const panelId = resolvePanelIdForTexture(circuitJson)
   if (!panelId) return null
 
   const allBoards = su(circuitJson).pcb_board.list()
