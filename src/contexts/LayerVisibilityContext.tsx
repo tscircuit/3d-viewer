@@ -24,6 +24,7 @@ export interface LayerVisibilityState {
   modelsMarkedDNP: boolean
   modelBoundingBoxes: boolean
   threedAxis: boolean
+  pcbNotes: boolean
   backgroundStart: boolean
   backgroundEnd: boolean
 }
@@ -54,6 +55,7 @@ const defaultVisibility: LayerVisibilityState = {
   modelsMarkedDNP: false,
   modelBoundingBoxes: false,
   threedAxis: false,
+  pcbNotes: false,
   backgroundStart: true,
   backgroundEnd: true,
 }

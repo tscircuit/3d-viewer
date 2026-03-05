@@ -154,7 +154,8 @@ export function createCombinedBoardTextures({
         })
       : null
 
-    const pcbNoteTexture = showSilkscreen
+    const showPcbNotes = visibility?.pcbNotes ?? false
+    const pcbNoteTexture = showPcbNotes
       ? createPcbNoteTextureForLayer({
           layer,
           circuitJson,
