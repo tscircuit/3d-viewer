@@ -11,6 +11,7 @@ import { createFabricationNoteTextureForLayer } from "./create-fabrication-note-
 import { createPcbNoteTextureForLayer } from "./create-pcb-note-texture-for-layer"
 import { createSilkscreenTextureForLayer } from "./create-silkscreen-texture-for-layer"
 import { createSoldermaskTextureForLayer } from "./create-soldermask-texture-for-layer"
+import { createThroughHoleTextureForLayer } from "./create-through-hole-texture-for-layer"
 
 export interface CombinedBoardTextures {
   topBoard?: THREE.CanvasTexture | null
@@ -134,6 +135,15 @@ export function createCombinedBoardTextures({
           traceTextureResolution,
         })
       : null
+    const throughHoleTexture = showCopper
+      ? createThroughHoleTextureForLayer({
+          layer,
+          circuitJson,
+          boardData,
+          copperColor,
+          traceTextureResolution,
+        })
+      : null
 
     const silkscreenTexture = showSilkscreen
       ? createSilkscreenTextureForLayer({
@@ -177,6 +187,7 @@ export function createCombinedBoardTextures({
       textures: [
         traceTexture,
         padTexture,
+        throughHoleTexture,
         soldermaskTexture,
         copperTextTexture,
         silkscreenTexture,

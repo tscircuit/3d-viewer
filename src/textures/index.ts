@@ -6,4 +6,5 @@ export { createFabricationNoteTextureForLayer } from "./create-fabrication-note-
 export { createPcbNoteTextureForLayer } from "./create-pcb-note-texture-for-layer"
 export { createSilkscreenTextureForLayer } from "./create-silkscreen-texture-for-layer"
 export { createSoldermaskTextureForLayer } from "./create-soldermask-texture-for-layer"
+export { createThroughHoleTextureForLayer } from "./create-through-hole-texture-for-layer"
 export { createTextureMeshes } from "./create-three-texture-meshes"

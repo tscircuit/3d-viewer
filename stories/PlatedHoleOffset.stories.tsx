@@ -13,6 +13,7 @@ export const PlatedHoleOffset = () => {
           holeOffsetY={-0.5}
           pcbX={-5}
           pcbY={-5}
+          coveredWithSolderMask={false}
         />
         <platedhole
           shape="pill_hole_with_rect_pad"
