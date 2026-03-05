@@ -1,6 +1,32 @@
-import * as THREE from "three"
-import type { AnyCircuitElement, PcbBoard } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
+import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
+import * as THREE from "three"
+
+const resolvePanelIdForTexture = (
+  circuitJson: AnyCircuitElement[],
+  panelData: PcbBoard,
+): string | null => {
+  const panels = circuitJson.filter(
+    (e): e is PcbPanel => e.type === "pcb_panel",
+  )
+  if (panels.length === 0) return null
+
+  const candidateId = panelData.pcb_panel_id ?? panelData.pcb_board_id
+  if (candidateId && panels.some((p) => p.pcb_panel_id === candidateId)) {
+    return candidateId
+  }
+
+  if (panels.length === 1) return panels[0]!.pcb_panel_id
+
+  const matchingByGeometry = panels.find(
+    (p) =>
+      p.center.x === panelData.center.x &&
+      p.center.y === panelData.center.y &&
+      p.width === panelData.width &&
+      p.height === panelData.height,
+  )
+  return matchingByGeometry?.pcb_panel_id ?? null
+}
 
 export function createPanelOutlineTextureForLayer({
   layer,
@@ -15,9 +41,17 @@ export function createPanelOutlineTextureForLayer({
   outlineColor?: string
   traceTextureResolution: number
 }): THREE.CanvasTexture | null {
-  const boardsInPanel = su(circuitJson)
-    .pcb_board.list()
-    .filter((b) => b.pcb_panel_id === panelData.pcb_board_id)
+  const panelId = resolvePanelIdForTexture(circuitJson, panelData)
+  if (!panelId) return null
+
+  const allBoards = su(circuitJson).pcb_board.list()
+  const boardsInPanel = allBoards.filter(
+    (b) =>
+      b.pcb_panel_id === panelId ||
+      ((b as { position_mode?: string }).position_mode ===
+        "relative_to_panel_anchor" &&
+        !b.pcb_panel_id),
+  )
 
   if (boardsInPanel.length === 0) {
     return null
