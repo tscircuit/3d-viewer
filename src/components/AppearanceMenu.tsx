@@ -273,6 +273,29 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
+                  hoveredItem === "pcbNotes" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                setLayerVisibility("pcbNotes", !visibility.pcbNotes)
+              }}
+              onMouseEnter={() => setHoveredItem("pcbNotes")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("pcbNotes")}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.pcbNotes && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                PCB Notes
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
                   hoveredItem === "smtModels" ? "#404040" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}
