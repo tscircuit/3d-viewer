@@ -7,19 +7,9 @@ import type {
   PcbPlatedHole,
   PcbRenderLayer,
 } from "circuit-json"
-import { su } from "@tscircuit/circuit-json-util"
+import { getElementRenderLayers, su } from "@tscircuit/circuit-json-util"
 import { calculateOutlineBounds } from "./outline-bounds"
-
-export function isWireRoutePoint(
-  point: any,
-): point is { x: number; y: number; width: number; layer: string } {
-  return (
-    point &&
-    point.route_type === "wire" &&
-    typeof point.layer === "string" &&
-    typeof point.width === "number"
-  )
-}
+import { splitTraceIntoLayerSegments } from "./trace-layer-segments"
 
 export function createTraceTextureForLayer({
   layer,
@@ -40,9 +30,9 @@ export function createTraceTextureForLayer({
   const pcbRenderLayer: PcbRenderLayer =
     layer === "top" ? "top_copper" : "bottom_copper"
 
-  const tracesOnLayer = pcbTraces.filter((t) =>
-    t.route.some((p) => isWireRoutePoint(p) && p.layer === layer),
-  )
+  const tracesOnLayer = pcbTraces
+    .filter((trace) => getElementRenderLayers(trace).includes(pcbRenderLayer))
+    .flatMap((trace) => splitTraceIntoLayerSegments(trace, layer))
   if (tracesOnLayer.length === 0) return null
   const platedHolesOnLayer = pcbPlatedHoles.filter((hole: PcbPlatedHole) =>
     hole.layers.includes(layer),
