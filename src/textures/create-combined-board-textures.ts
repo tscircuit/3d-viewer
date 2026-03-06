@@ -79,8 +79,7 @@ export function createCombinedBoardTextures({
   traceTextureResolution: number
   visibility?: Partial<LayerVisibilityState>
 }): CombinedBoardTextures {
-  const traceColorWithMask = toRgb(defaultColors.fr4TracesWithMaskGreen)
-  const traceColorWithoutMask = toRgb(defaultColors.fr4TracesWithoutMaskTan)
+  const traceColor = toRgb(defaultColors.copper)
   const silkscreenColor = "rgb(255,255,255)"
   const copperColor = toRgb(defaultColors.copper)
 
@@ -111,7 +110,7 @@ export function createCombinedBoardTextures({
           layer,
           circuitJson,
           boardData,
-          traceColor: showMask ? traceColorWithMask : traceColorWithoutMask,
+          traceColor,
           traceTextureResolution,
         })
       : null
