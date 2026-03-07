@@ -1,13 +1,10 @@
 // Utility for creating SMT pad textures for PCB layers
 
 import { su } from "@tscircuit/circuit-json-util"
-import type { AnyCircuitElement, PcbBoard } from "circuit-json"
+import { CircuitToCanvasDrawer } from "circuit-to-canvas"
+import type { AnyCircuitElement, PcbBoard, PcbRenderLayer } from "circuit-json"
 import * as THREE from "three"
 import { calculateOutlineBounds } from "./outline-bounds"
-import {
-  clampRectBorderRadius,
-  extractRectBorderRadius,
-} from "./rect-border-radius"
 
 export function createPadTextureForLayer({
   layer,
@@ -24,9 +21,10 @@ export function createPadTextureForLayer({
 }): THREE.CanvasTexture | null {
   const pcbSmtPads = su(circuitJson).pcb_smtpad.list()
   const smtPadsOnLayer = pcbSmtPads.filter((pad) => pad.layer === layer)
-
   if (smtPadsOnLayer.length === 0) return null
 
+  const pcbRenderLayer: PcbRenderLayer =
+    layer === "top" ? "top_copper" : "bottom_copper"
   const boardOutlineBounds = calculateOutlineBounds(boardData)
   const canvas = document.createElement("canvas")
   const canvasWidth = Math.floor(
@@ -45,117 +43,50 @@ export function createPadTextureForLayer({
     ctx.scale(1, -1)
   }
 
-  // Helper functions for coordinate conversion using outline bounds
-  const canvasXFromPcb = (pcbX: number) =>
-    (pcbX - boardOutlineBounds.minX) * traceTextureResolution
-  const canvasYFromPcb = (pcbY: number) =>
-    (boardOutlineBounds.maxY - pcbY) * traceTextureResolution
-
-  ctx.fillStyle = copperColor
-
-  smtPadsOnLayer.forEach((pad: any) => {
-    // Handle polygon pads
-    if (pad.shape === "polygon" && pad.points) {
-      ctx.beginPath()
-      pad.points.forEach((point: { x: number; y: number }, index: number) => {
-        const px = canvasXFromPcb(point.x)
-        const py = canvasYFromPcb(point.y)
-        if (index === 0) {
-          ctx.moveTo(px, py)
-        } else {
-          ctx.lineTo(px, py)
-        }
-      })
-      ctx.closePath()
-      ctx.fill()
-      return
-    }
-
-    if (pad.x === undefined || pad.y === undefined) return
-
-    const x = pad.x as number
-    const y = pad.y as number
-    const canvasX = canvasXFromPcb(x)
-    const canvasY = canvasYFromPcb(y)
-
-    if (pad.shape === "rect") {
-      const width = (pad.width as number) * traceTextureResolution
-      const height = (pad.height as number) * traceTextureResolution
-      const rawRadius = extractRectBorderRadius(pad)
-      const borderRadius =
-        clampRectBorderRadius(
-          pad.width as number,
-          pad.height as number,
-          rawRadius,
-        ) * traceTextureResolution
-
-      if (borderRadius > 0) {
-        ctx.beginPath()
-        ctx.roundRect(
-          canvasX - width / 2,
-          canvasY - height / 2,
-          width,
-          height,
-          borderRadius,
-        )
-        ctx.fill()
-      } else {
-        ctx.fillRect(canvasX - width / 2, canvasY - height / 2, width, height)
-      }
-    } else if (pad.shape === "circle") {
-      const radius =
-        ((pad.radius ?? pad.width / 2) as number) * traceTextureResolution
-      ctx.beginPath()
-      ctx.arc(canvasX, canvasY, radius, 0, 2 * Math.PI)
-      ctx.fill()
-    } else if (pad.shape === "pill" || pad.shape === "rotated_pill") {
-      const width = (pad.width as number) * traceTextureResolution
-      const height = (pad.height as number) * traceTextureResolution
-      const borderRadius = Math.min(width, height) / 2
-      const ccwRotation = (pad.ccw_rotation as number) || 0
-      const rotation = -ccwRotation * (Math.PI / 180)
-
-      if (rotation) {
-        ctx.save()
-        ctx.translate(canvasX, canvasY)
-        ctx.rotate(rotation)
-        ctx.beginPath()
-        ctx.roundRect(-width / 2, -height / 2, width, height, borderRadius)
-        ctx.fill()
-        ctx.restore()
-      } else {
-        ctx.beginPath()
-        ctx.roundRect(
-          canvasX - width / 2,
-          canvasY - height / 2,
-          width,
-          height,
-          borderRadius,
-        )
-        ctx.fill()
-      }
-    } else if (pad.shape === "rotated_rect") {
-      const width = (pad.width as number) * traceTextureResolution
-      const height = (pad.height as number) * traceTextureResolution
-      const rawRadius = extractRectBorderRadius(pad)
-      const borderRadius =
-        clampRectBorderRadius(
-          pad.width as number,
-          pad.height as number,
-          rawRadius,
-        ) * traceTextureResolution
-
-      const ccwRotation = (pad.ccw_rotation as number) || 0
-      const rotation = -ccwRotation * (Math.PI / 180)
-
-      ctx.save()
-      ctx.translate(canvasX, canvasY)
-      ctx.rotate(rotation)
-      ctx.beginPath()
-      ctx.roundRect(-width / 2, -height / 2, width, height, borderRadius)
-      ctx.fill()
-      ctx.restore()
-    }
+  const transparent = "rgba(0,0,0,0)"
+  const drawer = new CircuitToCanvasDrawer(ctx)
+  drawer.configure({
+    colorOverrides: {
+      copper: {
+        top: copperColor,
+        bottom: copperColor,
+        inner1: copperColor,
+        inner2: copperColor,
+        inner3: copperColor,
+        inner4: copperColor,
+        inner5: copperColor,
+        inner6: copperColor,
+      },
+      copperPour: { top: transparent, bottom: transparent },
+      drill: transparent,
+      boardOutline: transparent,
+      substrate: transparent,
+      keepout: transparent,
+      fabricationNote: transparent,
+      courtyard: { top: transparent, bottom: transparent },
+      silkscreen: { top: transparent, bottom: transparent },
+      soldermask: { top: transparent, bottom: transparent },
+      soldermaskWithCopperUnderneath: {
+        top: transparent,
+        bottom: transparent,
+      },
+      soldermaskOverCopper: {
+        top: transparent,
+        bottom: transparent,
+      },
+    },
+  })
+  drawer.setCameraBounds({
+    minX: boardOutlineBounds.minX,
+    maxX: boardOutlineBounds.maxX,
+    minY: boardOutlineBounds.minY,
+    maxY: boardOutlineBounds.maxY,
+  })
+  drawer.drawElements(smtPadsOnLayer, {
+    layers: [pcbRenderLayer],
+    drawSoldermask: false,
+    drawSoldermaskTop: false,
+    drawSoldermaskBottom: false,
   })
 
   const texture = new THREE.CanvasTexture(canvas)
