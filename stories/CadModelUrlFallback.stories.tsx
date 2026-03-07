@@ -8,7 +8,7 @@ export default {
 }
 
 const missingWrlUrl = "https://example.com/nonexistent.wrl"
-const workingStepUrl = "http://modelcdn.tscircuit.com/jscad_models/soic12.step"
+const workingStepUrl = "https://modelcdn.tscircuit.com/jscad_models/soic12.step"
 
 const cad_component: CadComponent = {
   type: "cad_component",
