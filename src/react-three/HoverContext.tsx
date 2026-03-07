@@ -41,6 +41,8 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
   hoverablesRef.current = hoverables
 
   const hoveredObjectRef = useRef<HoverableObject | null>(null)
+  const lastProcessedAtRef = useRef(0)
+  const lastHoverPointRef = useRef<THREE.Vector3 | null>(null)
 
   const addHoverable = useCallback((hoverable: HoverableObject) => {
     setHoverables((prev) => [...prev, hoverable])
@@ -62,6 +64,7 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
         // The object being removed contains the hovered object.
         hoveredObjectRef.current.onUnhover()
         hoveredObjectRef.current = null
+        lastHoverPointRef.current = null
       }
     }
     setHoverables((prev) => prev.filter((h) => h.object !== object))
@@ -83,6 +86,12 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
   const onMouseMove = useCallback(
     (event: MouseEvent) => {
       if (!renderer.domElement) return
+
+      // Mousemove can fire at very high frequency; cap processing to ~60fps.
+      const now = performance.now()
+      if (now - lastProcessedAtRef.current < 16) return
+      lastProcessedAtRef.current = now
+
       const rect = renderer.domElement.getBoundingClientRect()
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
       mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
@@ -94,6 +103,7 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
         if (hoveredObjectRef.current) {
           hoveredObjectRef.current.onUnhover()
           hoveredObjectRef.current = null
+          lastHoverPointRef.current = null
         }
         return
       }
@@ -116,19 +126,28 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
             hoveredObjectRef.current?.onUnhover()
             newHovered.onHover(eventPayload)
             hoveredObjectRef.current = newHovered
+            lastHoverPointRef.current = firstIntersect.point.clone()
           } else {
-            newHovered.onHover(eventPayload)
+            const lastPoint = lastHoverPointRef.current
+            const movedEnough =
+              !lastPoint || lastPoint.distanceToSquared(firstIntersect.point) > 0.0001
+            if (movedEnough) {
+              newHovered.onHover(eventPayload)
+              lastHoverPointRef.current = firstIntersect.point.clone()
+            }
           }
         } else {
           if (hoveredObjectRef.current) {
             hoveredObjectRef.current.onUnhover()
             hoveredObjectRef.current = null
+            lastHoverPointRef.current = null
           }
         }
       } else {
         if (hoveredObjectRef.current) {
           hoveredObjectRef.current.onUnhover()
           hoveredObjectRef.current = null
+          lastHoverPointRef.current = null
         }
       }
     },
