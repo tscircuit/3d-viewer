@@ -4,7 +4,7 @@ import type {
   CadComponent,
   PcbComponent,
 } from "circuit-json"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
 import { usePcbThickness } from "./hooks/usePcbThickness"
 import { Html } from "./react-three/Html"
@@ -15,6 +15,21 @@ import { MixedStlModel } from "./three-components/MixedStlModel"
 import { StepModel } from "./three-components/StepModel"
 import { resolveModelUrl } from "./utils/resolve-model-url"
 import { tuple } from "./utils/tuple"
+import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
+
+const ModelLoadErrorReporter = ({
+  error,
+  onError,
+}: {
+  error: Error
+  onError: (error: Error) => void
+}) => {
+  useEffect(() => {
+    onError(error)
+  }, [error, onError])
+
+  return null
+}
 
 export const AnyCadComponent = ({
   cad_component,
@@ -79,6 +94,13 @@ export const AnyCadComponent = ({
   const stepUrl = resolveModelUrlWithStaticResolver(
     cad_component.model_step_url,
   )
+  const [fallbackModelIndex, setFallbackModelIndex] = useState(0)
+  const [lastModelError, setLastModelError] = useState<Error | null>(null)
+
+  useEffect(() => {
+    setFallbackModelIndex(0)
+    setLastModelError(null)
+  }, [cad_component.cad_component_id, url, gltfUrl, stepUrl])
   const pcbComponent = circuitJson.find(
     (elm) =>
       elm.type === "pcb_component" &&
@@ -122,52 +144,105 @@ export const AnyCadComponent = ({
     ]
   }, [cad_component.position, layer, pcbThickness])
 
+  const fallbackModelComponents = useMemo(() => {
+    const components: React.ReactNode[] = []
+
+    if (url) {
+      components.push(
+        <MixedStlModel
+          key={`${cad_component.cad_component_id}-mixed-${url}`}
+          url={url}
+          position={adjustedPosition}
+          rotation={rotationOffset}
+          scale={cad_component.model_unit_to_mm_scale_factor}
+          onHover={handleHover}
+          onUnhover={handleUnhover}
+          isHovered={isHovered}
+          isTranslucent={cad_component.show_as_translucent_model}
+        />,
+      )
+    }
+
+    if (gltfUrl) {
+      components.push(
+        <GltfModel
+          key={`${cad_component.cad_component_id}-gltf-${gltfUrl}`}
+          gltfUrl={gltfUrl}
+          position={adjustedPosition}
+          rotation={rotationOffset}
+          scale={cad_component.model_unit_to_mm_scale_factor}
+          onHover={handleHover}
+          onUnhover={handleUnhover}
+          isHovered={isHovered}
+          isTranslucent={cad_component.show_as_translucent_model}
+        />,
+      )
+    }
+
+    if (
+      stepUrl &&
+      !cad_component.model_jscad &&
+      !cad_component.footprinter_string
+    ) {
+      components.push(
+        <StepModel
+          key={`${cad_component.cad_component_id}-step-${stepUrl}`}
+          stepUrl={stepUrl}
+          position={adjustedPosition}
+          rotation={rotationOffset}
+          scale={cad_component.model_unit_to_mm_scale_factor}
+          onHover={handleHover}
+          onUnhover={handleUnhover}
+          isHovered={isHovered}
+          isTranslucent={cad_component.show_as_translucent_model}
+        />,
+      )
+    }
+
+    return components
+  }, [
+    adjustedPosition,
+    cad_component.cad_component_id,
+    cad_component.footprinter_string,
+    cad_component.model_jscad,
+    cad_component.model_unit_to_mm_scale_factor,
+    cad_component.show_as_translucent_model,
+    gltfUrl,
+    handleHover,
+    handleUnhover,
+    isHovered,
+    rotationOffset,
+    stepUrl,
+    url,
+  ])
+
   let modelComponent: React.ReactNode = null
 
-  if (url) {
+  if (fallbackModelComponents.length > 0) {
+    if (fallbackModelIndex >= fallbackModelComponents.length) {
+      if (lastModelError) {
+        throw lastModelError
+      }
+      return null
+    }
+
     modelComponent = (
-      <MixedStlModel
-        key={cad_component.cad_component_id}
-        url={url}
-        position={adjustedPosition}
-        rotation={rotationOffset}
-        scale={cad_component.model_unit_to_mm_scale_factor}
-        onHover={handleHover}
-        onUnhover={handleUnhover}
-        isHovered={isHovered}
-        isTranslucent={cad_component.show_as_translucent_model}
-      />
-    )
-  } else if (gltfUrl) {
-    modelComponent = (
-      <GltfModel
-        key={cad_component.cad_component_id}
-        gltfUrl={gltfUrl}
-        position={adjustedPosition}
-        rotation={rotationOffset}
-        scale={cad_component.model_unit_to_mm_scale_factor}
-        onHover={handleHover}
-        onUnhover={handleUnhover}
-        isHovered={isHovered}
-        isTranslucent={cad_component.show_as_translucent_model}
-      />
-    )
-  } else if (
-    stepUrl &&
-    !cad_component.model_jscad &&
-    !cad_component.footprinter_string
-  ) {
-    modelComponent = (
-      <StepModel
-        stepUrl={stepUrl}
-        position={adjustedPosition}
-        rotation={rotationOffset}
-        scale={cad_component.model_unit_to_mm_scale_factor}
-        onHover={handleHover}
-        onUnhover={handleUnhover}
-        isHovered={isHovered}
-        isTranslucent={cad_component.show_as_translucent_model}
-      />
+      <ThreeErrorBoundary
+        key={`${cad_component.cad_component_id}-fallback-${fallbackModelIndex}`}
+        fallback={({ error }) => (
+          <ModelLoadErrorReporter
+            error={error}
+            onError={(nextError) => {
+              setLastModelError(nextError)
+              setFallbackModelIndex((current) =>
+                Math.max(current, fallbackModelIndex + 1),
+              )
+            }}
+          />
+        )}
+      >
+        {fallbackModelComponents[fallbackModelIndex]}
+      </ThreeErrorBoundary>
     )
   } else if (cad_component.model_jscad) {
     modelComponent = (
