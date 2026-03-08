@@ -129,9 +129,13 @@ export const AnyCadComponent = ({
   // Adjust position based on layer to place components on top/bottom of board
   const adjustedPosition = useMemo(() => {
     if (!cad_component.position) return undefined
-    let z = cad_component.position.z + pcbThickness / 2
-    if (layer === "bottom") {
-      z = -cad_component.position.z - pcbThickness / 2
+    let z: number
+    if (layer === "top") {
+      z = cad_component.position.z
+    } else if (layer === "bottom") {
+      z = -(cad_component.position.z + pcbThickness) // Place on bottom side, accounting for PCB thickness
+    } else {
+      z = cad_component.position.z // Fallback
     }
     return [cad_component.position.x, cad_component.position.y, z] as [
       number,
