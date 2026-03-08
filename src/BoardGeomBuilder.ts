@@ -23,6 +23,10 @@ import type {
   PcbHole,
   PcbPanel,
   PcbPlatedHole,
+  PcbSilkscreenCircle,
+  PcbSilkscreenLine,
+  PcbSilkscreenPath,
+  PcbSilkscreenRect,
   PcbTrace,
   PcbVia,
 } from "circuit-json"
@@ -35,6 +39,10 @@ import {
 import { createHoleWithPolygonPadHoleGeom } from "./geoms/create-hole-with-polygon-pad"
 import { platedHole } from "./geoms/plated-hole"
 import { createViaBoardDrill, createViaCopper } from "./geoms/via-geoms"
+import { createSilkscreenPathGeom } from "./geoms/create-geoms-for-silkscreen-path"
+import { createSilkscreenLineGeom } from "./geoms/create-geoms-for-silkscreen-line"
+import { createSilkscreenCircleGeom } from "./geoms/create-geoms-for-silkscreen-circle"
+import { createSilkscreenRectGeom } from "./geoms/create-geoms-for-silkscreen-rect"
 import {
   clampRectBorderRadius,
   extractRectBorderRadius,
@@ -51,6 +59,7 @@ type BuilderState =
   | "processing_holes"
   | "processing_cutouts"
   | "processing_vias"
+  | "processing_silkscreen"
   | "finalizing"
   | "done"
 
@@ -63,6 +72,7 @@ const buildStateOrder: BuilderState[] = [
   "processing_cutouts",
 
   "processing_vias",
+  "processing_silkscreen",
   "finalizing",
   "done",
 ]
@@ -80,6 +90,7 @@ export class BoardGeomBuilder {
   private platedHoleGeoms: Geom3[] = []
   private viaGeoms: Geom3[] = [] // Combined with platedHoleGeoms
   private copperPourGeoms: Geom3[] = []
+  private silkscreenGeoms: Geom3[] = []
   private boardClipGeom: Geom3 | null = null
 
   private state: BuilderState = "initializing"
@@ -241,6 +252,11 @@ export class BoardGeomBuilder {
           } else {
             this.goToNextState()
           }
+          break
+
+        case "processing_silkscreen":
+          this.processSilkscreen()
+          this.goToNextState()
           break
 
         case "processing_cutouts":
@@ -728,6 +744,40 @@ export class BoardGeomBuilder {
     }
   }
 
+  private processSilkscreen() {
+    const paths = this.circuitJson.filter(
+      (e): e is PcbSilkscreenPath => e.type === "pcb_silkscreen_path",
+    )
+    for (const sp of paths) {
+      const geom = createSilkscreenPathGeom(sp, this.ctx)
+      if (geom) this.silkscreenGeoms.push(geom)
+    }
+
+    const lines = this.circuitJson.filter(
+      (e): e is PcbSilkscreenLine => e.type === "pcb_silkscreen_line",
+    )
+    for (const sl of lines) {
+      const geom = createSilkscreenLineGeom(sl, this.ctx)
+      if (geom) this.silkscreenGeoms.push(geom)
+    }
+
+    const circles = this.circuitJson.filter(
+      (e): e is PcbSilkscreenCircle => e.type === "pcb_silkscreen_circle",
+    )
+    for (const sc of circles) {
+      const geom = createSilkscreenCircleGeom(sc, this.ctx)
+      if (geom) this.silkscreenGeoms.push(geom)
+    }
+
+    const rects = this.circuitJson.filter(
+      (e): e is PcbSilkscreenRect => e.type === "pcb_silkscreen_rect",
+    )
+    for (const sr of rects) {
+      const geom = createSilkscreenRectGeom(sr, this.ctx)
+      if (geom) this.silkscreenGeoms.push(geom)
+    }
+  }
+
   private finalize() {
     if (!this.boardGeom) return
     // Colorize the final board geometry
@@ -740,6 +790,7 @@ export class BoardGeomBuilder {
       ...this.platedHoleGeoms,
       ...this.viaGeoms,
       ...this.copperPourGeoms,
+      ...this.silkscreenGeoms,
     ]
 
     if (this.onCompleteCallback) {
