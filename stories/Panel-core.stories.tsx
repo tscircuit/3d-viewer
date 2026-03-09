@@ -6,7 +6,7 @@ const createCircuit = () => {
   const circuit = new Circuit()
 
   circuit.add(
-    <panel panelizationMethod="tab-routing">
+    <panel panelizationMethod="tab-routing" layoutMode="grid">
       <board width="10mm" height="10mm" name="B_breakout">
         <resistor name="R1" resistance="1k" footprint="0805" layer={"bottom"} />
         <capacitor name="C1" capacitance="100nF" footprint="0805" />
@@ -72,12 +72,56 @@ const createCircuit = () => {
       </board>
     </panel>,
   )
-
+  circuit.render()
   return circuit.getCircuitJson()
 }
 
 export const panelCoreTest = () => {
   const circuitJson = createCircuit()
+  console.log(
+    "[Panel-core] panel snapshot",
+    JSON.stringify(
+      {
+        panel: circuitJson
+          .filter((item) => item.type === "pcb_panel")
+          .map((item: any) => ({
+            pcb_panel_id: item.pcb_panel_id,
+            width: item.width,
+            height: item.height,
+            center: item.center,
+          })),
+        boards: circuitJson
+          .filter((item) => item.type === "pcb_board")
+          .map((item: any) => ({
+            pcb_board_id: item.pcb_board_id,
+            pcb_panel_id: item.pcb_panel_id,
+            center: item.center,
+            width: item.width,
+            height: item.height,
+            thickness: item.thickness,
+            position_mode: item.position_mode,
+            display_offset_x: item.display_offset_x,
+            display_offset_y: item.display_offset_y,
+          })),
+        cad: circuitJson
+          .filter((item) => item.type === "cad_component")
+          .map((item: any) => ({
+            cad_component_id: item.cad_component_id,
+            source_component_id: item.source_component_id,
+            pcb_component_id: item.pcb_component_id,
+            position: item.position,
+            rotation: item.rotation,
+            model:
+              item.model_glb_url ??
+              item.model_gltf_url ??
+              item.footprinter_string,
+          })),
+      },
+      null,
+      2,
+    ),
+  )
+
   return <CadViewer circuitJson={circuitJson} />
 }
 
