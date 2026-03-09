@@ -67,33 +67,53 @@ export function createTextureMeshes(
 ): THREE.Mesh[] {
   const meshes: THREE.Mesh[] = []
   if (!textures || !boardData || pcbThickness === null) return meshes
-  const SURFACE_OFFSET = 0.005
 
-  const topBoardMesh = createTexturePlane(
-    {
-      texture: textures.topBoard,
-      yOffset: pcbThickness / 2 + SURFACE_OFFSET,
-      isBottomLayer: false,
-      usePolygonOffset: true,
-      renderOrder: 1,
-      isFaux,
-    },
-    boardData,
-  )
-  if (topBoardMesh) meshes.push(topBoardMesh)
+  const boardOutlineBounds = calculateOutlineBounds(boardData)
+  const { width, height, centerX, centerY } = boardOutlineBounds
 
-  const bottomBoardMesh = createTexturePlane(
-    {
-      texture: textures.bottomBoard,
-      yOffset: -pcbThickness / 2 - SURFACE_OFFSET,
-      isBottomLayer: true,
-      usePolygonOffset: true,
-      renderOrder: 1,
-      isFaux,
-    },
-    boardData,
-  )
-  if (bottomBoardMesh) meshes.push(bottomBoardMesh)
+  // Create the box geometry for the PCB substrate
+  const boxGeom = new THREE.BoxGeometry(width, pcbThickness, height)
+
+  // Define materials for each face of the box
+  // Order: right, left, top, bottom, front, back
+  const sideMaterial = new THREE.MeshStandardMaterial({
+    color: 0x1e1e1e, // Dark substrate color
+    roughness: 0.6,
+    metalness: 0.1,
+  })
+
+  const topMaterial = textures.topBoard
+    ? new THREE.MeshBasicMaterial({
+        map: textures.topBoard,
+        transparent: true,
+        alphaTest: 0.08,
+        opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
+      })
+    : sideMaterial
+
+  const bottomMaterial = textures.bottomBoard
+    ? new THREE.MeshBasicMaterial({
+        map: textures.bottomBoard,
+        transparent: true,
+        alphaTest: 0.08,
+        opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
+      })
+    : sideMaterial
+
+  const materials = [
+    sideMaterial, // right
+    sideMaterial, // left
+    topMaterial, // top
+    bottomMaterial, // bottom
+    sideMaterial, // front
+    sideMaterial, // back
+  ]
+
+  const pcbBox = new THREE.Mesh(boxGeom, materials)
+  pcbBox.position.set(centerX, centerY, 0)
+  pcbBox.name = "pcb-board-box"
+
+  meshes.push(pcbBox)
 
   return meshes
 }
