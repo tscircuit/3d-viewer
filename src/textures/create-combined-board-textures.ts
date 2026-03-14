@@ -7,6 +7,7 @@ import { createPadTextureForLayer } from "../utils/pad-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
 import { createCopperTextTextureForLayer } from "./create-copper-text-texture-for-layer"
+import { createCopperPourTextureForLayer } from "./create-copper-pour-texture-for-layer"
 import { createFabricationNoteTextureForLayer } from "./create-fabrication-note-texture-for-layer"
 import { createPcbNoteTextureForLayer } from "./create-pcb-note-texture-for-layer"
 import { createSilkscreenTextureForLayer } from "./create-silkscreen-texture-for-layer"
@@ -143,6 +144,14 @@ export function createCombinedBoardTextures({
           traceTextureResolution,
         })
       : null
+    const copperPourTexture = showCopper
+      ? createCopperPourTextureForLayer({
+          layer,
+          circuitJson,
+          boardData,
+          traceTextureResolution,
+        })
+      : null
 
     const silkscreenTexture = showSilkscreen
       ? createSilkscreenTextureForLayer({
@@ -187,6 +196,7 @@ export function createCombinedBoardTextures({
         traceTexture,
         padTexture,
         throughHoleTexture,
+        copperPourTexture,
         soldermaskTexture,
         copperTextTexture,
         silkscreenTexture,

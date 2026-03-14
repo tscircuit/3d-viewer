@@ -145,6 +145,7 @@ export function createCopperPourTextureForLayer({
   // Draw rect and polygon pours using circuit-to-canvas
   if (rectAndPolygonPours.length > 0) {
     const drawer = new CircuitToCanvasDrawer(ctx)
+    const copperColor = `rgb(${defaultColors.copper.map((c) => c * 255).join(",")})`
 
     // Set up camera bounds to match canvas coordinates
     drawer.setCameraBounds({
@@ -154,66 +155,29 @@ export function createCopperPourTextureForLayer({
       maxY: boardOutlineBounds.maxY,
     })
 
-    // Group pours by soldermask coverage and draw them separately
-    const coveredPours = rectAndPolygonPours.filter(
-      (p) => p.covered_with_solder_mask !== false,
-    )
-    const uncoveredPours = rectAndPolygonPours.filter(
-      (p) => p.covered_with_solder_mask === false,
-    )
-
-    // Create color maps
-    const coveredColor = `rgb(${defaultColors.fr4TracesWithMaskGreen.map((c) => c * 255).join(",")})`
-    const uncoveredColor = `rgb(${defaultColors.copper.map((c) => c * 255).join(",")})`
-
-    // Draw covered pours
-    if (coveredPours.length > 0) {
-      drawer.configure({
-        colorOverrides: {
-          copper: {
-            top: coveredColor,
-            bottom: coveredColor,
-            inner1: coveredColor,
-            inner2: coveredColor,
-            inner3: coveredColor,
-            inner4: coveredColor,
-            inner5: coveredColor,
-            inner6: coveredColor,
-          },
+    drawer.configure({
+      colorOverrides: {
+        copper: {
+          top: copperColor,
+          bottom: copperColor,
+          inner1: copperColor,
+          inner2: copperColor,
+          inner3: copperColor,
+          inner4: copperColor,
+          inner5: copperColor,
+          inner6: copperColor,
         },
-      })
-      drawer.drawElements(coveredPours, { layers: [pcbRenderLayer] })
-    }
-
-    // Draw uncovered pours
-    if (uncoveredPours.length > 0) {
-      drawer.configure({
-        colorOverrides: {
-          copper: {
-            top: uncoveredColor,
-            bottom: uncoveredColor,
-            inner1: uncoveredColor,
-            inner2: uncoveredColor,
-            inner3: uncoveredColor,
-            inner4: uncoveredColor,
-            inner5: uncoveredColor,
-            inner6: uncoveredColor,
-          },
-        },
-      })
-      drawer.drawElements(uncoveredPours, { layers: [pcbRenderLayer] })
-    }
+      },
+    })
+    drawer.drawElements(rectAndPolygonPours, {
+      layers: [pcbRenderLayer],
+      drawSoldermask: false,
+    })
   }
 
   // Draw brep shapes using custom implementation
   for (const pour of brepPours) {
-    // Set color based on soldermask coverage
-    const covered = pour.covered_with_solder_mask !== false
-    const colorArr = covered
-      ? defaultColors.fr4TracesWithMaskGreen // Bright green like traces with soldermask
-      : defaultColors.copper
-
-    const copperColor = `rgb(${colorArr[0] * 255}, ${colorArr[1] * 255}, ${colorArr[2] * 255})`
+    const copperColor = `rgb(${defaultColors.copper[0] * 255}, ${defaultColors.copper[1] * 255}, ${defaultColors.copper[2] * 255})`
     ctx.fillStyle = copperColor
 
     drawBrepShape({ ctx, pour, canvasXFromPcb, canvasYFromPcb })
