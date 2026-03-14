@@ -31,6 +31,9 @@ export const useHover = () => {
   return context
 }
 
+const MOUSEMOVE_THROTTLE_MS = 16
+const HOVER_POINT_MOVE_EPSILON_SQ = 0.0001
+
 export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
   const { camera, renderer } = useThree()
   const [hoverables, setHoverables] = useState<HoverableObject[]>([])
@@ -89,7 +92,7 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Mousemove can fire at very high frequency; cap processing to ~60fps.
       const now = performance.now()
-      if (now - lastProcessedAtRef.current < 16) return
+      if (now - lastProcessedAtRef.current < MOUSEMOVE_THROTTLE_MS) return
       lastProcessedAtRef.current = now
 
       const rect = renderer.domElement.getBoundingClientRect()
@@ -130,7 +133,9 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
           } else {
             const lastPoint = lastHoverPointRef.current
             const movedEnough =
-              !lastPoint || lastPoint.distanceToSquared(firstIntersect.point) > 0.0001
+              !lastPoint ||
+              lastPoint.distanceToSquared(firstIntersect.point) >
+                HOVER_POINT_MOVE_EPSILON_SQ
             if (movedEnough) {
               newHovered.onHover(eventPayload)
               lastHoverPointRef.current = firstIntersect.point.clone()

@@ -112,6 +112,10 @@ The `convert3dCircuitToSvg` function accepts the following options:
   - `position`: {x, y, z} coordinates for camera position
   - `lookAt`: {x, y, z} coordinates for camera target
 
+## Hover Performance Notes
+
+To reduce tooltip hover over-rendering in dense scenes, hover processing is intentionally rate-limited and ignores sub-threshold cursor jitter while staying on the same object. This keeps interactions responsive without spamming hover callbacks.
+
 ## API Reference
 
 ### `<CadViewer>`
