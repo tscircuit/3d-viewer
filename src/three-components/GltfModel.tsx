@@ -54,6 +54,8 @@ export function GltfModel({
             } else {
               setMaterialTransparency(child.material)
             }
+
+            child.renderOrder = isTranslucent ? 2 : 1
           }
         })
 
