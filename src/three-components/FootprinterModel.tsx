@@ -52,6 +52,7 @@ export const FootprinterModel = ({
         depthWrite: !isTranslucent,
       })
       const mesh = new THREE.Mesh(threeGeom, material)
+      mesh.renderOrder = isTranslucent ? 2 : 1
       group.add(mesh)
     }
 

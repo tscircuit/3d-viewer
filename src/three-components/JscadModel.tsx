@@ -48,8 +48,10 @@ export const JscadModel = ({
 
   const mesh = useMemo(() => {
     if (!threeGeom) return null
-    return new THREE.Mesh(threeGeom, material)
-  }, [threeGeom, material])
+    const createdMesh = new THREE.Mesh(threeGeom, material)
+    createdMesh.renderOrder = isTranslucent ? 2 : 1
+    return createdMesh
+  }, [threeGeom, material, isTranslucent])
 
   useEffect(() => {
     if (!mesh || !rootObject) return

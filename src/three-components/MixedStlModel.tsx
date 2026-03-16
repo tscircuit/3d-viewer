@@ -43,6 +43,8 @@ export function MixedStlModel({
           } else {
             setMaterialTransparency(child.material)
           }
+
+          child.renderOrder = isTranslucent ? 2 : 1
         }
       })
       return obj
