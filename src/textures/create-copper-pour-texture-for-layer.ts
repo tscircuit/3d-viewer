@@ -8,100 +8,35 @@ import type {
 } from "circuit-json"
 import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
-import { segmentToPoints, ringToPoints } from "../geoms/brep-converter"
 import {
   colors as defaultColors,
   TRACE_TEXTURE_RESOLUTION,
 } from "../geoms/constants"
 
-/**
- * Draw a polygon shape on canvas (for brep shapes - custom implementation)
- */
-function drawPolygon({
-  ctx,
-  points,
-  canvasXFromPcb,
-  canvasYFromPcb,
-}: {
-  ctx: CanvasRenderingContext2D
-  points: [number, number][]
-  canvasXFromPcb: (x: number) => number
-  canvasYFromPcb: (y: number) => number
-}) {
-  if (points.length < 3) return
-
-  ctx.beginPath()
-  points.forEach((point, index) => {
-    const canvasX = canvasXFromPcb(point[0])
-    const canvasY = canvasYFromPcb(point[1])
-    if (index === 0) {
-      ctx.moveTo(canvasX, canvasY)
-    } else {
-      ctx.lineTo(canvasX, canvasY)
-    }
-  })
-  ctx.closePath()
-  ctx.fill()
+const toRgb = (colorArr: number[]) => {
+  const [r = 0, g = 0, b = 0] = colorArr
+  return `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(
+    b * 255,
+  )})`
 }
 
-/**
- * Draw brep shape using custom implementation (not supported by circuit-to-canvas yet)
- */
-function drawBrepShape({
-  ctx,
-  pour,
-  canvasXFromPcb,
-  canvasYFromPcb,
-}: {
-  ctx: CanvasRenderingContext2D
-  pour: PcbCopperPour
-  canvasXFromPcb: (x: number) => number
-  canvasYFromPcb: (y: number) => number
-}) {
-  const brepShape = (pour as any).brep_shape
-  if (!brepShape || !brepShape.outer_ring) return
-
-  // Draw outer ring
-  const outerRingPoints = ringToPoints(brepShape.outer_ring, 32)
-  if (outerRingPoints.length >= 3) {
-    drawPolygon({
-      ctx,
-      points: outerRingPoints,
-      canvasXFromPcb,
-      canvasYFromPcb,
-    })
-  }
-
-  // Cut out inner rings (holes)
-  if (brepShape.inner_rings && brepShape.inner_rings.length > 0) {
-    ctx.globalCompositeOperation = "destination-out"
-
-    for (const innerRing of brepShape.inner_rings) {
-      const innerRingPoints = ringToPoints(innerRing, 32)
-      if (innerRingPoints.length >= 3) {
-        drawPolygon({
-          ctx,
-          points: innerRingPoints,
-          canvasXFromPcb,
-          canvasYFromPcb,
-        })
-      }
-    }
-
-    ctx.globalCompositeOperation = "source-over"
-  }
-}
+// circuit-to-canvas currently renders top/bottom copper pours at 0.5 alpha.
+// Re-drawing the same pours several times over transparent background makes
+// the final result effectively opaque to match traces/pads copper texture color.
+const COPPER_POUR_OPACITY_COMPENSATION_PASSES = 8
 
 export function createCopperPourTextureForLayer({
   layer,
   circuitJson,
   boardData,
   traceTextureResolution = TRACE_TEXTURE_RESOLUTION,
+  copperColor = toRgb(defaultColors.copper),
 }: {
   layer: "top" | "bottom"
   circuitJson: AnyCircuitElement[]
   boardData: PcbBoard
   traceTextureResolution?: number
+  copperColor?: string
 }): THREE.CanvasTexture | null {
   const copperPours = circuitJson.filter(
     (e) => e.type === "pcb_copper_pour",
@@ -131,93 +66,79 @@ export function createCopperPourTextureForLayer({
     ctx.scale(1, -1)
   }
 
-  const canvasXFromPcb = (pcbX: number) =>
-    (pcbX - boardOutlineBounds.minX) * traceTextureResolution
-  const canvasYFromPcb = (pcbY: number) =>
-    (boardOutlineBounds.maxY - pcbY) * traceTextureResolution
+  const transparent = "rgba(0,0,0,0)"
+  const coveredColor = copperColor
+  const uncoveredColor = copperColor
 
-  // Separate pours by shape type
-  const rectAndPolygonPours = poursOnLayer.filter(
-    (pour) => pour.shape === "rect" || pour.shape === "polygon",
-  )
-  const brepPours = poursOnLayer.filter((pour) => pour.shape === "brep")
+  const setColorAndDraw = (pours: PcbCopperPour[], copperPourColor: string) => {
+    if (pours.length === 0) return
 
-  // Draw rect and polygon pours using circuit-to-canvas
-  if (rectAndPolygonPours.length > 0) {
     const drawer = new CircuitToCanvasDrawer(ctx)
-
-    // Set up camera bounds to match canvas coordinates
+    drawer.configure({
+      colorOverrides: {
+        copper: {
+          top: copperPourColor,
+          bottom: copperPourColor,
+          inner1: copperPourColor,
+          inner2: copperPourColor,
+          inner3: copperPourColor,
+          inner4: copperPourColor,
+          inner5: copperPourColor,
+          inner6: copperPourColor,
+        },
+        copperPour: {
+          top: transparent,
+          bottom: transparent,
+        },
+        drill: transparent,
+        boardOutline: transparent,
+        substrate: transparent,
+        keepout: transparent,
+        fabricationNote: transparent,
+        courtyard: { top: transparent, bottom: transparent },
+        silkscreen: { top: transparent, bottom: transparent },
+        soldermask: { top: transparent, bottom: transparent },
+        soldermaskWithCopperUnderneath: {
+          top: transparent,
+          bottom: transparent,
+        },
+        soldermaskOverCopper: {
+          top: transparent,
+          bottom: transparent,
+        },
+      },
+    })
     drawer.setCameraBounds({
       minX: boardOutlineBounds.minX,
       maxX: boardOutlineBounds.maxX,
       minY: boardOutlineBounds.minY,
       maxY: boardOutlineBounds.maxY,
     })
-
-    // Group pours by soldermask coverage and draw them separately
-    const coveredPours = rectAndPolygonPours.filter(
-      (p) => p.covered_with_solder_mask !== false,
-    )
-    const uncoveredPours = rectAndPolygonPours.filter(
-      (p) => p.covered_with_solder_mask === false,
-    )
-
-    // Create color maps
-    const coveredColor = `rgb(${defaultColors.fr4TracesWithMaskGreen.map((c) => c * 255).join(",")})`
-    const uncoveredColor = `rgb(${defaultColors.copper.map((c) => c * 255).join(",")})`
-
-    // Draw covered pours
-    if (coveredPours.length > 0) {
-      drawer.configure({
-        colorOverrides: {
-          copper: {
-            top: coveredColor,
-            bottom: coveredColor,
-            inner1: coveredColor,
-            inner2: coveredColor,
-            inner3: coveredColor,
-            inner4: coveredColor,
-            inner5: coveredColor,
-            inner6: coveredColor,
-          },
-        },
+    drawer.drawElements(pours, {
+      layers: [pcbRenderLayer],
+      drawSoldermask: false,
+      drawSoldermaskTop: false,
+      drawSoldermaskBottom: false,
+    })
+    for (let i = 1; i < COPPER_POUR_OPACITY_COMPENSATION_PASSES; i += 1) {
+      drawer.drawElements(pours, {
+        layers: [pcbRenderLayer],
+        drawSoldermask: false,
+        drawSoldermaskTop: false,
+        drawSoldermaskBottom: false,
       })
-      drawer.drawElements(coveredPours, { layers: [pcbRenderLayer] })
-    }
-
-    // Draw uncovered pours
-    if (uncoveredPours.length > 0) {
-      drawer.configure({
-        colorOverrides: {
-          copper: {
-            top: uncoveredColor,
-            bottom: uncoveredColor,
-            inner1: uncoveredColor,
-            inner2: uncoveredColor,
-            inner3: uncoveredColor,
-            inner4: uncoveredColor,
-            inner5: uncoveredColor,
-            inner6: uncoveredColor,
-          },
-        },
-      })
-      drawer.drawElements(uncoveredPours, { layers: [pcbRenderLayer] })
     }
   }
 
-  // Draw brep shapes using custom implementation
-  for (const pour of brepPours) {
-    // Set color based on soldermask coverage
-    const covered = pour.covered_with_solder_mask !== false
-    const colorArr = covered
-      ? defaultColors.fr4TracesWithMaskGreen // Bright green like traces with soldermask
-      : defaultColors.copper
+  const coveredPours = poursOnLayer.filter(
+    (p) => p.covered_with_solder_mask !== false,
+  )
+  const uncoveredPours = poursOnLayer.filter(
+    (p) => p.covered_with_solder_mask === false,
+  )
 
-    const copperColor = `rgb(${colorArr[0] * 255}, ${colorArr[1] * 255}, ${colorArr[2] * 255})`
-    ctx.fillStyle = copperColor
-
-    drawBrepShape({ ctx, pour, canvasXFromPcb, canvasYFromPcb })
-  }
+  setColorAndDraw(coveredPours, coveredColor)
+  setColorAndDraw(uncoveredPours, uncoveredColor)
 
   const texture = new THREE.CanvasTexture(canvas)
   texture.generateMipmaps = true
