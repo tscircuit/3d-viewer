@@ -126,7 +126,7 @@ export function JscadBoardTextures({
         map: texture,
         transparent: true,
         alphaTest: 0.08,
-        side: THREE.DoubleSide,
+        side: THREE.FrontSide,
         depthWrite,
         polygonOffset: usePolygonOffset,
         polygonOffsetFactor: usePolygonOffset ? -4 : 0,
