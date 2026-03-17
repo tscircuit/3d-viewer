@@ -38,7 +38,7 @@ function createTexturePlane(
     map: texture,
     transparent: true,
     alphaTest: 0.08,
-    side: THREE.DoubleSide,
+    side: THREE.FrontSide,
     depthWrite: true,
     polygonOffset: usePolygonOffset,
     polygonOffsetFactor: usePolygonOffset ? -4 : 0, // Increased for better z-fighting prevention
