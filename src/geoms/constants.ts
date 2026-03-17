@@ -11,8 +11,8 @@ export const BOARD_SURFACE_OFFSET = {
 export const colors = {
   copper: [0.9, 0.6, 0.2],
   fr4Tan: [0.6, 0.43, 0.28],
-  fr4SolderMaskGreen: [0.02, 0.1, 0.04],
-  fr4TracesWithMaskGreen: [0.0, 0.5, 0.25],
+  fr4SolderMaskGreen: [0.015, 0.059, 0.027],
+  fr4TracesWithMaskGreen: [0.063, 0.141, 0.023],
   fr4TracesWithoutMaskTan: [0.6, 0.43, 0.28],
   fr1Tan: [0.8, 0.4, 0.2],
   fr1TracesWithMaskCopper: [0.9, 0.6, 0.2],
