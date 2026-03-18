@@ -95,6 +95,6 @@ export const RefDesInFootprint = () => {
 }
 
 export default {
-  title: "Repros/Footprint Reference Designator",
+  title: "Footprint Reference Designator",
   component: RefDesInFootprint,
 }
