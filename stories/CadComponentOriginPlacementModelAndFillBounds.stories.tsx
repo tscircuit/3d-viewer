@@ -42,8 +42,9 @@ export const CadComponentGlbAssembly = () => (
   <CadViewer circuitJson={circuitJson} />
 )
 
-CadComponentGlbAssembly.storyName = "CAD Component Origin Placement Model"
+CadComponentGlbAssembly.storyName =
+  "CAD Component Origin Placement Model And Fill Bound"
 
 export default {
-  title: "CadComponent/OriginPlacementModel",
+  title: "CadComponent/OriginPlacementModelAndFillBound",
 }
