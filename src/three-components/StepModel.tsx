@@ -9,6 +9,7 @@ import {
 } from "three"
 import { GLTFExporter } from "three-stdlib"
 import { GltfModel } from "./GltfModel"
+import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
 
 type OcctImportParams = {
   linearUnit?: "millimeter" | "centimeter" | "meter" | "inch" | "foot"
@@ -211,6 +212,11 @@ type StepModelProps = {
   stepUrl: string
   position?: [number, number, number]
   rotation?: [number, number, number]
+  modelOffset?: [number, number, number]
+  modelRotation?: [number, number, number]
+  sourceCoordinateTransform?: import("three").Matrix4
+  modelSize?: CadModelSize
+  modelFitMode?: CadModelFitMode
   scale?: number
   onHover: (event: unknown) => void
   onUnhover: () => void
@@ -222,6 +228,11 @@ export const StepModel = ({
   stepUrl,
   position,
   rotation,
+  modelOffset,
+  modelRotation,
+  sourceCoordinateTransform,
+  modelSize,
+  modelFitMode,
   scale,
   onHover,
   onUnhover,
@@ -320,6 +331,11 @@ export const StepModel = ({
       gltfUrl={stepGltfUrl}
       position={position}
       rotation={rotation}
+      modelOffset={modelOffset}
+      modelRotation={modelRotation}
+      sourceCoordinateTransform={sourceCoordinateTransform}
+      modelSize={modelSize}
+      modelFitMode={modelFitMode}
       scale={scale}
       onHover={onHover}
       onUnhover={onUnhover}

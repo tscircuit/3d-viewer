@@ -5,12 +5,18 @@ import { convertCSGToThreeGeom } from "jscad-electronics/vanilla"
 import * as THREE from "three"
 import { useMemo, useEffect } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
-import { useThree } from "src/react-three/ThreeContext"
+import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 export const JscadModel = ({
   jscadPlan,
   positionOffset,
   rotationOffset,
+  modelOffset = [0, 0, 0],
+  modelRotation = [0, 0, 0],
+  sourceCoordinateTransform,
+  modelSize,
+  modelFitMode = "contain_within_bounds",
   onHover,
   onUnhover,
   isHovered,
@@ -20,13 +26,17 @@ export const JscadModel = ({
   jscadPlan: JscadOperation
   positionOffset?: [number, number, number]
   rotationOffset?: [number, number, number]
+  modelOffset?: [number, number, number]
+  modelRotation?: [number, number, number]
+  sourceCoordinateTransform?: THREE.Matrix4
+  modelSize?: CadModelSize
+  modelFitMode?: CadModelFitMode
   onHover: (e: any) => void
   onUnhover: () => void
   isHovered: boolean
   scale?: number
   isTranslucent?: boolean
 }) => {
-  const { rootObject } = useThree()
   const { threeGeom, material } = useMemo(() => {
     const jscadObject = executeJscadOperations(jscad as any, jscadPlan)
 
@@ -52,32 +62,19 @@ export const JscadModel = ({
     createdMesh.renderOrder = isTranslucent ? 2 : 1
     return createdMesh
   }, [threeGeom, material, isTranslucent])
-
-  useEffect(() => {
-    if (!mesh || !rootObject) return
-    rootObject.add(mesh)
-    return () => {
-      rootObject.remove(mesh)
-    }
-  }, [rootObject, mesh])
-
-  useEffect(() => {
-    if (!mesh) return
-    if (positionOffset) mesh.position.fromArray(positionOffset)
-    if (rotationOffset) mesh.rotation.fromArray(rotationOffset)
-    if (scale !== undefined) mesh.scale.setScalar(scale)
-  }, [
-    mesh,
-    positionOffset?.[0],
-    positionOffset?.[1],
-    positionOffset?.[2],
-    rotationOffset?.[0],
-    rotationOffset?.[1],
-    rotationOffset?.[2],
+  const { boardTransformGroup } = useCadModelTransformGraph({
+    model: mesh,
+    position: positionOffset,
+    rotation: rotationOffset,
+    modelOffset,
+    modelRotation,
+    sourceCoordinateTransform,
+    modelSize,
+    modelFitMode,
     scale,
-  ])
+  })
 
-  useMemo(() => {
+  useEffect(() => {
     if (!material) return
     if (isHovered) {
       const color = new THREE.Color(material.color.getHex())
@@ -96,7 +93,7 @@ export const JscadModel = ({
       isHovered={isHovered}
       onHover={onHover}
       onUnhover={onUnhover}
-      object={mesh}
+      object={boardTransformGroup}
     >
       {/* mesh is now added imperatively */}
     </ContainerWithTooltip>

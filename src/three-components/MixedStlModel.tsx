@@ -1,14 +1,20 @@
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { useGlobalObjLoader } from "src/hooks/use-global-obj-loader"
 import type { Euler, Vector3 } from "three"
-import { useThree } from "src/react-three/ThreeContext"
-import { useEffect, useMemo } from "react"
+import { useMemo } from "react"
 import * as THREE from "three"
+import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 export function MixedStlModel({
   url,
   position,
   rotation,
+  modelOffset = [0, 0, 0],
+  modelRotation = [0, 0, 0],
+  sourceCoordinateTransform,
+  modelSize,
+  modelFitMode = "contain_within_bounds",
   onHover,
   onUnhover,
   isHovered,
@@ -18,6 +24,11 @@ export function MixedStlModel({
   url: string
   position?: Vector3 | [number, number, number]
   rotation?: Euler | [number, number, number]
+  modelOffset?: [number, number, number]
+  modelRotation?: [number, number, number]
+  sourceCoordinateTransform?: THREE.Matrix4
+  modelSize?: CadModelSize
+  modelFitMode?: CadModelFitMode
   onHover: (e: any) => void
   onUnhover: () => void
   isHovered: boolean
@@ -25,8 +36,6 @@ export function MixedStlModel({
   isTranslucent?: boolean
 }) {
   const obj = useGlobalObjLoader(url)
-  const { rootObject } = useThree()
-
   const model = useMemo(() => {
     if (obj && !(obj instanceof Error)) {
       obj.traverse((child) => {
@@ -59,45 +68,25 @@ export function MixedStlModel({
       }),
     )
   }, [obj, isTranslucent])
-
-  useEffect(() => {
-    if (!rootObject || !model) return
-
-    rootObject.add(model)
-    return () => {
-      rootObject.remove(model)
-    }
-  }, [rootObject, model])
-
-  useEffect(() => {
-    if (!model) return
-    if (position) {
-      if (Array.isArray(position)) {
-        model.position.fromArray(position)
-      } else {
-        model.position.copy(position as THREE.Vector3)
-      }
-    }
-    if (rotation) {
-      if (Array.isArray(rotation)) {
-        model.rotation.fromArray(rotation)
-      } else {
-        model.rotation.copy(rotation as THREE.Euler)
-      }
-    }
-    if (scale !== undefined) {
-      model.scale.setScalar(scale)
-    }
-  }, [
+  const { boardTransformGroup } = useCadModelTransformGraph({
     model,
-    Array.isArray(position) ? position[0] : (position as THREE.Vector3)?.x,
-    Array.isArray(position) ? position[1] : (position as THREE.Vector3)?.y,
-    Array.isArray(position) ? position[2] : (position as THREE.Vector3)?.z,
-    Array.isArray(rotation) ? rotation[0] : (rotation as THREE.Euler)?.x,
-    Array.isArray(rotation) ? rotation[1] : (rotation as THREE.Euler)?.y,
-    Array.isArray(rotation) ? rotation[2] : (rotation as THREE.Euler)?.z,
+    position: Array.isArray(position)
+      ? position
+      : position
+        ? [position.x, position.y, position.z]
+        : undefined,
+    rotation: Array.isArray(rotation)
+      ? rotation
+      : rotation
+        ? [rotation.x, rotation.y, rotation.z]
+        : undefined,
+    modelOffset,
+    modelRotation,
+    sourceCoordinateTransform,
+    modelSize,
+    modelFitMode,
     scale,
-  ])
+  })
 
   if (obj instanceof Error) {
     throw obj
@@ -108,7 +97,7 @@ export function MixedStlModel({
       isHovered={isHovered}
       onHover={onHover}
       onUnhover={onUnhover}
-      object={model}
+      object={boardTransformGroup}
     >
       {/* This component now just manages hover state, the 3D object is added imperatively */}
     </ContainerWithTooltip>
