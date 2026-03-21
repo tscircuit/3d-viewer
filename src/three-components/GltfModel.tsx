@@ -1,9 +1,11 @@
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import * as THREE from "three"
 import { GLTFLoader } from "three-stdlib"
 import { useThree } from "src/react-three/ThreeContext"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { getDefaultEnvironmentMap } from "src/react-three/getDefaultEnvironmentMap"
+import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 const DEFAULT_ENV_MAP_INTENSITY = 1.25
 
@@ -11,6 +13,11 @@ export function GltfModel({
   gltfUrl,
   position,
   rotation,
+  modelOffset = [0, 0, 0],
+  modelRotation = [0, 0, 0],
+  sourceCoordinateTransform,
+  modelSize,
+  modelFitMode = "contain_within_bounds",
   onHover,
   onUnhover,
   isHovered,
@@ -20,15 +27,31 @@ export function GltfModel({
   gltfUrl: string
   position?: [number, number, number]
   rotation?: [number, number, number]
+  modelOffset?: [number, number, number]
+  modelRotation?: [number, number, number]
+  sourceCoordinateTransform?: THREE.Matrix4
+  modelSize?: CadModelSize
+  modelFitMode?: CadModelFitMode
   onHover: (e: any) => void
   onUnhover: () => void
   isHovered: boolean
   scale?: number
   isTranslucent?: boolean
 }) {
-  const { renderer, rootObject } = useThree()
+  const { renderer } = useThree()
   const [model, setModel] = useState<THREE.Group | null>(null)
   const [loadError, setLoadError] = useState<Error | null>(null)
+  const { boardTransformGroup } = useCadModelTransformGraph({
+    model,
+    position,
+    rotation,
+    modelOffset,
+    modelRotation,
+    sourceCoordinateTransform,
+    modelSize,
+    modelFitMode,
+    scale,
+  })
 
   useEffect(() => {
     if (!gltfUrl) return
@@ -76,30 +99,6 @@ export function GltfModel({
       isMounted = false
     }
   }, [gltfUrl, isTranslucent])
-
-  useEffect(() => {
-    if (!model) return
-    if (position) model.position.fromArray(position)
-    if (rotation) model.rotation.fromArray(rotation)
-    if (scale !== undefined) model.scale.setScalar(scale)
-  }, [
-    model,
-    position?.[0],
-    position?.[1],
-    position?.[2],
-    rotation?.[0],
-    rotation?.[1],
-    rotation?.[2],
-    scale,
-  ])
-
-  useEffect(() => {
-    if (!rootObject || !model) return
-    rootObject.add(model)
-    return () => {
-      rootObject.remove(model)
-    }
-  }, [rootObject, model])
 
   useEffect(() => {
     if (!model || !renderer) return
@@ -182,7 +181,7 @@ export function GltfModel({
       isHovered={isHovered}
       onHover={onHover}
       onUnhover={onUnhover}
-      object={model}
+      object={boardTransformGroup}
     >
       {/* model is now added imperatively */}
     </ContainerWithTooltip>

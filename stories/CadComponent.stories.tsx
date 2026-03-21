@@ -11,6 +11,7 @@ const cad_component: CadComponent = {
   pcb_component_id: "todo",
   source_component_id: "todo",
   anchor_alignment: "center",
+  model_object_fit: "contain_within_bounds",
 }
 
 const wrlComponent: CadComponent = {
@@ -23,6 +24,7 @@ const wrlComponent: CadComponent = {
   pcb_component_id: "todo",
   source_component_id: "todo",
   anchor_alignment: "center",
+  model_object_fit: "contain_within_bounds",
 }
 
 export const Default = () => (
@@ -51,6 +53,7 @@ export const BottomLayer = () => (
         },
         model_obj_url: "/easyeda-models/47443b588a77418ba6b4ea51975c36c0",
         anchor_alignment: "center",
+        model_object_fit: "contain_within_bounds",
       },
     ])}
   />
@@ -76,6 +79,7 @@ export const SSOPRotated = () => (
         },
         model_obj_url: "/easyeda-models/47443b588a77418ba6b4ea51975c36c0",
         anchor_alignment: "center",
+        model_object_fit: "contain_within_bounds",
       },
     ])}
   />

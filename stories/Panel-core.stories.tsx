@@ -22,8 +22,6 @@ const createCircuit = () => {
           }
           cadModel={{
             gltfUrl: mediumMachinePinUrl,
-            rotationOffset: { x: 0, y: 0, z: 0 },
-            positionOffset: { x: 0, y: 0, z: 0.8 },
             modelUnitToMmScale: 1000,
           }}
         />

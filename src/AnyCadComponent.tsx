@@ -13,6 +13,16 @@ import { GltfModel } from "./three-components/GltfModel"
 import { JscadModel } from "./three-components/JscadModel"
 import { MixedStlModel } from "./three-components/MixedStlModel"
 import { StepModel } from "./three-components/StepModel"
+import {
+  getCadLoaderTransformConfig,
+  getCadLoaderTransformMatrix,
+} from "./utils/cad-model-loader-transform"
+import { getCadModelTransform } from "./utils/cad-model-transform"
+import {
+  type CadModelType,
+  getCadModelType,
+  getRenderedCadModelType,
+} from "./utils/get-cad-model-type"
 import { resolveModelUrl } from "./utils/resolve-model-url"
 import { tuple } from "./utils/tuple"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
@@ -84,9 +94,9 @@ export const AnyCadComponent = ({
   )
 
   const url = resolveModelUrlWithStaticResolver(
-    cad_component.model_obj_url ??
-      cad_component.model_wrl_url ??
-      cad_component.model_stl_url,
+    cad_component.model_wrl_url ??
+      cad_component.model_stl_url ??
+      cad_component.model_obj_url,
   )
   const gltfUrl = resolveModelUrlWithStaticResolver(
     cad_component.model_glb_url ?? cad_component.model_gltf_url,
@@ -107,61 +117,32 @@ export const AnyCadComponent = ({
       elm.source_component_id === cad_component.source_component_id,
   ) as PcbComponent | undefined
   const layer = pcbComponent?.layer ?? "top"
+  const sourceModelType = getCadModelType(cad_component)
+  const renderedModelType = getRenderedCadModelType(sourceModelType)
+  const gltfModelType: CadModelType = cad_component.model_glb_url
+    ? "glb"
+    : "gltf"
+  const meshModelType: CadModelType = cad_component.model_wrl_url
+    ? "wrl"
+    : cad_component.model_stl_url
+      ? "stl"
+      : "obj"
 
-  // For bottom layer, flip component 180° around X axis
-  const rotationOffset = useMemo(() => {
-    const baseRotation = cad_component.rotation
-      ? tuple(
-          (cad_component.rotation.x * Math.PI) / 180,
-          (cad_component.rotation.y * Math.PI) / 180,
-          (cad_component.rotation.z * Math.PI) / 180,
-        )
-      : tuple(0, 0, 0)
+  const modelTransform = useMemo(
+    () =>
+      getCadModelTransform(cad_component, {
+        layer,
+        pcbThickness,
+        modelType: renderedModelType,
+      }),
+    [cad_component, layer, pcbThickness, renderedModelType],
+  )
 
-    if (layer === "bottom") {
-      // Flip 180° around X axis for bottom layer components
-      // tscircuit/core already rotates the components
-      // return tuple(baseRotation[0] + Math.PI, baseRotation[1], -baseRotation[2])
-    }
-    return baseRotation
-  }, [cad_component.rotation, layer])
-
-  // Adjust position based on layer to place components on top/bottom of board
-  const adjustedPosition = useMemo(() => {
-    if (!cad_component.position) return undefined
-    let z: number
-    if (layer === "top") {
-      z = cad_component.position.z
-    } else if (layer === "bottom") {
-      z = -(cad_component.position.z + pcbThickness) // Place on bottom side, accounting for PCB thickness
-    } else {
-      z = cad_component.position.z // Fallback
-    }
-    return [cad_component.position.x, cad_component.position.y, z] as [
-      number,
-      number,
-      number,
-    ]
-  }, [cad_component.position, layer, pcbThickness])
+  const rotationOffset = tuple(...modelTransform.rotation)
+  const adjustedPosition = modelTransform.position
 
   const fallbackModelComponents = useMemo(() => {
     const components: React.ReactNode[] = []
-
-    if (url) {
-      components.push(
-        <MixedStlModel
-          key={`${cad_component.cad_component_id}-mixed-${url}`}
-          url={url}
-          position={adjustedPosition}
-          rotation={rotationOffset}
-          scale={cad_component.model_unit_to_mm_scale_factor}
-          onHover={handleHover}
-          onUnhover={handleUnhover}
-          isHovered={isHovered}
-          isTranslucent={cad_component.show_as_translucent_model}
-        />,
-      )
-    }
 
     if (gltfUrl) {
       components.push(
@@ -170,7 +151,14 @@ export const AnyCadComponent = ({
           gltfUrl={gltfUrl}
           position={adjustedPosition}
           rotation={rotationOffset}
-          scale={cad_component.model_unit_to_mm_scale_factor}
+          modelOffset={modelTransform.modelPosition}
+          modelRotation={modelTransform.modelRotation}
+          sourceCoordinateTransform={getCadLoaderTransformMatrix(
+            getCadLoaderTransformConfig(cad_component, gltfModelType),
+          )}
+          scale={modelTransform.scale}
+          modelSize={modelTransform.size}
+          modelFitMode={modelTransform.fitMode}
           onHover={handleHover}
           onUnhover={handleUnhover}
           isHovered={isHovered}
@@ -190,7 +178,37 @@ export const AnyCadComponent = ({
           stepUrl={stepUrl}
           position={adjustedPosition}
           rotation={rotationOffset}
-          scale={cad_component.model_unit_to_mm_scale_factor}
+          modelOffset={modelTransform.modelPosition}
+          modelRotation={modelTransform.modelRotation}
+          sourceCoordinateTransform={getCadLoaderTransformMatrix(
+            getCadLoaderTransformConfig(cad_component, renderedModelType),
+          )}
+          scale={modelTransform.scale}
+          modelSize={modelTransform.size}
+          modelFitMode={modelTransform.fitMode}
+          onHover={handleHover}
+          onUnhover={handleUnhover}
+          isHovered={isHovered}
+          isTranslucent={cad_component.show_as_translucent_model}
+        />,
+      )
+    }
+
+    if (url) {
+      components.push(
+        <MixedStlModel
+          key={`${cad_component.cad_component_id}-mixed-${url}`}
+          url={url}
+          position={adjustedPosition}
+          rotation={rotationOffset}
+          modelOffset={modelTransform.modelPosition}
+          modelRotation={modelTransform.modelRotation}
+          sourceCoordinateTransform={getCadLoaderTransformMatrix(
+            getCadLoaderTransformConfig(cad_component, meshModelType),
+          )}
+          scale={modelTransform.scale}
+          modelSize={modelTransform.size}
+          modelFitMode={modelTransform.fitMode}
           onHover={handleHover}
           onUnhover={handleUnhover}
           isHovered={isHovered}
@@ -205,12 +223,19 @@ export const AnyCadComponent = ({
     cad_component.cad_component_id,
     cad_component.footprinter_string,
     cad_component.model_jscad,
-    cad_component.model_unit_to_mm_scale_factor,
     cad_component.show_as_translucent_model,
     gltfUrl,
+    gltfModelType,
     handleHover,
     handleUnhover,
     isHovered,
+    meshModelType,
+    modelTransform.modelPosition,
+    modelTransform.modelRotation,
+    modelTransform.scale,
+    modelTransform.fitMode,
+    modelTransform.size,
+    renderedModelType,
     rotationOffset,
     stepUrl,
     url,
@@ -248,10 +273,17 @@ export const AnyCadComponent = ({
     modelComponent = (
       <JscadModel
         key={cad_component.cad_component_id}
-        jscadPlan={cad_component.model_jscad as any}
+        jscadPlan={cad_component.model_jscad}
         positionOffset={adjustedPosition}
         rotationOffset={rotationOffset}
-        scale={cad_component.model_unit_to_mm_scale_factor}
+        modelOffset={modelTransform.modelPosition}
+        modelRotation={modelTransform.modelRotation}
+        sourceCoordinateTransform={getCadLoaderTransformMatrix(
+          getCadLoaderTransformConfig(cad_component, "jscad"),
+        )}
+        scale={modelTransform.scale}
+        modelSize={modelTransform.size}
+        modelFitMode={modelTransform.fitMode}
         onHover={handleHover}
         onUnhover={handleUnhover}
         isHovered={isHovered}
@@ -264,7 +296,7 @@ export const AnyCadComponent = ({
         positionOffset={adjustedPosition}
         rotationOffset={rotationOffset}
         footprint={cad_component.footprinter_string}
-        scale={cad_component.model_unit_to_mm_scale_factor}
+        scale={modelTransform.scale}
         onHover={handleHover}
         onUnhover={handleUnhover}
         isHovered={isHovered}

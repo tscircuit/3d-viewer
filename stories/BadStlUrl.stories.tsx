@@ -18,6 +18,7 @@ const cad_component: CadComponent = {
   pcb_component_id: "todo",
   source_component_id: "todo",
   anchor_alignment: "center",
+  model_object_fit: "contain_within_bounds",
 }
 
 export const BadStlUrl = () => {
