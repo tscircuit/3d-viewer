@@ -20,7 +20,7 @@ const circuitJson = [
     model_gltf_url: undefined,
     model_jscad: undefined,
     model_mtl_url: undefined,
-    model_object_fit: "contain_within_bounds",
+    model_object_fit: "fill_bounds",
     model_obj_url:
       "https://modelcdn.tscircuit.com/easyeda_models/download?uuid=4e90b6d8552a4e058d9ebe9d82e11f3a&pn=C9900017879&cachebust_origin=http%3A%2F%2Flocalhost%3A6006",
     model_origin_alignment: "center_of_component_on_board_surface",
