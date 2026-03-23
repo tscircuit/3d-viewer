@@ -95,5 +95,45 @@ export function createTextureMeshes(
   )
   if (bottomBoardMesh) meshes.push(bottomBoardMesh)
 
+  const edgeMesh = createBoardEdgeMesh(boardData, pcbThickness)
+  meshes.push(edgeMesh)
+
   return meshes
+}
+
+export function createBoardEdgeMesh(
+  boardData: PcbBoard,
+  pcbThickness: number,
+): THREE.Mesh {
+  const boardOutlineBounds = calculateOutlineBounds(boardData)
+  const { width, height, centerX, centerY } = boardOutlineBounds
+
+  const geometry = new THREE.BoxGeometry(width, height, pcbThickness)
+
+  // Create a canvas texture for the PCB edge (FR4 yellowish-green color)
+  const canvas = document.createElement("canvas")
+  canvas.width = 64
+  canvas.height = 64
+  const ctx = canvas.getContext("2d")!
+  ctx.fillStyle = "#1a3d1a"
+  ctx.fillRect(0, 0, 64, 64)
+  // Add subtle edge lines to simulate PCB layers
+  ctx.strokeStyle = "#0f2610"
+  ctx.lineWidth = 3
+  ctx.strokeRect(0, 0, 64, 64)
+  const edgeTexture = new THREE.CanvasTexture(canvas)
+
+  const materials = [
+    new THREE.MeshBasicMaterial({ map: edgeTexture }), // right
+    new THREE.MeshBasicMaterial({ map: edgeTexture }), // left
+    new THREE.MeshBasicMaterial({ map: edgeTexture }), // top
+    new THREE.MeshBasicMaterial({ map: edgeTexture }), // bottom
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 }), // front (top face - hidden, texture plane sits here)
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 }), // back (bottom face - hidden)
+  ]
+
+  const mesh = new THREE.Mesh(geometry, materials)
+  mesh.position.set(centerX, centerY, 0)
+  mesh.name = "pcb-board-edge-box"
+  return mesh
 }
