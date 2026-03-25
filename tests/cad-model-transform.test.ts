@@ -223,3 +223,12 @@ test("prefers obj over step when both model URLs are present", () => {
 
   expect(getCadModelType(cadComponent)).toBe("obj")
 })
+
+test("prefers jscad over step when both model definitions are present", () => {
+  const cadComponent = createCadComponent({
+    model_step_url: "https://example.com/model.step",
+    model_jscad: [{ type: "primitive_cube", size: [1, 1, 1] }],
+  })
+
+  expect(getCadModelType(cadComponent)).toBe("jscad")
+})

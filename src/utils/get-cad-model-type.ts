@@ -19,10 +19,9 @@ export const getCadModelType = (cadComponent: CadComponent): CadModelType => {
     return "obj"
   }
 
-  if (cadComponent.model_step_url) return "step"
-
   if (cadComponent.model_jscad) return "jscad"
   if (cadComponent.footprinter_string) return "footprinter"
+  if (cadComponent.model_step_url) return "step"
   return "unknown"
 }
 
