@@ -214,3 +214,12 @@ test("prefers gltf over step and obj when multiple model urls are present", () =
 
   expect(getCadModelType(cadComponent)).toBe("glb")
 })
+
+test("prefers obj over step when both model URLs are present", () => {
+  const cadComponent = createCadComponent({
+    model_obj_url: "https://example.com/model.obj",
+    model_step_url: "https://example.com/model.step",
+  })
+
+  expect(getCadModelType(cadComponent)).toBe("obj")
+})
