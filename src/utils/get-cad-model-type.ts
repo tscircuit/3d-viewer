@@ -9,8 +9,6 @@ export const getCadModelType = (cadComponent: CadComponent): CadModelType => {
     return cadComponent.model_glb_url ? "glb" : "gltf"
   }
 
-  if (cadComponent.model_step_url) return "step"
-
   if (
     cadComponent.model_obj_url ||
     cadComponent.model_wrl_url ||
@@ -23,6 +21,7 @@ export const getCadModelType = (cadComponent: CadComponent): CadModelType => {
 
   if (cadComponent.model_jscad) return "jscad"
   if (cadComponent.footprinter_string) return "footprinter"
+  if (cadComponent.model_step_url) return "step"
   return "unknown"
 }
 

@@ -167,6 +167,29 @@ export const AnyCadComponent = ({
       )
     }
 
+    if (url) {
+      components.push(
+        <MixedStlModel
+          key={`${cad_component.cad_component_id}-mixed-${url}`}
+          url={url}
+          position={adjustedPosition}
+          rotation={rotationOffset}
+          modelOffset={modelTransform.modelPosition}
+          modelRotation={modelTransform.modelRotation}
+          sourceCoordinateTransform={getCadLoaderTransformMatrix(
+            getCadLoaderTransformConfig(cad_component, meshModelType),
+          )}
+          scale={modelTransform.scale}
+          modelSize={modelTransform.size}
+          modelFitMode={modelTransform.fitMode}
+          onHover={handleHover}
+          onUnhover={handleUnhover}
+          isHovered={isHovered}
+          isTranslucent={cad_component.show_as_translucent_model}
+        />,
+      )
+    }
+
     if (
       stepUrl &&
       !cad_component.model_jscad &&
@@ -182,29 +205,6 @@ export const AnyCadComponent = ({
           modelRotation={modelTransform.modelRotation}
           sourceCoordinateTransform={getCadLoaderTransformMatrix(
             getCadLoaderTransformConfig(cad_component, renderedModelType),
-          )}
-          scale={modelTransform.scale}
-          modelSize={modelTransform.size}
-          modelFitMode={modelTransform.fitMode}
-          onHover={handleHover}
-          onUnhover={handleUnhover}
-          isHovered={isHovered}
-          isTranslucent={cad_component.show_as_translucent_model}
-        />,
-      )
-    }
-
-    if (url) {
-      components.push(
-        <MixedStlModel
-          key={`${cad_component.cad_component_id}-mixed-${url}`}
-          url={url}
-          position={adjustedPosition}
-          rotation={rotationOffset}
-          modelOffset={modelTransform.modelPosition}
-          modelRotation={modelTransform.modelRotation}
-          sourceCoordinateTransform={getCadLoaderTransformMatrix(
-            getCadLoaderTransformConfig(cad_component, meshModelType),
           )}
           scale={modelTransform.scale}
           modelSize={modelTransform.size}
