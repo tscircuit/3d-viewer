@@ -5,37 +5,59 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
-} from "react"
+} from "react";
 
 export interface LayerVisibilityState {
-  boardBody: boolean
-  topCopper: boolean
-  bottomCopper: boolean
-  adhesive: boolean
-  solderPaste: boolean
-  topSilkscreen: boolean
-  bottomSilkscreen: boolean
-  topMask: boolean
-  bottomMask: boolean
-  throughHoleModels: boolean
-  smtModels: boolean
-  translucentModels: boolean
-  modelsNotInPosFile: boolean
-  modelsMarkedDNP: boolean
-  modelBoundingBoxes: boolean
-  threedAxis: boolean
-  pcbNotes: boolean
-  backgroundStart: boolean
-  backgroundEnd: boolean
+  boardBody: boolean;
+  topCopper: boolean;
+  bottomCopper: boolean;
+  adhesive: boolean;
+  solderPaste: boolean;
+  topSilkscreen: boolean;
+  bottomSilkscreen: boolean;
+  topMask: boolean;
+  bottomMask: boolean;
+  throughHoleModels: boolean;
+  smtModels: boolean;
+  translucentModels: boolean;
+  modelsNotInPosFile: boolean;
+  modelsMarkedDNP: boolean;
+  modelBoundingBoxes: boolean;
+  threedAxis: boolean;
+  pcbNotes: boolean;
+  backgroundStart: boolean;
+  backgroundEnd: boolean;
+  /**
+   * Enable SVG-based high-quality texture rendering for PCB faces
+   * When enabled, uses resvg-wasm to generate raster textures from SVG
+   * @default false
+   */
+  svgTexturesEnabled: boolean;
+  /**
+   * Resolution for SVG textures in pixels per mm
+   * Higher values give sharper textures but use more memory
+   * @default 150
+   */
+  svgTextureResolution: number;
+  /**
+   * Enable SVG texture on top face
+   * @default true
+   */
+  svgTextureTop: boolean;
+  /**
+   * Enable SVG texture on bottom face
+   * @default true
+   */
+  svgTextureBottom: boolean;
 }
 
 interface LayerVisibilityContextType {
-  visibility: LayerVisibilityState
+  visibility: LayerVisibilityState;
   setLayerVisibility: (
     layer: keyof LayerVisibilityState,
     visible: boolean,
-  ) => void
-  resetToDefaults: () => void
+  ) => void;
+  resetToDefaults: () => void;
 }
 
 const defaultVisibility: LayerVisibilityState = {
@@ -58,31 +80,35 @@ const defaultVisibility: LayerVisibilityState = {
   pcbNotes: false,
   backgroundStart: true,
   backgroundEnd: true,
-}
+  svgTexturesEnabled: false,
+  svgTextureResolution: 150,
+  svgTextureTop: true,
+  svgTextureBottom: true,
+};
 
 const LayerVisibilityContext = createContext<
   LayerVisibilityContextType | undefined
->(undefined)
+>(undefined);
 
 export const LayerVisibilityProvider: React.FC<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }> = ({ children }) => {
   const [visibility, setVisibility] =
-    useState<LayerVisibilityState>(defaultVisibility)
+    useState<LayerVisibilityState>(defaultVisibility);
 
   const setLayerVisibility = useCallback(
     (layer: keyof LayerVisibilityState, visible: boolean) => {
       setVisibility((prev) => ({
         ...prev,
         [layer]: visible,
-      }))
+      }));
     },
     [],
-  )
+  );
 
   const resetToDefaults = useCallback(() => {
-    setVisibility(defaultVisibility)
-  }, [])
+    setVisibility(defaultVisibility);
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -91,21 +117,21 @@ export const LayerVisibilityProvider: React.FC<{
       resetToDefaults,
     }),
     [visibility, setLayerVisibility, resetToDefaults],
-  )
+  );
 
   return (
     <LayerVisibilityContext.Provider value={value}>
       {children}
     </LayerVisibilityContext.Provider>
-  )
-}
+  );
+};
 
 export const useLayerVisibility = () => {
-  const context = useContext(LayerVisibilityContext)
+  const context = useContext(LayerVisibilityContext);
   if (!context) {
     throw new Error(
       "useLayerVisibility must be used within a LayerVisibilityProvider",
-    )
+    );
   }
-  return context
-}
+  return context;
+};
