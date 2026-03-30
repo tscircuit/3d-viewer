@@ -1,34 +1,34 @@
-import { su } from "@tscircuit/circuit-json-util";
-import type { AnyCircuitElement } from "circuit-json";
-import type * as React from "react";
-import { forwardRef, useMemo } from "react";
-import type * as THREE from "three";
-import { AnyCadComponent } from "./AnyCadComponent";
-import { CadViewerContainer } from "./CadViewerContainer";
-import type { CameraController } from "./hooks/cameraAnimation";
-import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup";
-import { useStlsFromGeom } from "./hooks/use-stls-from-geom";
-import { useBoardGeomBuilder } from "./hooks/useBoardGeomBuilder";
-import { usePcbThickness } from "./hooks/usePcbThickness";
-import { Error3d } from "./three-components/Error3d";
-import { VisibleSTLModel } from "./three-components/VisibleSTLModel";
-import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary";
-import { JscadBoardTextures } from "./three-components/JscadBoardTextures";
-import { SvgBoardTextures } from "./three-components/SvgBoardTextures";
-import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json";
+import { su } from "@tscircuit/circuit-json-util"
+import type { AnyCircuitElement } from "circuit-json"
+import type * as React from "react"
+import { forwardRef, useMemo } from "react"
+import type * as THREE from "three"
+import { AnyCadComponent } from "./AnyCadComponent"
+import { CadViewerContainer } from "./CadViewerContainer"
+import type { CameraController } from "./hooks/cameraAnimation"
+import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
+import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
+import { useBoardGeomBuilder } from "./hooks/useBoardGeomBuilder"
+import { usePcbThickness } from "./hooks/usePcbThickness"
+import { Error3d } from "./three-components/Error3d"
+import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
+import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
+import { JscadBoardTextures } from "./three-components/JscadBoardTextures"
+import { SvgBoardTextures } from "./three-components/SvgBoardTextures"
+import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 
 interface Props {
   /**
    * @deprecated Use circuitJson instead.
    */
-  soup?: AnyCircuitElement[];
-  circuitJson?: AnyCircuitElement[];
-  autoRotateDisabled?: boolean;
-  clickToInteractEnabled?: boolean;
-  cameraType?: "orthographic" | "perspective";
-  onUserInteraction?: () => void;
-  onCameraControllerReady?: (controller: CameraController | null) => void;
-  resolveStaticAsset?: (modelUrl: string) => string;
+  soup?: AnyCircuitElement[]
+  circuitJson?: AnyCircuitElement[]
+  autoRotateDisabled?: boolean
+  clickToInteractEnabled?: boolean
+  cameraType?: "orthographic" | "perspective"
+  onUserInteraction?: () => void
+  onCameraControllerReady?: (controller: CameraController | null) => void
+  resolveStaticAsset?: (modelUrl: string) => string
 }
 
 export const CadViewerJscad = forwardRef<
@@ -47,93 +47,93 @@ export const CadViewerJscad = forwardRef<
     },
     ref,
   ) => {
-    const childrenSoup = useConvertChildrenToCircuitJson(children);
+    const childrenSoup = useConvertChildrenToCircuitJson(children)
     const internalCircuitJson = useMemo(() => {
       return addFauxBoardIfNeeded(
         circuitJson ?? childrenSoup,
-      ) as AnyCircuitElement[];
-    }, [circuitJson, childrenSoup]);
+      ) as AnyCircuitElement[]
+    }, [circuitJson, childrenSoup])
 
     // Use the new hook to manage board geometry building
-    const boardGeom = useBoardGeomBuilder(internalCircuitJson);
+    const boardGeom = useBoardGeomBuilder(internalCircuitJson)
 
     const initialCameraPosition = useMemo(() => {
-      if (!internalCircuitJson) return [5, -5, 5] as const;
+      if (!internalCircuitJson) return [5, -5, 5] as const
       try {
-        const board = su(internalCircuitJson as any).pcb_board.list()[0];
-        if (!board) return [5, -5, 5] as const;
-        const { width, height } = board;
+        const board = su(internalCircuitJson as any).pcb_board.list()[0]
+        if (!board) return [5, -5, 5] as const
+        const { width, height } = board
 
         if (!width && !height) {
-          return [5, -5, 5] as const;
+          return [5, -5, 5] as const
         }
 
-        const minCameraDistance = 5;
-        const adjustedBoardWidth = Math.max(width!, minCameraDistance);
-        const adjustedBoardHeight = Math.max(height!, minCameraDistance);
-        const largestDim = Math.max(adjustedBoardWidth, adjustedBoardHeight);
+        const minCameraDistance = 5
+        const adjustedBoardWidth = Math.max(width!, minCameraDistance)
+        const adjustedBoardHeight = Math.max(height!, minCameraDistance)
+        const largestDim = Math.max(adjustedBoardWidth, adjustedBoardHeight)
         // Position the camera for a top-front-right view
         return [
           largestDim * 0.4, // Move right
           -largestDim * 0.7, // Move back (negative Y)
           largestDim * 0.9, // Keep height but slightly lower than top-down
-        ] as const;
+        ] as const
       } catch (e) {
-        console.error(e);
-        return [5, -5, 5] as const;
+        console.error(e)
+        return [5, -5, 5] as const
       }
-    }, [internalCircuitJson]);
+    }, [internalCircuitJson])
 
     const isFauxBoard = useMemo(() => {
-      if (!internalCircuitJson) return false;
+      if (!internalCircuitJson) return false
       try {
-        const board = su(internalCircuitJson as any).pcb_board.list()[0];
-        return !!board && board.pcb_board_id === "faux-board";
+        const board = su(internalCircuitJson as any).pcb_board.list()[0]
+        return !!board && board.pcb_board_id === "faux-board"
       } catch (e) {
-        return false;
+        return false
       }
-    }, [internalCircuitJson]);
+    }, [internalCircuitJson])
 
     const boardDimensions = useMemo(() => {
-      if (!internalCircuitJson) return undefined;
+      if (!internalCircuitJson) return undefined
       try {
-        const board = su(internalCircuitJson as any).pcb_board.list()[0];
-        if (!board) return undefined;
-        return { width: board.width ?? 0, height: board.height ?? 0 };
+        const board = su(internalCircuitJson as any).pcb_board.list()[0]
+        if (!board) return undefined
+        return { width: board.width ?? 0, height: board.height ?? 0 }
       } catch (e) {
-        console.error(e);
-        return undefined;
+        console.error(e)
+        return undefined
       }
-    }, [internalCircuitJson]);
+    }, [internalCircuitJson])
 
     const boardCenter = useMemo(() => {
-      if (!internalCircuitJson) return undefined;
+      if (!internalCircuitJson) return undefined
       try {
-        const board = su(internalCircuitJson as any).pcb_board.list()[0];
-        if (!board || !board.center) return undefined;
-        return { x: board.center.x, y: board.center.y };
+        const board = su(internalCircuitJson as any).pcb_board.list()[0]
+        if (!board || !board.center) return undefined
+        return { x: board.center.x, y: board.center.y }
       } catch (e) {
-        console.error(e);
-        return undefined;
+        console.error(e)
+        return undefined
       }
-    }, [internalCircuitJson]);
+    }, [internalCircuitJson])
 
     const boardData = useMemo(() => {
-      if (!internalCircuitJson) return null;
+      if (!internalCircuitJson) return null
       try {
-        const board = su(internalCircuitJson as any).pcb_board.list()[0];
-        return board ?? null;
+        const board = su(internalCircuitJson as any).pcb_board.list()[0]
+        return board ?? null
       } catch (e) {
-        return null;
+        return null
       }
-    }, [internalCircuitJson]);
+    }, [internalCircuitJson])
 
-    const pcbThickness = usePcbThickness(internalCircuitJson);
+    const pcbThickness = usePcbThickness(internalCircuitJson)
 
     // Use the state `boardGeom` which starts simplified and gets updated
-    const { stls: boardStls, loading } = useStlsFromGeom(boardGeom);
+    const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
 
-    const cad_components = su(internalCircuitJson).cad_component.list();
+    const cad_components = su(internalCircuitJson).cad_component.list()
 
     return (
       <CadViewerContainer
@@ -182,6 +182,6 @@ export const CadViewerJscad = forwardRef<
           </ThreeErrorBoundary>
         ))}
       </CadViewerContainer>
-    );
+    )
   },
-);
+)

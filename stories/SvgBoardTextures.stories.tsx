@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { CadViewer } from "src/CadViewer";
-import type { AnyCircuitElement } from "circuit-json";
+import { useState } from "react"
+import { CadViewer } from "src/CadViewer"
+import type { AnyCircuitElement } from "circuit-json"
 
 const createTestCircuit = (): AnyCircuitElement[] => {
   return [
@@ -116,23 +116,23 @@ const createTestCircuit = (): AnyCircuitElement[] => {
       hole_diameter: 0.3,
       layers: ["top", "bottom"],
     },
-  ];
-};
+  ]
+}
 
 export const SvgTexturesDisabled = () => {
-  const circuitJson = createTestCircuit();
+  const circuitJson = createTestCircuit()
   return (
     <div style={{ width: "100%", height: "500px" }}>
       <CadViewer circuitJson={circuitJson} />
     </div>
-  );
-};
+  )
+}
 
-SvgTexturesDisabled.storyName = "SVG Textures (Disabled - Default)";
+SvgTexturesDisabled.storyName = "SVG Textures (Disabled - Default)"
 
 export const SvgTexturesEnabled = () => {
-  const circuitJson = createTestCircuit();
-  const [status, setStatus] = useState<string>("Loading...");
+  const circuitJson = createTestCircuit()
+  const [status, setStatus] = useState<string>("Loading...")
 
   return (
     <div style={{ width: "100%", height: "500px", position: "relative" }}>
@@ -159,13 +159,13 @@ export const SvgTexturesEnabled = () => {
       </div>
       <CadViewer circuitJson={circuitJson} />
     </div>
-  );
-};
+  )
+}
 
-SvgTexturesEnabled.storyName = "SVG Textures (Enabled)";
+SvgTexturesEnabled.storyName = "SVG Textures (Enabled)"
 
 export const SvgTexturesHighRes = () => {
-  const circuitJson = createTestCircuit();
+  const circuitJson = createTestCircuit()
 
   return (
     <div style={{ width: "100%", height: "500px", position: "relative" }}>
@@ -191,12 +191,12 @@ export const SvgTexturesHighRes = () => {
       </div>
       <CadViewer circuitJson={circuitJson} />
     </div>
-  );
-};
+  )
+}
 
-SvgTexturesHighRes.storyName = "SVG Textures (High Resolution)";
+SvgTexturesHighRes.storyName = "SVG Textures (High Resolution)"
 
 export default {
   title: "SVG Board Textures",
   component: SvgTexturesDisabled,
-};
+}

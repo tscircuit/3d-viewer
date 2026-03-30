@@ -3,7 +3,10 @@ import type { AnyCircuitElement, PcbBoard } from "circuit-json"
 import * as THREE from "three"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import { useThree } from "../react-three/ThreeContext"
-import { useSvgBoardTextures, usePreloadResvgWasm } from "../hooks/useSvgBoardTextures"
+import {
+  useSvgBoardTextures,
+  usePreloadResvgWasm,
+} from "../hooks/useSvgBoardTextures"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
 import { FAUX_BOARD_OPACITY } from "../geoms/constants"
 

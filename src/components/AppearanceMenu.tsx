@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { useLayerVisibility } from "../contexts/LayerVisibilityContext";
-import type React from "react";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { CheckIcon, ChevronRightIcon } from "./Icons";
-import { zIndexMap } from "../../lib/utils/z-index-map";
+import { useState } from "react"
+import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
+import type React from "react"
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
+import { CheckIcon, ChevronRightIcon } from "./Icons"
+import { zIndexMap } from "../../lib/utils/z-index-map"
 
 const itemStyles: React.CSSProperties = {
   padding: "6px 8px",
@@ -20,20 +20,20 @@ const itemStyles: React.CSSProperties = {
   transition: "background-color 0.15s ease, color 0.15s ease",
   fontFamily:
     'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-};
+}
 
 const itemPaddingStyles: React.CSSProperties = {
   paddingLeft: 32,
   paddingTop: 6,
   paddingBottom: 6,
   paddingRight: 8,
-};
+}
 
 const separatorStyles: React.CSSProperties = {
   height: 1,
   backgroundColor: "#ffffff1a",
   margin: "4px 0",
-};
+}
 
 const contentStyles: React.CSSProperties = {
   backgroundColor: "#262626",
@@ -48,7 +48,7 @@ const contentStyles: React.CSSProperties = {
   fontSize: 14,
   fontFamily:
     'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-};
+}
 
 const iconContainerStyles: React.CSSProperties = {
   width: 16,
@@ -57,12 +57,12 @@ const iconContainerStyles: React.CSSProperties = {
   alignItems: "flex-end",
   justifyContent: "center",
   flexShrink: 0,
-};
+}
 
 export const AppearanceMenu = () => {
-  const { visibility, setLayerVisibility } = useLayerVisibility();
-  const [appearanceSubOpen, setAppearanceSubOpen] = useState(false);
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const { visibility, setLayerVisibility } = useLayerVisibility()
+  const [appearanceSubOpen, setAppearanceSubOpen] = useState(false)
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
   return (
     <>
@@ -111,11 +111,11 @@ export const AppearanceMenu = () => {
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
-                e.preventDefault();
+                e.preventDefault()
                 setLayerVisibility(
                   "svgTexturesEnabled",
                   !visibility.svgTexturesEnabled,
-                );
+                )
               }}
               onMouseEnter={() => setHoveredItem("svgTextures")}
               onMouseLeave={() => setHoveredItem(null)}
@@ -149,8 +149,8 @@ export const AppearanceMenu = () => {
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
-                e.preventDefault();
-                setLayerVisibility("boardBody", !visibility.boardBody);
+                e.preventDefault()
+                setLayerVisibility("boardBody", !visibility.boardBody)
               }}
               onMouseEnter={() => setHoveredItem("boardBody")}
               onMouseLeave={() => setHoveredItem(null)}
@@ -172,8 +172,8 @@ export const AppearanceMenu = () => {
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
-                e.preventDefault();
-                setLayerVisibility("topCopper", !visibility.topCopper);
+                e.preventDefault()
+                setLayerVisibility("topCopper", !visibility.topCopper)
               }}
               onMouseEnter={() => setHoveredItem("topCopper")}
               onMouseLeave={() => setHoveredItem(null)}
@@ -195,8 +195,8 @@ export const AppearanceMenu = () => {
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
-                e.preventDefault();
-                setLayerVisibility("bottomCopper", !visibility.bottomCopper);
+                e.preventDefault()
+                setLayerVisibility("bottomCopper", !visibility.bottomCopper)
               }}
               onMouseEnter={() => setHoveredItem("bottomCopper")}
               onMouseLeave={() => setHoveredItem(null)}
@@ -218,8 +218,8 @@ export const AppearanceMenu = () => {
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
-                e.preventDefault();
-                setLayerVisibility("topSilkscreen", !visibility.topSilkscreen);
+                e.preventDefault()
+                setLayerVisibility("topSilkscreen", !visibility.topSilkscreen)
               }}
               onMouseEnter={() => setHoveredItem("topSilkscreen")}
               onMouseLeave={() => setHoveredItem(null)}
@@ -243,11 +243,11 @@ export const AppearanceMenu = () => {
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
-                e.preventDefault();
+                e.preventDefault()
                 setLayerVisibility(
                   "bottomSilkscreen",
                   !visibility.bottomSilkscreen,
-                );
+                )
               }}
               onMouseEnter={() => setHoveredItem("bottomSilkscreen")}
               onMouseLeave={() => setHoveredItem(null)}
@@ -269,8 +269,8 @@ export const AppearanceMenu = () => {
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
-                e.preventDefault();
-                setLayerVisibility("topMask", !visibility.topMask);
+                e.preventDefault()
+                setLayerVisibility("topMask", !visibility.topMask)
               }}
               onMouseEnter={() => setHoveredItem("topMask")}
               onMouseLeave={() => setHoveredItem(null)}
@@ -292,8 +292,8 @@ export const AppearanceMenu = () => {
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
-                e.preventDefault();
-                setLayerVisibility("bottomMask", !visibility.bottomMask);
+                e.preventDefault()
+                setLayerVisibility("bottomMask", !visibility.bottomMask)
               }}
               onMouseEnter={() => setHoveredItem("bottomMask")}
               onMouseLeave={() => setHoveredItem(null)}
@@ -315,8 +315,8 @@ export const AppearanceMenu = () => {
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
-                e.preventDefault();
-                setLayerVisibility("pcbNotes", !visibility.pcbNotes);
+                e.preventDefault()
+                setLayerVisibility("pcbNotes", !visibility.pcbNotes)
               }}
               onMouseEnter={() => setHoveredItem("pcbNotes")}
               onMouseLeave={() => setHoveredItem(null)}
@@ -338,8 +338,8 @@ export const AppearanceMenu = () => {
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
-                e.preventDefault();
-                setLayerVisibility("smtModels", !visibility.smtModels);
+                e.preventDefault()
+                setLayerVisibility("smtModels", !visibility.smtModels)
               }}
               onMouseEnter={() => setHoveredItem("smtModels")}
               onMouseLeave={() => setHoveredItem(null)}
@@ -363,11 +363,11 @@ export const AppearanceMenu = () => {
               }}
               onSelect={(e) => e.preventDefault()}
               onPointerDown={(e) => {
-                e.preventDefault();
+                e.preventDefault()
                 setLayerVisibility(
                   "throughHoleModels",
                   !visibility.throughHoleModels,
-                );
+                )
               }}
               onMouseEnter={() => setHoveredItem("throughHoleModels")}
               onMouseLeave={() => setHoveredItem(null)}
@@ -384,5 +384,5 @@ export const AppearanceMenu = () => {
         </DropdownMenu.Portal>
       </DropdownMenu.Sub>
     </>
-  );
-};
+  )
+}

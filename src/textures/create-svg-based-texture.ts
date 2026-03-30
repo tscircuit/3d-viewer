@@ -1,27 +1,27 @@
-import type { AnyCircuitElement, PcbBoard } from "circuit-json";
-import { calculateOutlineBounds } from "../utils/outline-bounds";
-import { createSvgFromCircuitJson } from "./svg-from-circuit-json";
-import { convertSvgToPng } from "./resvg-converter";
-import * as THREE from "three";
+import type { AnyCircuitElement, PcbBoard } from "circuit-json"
+import { calculateOutlineBounds } from "../utils/outline-bounds"
+import { createSvgFromCircuitJson } from "./svg-from-circuit-json"
+import { convertSvgToPng } from "./resvg-converter"
+import * as THREE from "three"
 
 export interface SvgTextureOptions {
-  width: number;
-  height: number;
-  layer: "top" | "bottom";
+  width: number
+  height: number
+  layer: "top" | "bottom"
   /**
    * Resolution in pixels per mm
    * @default 150
    */
-  resolution?: number;
+  resolution?: number
   /**
    * Color overrides for different elements
    */
   colors?: {
-    copper?: string;
-    silkscreen?: string;
-    soldermask?: string;
-    substrate?: string;
-  };
+    copper?: string
+    silkscreen?: string
+    soldermask?: string
+    substrate?: string
+  }
 }
 
 /**
@@ -33,14 +33,14 @@ export async function createSvgBasedTexture(
   boardData: PcbBoard,
   options: SvgTextureOptions,
 ): Promise<THREE.DataTexture | null> {
-  const { width, height, layer, resolution = 150, colors } = options;
+  const { width, height, layer, resolution = 150, colors } = options
 
-  const bounds = calculateOutlineBounds(boardData);
-  const pixelWidth = Math.floor(bounds.width * resolution);
-  const pixelHeight = Math.floor(bounds.height * resolution);
+  const bounds = calculateOutlineBounds(boardData)
+  const pixelWidth = Math.floor(bounds.width * resolution)
+  const pixelHeight = Math.floor(bounds.height * resolution)
 
   if (pixelWidth <= 0 || pixelHeight <= 0) {
-    return null;
+    return null
   }
 
   try {
@@ -53,25 +53,25 @@ export async function createSvgBasedTexture(
       height: pixelHeight,
       bounds,
       colors,
-    });
+    })
 
     // Convert SVG to PNG using resvg-wasm
     const pngBuffer = await convertSvgToPng(svgString, {
       width: pixelWidth,
       height: pixelHeight,
-    });
+    })
 
     if (!pngBuffer) {
-      return null;
+      return null
     }
 
     // Create Three.js DataTexture from PNG
-    const texture = createTextureFromPng(pngBuffer, pixelWidth, pixelHeight);
+    const texture = createTextureFromPng(pngBuffer, pixelWidth, pixelHeight)
 
-    return texture;
+    return texture
   } catch (error) {
-    console.error("Error creating SVG-based texture:", error);
-    return null;
+    console.error("Error creating SVG-based texture:", error)
+    return null
   }
 }
 
@@ -84,13 +84,13 @@ function createTextureFromPng(
   height: number,
 ): Promise<THREE.DataTexture> {
   // Create a temporary canvas to decode the PNG
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
+  const canvas = document.createElement("canvas")
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext("2d")
 
   if (!ctx) {
-    throw new Error("Failed to get 2D context");
+    throw new Error("Failed to get 2D context")
   }
 
   // Create blob from buffer and draw to canvas
@@ -98,14 +98,14 @@ function createTextureFromPng(
   const arrayBuffer = pngBuffer.buffer.slice(
     pngBuffer.byteOffset,
     pngBuffer.byteOffset + pngBuffer.byteLength,
-  ) as ArrayBuffer;
-  const blob = new Blob([arrayBuffer], { type: "image/png" });
-  const img = new Image();
+  ) as ArrayBuffer
+  const blob = new Blob([arrayBuffer], { type: "image/png" })
+  const img = new Image()
 
   return new Promise((resolve, reject) => {
     img.onload = () => {
-      ctx.drawImage(img, 0, 0);
-      const imageData = ctx.getImageData(0, 0, width, height);
+      ctx.drawImage(img, 0, 0)
+      const imageData = ctx.getImageData(0, 0, width, height)
 
       // Create DataTexture
       const texture = new THREE.DataTexture(
@@ -113,23 +113,23 @@ function createTextureFromPng(
         width,
         height,
         THREE.RGBAFormat,
-      );
-      texture.generateMipmaps = true;
-      texture.minFilter = THREE.LinearMipmapLinearFilter;
-      texture.magFilter = THREE.LinearFilter;
-      texture.anisotropy = 16;
-      texture.needsUpdate = true;
-      texture.flipY = false;
+      )
+      texture.generateMipmaps = true
+      texture.minFilter = THREE.LinearMipmapLinearFilter
+      texture.magFilter = THREE.LinearFilter
+      texture.anisotropy = 16
+      texture.needsUpdate = true
+      texture.flipY = false
 
-      resolve(texture);
-    };
+      resolve(texture)
+    }
 
     img.onerror = () => {
-      reject(new Error("Failed to load PNG image"));
-    };
+      reject(new Error("Failed to load PNG image"))
+    }
 
-    img.src = URL.createObjectURL(blob);
-  });
+    img.src = URL.createObjectURL(blob)
+  })
 }
 
 // Synchronous version that returns a placeholder and loads async
@@ -142,13 +142,13 @@ export function createSvgBasedTextureAsync(
   // Start async loading
   createSvgBasedTexture(circuitJson, boardData, options)
     .then((texture) => {
-      onLoad(texture);
+      onLoad(texture)
     })
     .catch((error) => {
-      console.error("Async texture loading failed:", error);
-      onLoad(null);
-    });
+      console.error("Async texture loading failed:", error)
+      onLoad(null)
+    })
 
   // Return null immediately - texture will be set via callback
-  return null;
+  return null
 }
