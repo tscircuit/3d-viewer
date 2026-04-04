@@ -18,7 +18,10 @@ import type {
 const CAMERA_KEY = "cadViewerCameraStateSession"
 
 // Camera session storage functions
-export const saveCameraToSession = (camera: THREE.Camera, controls: any) => {
+export const saveCameraToSession = (
+  camera: THREE.Camera,
+  controls: ThreeOrbitControls,
+) => {
   try {
     const savedCameraSession = {
       position: camera.position.toArray(),
@@ -35,7 +38,7 @@ export const saveCameraToSession = (camera: THREE.Camera, controls: any) => {
 
 export const loadCameraFromSession = (
   camera: THREE.Camera,
-  controls: any,
+  controls: ThreeOrbitControls,
 ): boolean => {
   try {
     const raw = sessionStorage.getItem(CAMERA_KEY)
@@ -79,8 +82,14 @@ interface CameraControllerContextValue {
   setCameraPosition: (position: readonly [number, number, number]) => void
   cameraRotation: THREE.Euler
   setCameraRotation: (rotation: THREE.Euler) => void
-  saveCameraToSession: (camera: THREE.Camera, controls: any) => void
-  loadCameraFromSession: (camera: THREE.Camera, controls: any) => boolean
+  saveCameraToSession: (
+    camera: THREE.Camera,
+    controls: ThreeOrbitControls,
+  ) => void
+  loadCameraFromSession: (
+    camera: THREE.Camera,
+    controls: ThreeOrbitControls,
+  ) => boolean
 }
 
 const CameraControllerContext = createContext<

@@ -121,7 +121,7 @@ const BoardMeshes = ({
   return null
 }
 
-type CadViewerManifoldProps = {
+export type CadViewerManifoldProps = {
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
   cameraType?: "orthographic" | "perspective"
