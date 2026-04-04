@@ -13,10 +13,12 @@ import { createPcbNoteTextureForLayer } from "./create-pcb-note-texture-for-laye
 import { createSilkscreenTextureForLayer } from "./create-silkscreen-texture-for-layer"
 import { createSoldermaskTextureForLayer } from "./create-soldermask-texture-for-layer"
 import { createThroughHoleTextureForLayer } from "./create-through-hole-texture-for-layer"
+import { createSideBoardTexture } from "./create-side-board-texture"
 
 export interface CombinedBoardTextures {
   topBoard?: THREE.CanvasTexture | null
   bottomBoard?: THREE.CanvasTexture | null
+  sideBoard?: THREE.CanvasTexture | null
 }
 
 const toRgb = (colorArr: number[]) => {
@@ -216,5 +218,6 @@ export function createCombinedBoardTextures({
   return {
     topBoard: buildForLayer("top"),
     bottomBoard: numLayers < 2 ? null : buildForLayer("bottom"),
+    sideBoard: createSideBoardTexture(),
   }
 }
