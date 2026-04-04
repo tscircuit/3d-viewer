@@ -107,6 +107,44 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
+                  hoveredItem === "svgTextures" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                setLayerVisibility(
+                  "svgTexturesEnabled",
+                  !visibility.svgTexturesEnabled,
+                )
+              }}
+              onMouseEnter={() => setHoveredItem("svgTextures")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("svgTextures")}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.svgTexturesEnabled && <CheckIcon />}
+              </span>
+              <span style={{ flex: 1, display: "flex", alignItems: "center" }}>
+                SVG Board Textures
+              </span>
+              <span
+                style={{
+                  fontSize: 10,
+                  opacity: 0.6,
+                  backgroundColor: "rgba(161, 161, 170, 0.15)",
+                  padding: "2px 6px",
+                  borderRadius: 4,
+                  fontWeight: 500,
+                }}
+              >
+                experimental
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
                   hoveredItem === "boardBody" ? "#404040" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}

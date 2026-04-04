@@ -14,6 +14,7 @@ import { Error3d } from "./three-components/Error3d"
 import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { JscadBoardTextures } from "./three-components/JscadBoardTextures"
+import { SvgBoardTextures } from "./three-components/SvgBoardTextures"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 
 interface Props {
@@ -117,6 +118,16 @@ export const CadViewerJscad = forwardRef<
       }
     }, [internalCircuitJson])
 
+    const boardData = useMemo(() => {
+      if (!internalCircuitJson) return null
+      try {
+        const board = su(internalCircuitJson as any).pcb_board.list()[0]
+        return board ?? null
+      } catch (e) {
+        return null
+      }
+    }, [internalCircuitJson])
+
     const pcbThickness = usePcbThickness(internalCircuitJson)
 
     // Use the state `boardGeom` which starts simplified and gets updated
@@ -146,6 +157,12 @@ export const CadViewerJscad = forwardRef<
         ))}
         <JscadBoardTextures
           circuitJson={internalCircuitJson}
+          pcbThickness={pcbThickness}
+          isFaux={isFauxBoard}
+        />
+        <SvgBoardTextures
+          circuitJson={internalCircuitJson}
+          boardData={boardData}
           pcbThickness={pcbThickness}
           isFaux={isFauxBoard}
         />
