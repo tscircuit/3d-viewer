@@ -1,12 +1,12 @@
 import { vectorText } from "@jscad/modeling/src/text"
+import type { PcbSilkscreenText } from "circuit-json"
 import {
-  compose,
-  translate,
-  rotate,
   applyToPoint,
-  Matrix,
+  compose,
+  type Matrix,
+  rotate,
+  translate,
 } from "transformation-matrix"
-import { PcbSilkscreenText } from "circuit-json"
 
 // Generate 2D text outlines
 export function createSilkscreenTextGeoms(silkscreenText: PcbSilkscreenText) {
@@ -45,7 +45,7 @@ export function createSilkscreenTextGeoms(silkscreenText: PcbSilkscreenText) {
   })
 
   // Calculate text bounds and center point
-  const points = textOutlines.flatMap((o) => o)
+  const points = textOutlines.flat()
   const textBounds = {
     minX: Math.min(...points.map((p) => p[0])),
     maxX: Math.max(...points.map((p) => p[0])),

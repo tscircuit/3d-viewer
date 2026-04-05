@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef } from "react"
 
 // Based off a tweet and codesandbox:
 // https://mobile.twitter.com/hieuhlc/status/1164369876825169920

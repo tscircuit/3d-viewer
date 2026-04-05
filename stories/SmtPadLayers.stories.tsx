@@ -1,5 +1,5 @@
-import { CadViewer } from "src/CadViewer"
 import { Circuit } from "@tscircuit/core"
+import { CadViewer } from "src/CadViewer"
 import complexCircuitJson from "./assets/complex-board.json"
 
 const createCircuit = () => {

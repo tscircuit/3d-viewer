@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo } from "react"
+import type React from "react"
+import { useEffect, useMemo } from "react"
 import * as THREE from "three"
 import { useFrame, useThree } from "./ThreeContext"
 
@@ -97,7 +98,9 @@ export const Grid: React.FC<GridProps> = ({
       scene.remove(gridMesh)
       gridMesh.geometry.dispose()
       if (Array.isArray(gridMesh.material)) {
-        gridMesh.material.forEach((m) => m.dispose())
+        gridMesh.material.forEach((m) => {
+          m.dispose()
+        })
       } else {
         gridMesh.material.dispose()
       }

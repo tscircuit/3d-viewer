@@ -1,7 +1,7 @@
 import * as THREE from "three"
 import type { ManifoldGeoms } from "../../hooks/useManifoldBoardBuilder"
-import { createBoardMaterial } from "../create-board-material"
 import type { CombinedBoardTextures } from "../../textures"
+import { createBoardMaterial } from "../create-board-material"
 
 export function createGeometryMeshes(
   geoms: ManifoldGeoms | null,
@@ -10,7 +10,7 @@ export function createGeometryMeshes(
   const meshes: THREE.Mesh[] = []
   if (!geoms) return meshes
 
-  if (geoms.board && geoms.board.geometry) {
+  if (geoms.board?.geometry) {
     const mesh = new THREE.Mesh(
       geoms.board.geometry,
       createBoardMaterial({

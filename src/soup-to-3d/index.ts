@@ -1,13 +1,9 @@
-import type { Geom3 } from "@jscad/modeling/src/geometries/types"
-import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
-import { su } from "@tscircuit/circuit-json-util"
-import { cuboid } from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
-import {
-  colors,
-  boardMaterialColors,
-  tracesMaterialColors,
-} from "../geoms/constants"
+import type { Geom3 } from "@jscad/modeling/src/geometries/types"
+import { cuboid } from "@jscad/modeling/src/primitives"
+import { su } from "@tscircuit/circuit-json-util"
+import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
+import { boardMaterialColors, colors } from "../geoms/constants"
 import { createBoardGeomWithOutline } from "../geoms/create-board-with-outline"
 
 /**

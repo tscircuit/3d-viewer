@@ -1,5 +1,5 @@
-import { CadViewer } from "src/CadViewer"
 import { Circuit } from "@tscircuit/core"
+import { CadViewer } from "src/CadViewer"
 
 const atariOutline = [
   { x: -22.5, y: 24.5 },

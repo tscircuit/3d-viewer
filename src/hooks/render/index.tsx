@@ -1,4 +1,4 @@
-import { Geom2, Geom3 } from "@jscad/modeling/src/geometries/types"
+import type { Geom2, Geom3 } from "@jscad/modeling/src/geometries/types"
 import {
   cameras,
   controls,
@@ -6,12 +6,12 @@ import {
   entitiesFromSolids,
   prepareRender,
 } from "@jscad/regl-renderer"
-import { cameraState } from "@jscad/regl-renderer/types/cameras/perspectiveCamera"
-import { controlsState } from "@jscad/regl-renderer/types/controls/orbitControls"
-import * as renderingDefaults from "@jscad/regl-renderer/types/rendering/renderDefaults"
+import type { cameraState } from "@jscad/regl-renderer/types/cameras/perspectiveCamera"
+import type { controlsState } from "@jscad/regl-renderer/types/controls/orbitControls"
+import type * as renderingDefaults from "@jscad/regl-renderer/types/rendering/renderDefaults"
 import * as React from "react"
 import { useDrag, usePinch, useWheel } from "react-use-gesture"
-import { InitializationOptions } from "regl"
+import type { InitializationOptions } from "regl"
 
 import { useAnimationFrame, useKeyPress } from "./hooks"
 
@@ -289,13 +289,11 @@ const Renderer = React.forwardRef<HTMLDivElement, RendererProps>(
     React.useEffect(() => {
       const ref: React.MutableRefObject<HTMLDivElement> =
         forwardRef as React.MutableRefObject<HTMLDivElement>
-      if (ref && ref.current)
-        dispatch({ type: "SET_ELEMENT", payload: ref.current })
+      if (ref?.current) dispatch({ type: "SET_ELEMENT", payload: ref.current })
     }, [forwardRef])
 
     React.useEffect(() => {
-      if (ref && ref.current)
-        dispatch({ type: "SET_ELEMENT", payload: ref.current })
+      if (ref?.current) dispatch({ type: "SET_ELEMENT", payload: ref.current })
     }, [ref])
 
     React.useEffect(() => {
@@ -436,5 +434,5 @@ const Renderer = React.forwardRef<HTMLDivElement, RendererProps>(
 
 Renderer.displayName = "Renderer"
 
-export type { RendererProps, RendererState, RendererAction }
-export { Renderer, initialProps, initialState }
+export type { RendererAction, RendererProps, RendererState }
+export { initialProps, initialState, Renderer }

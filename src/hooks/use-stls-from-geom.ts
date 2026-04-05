@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react"
+import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import stlSerializer from "@jscad/stl-serializer"
-import { Geom3 } from "@jscad/modeling/src/geometries/types"
+import { useEffect, useState } from "react"
 
 export type LayerType =
   | "board"

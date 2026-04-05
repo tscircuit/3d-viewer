@@ -7,10 +7,10 @@ import type { CombinedBoardTextures } from "./index"
  * This function returns an empty array to disable the legacy floating decal planes.
  */
 export function createTextureMeshes(
-  textures: CombinedBoardTextures | null,
-  boardData: PcbBoard | null,
-  pcbThickness: number | null,
-  isFaux: boolean = false,
+  _textures: CombinedBoardTextures | null,
+  _boardData: PcbBoard | null,
+  _pcbThickness: number | null,
+  _isFaux: boolean = false,
 ): THREE.Mesh[] {
   // Return empty array as textures are now applied directly to the board mesh faces
   // in src/utils/manifold/create-three-geometry-meshes.ts

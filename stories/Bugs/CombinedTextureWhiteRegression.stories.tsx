@@ -1,4 +1,4 @@
-import { LayerRef } from "circuit-json"
+import type { LayerRef } from "circuit-json"
 import { useEffect, useMemo, useState } from "react"
 import { CadViewer } from "src/CadViewer"
 
@@ -54,7 +54,7 @@ const StressCombinedTextures = ({
 
         {silkscreenRows.map((row, i) => (
           <silkscreentext
-            // @ts-ignore
+            // @ts-expect-error
             key={row.key}
             layer={row.layer}
             pcbX={`${row.xMm}mm`}

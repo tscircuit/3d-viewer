@@ -1,8 +1,8 @@
-import * as THREE from "three"
 import type { AnyCircuitElement, PcbBoard } from "circuit-json"
+import * as THREE from "three"
 import { TRACE_TEXTURE_RESOLUTION } from "../geoms/constants"
-import { drawSoldermaskLayer } from "./soldermask/soldermask-drawing"
 import { getSoldermaskRenderBounds } from "./soldermask/soldermask-bounds"
+import { drawSoldermaskLayer } from "./soldermask/soldermask-drawing"
 
 export function createSoldermaskTextureForLayer({
   layer,

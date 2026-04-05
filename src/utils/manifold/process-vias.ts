@@ -1,15 +1,15 @@
-import type { ManifoldToplevel } from "manifold-3d"
-import type { AnyCircuitElement, PcbVia } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
+import type { AnyCircuitElement, PcbVia } from "circuit-json"
+import type { ManifoldToplevel } from "manifold-3d"
 import * as THREE from "three"
-import { createPlatedHoleDrill } from "../hole-geoms"
-import { createViaCopper } from "../via-geoms"
-import { manifoldMeshToThreeGeometry } from "../manifold-mesh-to-three-geometry"
 import {
   colors as defaultColors,
   MANIFOLD_Z_OFFSET,
   SMOOTH_CIRCLE_SEGMENTS,
 } from "../../geoms/constants"
+import { createPlatedHoleDrill } from "../hole-geoms"
+import { manifoldMeshToThreeGeometry } from "../manifold-mesh-to-three-geometry"
+import { createViaCopper } from "../via-geoms"
 
 const COPPER_COLOR = new THREE.Color(...defaultColors.copper)
 

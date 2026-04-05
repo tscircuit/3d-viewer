@@ -1,5 +1,5 @@
 export function removeExistingCanvases(container: HTMLElement) {
-  container
-    .querySelectorAll("canvas")
-    .forEach((existingCanvas) => existingCanvas.remove())
+  container.querySelectorAll("canvas").forEach((existingCanvas) => {
+    existingCanvas.remove()
+  })
 }

@@ -6,14 +6,14 @@ import { calculateOutlineBounds } from "../utils/outline-bounds"
 import { createPadTextureForLayer } from "../utils/pad-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
-import { createCopperTextTextureForLayer } from "./create-copper-text-texture-for-layer"
 import { createCopperPourTextureForLayer } from "./create-copper-pour-texture-for-layer"
+import { createCopperTextTextureForLayer } from "./create-copper-text-texture-for-layer"
 import { createFabricationNoteTextureForLayer } from "./create-fabrication-note-texture-for-layer"
 import { createPcbNoteTextureForLayer } from "./create-pcb-note-texture-for-layer"
+import { createSideBoardTexture } from "./create-side-board-texture"
 import { createSilkscreenTextureForLayer } from "./create-silkscreen-texture-for-layer"
 import { createSoldermaskTextureForLayer } from "./create-soldermask-texture-for-layer"
 import { createThroughHoleTextureForLayer } from "./create-through-hole-texture-for-layer"
-import { createSideBoardTexture } from "./create-side-board-texture"
 
 export interface CombinedBoardTextures {
   topBoard?: THREE.CanvasTexture | null

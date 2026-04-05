@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 interface ContextMenuProps {
   containerRef: React.RefObject<HTMLDivElement | null>
@@ -127,7 +127,7 @@ export const useContextMenu = ({ containerRef }: ContextMenuProps) => {
     const target = e.target as Node
 
     // Check if the target is inside the menu
-    if (menuRef.current && menuRef.current.contains(target)) {
+    if (menuRef.current?.contains(target)) {
       return
     }
 

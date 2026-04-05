@@ -66,7 +66,7 @@ export const Socket = () => (
  *
  * https://www.lcsc.com/datasheet/lcsc_datasheet_1912111437_Kailh-CPG1511F01S03_C400227.pdf
  */
-const Keyswitch = (props: { name: string; pcbX?: number; pcbY?: number }) => {
+const _Keyswitch = (props: { name: string; pcbX?: number; pcbY?: number }) => {
   return (
     <chip
       {...props}

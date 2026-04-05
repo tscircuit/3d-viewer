@@ -1,5 +1,5 @@
-import * as THREE from "three"
 import type { Mesh } from "manifold-3d"
+import * as THREE from "three"
 
 export function manifoldMeshToThreeGeometry(
   manifoldMesh: Mesh,

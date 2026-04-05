@@ -1,6 +1,6 @@
-import { polygon } from "@jscad/modeling/src/primitives"
-import { subtract } from "@jscad/modeling/src/operations/booleans"
 import type { Vec2 } from "@jscad/modeling/src/maths/types"
+import { subtract } from "@jscad/modeling/src/operations/booleans"
+import { polygon } from "@jscad/modeling/src/primitives"
 
 type PointWithBulge = { x: number; y: number; bulge?: number }
 type Ring = { vertices: PointWithBulge[] }
@@ -96,7 +96,7 @@ export function createGeom2FromBRep(
   },
   arcSegments = 16,
 ): any /*Geom2*/ {
-  let outerPoints = ringToPoints(brep.outer_ring, arcSegments)
+  const outerPoints = ringToPoints(brep.outer_ring, arcSegments)
   if (arePointsClockwise(outerPoints)) {
     outerPoints.reverse() // Ensure it's CCW for JSCAD
   }
@@ -107,7 +107,7 @@ export function createGeom2FromBRep(
   }
 
   const innerGeoms = brep.inner_rings.map((ring) => {
-    let innerPoints = ringToPoints(ring, arcSegments)
+    const innerPoints = ringToPoints(ring, arcSegments)
     // For holes with subtract, they also need to be solid polygons (CCW)
     if (arePointsClockwise(innerPoints)) {
       innerPoints.reverse()

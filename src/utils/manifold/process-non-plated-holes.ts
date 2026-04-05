@@ -1,8 +1,8 @@
-import type { ManifoldToplevel } from "manifold-3d"
-import type { AnyCircuitElement, PcbHole } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
-import { createCircleHoleDrill } from "../hole-geoms"
+import type { AnyCircuitElement, PcbHole } from "circuit-json"
+import type { ManifoldToplevel } from "manifold-3d"
 import { SMOOTH_CIRCLE_SEGMENTS } from "../../geoms/constants"
+import { createCircleHoleDrill } from "../hole-geoms"
 import { createRoundedRectPrism } from "../pad-geoms"
 
 export interface ProcessNonPlatedHolesResult {

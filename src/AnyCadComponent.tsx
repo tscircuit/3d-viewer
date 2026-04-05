@@ -13,6 +13,7 @@ import { GltfModel } from "./three-components/GltfModel"
 import { JscadModel } from "./three-components/JscadModel"
 import { MixedStlModel } from "./three-components/MixedStlModel"
 import { StepModel } from "./three-components/StepModel"
+import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import {
   getCadLoaderTransformConfig,
   getCadLoaderTransformMatrix,
@@ -25,7 +26,6 @@ import {
 } from "./utils/get-cad-model-type"
 import { resolveModelUrl } from "./utils/resolve-model-url"
 import { tuple } from "./utils/tuple"
-import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 
 const ModelLoadErrorReporter = ({
   error,

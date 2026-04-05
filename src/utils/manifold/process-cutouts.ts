@@ -1,9 +1,9 @@
-import type { ManifoldToplevel, CrossSection } from "manifold-3d"
-import type { AnyCircuitElement, PcbCutout } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
+import type { AnyCircuitElement, PcbCutout } from "circuit-json"
+import type { ManifoldToplevel } from "manifold-3d"
 import { SMOOTH_CIRCLE_SEGMENTS } from "../../geoms/constants"
-import { extractRectBorderRadius } from "../rect-border-radius"
 import { createRoundedRectPrism } from "../pad-geoms"
+import { extractRectBorderRadius } from "../rect-border-radius"
 
 const arePointsClockwise = (points: Array<[number, number]>): boolean => {
   let area = 0
@@ -79,7 +79,7 @@ export function processCutoutsForManifold(
         cutoutOp = cutoutOp.translate([cutout.center.x, cutout.center.y, 0])
         manifoldInstancesForCleanup.push(cutoutOp)
         break
-      case "polygon":
+      case "polygon": {
         if (cutout.points.length < 3) {
           console.warn(
             `PCB Cutout [${cutout.pcb_cutout_id}] polygon has fewer than 3 points, skipping.`,
@@ -105,6 +105,7 @@ export function processCutoutsForManifold(
         )
         manifoldInstancesForCleanup.push(cutoutOp)
         break
+      }
       default:
         console.warn(
           `Unsupported cutout shape: ${(cutout as any).shape} for cutout ${

@@ -80,7 +80,7 @@ export function CommonToThree({
       case "mesh":
         mesh = new Mesh(geo, material)
         break
-      case "instance":
+      case "instance": {
         const { list } = obj
         mesh = new InstancedMesh(
           geo,
@@ -96,6 +96,7 @@ export function CommonToThree({
         })
         transforms = null
         break
+      }
       case "line":
         mesh = new Line(geo, material)
         break

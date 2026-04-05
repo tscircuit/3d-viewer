@@ -1,5 +1,5 @@
-import * as THREE from "three"
 import type { PcbBoard } from "circuit-json"
+import * as THREE from "three"
 import { FAUX_BOARD_OPACITY } from "../geoms/constants"
 
 type BoardMaterialType = PcbBoard["material"]

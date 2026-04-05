@@ -1,6 +1,6 @@
 import { CadViewer } from "src/CadViewer"
-import bugsPadsAndTracesSoup from "./assets/soic-with-traces.json"
 import LedFlashlightCircuitJson from "./assets/left-flashlight-board.json"
+import bugsPadsAndTracesSoup from "./assets/soic-with-traces.json"
 
 export const Default = () => (
   <CadViewer circuitJson={bugsPadsAndTracesSoup as any} />

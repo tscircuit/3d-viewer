@@ -1,8 +1,8 @@
-import type { AnyCircuitElement } from "circuit-json"
 import { expect, test } from "bun:test"
+import type { AnyCircuitElement } from "circuit-json"
+import { JSDOM } from "jsdom"
 import { convertCircuitJsonTo3dSvg } from "../src/convert-circuit-json-to-3d-svg.ts"
 import { applyJsdomShim } from "../src/utils/jsdom-shim.ts"
-import { JSDOM } from "jsdom"
 import { calculateOutlineBounds } from "../src/utils/outline-bounds"
 
 const atariOutline = [

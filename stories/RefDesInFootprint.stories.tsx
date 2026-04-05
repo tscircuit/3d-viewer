@@ -1,6 +1,6 @@
-import React, { useMemo } from "react"
-import { CadViewer } from "src/CadViewer"
 import { Circuit } from "@tscircuit/core"
+import { useMemo } from "react"
+import { CadViewer } from "src/CadViewer"
 
 const createCircuit = () => {
   const circuit = new Circuit()

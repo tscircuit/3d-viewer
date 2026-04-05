@@ -1,6 +1,4 @@
-import React from "react"
-import type { Preview } from "@storybook/react"
-import type { StoryFn } from "@storybook/react"
+import type { Preview, StoryFn } from "@storybook/react"
 
 const withContainer = (Story: StoryFn) => (
   <div style={{ width: "100vw", height: "100vh" }}>

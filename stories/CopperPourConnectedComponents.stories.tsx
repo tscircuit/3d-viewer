@@ -1,5 +1,5 @@
+import type { AnyCircuitElement } from "circuit-json"
 import { CadViewer } from "src/CadViewer"
-import type { AnyCircuitElement, PcbCopperPour } from "circuit-json"
 
 // Test a mix of rect and polygon pours on both layers
 const soup: AnyCircuitElement[] = [

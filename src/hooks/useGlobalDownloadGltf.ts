@@ -1,6 +1,6 @@
 import { useCallback } from "react"
-import { GLTFExporter } from "three-stdlib"
 import type * as THREE from "three"
+import { GLTFExporter } from "three-stdlib"
 
 declare global {
   interface Window {

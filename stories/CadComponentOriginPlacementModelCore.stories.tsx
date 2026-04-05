@@ -1,6 +1,6 @@
 import "tscircuit"
-import { CadViewer } from "src/CadViewer"
 import { Circuit } from "@tscircuit/core"
+import { CadViewer } from "src/CadViewer"
 
 const createCircuit = () => {
   const circuit = new Circuit()
