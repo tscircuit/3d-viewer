@@ -81,7 +81,10 @@ export function manifoldMeshToThreeGeometry(
       } else {
         // Side UVs: U is distance along XY, V is Z height
         // For simple tiling, we can use x + y as U
-        newUvs.push((x + y) / width, (z - minZ) / thickness)
+        newUvs.push(
+          (x - minX + (y - minY)) / (width + height),
+          (z - minZ) / thickness,
+        )
       }
       targetIndexList.push(newPositions.length / 3 - 1)
     }
