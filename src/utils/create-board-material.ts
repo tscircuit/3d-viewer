@@ -28,7 +28,6 @@ export const createBoardMaterial = ({
   const baseOptions = {
     side,
     flatShading: true,
-    transparent: isFaux || Boolean(topMap || bottomMap || sideMap),
     opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
     polygonOffset: true,
     polygonOffsetFactor: 1,
@@ -36,11 +35,16 @@ export const createBoardMaterial = ({
   }
 
   const createMaterial = (map?: THREE.Texture | null) => {
+    const commonProps = {
+      ...baseOptions,
+      transparent: isFaux || Boolean(map),
+      color: map ? "#ffffff" : color,
+      map: map || null,
+    }
+
     if (material === "fr4") {
       return new THREE.MeshPhysicalMaterial({
-        ...baseOptions,
-        color: map ? "#ffffff" : color,
-        map: map || null,
+        ...commonProps,
         metalness: 0.0,
         roughness: 0.8,
         specularIntensity: 0.2,
@@ -48,9 +52,7 @@ export const createBoardMaterial = ({
       })
     }
     return new THREE.MeshStandardMaterial({
-      ...baseOptions,
-      color: map ? "#ffffff" : color,
-      map: map || null,
+      ...commonProps,
       metalness: 0.1,
       roughness: 0.8,
     })
