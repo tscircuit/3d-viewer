@@ -208,7 +208,6 @@ export const CameraControllerProvider: React.FC<
             target: targetVector,
             up: [0, 0, 1],
           }
-        case "Custom":
         default:
           return null
       }

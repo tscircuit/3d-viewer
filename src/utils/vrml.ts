@@ -7,7 +7,7 @@ import { VRMLLoader } from "three-stdlib"
  * from three-stdlib which does not allow hyphens in identifiers.
  */
 export function sanitizeVrmlIdentifiers(text: string): string {
-  return text.replace(/(DEF|USE)\s+([^\s]+)/g, (match, type, name) => {
+  return text.replace(/(DEF|USE)\s+([^\s]+)/g, (_match, type, name) => {
     return `${type} ${name.replace(/-/g, "_")}`
   })
 }

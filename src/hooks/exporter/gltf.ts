@@ -1,7 +1,7 @@
 import type * as React from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import type * as THREE from "three"
 import { GLTFExporter, type GLTFExporterOptions } from "three-stdlib"
-import { useEffect, useState, useMemo, useCallback } from "react"
 
 type Options = Omit<
   GLTFExporterOptions,

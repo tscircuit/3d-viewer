@@ -11,6 +11,7 @@ export const CheckIcon = () => (
     strokeLinecap="round"
     strokeLinejoin="round"
   >
+    <title>Check</title>
     <path d="M20 6 9 17l-5-5" />
   </svg>
 )
@@ -33,6 +34,7 @@ export const ChevronRightIcon = ({ isOpen }: { isOpen: boolean }) => (
       opacity: 0.6,
     }}
   >
+    <title>Chevron Right</title>
     <path d="m9 18 6-6-6-6" />
   </svg>
 )
@@ -50,6 +52,7 @@ export const DotIcon = () => (
     strokeLinejoin="round"
     className="lucide lucide-dot-icon lucide-dot"
   >
+    <title>Dot</title>
     <circle cx="12.1" cy="12.1" r="4.5" fill="white" />
   </svg>
 )

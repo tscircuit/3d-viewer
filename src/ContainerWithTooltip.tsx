@@ -1,6 +1,7 @@
-import React, { useEffect } from "react"
+import type React from "react"
+import { useEffect } from "react"
+import type * as THREE from "three"
 import { useHover } from "./react-three/HoverContext"
-import * as THREE from "three"
 
 const ContainerWithTooltip = ({
   children,

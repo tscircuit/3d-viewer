@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
+import { loadVrml } from "src/utils/vrml"
 import type { Object3D } from "three"
 import { MTLLoader, OBJLoader } from "three-stdlib"
-import { loadVrml } from "src/utils/vrml"
 
 // Define the type for our cache
 interface CacheItem {

@@ -1,9 +1,9 @@
-import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import type {
   AnyCircuitElement,
   PcbCopperText,
   PcbRenderLayer,
 } from "circuit-json"
+import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import type { OutlineBounds } from "../../utils/outline-bounds"
 
 const setDrawerBounds = (

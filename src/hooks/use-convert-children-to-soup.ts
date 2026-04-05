@@ -1,6 +1,6 @@
 import { Circuit } from "@tscircuit/core"
-import { useMemo } from "react"
 import type { AnyCircuitElement } from "circuit-json"
+import { useMemo } from "react"
 
 export const useConvertChildrenToCircuitJson = (
   children?: any,

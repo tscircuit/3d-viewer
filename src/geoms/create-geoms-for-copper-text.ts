@@ -1,10 +1,10 @@
 import { vectorText } from "@jscad/modeling/src/text"
 import {
-  compose,
-  translate,
-  rotate,
   applyToPoint,
-  Matrix,
+  compose,
+  type Matrix,
+  rotate,
+  translate,
 } from "transformation-matrix"
 
 /**
@@ -74,7 +74,7 @@ export function createCopperTextGeoms(copperText: PcbCopperText) {
   })
 
   // Calculate text bounds and center point
-  const points = textOutlines.flatMap((o) => o)
+  const points = textOutlines.flat()
   const textBounds = {
     minX: Math.min(...points.map((p) => p[0])),
     maxX: Math.max(...points.map((p) => p[0])),

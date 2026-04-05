@@ -1,5 +1,5 @@
-import { useCallback, RefObject } from "react"
-import type { CameraPreset, CameraController } from "./cameraAnimation"
+import { type RefObject, useCallback } from "react"
+import type { CameraController, CameraPreset } from "./cameraAnimation"
 
 interface UseCameraPresetProps {
   setAutoRotate: (value: boolean) => void

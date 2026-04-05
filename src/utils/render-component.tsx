@@ -1,14 +1,12 @@
-import jscad from "@jscad/modeling"
-import type { AnyCircuitElement } from "circuit-json"
+import jscad, * as jscadModeling from "@jscad/modeling"
+import type { CadComponent } from "circuit-json"
 import {
   convertCSGToThreeGeom,
   getJscadModelForFootprint,
 } from "jscad-electronics/vanilla"
 import { executeJscadOperations } from "jscad-planner"
 import * as THREE from "three"
-import * as jscadModeling from "@jscad/modeling"
 import { load3DModel } from "./load-model"
-import type { CadComponent } from "circuit-json"
 
 export async function renderComponent(
   component: CadComponent,

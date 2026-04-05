@@ -64,7 +64,7 @@ export function JscadBoardTextures({
   }, [boardData])
 
   const textures = useMemo(() => {
-    if (!boardData || !boardData.width || !boardData.height) return null
+    if (!boardData?.width || !boardData.height) return null
     return createCombinedBoardTextures({
       circuitJson,
       boardData,
@@ -182,7 +182,9 @@ export function JscadBoardTextures({
         }
         mesh.geometry.dispose()
         if (Array.isArray(mesh.material)) {
-          mesh.material.forEach((material) => disposeTextureMaterial(material))
+          mesh.material.forEach((material) => {
+            disposeTextureMaterial(material)
+          })
         } else if (mesh.material instanceof THREE.Material) {
           disposeTextureMaterial(mesh.material)
         }

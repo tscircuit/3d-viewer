@@ -1,11 +1,11 @@
 import { useEffect, useMemo } from "react"
-import * as THREE from "three"
 import { useThree } from "src/react-three/ThreeContext"
 import {
-  getCadModelFitScale,
   type CadModelFitMode,
   type CadModelSize,
+  getCadModelFitScale,
 } from "src/utils/cad-model-fit"
+import * as THREE from "three"
 
 interface UseCadModelTransformGraphOptions {
   model: THREE.Object3D | null

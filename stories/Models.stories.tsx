@@ -1,5 +1,5 @@
-import { CadViewer } from "src/CadViewer"
 import { Circuit } from "@tscircuit/core"
+import { CadViewer } from "src/CadViewer"
 import myGlb from "./assets/myGlb.glb?url"
 import myGltfUrl from "./assets/myGltf.gltf?url"
 import myObjUrl from "./assets/myObj.obj?url"

@@ -1,14 +1,14 @@
-import type { PcbSilkscreenPath } from "circuit-json"
+import { colorize } from "@jscad/modeling/src/colors"
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import type { Vec2 } from "@jscad/modeling/src/maths/types"
-import { line } from "@jscad/modeling/src/primitives"
 import { expand } from "@jscad/modeling/src/operations/expansions"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { translate } from "@jscad/modeling/src/operations/transforms"
-import { colorize } from "@jscad/modeling/src/colors"
+import { line } from "@jscad/modeling/src/primitives"
+import type { PcbSilkscreenPath } from "circuit-json"
 import type { GeomContext } from "../GeomContext"
-import { M } from "./constants"
 import { coerceDimensionToMm, parseDimensionToMm } from "../utils/units"
+import { M } from "./constants"
 
 export function createSilkscreenPathGeom(
   sp: PcbSilkscreenPath,

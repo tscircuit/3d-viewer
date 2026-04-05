@@ -1,4 +1,3 @@
-import React from "react"
 import { CadViewer } from "src/CadViewer"
 import stepModelUrl from "./assets/MachineContactMedium.step?url"
 

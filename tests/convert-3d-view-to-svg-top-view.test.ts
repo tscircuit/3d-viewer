@@ -1,9 +1,9 @@
-import type { AnyCircuitElement } from "circuit-json"
 import { expect, test } from "bun:test"
-import { convertCircuitJsonTo3dSvg } from "../src/convert-circuit-json-to-3d-svg.ts"
-import circuitJson from "./assets/circuit.json"
-import { applyJsdomShim } from "../src/utils/jsdom-shim.ts"
+import type { AnyCircuitElement } from "circuit-json"
 import { JSDOM } from "jsdom"
+import { convertCircuitJsonTo3dSvg } from "../src/convert-circuit-json-to-3d-svg.ts"
+import { applyJsdomShim } from "../src/utils/jsdom-shim.ts"
+import circuitJson from "./assets/circuit.json"
 
 test("convert 3d view to svg of a single resistor component top view", async () => {
   const dom = new JSDOM()

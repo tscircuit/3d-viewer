@@ -1,4 +1,3 @@
-import React from "react"
 import "tscircuit"
 import { CadViewer } from "src/CadViewer"
 import myGlbUrl from "./assets/myGlb.glb?url"

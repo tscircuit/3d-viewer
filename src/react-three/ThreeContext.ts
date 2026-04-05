@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from "react"
-import * as THREE from "three"
+import type * as THREE from "three"
 
 export interface ThreeContextState {
   scene: THREE.Scene

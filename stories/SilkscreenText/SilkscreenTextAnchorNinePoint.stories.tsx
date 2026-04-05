@@ -1,5 +1,5 @@
-import { CadViewer } from "src/CadViewer"
 import type { AnyCircuitElement } from "circuit-json"
+import { CadViewer } from "src/CadViewer"
 
 const createTopLeftBottomRightCircuit = (): AnyCircuitElement[] => {
   return [

@@ -1,8 +1,8 @@
 import "tscircuit"
-import { CadViewer } from "src/CadViewer"
 import { Circuit } from "@tscircuit/core"
 import { getPlatformConfig } from "@tscircuit/eval"
 import { useEffect, useState } from "react"
+import { CadViewer } from "src/CadViewer"
 import stepModelUrl from "./assets/MachineContactMedium.step?url"
 
 const createCircuit = async (modelUrl: string) => {
@@ -40,6 +40,7 @@ const createManyStepCircuit = async (modelUrl: string) => {
     const yMm = row * pitchMm - offsetMm
     return (
       <chip
+        // biome-ignore lint/suspicious/noArrayIndexKey: Index is stable in this static grid story
         key={`U${index + 1}`}
         name={`U${index + 1}`}
         footprint="pinrow1"

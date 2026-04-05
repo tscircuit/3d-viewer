@@ -1,4 +1,4 @@
-import { test, expect } from "bun:test"
+import { expect, test } from "bun:test"
 import { JSDOM } from "jsdom"
 import { removeExistingCanvases } from "../src/react-three/remove-existing-canvases"
 

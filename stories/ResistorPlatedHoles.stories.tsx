@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react"
-import { CadViewer } from "src/CadViewer"
 import { Circuit } from "@tscircuit/core"
+import { useEffect, useState } from "react"
+import { CadViewer } from "src/CadViewer"
 
 const createCircuit = async () => {
   const circuit = new Circuit()

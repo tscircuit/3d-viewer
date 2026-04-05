@@ -1,9 +1,9 @@
-import { useState } from "react"
-import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
-import type React from "react"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
-import { CheckIcon, ChevronRightIcon } from "./Icons"
+import type React from "react"
+import { useState } from "react"
 import { zIndexMap } from "../../lib/utils/z-index-map"
+import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
+import { CheckIcon, ChevronRightIcon } from "./Icons"
 
 const itemStyles: React.CSSProperties = {
   padding: "6px 8px",

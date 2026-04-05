@@ -1,5 +1,5 @@
-import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import type { AnyCircuitElement, PcbRenderLayer } from "circuit-json"
+import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import type { OutlineBounds } from "../../utils/outline-bounds"
 import { coerceDimensionToMm, parseDimensionToMm } from "../../utils/units"
 

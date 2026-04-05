@@ -1,10 +1,6 @@
-import type {
-  CadComponent,
-  CadModelAxisDirection,
-  CadModelFormat,
-} from "circuit-json"
-import type { CadModelType, RenderedCadModelType } from "./get-cad-model-type"
+import type { CadComponent, CadModelAxisDirection } from "circuit-json"
 import * as THREE from "three"
+import type { CadModelType, RenderedCadModelType } from "./get-cad-model-type"
 
 export interface CoordinateTransformConfig {
   axisMapping?: { x?: string; y?: string; z?: string }
@@ -179,7 +175,7 @@ export const COORDINATE_TRANSFORMS = {
 } as const
 
 export function getDefaultModelTransform(
-  cad: CadComponent & {
+  _cad: CadComponent & {
     model_board_normal_direction?: CadModelAxisDirection
   },
   options: GetDefaultModelTransformOptions,

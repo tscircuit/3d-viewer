@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo } from "react"
+import type React from "react"
+import { useEffect, useMemo } from "react"
 import * as THREE from "three"
 import { OrbitControls as ThreeOrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
 import { useFrame, useThree } from "./ThreeContext"

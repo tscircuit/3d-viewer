@@ -243,7 +243,11 @@ try {
     isFauxBoard,
   } = useManifoldBoardBuilder(manifoldJSModule, circuitJson, visibility)
 
-  const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
+  const geometryMeshes = useMemo(
+    () => createGeometryMeshes(geoms, textures),
+    [geoms, textures],
+  )
+
   const textureMeshes = useMemo(
     () => createTextureMeshes(textures, boardData, pcbThickness, isFauxBoard),
     [textures, boardData, pcbThickness, isFauxBoard],

@@ -1,11 +1,11 @@
 import type * as React from "react"
 import { useCallback, useEffect, useRef } from "react"
 import * as THREE from "three"
-import { useFrame } from "../react-three/ThreeContext"
 import { useCameraController as useCameraControllerContext } from "../contexts/CameraControllerContext"
+import { useFrame } from "../react-three/ThreeContext"
 
 const easeInOutCubic = (t: number) =>
-  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+  t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2
 
 export type CameraPreset =
   | "Custom"

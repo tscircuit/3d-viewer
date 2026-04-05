@@ -1,7 +1,7 @@
-import { CadViewer } from "src/CadViewer"
 import { Circuit } from "@tscircuit/core"
-import { useEffect, useState } from "react"
 import { getPlatformConfig } from "@tscircuit/eval"
+import { useEffect, useState } from "react"
+import { CadViewer } from "src/CadViewer"
 
 const createCircuit = async () => {
   const circuit = new Circuit({
@@ -34,7 +34,7 @@ export const BottomLayer = () => {
   useEffect(() => {
     const renderCircuit = async () => {
       const json = await createCircuit()
-      const cadComp = json.find((e) => e.type === "cad_component")!
+      const _cadComp = json.find((e) => e.type === "cad_component")!
       // cadComp.model_unit_to_mm_scale_factor = 2.54
       setCircuitJson(json)
     }

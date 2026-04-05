@@ -1,8 +1,8 @@
 // Utility for creating SMT pad textures for PCB layers
 
 import { su } from "@tscircuit/circuit-json-util"
-import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import type { AnyCircuitElement, PcbBoard, PcbRenderLayer } from "circuit-json"
+import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import * as THREE from "three"
 import { calculateOutlineBounds } from "./outline-bounds"
 

@@ -1,13 +1,13 @@
-import type { PcbSilkscreenCircle } from "circuit-json"
+import { colorize } from "@jscad/modeling/src/colors"
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
-import { circle } from "@jscad/modeling/src/primitives"
+import { subtract } from "@jscad/modeling/src/operations/booleans"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { translate } from "@jscad/modeling/src/operations/transforms"
-import { colorize } from "@jscad/modeling/src/colors"
+import { circle } from "@jscad/modeling/src/primitives"
+import type { PcbSilkscreenCircle } from "circuit-json"
 import type { GeomContext } from "../GeomContext"
 import { coerceDimensionToMm, parseDimensionToMm } from "../utils/units"
 import { M } from "./constants"
-import { subtract } from "@jscad/modeling/src/operations/booleans"
 
 const CIRCLE_SEGMENTS = 64
 

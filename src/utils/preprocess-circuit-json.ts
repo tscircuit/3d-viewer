@@ -1,5 +1,5 @@
-import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
+import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import { createFauxBoard } from "./create-faux-board"
 
 /**

@@ -1,5 +1,5 @@
+import { type Bounds, getBoundsFromPoints } from "@tscircuit/math-utils"
 import type { PcbBoard } from "circuit-json"
-import { getBoundsFromPoints, type Bounds } from "@tscircuit/math-utils"
 
 export interface OutlineBounds extends Bounds {
   width: number

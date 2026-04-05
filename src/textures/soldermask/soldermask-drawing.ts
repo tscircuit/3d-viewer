@@ -1,10 +1,10 @@
-import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import type {
   AnyCircuitElement,
   PcbBoard,
   PcbCopperPour,
   PcbRenderLayer,
 } from "circuit-json"
+import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import {
   colors as defaultColors,
   soldermaskColors,

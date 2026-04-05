@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo } from "react"
-import * as THREE from "three"
+import type React from "react"
+import { useEffect, useMemo } from "react"
+import type * as THREE from "three"
 import { Text as TroikaText } from "troika-three-text"
 import { useThree } from "./ThreeContext"
 
