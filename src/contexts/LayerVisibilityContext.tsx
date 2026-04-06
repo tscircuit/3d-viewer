@@ -27,6 +27,28 @@ export interface LayerVisibilityState {
   pcbNotes: boolean
   backgroundStart: boolean
   backgroundEnd: boolean
+  /**
+   * Enable SVG-based high-quality texture rendering for PCB faces
+   * When enabled, uses resvg-wasm to generate raster textures from SVG
+   * @default false
+   */
+  svgTexturesEnabled: boolean
+  /**
+   * Resolution for SVG textures in pixels per mm
+   * Higher values give sharper textures but use more memory
+   * @default 150
+   */
+  svgTextureResolution: number
+  /**
+   * Enable SVG texture on top face
+   * @default true
+   */
+  svgTextureTop: boolean
+  /**
+   * Enable SVG texture on bottom face
+   * @default true
+   */
+  svgTextureBottom: boolean
 }
 
 interface LayerVisibilityContextType {
@@ -58,6 +80,10 @@ const defaultVisibility: LayerVisibilityState = {
   pcbNotes: false,
   backgroundStart: true,
   backgroundEnd: true,
+  svgTexturesEnabled: false,
+  svgTextureResolution: 150,
+  svgTextureTop: true,
+  svgTextureBottom: true,
 }
 
 const LayerVisibilityContext = createContext<

@@ -8,3 +8,19 @@ export { createSilkscreenTextureForLayer } from "./create-silkscreen-texture-for
 export { createSoldermaskTextureForLayer } from "./create-soldermask-texture-for-layer"
 export { createThroughHoleTextureForLayer } from "./create-through-hole-texture-for-layer"
 export { createTextureMeshes } from "./create-three-texture-meshes"
+
+// SVG-based texture generation (new)
+export type { SvgTextureOptions } from "./create-svg-based-texture"
+export {
+  createSvgBasedTexture,
+  createSvgBasedTextureAsync,
+} from "./create-svg-based-texture"
+export { createSvgFromCircuitJson } from "./svg-from-circuit-json"
+export {
+  convertSvgToPng,
+  convertSvgToRawPixels,
+  initResvgWasm,
+  isResvgInitialized,
+  preloadResvgWasm,
+  type ConvertSvgOptions,
+} from "./resvg-converter"
