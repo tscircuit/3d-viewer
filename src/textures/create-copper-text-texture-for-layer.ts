@@ -17,12 +17,14 @@ export function createCopperTextTextureForLayer({
   copperColor?: string
   traceTextureResolution?: number
 }): THREE.CanvasTexture | null {
-  const elements = (circuitJson.filter(
-    (element) =>
-      element.type === "pcb_copper_text" &&
-      "layer" in element &&
-      element.layer === layer,
-  ) as PcbCopperText[]).map((element) =>
+  const elements = (
+    circuitJson.filter(
+      (element) =>
+        element.type === "pcb_copper_text" &&
+        "layer" in element &&
+        element.layer === layer,
+    ) as PcbCopperText[]
+  ).map((element) =>
     layer === "bottom"
       ? { ...element, is_mirrored: element.is_mirrored ?? true }
       : element,
