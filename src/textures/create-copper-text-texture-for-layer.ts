@@ -4,18 +4,6 @@ import { TRACE_TEXTURE_RESOLUTION } from "../geoms/constants"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
 import { drawCopperTextLayer } from "./copper-text/copper-text-drawing"
 
-export function applyDefaultBottomCopperTextMirroring(
-  elements: PcbCopperText[],
-  layer: "top" | "bottom",
-): PcbCopperText[] {
-  if (layer !== "bottom") return elements
-
-  return elements.map((element) => ({
-    ...element,
-    is_mirrored: element.is_mirrored ?? true,
-  }))
-}
-
 export function createCopperTextTextureForLayer({
   layer,
   circuitJson,
@@ -29,14 +17,15 @@ export function createCopperTextTextureForLayer({
   copperColor?: string
   traceTextureResolution?: number
 }): THREE.CanvasTexture | null {
-  const elements = applyDefaultBottomCopperTextMirroring(
-    circuitJson.filter(
-      (element) =>
-        element.type === "pcb_copper_text" &&
-        "layer" in element &&
-        element.layer === layer,
-    ) as PcbCopperText[],
-    layer,
+  const elements = (circuitJson.filter(
+    (element) =>
+      element.type === "pcb_copper_text" &&
+      "layer" in element &&
+      element.layer === layer,
+  ) as PcbCopperText[]).map((element) =>
+    layer === "bottom"
+      ? { ...element, is_mirrored: element.is_mirrored ?? true }
+      : element,
   )
   if (elements.length === 0) return null
 
