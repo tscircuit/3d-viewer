@@ -119,6 +119,7 @@ export function createCopperPourTextureForLayer({
       drawSoldermask: false,
       drawSoldermaskTop: false,
       drawSoldermaskBottom: false,
+      showPcbNotes: false,
     })
     for (let i = 1; i < COPPER_POUR_OPACITY_COMPENSATION_PASSES; i += 1) {
       drawer.drawElements(pours, {
@@ -126,6 +127,7 @@ export function createCopperPourTextureForLayer({
         drawSoldermask: false,
         drawSoldermaskTop: false,
         drawSoldermaskBottom: false,
+        showPcbNotes: false,
       })
     }
   }

@@ -80,5 +80,6 @@ export const drawSilkscreenLayer = ({
   setDrawerBounds(drawer, bounds)
   drawer.drawElements(elements, {
     layers: [renderLayer],
+    showPcbNotes: false,
   })
 }
