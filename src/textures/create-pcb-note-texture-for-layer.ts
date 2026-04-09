@@ -8,10 +8,8 @@ const isPcbNoteElement = (
   element: AnyCircuitElement,
   layer: "top" | "bottom",
 ) => {
-  if (!(element.type as string).startsWith("pcb_note_")) return false
-  // If no layer property, show on both layers (e.g. core-generated pcb_note_rect)
-  if (!("layer" in element)) return true
-  return element.layer === layer
+  if (!("layer" in element) || element.layer !== layer) return false
+  return (element.type as string).startsWith("pcb_note_")
 }
 
 export function createPcbNoteTextureForLayer({
