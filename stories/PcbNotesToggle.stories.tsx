@@ -1,3 +1,4 @@
+import { Circuit } from "@tscircuit/core"
 import { CadViewer } from "src/CadViewer"
 
 const pcbNotesCircuit = [
@@ -131,6 +132,173 @@ const pcbNotesCircuit = [
 
 export const PcbNotesToggle = () => (
   <CadViewer circuitJson={pcbNotesCircuit as any} />
+)
+
+const createPcbNoteAllElementsCircuitTop = () => {
+  const circuit = new Circuit()
+
+  circuit.add(
+    <board width="20mm" height="12mm">
+      {/* pcb_note_rect — filled with corner radius */}
+      <pcbnoterect
+        pcbX={-5}
+        pcbY={3}
+        width="4mm"
+        height="2.5mm"
+        strokeWidth={0.1}
+        color="#00FFFF"
+      />
+      {/* pcb_note_rect — dashed stroke only */}
+      <pcbnoterect
+        pcbX={-5}
+        pcbY={-2}
+        width="5mm"
+        height="2mm"
+        strokeWidth={0.1}
+        color="#FF6B6B"
+      />
+      {/* pcb_note_text */}
+      <pcbnotetext
+        pcbX={1}
+        pcbY={0}
+        text="PCB NOTES"
+        fontSize="1.2mm"
+        color="#FFFFFF"
+      />
+      {/* pcb_note_line — solid */}
+      <pcbnoteline
+        x1={0}
+        y1={4}
+        x2={6}
+        y2={4}
+        strokeWidth={0.15}
+        color="#E67E22"
+      />
+      {/* pcb_note_line — dashed */}
+      <pcbnoteline
+        x1={0}
+        y1={2.5}
+        x2={6}
+        y2={2.5}
+        strokeWidth={0.15}
+        color="#3498DB"
+        isDashed
+      />
+      {/* pcb_note_path — triangle */}
+      <pcbnotepath
+        route={[
+          { x: 2, y: -2 },
+          { x: 5, y: -4 },
+          { x: 2, y: -4 },
+          { x: 2, y: -2 },
+        ]}
+        strokeWidth={0.12}
+        color="#9B59B6"
+      />
+      {/* pcb_note_dimension */}
+      <pcbnotedimension
+        from={{ x: 6, y: -1 }}
+        to={{ x: 6, y: -4 }}
+        fontSize="0.8mm"
+        arrowSize="0.5mm"
+        offset="1mm"
+        color="#2ECC71"
+      />
+    </board>,
+  )
+
+  return circuit.getCircuitJson()
+}
+
+export const PcbNoteAllElementsTop = () => (
+  <CadViewer circuitJson={createPcbNoteAllElementsCircuitTop() as any} />
+)
+
+const createPcbNoteAllElementsCircuitBottom = () => {
+  const circuit = new Circuit()
+
+  circuit.add(
+    <board width="20mm" height="12mm">
+      {/* pcb_note_rect — filled with corner radius */}
+      <pcbnoterect
+        pcbX={-5}
+        pcbY={3}
+        width="4mm"
+        height="2.5mm"
+        strokeWidth={0.1}
+        color="#00FFFF"
+        layer="bottom"
+      />
+      {/* pcb_note_rect — dashed stroke only */}
+      <pcbnoterect
+        pcbX={-5}
+        pcbY={-2}
+        width="5mm"
+        height="2mm"
+        strokeWidth={0.1}
+        color="#FF6B6B"
+        layer="bottom"
+      />
+      {/* pcb_note_text */}
+      <pcbnotetext
+        pcbX={1}
+        pcbY={0}
+        text="PCB NOTES"
+        fontSize="1.2mm"
+        color="#FFFFFF"
+        layer="bottom"
+      />
+      {/* pcb_note_line — solid */}
+      <pcbnoteline
+        x1={0}
+        y1={4}
+        x2={6}
+        y2={4}
+        strokeWidth={0.15}
+        color="#E67E22"
+        layer="bottom"
+      />
+      {/* pcb_note_line — dashed */}
+      <pcbnoteline
+        x1={0}
+        y1={2.5}
+        x2={6}
+        y2={2.5}
+        strokeWidth={0.15}
+        color="#3498DB"
+        isDashed
+        layer="bottom"
+      />
+      {/* pcb_note_path — triangle */}
+      <pcbnotepath
+        route={[
+          { x: 2, y: -2 },
+          { x: 5, y: -4 },
+          { x: 2, y: -4 },
+          { x: 2, y: -2 },
+        ]}
+        strokeWidth={0.12}
+        color="#9B59B6"
+        layer="bottom"
+      />
+      {/* pcb_note_dimension */}
+      <pcbnotedimension
+        from={{ x: 6, y: -1 }}
+        to={{ x: 6, y: -4 }}
+        fontSize="0.8mm"
+        arrowSize="0.5mm"
+        offset="1mm"
+        color="#2ECC71"
+        layer="bottom"
+      />
+    </board>,
+  )
+
+  return circuit.getCircuitJson()
+}
+
+export const PcbNoteAllElementsBottom = () => (
+  <CadViewer circuitJson={createPcbNoteAllElementsCircuitBottom() as any} />
 )
 
 export default {
