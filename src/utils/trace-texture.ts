@@ -1,13 +1,14 @@
 // Utility for creating trace textures for PCB layers
-import * as THREE from "three"
-import { CircuitToCanvasDrawer } from "circuit-to-canvas"
+
+import { getElementRenderLayers, su } from "@tscircuit/circuit-json-util"
 import type {
   AnyCircuitElement,
   PcbBoard,
   PcbPlatedHole,
   PcbRenderLayer,
 } from "circuit-json"
-import { getElementRenderLayers, su } from "@tscircuit/circuit-json-util"
+import { CircuitToCanvasDrawer } from "circuit-to-canvas"
+import * as THREE from "three"
 import { calculateOutlineBounds } from "./outline-bounds"
 import { splitTraceIntoLayerSegments } from "./trace-layer-segments"
 

@@ -1,17 +1,18 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.1.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.10/schema.json",
   "formatter": {
     "enabled": true,
     "indentStyle": "space"
   },
   "files": {
     "includes": [
-      "!**/cosmos-export/**",
-      "!dist/**",
-      "!**/package.json",
-      "!**/node_modules/**",
       "**",
-      "!**/stores/assets/**",
+      "!**/cosmos-export",
+      "!**/dist",
+      "!**/package.json",
+      "!**/node_modules",
+      "!**/vendor",
+      "!**/stores/assets",
       "!**/*.json"
     ]
   },
@@ -44,7 +45,7 @@
         "noNonNullAssertion": "off",
         "useNumberNamespace": "off",
         "useFilenamingConvention": {
-          "level": "error",
+          "level": "warn",
           "options": {
             "strictCase": true,
             "requireAscii": true,

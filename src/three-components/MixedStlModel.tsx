@@ -1,9 +1,9 @@
+import { useMemo } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { useGlobalObjLoader } from "src/hooks/use-global-obj-loader"
-import type { Euler, Vector3 } from "three"
-import { useMemo } from "react"
-import * as THREE from "three"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import type { Euler, Vector3 } from "three"
+import * as THREE from "three"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 export function MixedStlModel({

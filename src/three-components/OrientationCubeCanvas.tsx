@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react"
 import * as THREE from "three"
 import { Text as TroikaText } from "troika-three-text"
-import { useCameraController } from "../contexts/CameraControllerContext"
 import { zIndexMap } from "../../lib/utils/z-index-map"
+import { useCameraController } from "../contexts/CameraControllerContext"
 
 function computePointInFront(
   rotationVector: THREE.Euler,

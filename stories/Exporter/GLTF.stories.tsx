@@ -38,7 +38,9 @@ export const SaveButton = () => {
 
   return (
     <>
-      <button onClick={() => saveAs("pcb.glb")}>save</button>
+      <button type="button" onClick={() => saveAs("pcb.glb")}>
+        save
+      </button>
 
       <CadViewer ref={ref}>
         <board width="12mm" height="12mm">

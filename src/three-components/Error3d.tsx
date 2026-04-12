@@ -1,5 +1,5 @@
 import type { CadComponent } from "circuit-json"
-import { useState, useCallback, useEffect, useMemo } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { Html } from "src/react-three/Html"
 import { Text } from "src/react-three/Text"

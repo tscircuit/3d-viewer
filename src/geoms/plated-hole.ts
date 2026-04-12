@@ -1,23 +1,26 @@
-import type { PCBPlatedHole } from "circuit-json"
-import type { Geom3 } from "@jscad/modeling/src/geometries/types"
-import {
-  cuboid,
-  cylinder,
-  roundedRectangle,
-  polygon as jscadPolygon,
-} from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
+import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import {
   intersect,
   subtract,
   union,
 } from "@jscad/modeling/src/operations/booleans"
-import { scale } from "@jscad/modeling/src/operations/transforms"
-import { M, colors } from "./constants"
-import type { GeomContext } from "../GeomContext"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
-import { rotate, translate } from "@jscad/modeling/src/operations/transforms"
+import {
+  rotate,
+  scale,
+  translate,
+} from "@jscad/modeling/src/operations/transforms"
+import {
+  cuboid,
+  cylinder,
+  polygon as jscadPolygon,
+  roundedRectangle,
+} from "@jscad/modeling/src/primitives"
+import type { PCBPlatedHole } from "circuit-json"
+import type { GeomContext } from "../GeomContext"
 import { extractRectBorderRadius } from "../utils/rect-border-radius"
+import { colors, M } from "./constants"
 import { createHoleWithPolygonPadHoleGeom } from "./create-hole-with-polygon-pad"
 
 const PLATED_HOLE_DRILL_OVERREACH = 0.05
@@ -192,9 +195,9 @@ export const platedHole = (
       : plated_hole.outer_height || holeHeight + 0.2
 
     const holeRadius = holeHeight / 2
-    const outerRadius = outerPillHeight / 2
+    const _outerRadius = outerPillHeight / 2
     const rectLength = Math.abs(holeWidth - holeHeight)
-    const outerRectLength = Math.abs(outerPillWidth - outerPillHeight)
+    const _outerRectLength = Math.abs(outerPillWidth - outerPillHeight)
     const copperHeight = copperFillHeight
 
     const createPillSection = (

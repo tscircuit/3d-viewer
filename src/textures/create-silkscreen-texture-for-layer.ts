@@ -1,8 +1,8 @@
 import type { AnyCircuitElement, PcbBoard } from "circuit-json"
 import * as THREE from "three"
 import { TRACE_TEXTURE_RESOLUTION } from "../geoms/constants"
-import { getSoldermaskRenderBounds } from "./soldermask/soldermask-bounds"
 import { drawSilkscreenLayer } from "./silkscreen/silkscreen-drawing"
+import { getSoldermaskRenderBounds } from "./soldermask/soldermask-bounds"
 
 const isSilkscreenElement = (
   element: AnyCircuitElement,

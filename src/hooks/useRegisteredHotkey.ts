@@ -142,7 +142,9 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 const notifySubscribers = () => {
   const entries = Array.from(hotkeyRegistry.values())
-  subscribers.forEach((subscriber) => subscriber(entries))
+  subscribers.forEach((subscriber) => {
+    subscriber(entries)
+  })
 }
 
 const ensureListener = () => {

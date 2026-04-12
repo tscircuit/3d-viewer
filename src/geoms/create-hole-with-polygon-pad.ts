@@ -1,8 +1,8 @@
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
-import { cuboid, cylinder, ellipse } from "@jscad/modeling/src/primitives"
-import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
-import { translate, rotateZ } from "@jscad/modeling/src/operations/transforms"
 import { union } from "@jscad/modeling/src/operations/booleans"
+import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
+import { rotateZ, translate } from "@jscad/modeling/src/operations/transforms"
+import { cuboid, cylinder, ellipse } from "@jscad/modeling/src/primitives"
 import { M } from "./constants"
 
 const ELLIPSE_SEGMENTS = 64

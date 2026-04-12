@@ -1,11 +1,12 @@
-import React, {
+import type React from "react"
+import {
   createContext,
-  useContext,
-  useState,
   useCallback,
-  useMemo,
+  useContext,
   useEffect,
+  useMemo,
   useRef,
+  useState,
 } from "react"
 import * as THREE from "three"
 import { useThree } from "./ThreeContext"

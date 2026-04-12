@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from "react"
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import type { AnyCircuitElement } from "circuit-json"
-import { createSimplifiedBoardGeom } from "../soup-to-3d"
+import { useEffect, useRef, useState } from "react"
 import { BoardGeomBuilder } from "../BoardGeomBuilder"
+import { createSimplifiedBoardGeom } from "../soup-to-3d"
 
 export const useBoardGeomBuilder = (
   circuitJson: AnyCircuitElement[] | undefined,
@@ -31,7 +31,7 @@ export const useBoardGeomBuilder = (
     setBoardGeom(simplifiedGeom)
 
     // Start the detailed builder
-    const builder = new BoardGeomBuilder(circuitJson, (finalGeoms) => {})
+    const builder = new BoardGeomBuilder(circuitJson, (_finalGeoms) => {})
 
     const runBuilderSteps = async () => {
       if (isProcessingRef.current) return // Prevent concurrent runs

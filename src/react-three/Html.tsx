@@ -1,8 +1,9 @@
-import React, { useRef, useEffect, useState } from "react"
+import type React from "react"
+import { useEffect, useRef, useState } from "react"
 import ReactDOM from "react-dom"
 import * as THREE from "three"
-import { useFrame, useThree } from "./ThreeContext"
 import { zIndexMap } from "../../lib/utils/z-index-map"
+import { useFrame, useThree } from "./ThreeContext"
 
 interface HtmlProps {
   children: React.ReactNode

@@ -1,5 +1,5 @@
-import { CadViewer } from "src"
 import type { Meta, StoryObj } from "@storybook/react"
+import { CadViewer } from "src"
 
 const meta = {
   title: "Bugs/Circle Plated Hole",

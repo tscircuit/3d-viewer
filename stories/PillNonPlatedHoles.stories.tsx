@@ -1,5 +1,5 @@
-import { CadViewer } from "../src/CadViewer"
 import type { Meta, StoryObj } from "@storybook/react"
+import { CadViewer } from "../src/CadViewer"
 
 const meta = {
   title: "PCB/Pill Non-Plated Holes",

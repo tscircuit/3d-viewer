@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo } from "react"
+import type React from "react"
+import { useEffect, useMemo } from "react"
 import * as THREE from "three"
 import { useThree } from "./ThreeContext"
 

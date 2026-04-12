@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
 import {
   BufferGeometry,
   Color,
@@ -9,7 +10,6 @@ import {
 } from "three"
 import { GLTFExporter } from "three-stdlib"
 import { GltfModel } from "./GltfModel"
-import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
 
 type OcctImportParams = {
   linearUnit?: "millimeter" | "centimeter" | "meter" | "inch" | "foot"

@@ -1,6 +1,6 @@
 import "tscircuit"
+import type { CircuitJson } from "circuit-json"
 import { CadViewer } from "src/CadViewer"
-import { CircuitJson } from "circuit-json"
 
 const circuitJson = [
   {

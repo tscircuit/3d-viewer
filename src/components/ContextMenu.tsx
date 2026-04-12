@@ -1,12 +1,12 @@
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import type React from "react"
 import { useState } from "react"
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
-import { AppearanceMenu } from "./AppearanceMenu"
-import type { CameraPreset } from "../hooks/cameraAnimation"
-import { useCameraController } from "../contexts/CameraControllerContext"
-import packageJson from "../../package.json"
-import { CheckIcon, ChevronRightIcon, DotIcon } from "./Icons"
 import { zIndexMap } from "../../lib/utils/z-index-map"
+import packageJson from "../../package.json"
+import { useCameraController } from "../contexts/CameraControllerContext"
+import type { CameraPreset } from "../hooks/cameraAnimation"
+import { AppearanceMenu } from "./AppearanceMenu"
+import { CheckIcon, ChevronRightIcon, DotIcon } from "./Icons"
 
 interface ContextMenuProps {
   menuRef: React.RefObject<HTMLDivElement | null>

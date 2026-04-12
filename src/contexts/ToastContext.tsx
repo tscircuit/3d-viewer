@@ -1,5 +1,5 @@
-import React from "react"
-import { Toaster, toast as hotToast } from "react-hot-toast"
+import type React from "react"
+import { toast as hotToast, Toaster } from "react-hot-toast"
 
 export const useToast = () => {
   return {

@@ -1,13 +1,13 @@
-import type { AnyCircuitElement } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
+import type { AnyCircuitElement } from "circuit-json"
 import Debug from "debug"
 import * as THREE from "three"
 import { SVGRenderer } from "three/examples/jsm/renderers/SVGRenderer.js"
+import { colors } from "./geoms/constants"
 import { createBoardGeomFromCircuitJson } from "./soup-to-3d"
 import { createBoardMaterial } from "./utils/create-board-material"
 import { createGeometryFromPolygons } from "./utils/create-geometry-from-polygons"
 import { renderComponent } from "./utils/render-component"
-import { colors } from "./geoms/constants"
 
 interface CircuitToSvgOptions {
   width?: number
@@ -30,7 +30,7 @@ interface CircuitToSvgOptions {
   }
 }
 
-const log = Debug("tscircuit:3d-viewer:convert-circuit-json-to-3d-svg")
+const _log = Debug("tscircuit:3d-viewer:convert-circuit-json-to-3d-svg")
 
 export async function convertCircuitJsonTo3dSvg(
   circuitJson: AnyCircuitElement[],

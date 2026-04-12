@@ -1,5 +1,5 @@
-import type { AnyCircuitElement, PcbBoard, CadComponent } from "circuit-json"
-import { su, getBoundsOfPcbElements } from "@tscircuit/circuit-json-util"
+import { getBoundsOfPcbElements, su } from "@tscircuit/circuit-json-util"
+import type { AnyCircuitElement, PcbBoard } from "circuit-json"
 
 /**
  * Creates a faux PCB board when no board is defined but PCB elements exist

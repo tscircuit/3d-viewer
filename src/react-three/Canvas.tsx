@@ -1,18 +1,19 @@
-import React, {
-  useRef,
-  useEffect,
-  useState,
-  useCallback,
+import type React from "react"
+import {
   forwardRef,
+  useCallback,
+  useEffect,
   useImperativeHandle,
   useMemo,
+  useRef,
+  useState,
 } from "react"
 import * as THREE from "three"
-import { ThreeContext, ThreeContextState } from "./ThreeContext"
+import { useCameraController } from "../contexts/CameraControllerContext"
+import { configureRenderer } from "./configure-renderer"
 import { HoverProvider } from "./HoverContext"
 import { removeExistingCanvases } from "./remove-existing-canvases"
-import { configureRenderer } from "./configure-renderer"
-import { useCameraController } from "../contexts/CameraControllerContext"
+import { ThreeContext, type ThreeContextState } from "./ThreeContext"
 
 declare global {
   interface Window {
@@ -143,7 +144,9 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
       const animate = () => {
         const time = clock.getElapsedTime()
         const delta = clock.getDelta()
-        frameListeners.current.forEach((listener) => listener(time, delta))
+        frameListeners.current.forEach((listener) => {
+          listener(time, delta)
+        })
         renderer.render(scene, camera)
         animationFrameId = requestAnimationFrame(animate)
       }

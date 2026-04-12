@@ -1,10 +1,10 @@
-import React, {
+import type React from "react"
+import {
   createContext,
-  useContext,
-  useState,
-  useEffect,
   useCallback,
+  useContext,
   useMemo,
+  useState,
 } from "react"
 
 export interface LayerVisibilityState {

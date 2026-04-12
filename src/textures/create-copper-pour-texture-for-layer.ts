@@ -1,17 +1,18 @@
 // Utility for creating copper pour textures for PCB layers
-import * as THREE from "three"
+
 import type {
   AnyCircuitElement,
-  PcbCopperPour,
   PcbBoard,
+  PcbCopperPour,
   PcbRenderLayer,
 } from "circuit-json"
 import { CircuitToCanvasDrawer } from "circuit-to-canvas"
-import { calculateOutlineBounds } from "../utils/outline-bounds"
+import * as THREE from "three"
 import {
   colors as defaultColors,
   TRACE_TEXTURE_RESOLUTION,
 } from "../geoms/constants"
+import { calculateOutlineBounds } from "../utils/outline-bounds"
 
 const toRgb = (colorArr: number[]) => {
   const [r = 0, g = 0, b = 0] = colorArr

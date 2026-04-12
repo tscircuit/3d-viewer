@@ -11,9 +11,9 @@ import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { useBoardGeomBuilder } from "./hooks/useBoardGeomBuilder"
 import { usePcbThickness } from "./hooks/usePcbThickness"
 import { Error3d } from "./three-components/Error3d"
-import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
-import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { JscadBoardTextures } from "./three-components/JscadBoardTextures"
+import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
+import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 
 interface Props {
@@ -88,7 +88,7 @@ export const CadViewerJscad = forwardRef<
       try {
         const board = su(internalCircuitJson as any).pcb_board.list()[0]
         return !!board && board.pcb_board_id === "faux-board"
-      } catch (e) {
+      } catch (_e) {
         return false
       }
     }, [internalCircuitJson])
@@ -109,7 +109,7 @@ export const CadViewerJscad = forwardRef<
       if (!internalCircuitJson) return undefined
       try {
         const board = su(internalCircuitJson as any).pcb_board.list()[0]
-        if (!board || !board.center) return undefined
+        if (!board?.center) return undefined
         return { x: board.center.x, y: board.center.y }
       } catch (e) {
         console.error(e)
@@ -120,7 +120,7 @@ export const CadViewerJscad = forwardRef<
     const pcbThickness = usePcbThickness(internalCircuitJson)
 
     // Use the state `boardGeom` which starts simplified and gets updated
-    const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
+    const { stls: boardStls } = useStlsFromGeom(boardGeom)
 
     const cad_components = su(internalCircuitJson).cad_component.list()
 
@@ -137,7 +137,7 @@ export const CadViewerJscad = forwardRef<
       >
         {boardStls.map(({ stlData, color, layerType }, index) => (
           <VisibleSTLModel
-            key={`board-${index}`}
+            key={layerType || index}
             stlData={stlData}
             color={color}
             opacity={index === 0 ? (isFauxBoard ? 0.8 : 0.95) : 1}

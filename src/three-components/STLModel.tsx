@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useThree } from "src/react-three/ThreeContext"
 import * as THREE from "three"
 import { STLLoader } from "three-stdlib"
-import { useThree } from "src/react-three/ThreeContext"
 import type { LayerType } from "../hooks/use-stls-from-geom"
 
 export function STLModel({
@@ -66,7 +66,9 @@ export function STLModel({
       rootObject.remove(mesh)
       mesh.geometry.dispose()
       if (Array.isArray(mesh.material)) {
-        mesh.material.forEach((m) => m.dispose())
+        mesh.material.forEach((m) => {
+          m.dispose()
+        })
       } else {
         mesh.material.dispose()
       }

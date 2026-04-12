@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react"
-import * as THREE from "three"
-import { GLTFLoader } from "three-stdlib"
-import { useThree } from "src/react-three/ThreeContext"
+import { useEffect, useState } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { getDefaultEnvironmentMap } from "src/react-three/getDefaultEnvironmentMap"
+import { useThree } from "src/react-three/ThreeContext"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import * as THREE from "three"
+import { GLTFLoader } from "three-stdlib"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 const DEFAULT_ENV_MAP_INTENSITY = 1.25

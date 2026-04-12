@@ -1,5 +1,5 @@
-import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import type { AnyCircuitElement, PcbRenderLayer } from "circuit-json"
+import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import type { OutlineBounds } from "../../utils/outline-bounds"
 
 const FABRICATION_NOTE_COLOR = "rgb(255,243,204)"
