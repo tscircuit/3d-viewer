@@ -23,7 +23,6 @@ import type {
   PcbHole,
   PcbPanel,
   PcbPlatedHole,
-  PcbTrace,
   PcbVia,
 } from "circuit-json"
 import type { GeomContext } from "./GeomContext"
@@ -68,11 +67,9 @@ const buildStateOrder: BuilderState[] = [
 ]
 
 export class BoardGeomBuilder {
-  private circuitJson: AnyCircuitElement[]
   private board: PcbBoard
   private plated_holes: PcbPlatedHole[]
   private holes: PcbHole[]
-  private traces: PcbTrace[]
   private pcb_vias: PcbVia[]
   private pcb_cutouts: PcbCutout[]
 
@@ -88,35 +85,10 @@ export class BoardGeomBuilder {
   private onCompleteCallback?: (geoms: Geom3[]) => void
   private finalGeoms: Geom3[] = []
 
-  private getHoleToCut(x: number, y: number): { diameter: number } | null {
-    const epsilon = M / 10
-    for (const via of this.pcb_vias) {
-      if (
-        Math.abs(via.x - x) < epsilon &&
-        Math.abs(via.y - y) < epsilon &&
-        via.hole_diameter
-      ) {
-        return { diameter: via.hole_diameter }
-      }
-    }
-    for (const ph of this.plated_holes) {
-      if (ph.shape !== "circle") continue
-      if (
-        Math.abs(ph.x - x) < epsilon &&
-        Math.abs(ph.y - y) < epsilon &&
-        ph.hole_diameter
-      ) {
-        return { diameter: ph.hole_diameter }
-      }
-    }
-    return null
-  }
-
   constructor(
     circuitJson: AnyCircuitElement[],
     onComplete: (geoms: Geom3[]) => void,
   ) {
-    this.circuitJson = circuitJson
     this.onCompleteCallback = onComplete
 
     // Extract elements - check for panel first, then board
@@ -150,7 +122,6 @@ export class BoardGeomBuilder {
 
     this.plated_holes = su(circuitJson).pcb_plated_hole.list()
     this.holes = su(circuitJson).pcb_hole.list()
-    this.traces = su(circuitJson).pcb_trace.list()
     this.pcb_vias = su(circuitJson).pcb_via.list()
     this.pcb_cutouts = su(circuitJson).pcb_cutout.list()
 
@@ -589,7 +560,6 @@ export class BoardGeomBuilder {
     if (!this.boardGeom) return
 
     const holeDepth = this.ctx.pcbThickness * 1.5 // still cut through board fully
-    const copperInset = 0.02 // tiny offset for plated hole copper cut
 
     if (hole.hole_shape === "circle") {
       const cyGeom = cylinder({
