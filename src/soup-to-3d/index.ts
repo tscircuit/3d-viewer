@@ -3,10 +3,7 @@ import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import { cuboid } from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
-import {
-  colors,
-  boardMaterialColors,
-} from "../geoms/constants"
+import { colors, boardMaterialColors } from "../geoms/constants"
 import { createBoardGeomWithOutline } from "../geoms/create-board-with-outline"
 
 /**
