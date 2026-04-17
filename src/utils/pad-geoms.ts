@@ -1,6 +1,4 @@
-import {
-  clampRectBorderRadius,
-} from "./rect-border-radius"
+import { clampRectBorderRadius } from "./rect-border-radius"
 
 const RECT_PAD_SEGMENTS = 64
 
