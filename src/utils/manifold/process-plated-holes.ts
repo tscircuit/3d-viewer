@@ -3,8 +3,6 @@ import type { AnyCircuitElement, PcbPlatedHole } from "circuit-json"
 import type { Manifold, ManifoldToplevel } from "manifold-3d"
 import * as THREE from "three"
 import {
-  BOARD_SURFACE_OFFSET,
-  DEFAULT_SMT_PAD_THICKNESS,
   colors as defaultColors,
   M,
   MANIFOLD_Z_OFFSET,
