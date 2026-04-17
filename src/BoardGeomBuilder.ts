@@ -45,7 +45,6 @@ const BOARD_CLIP_XY_OUTSET = 0.05
 
 type BuilderState =
   | "initializing"
-  | "processing_copper_pours"
   | "processing_plated_holes"
   | "processing_holes"
   | "processing_cutouts"
@@ -55,8 +54,6 @@ type BuilderState =
 
 const buildStateOrder: BuilderState[] = [
   "initializing",
-  "processing_copper_pours",
-
   "processing_plated_holes",
   "processing_holes",
   "processing_cutouts",
@@ -76,7 +73,6 @@ export class BoardGeomBuilder {
   private boardGeom: Geom3 | null = null
   private platedHoleGeoms: Geom3[] = []
   private viaGeoms: Geom3[] = [] // Combined with platedHoleGeoms
-  private copperPourGeoms: Geom3[] = []
   private boardClipGeom: Geom3 | null = null
 
   private state: BuilderState = "initializing"
@@ -162,7 +158,7 @@ export class BoardGeomBuilder {
         center: [this.board.center.x, this.board.center.y, 0],
       })
     }
-    this.state = "processing_copper_pours"
+    this.state = "processing_plated_holes"
     this.currentIndex = 0
   }
 
@@ -197,12 +193,6 @@ export class BoardGeomBuilder {
           } else {
             this.goToNextState()
           }
-          break
-
-        case "processing_copper_pours":
-          // Copper pours are rendered as textures in the JSCAD viewer.
-          // SMT pads are also rendered as textures.
-          this.goToNextState()
           break
 
         case "processing_vias":
@@ -709,7 +699,6 @@ export class BoardGeomBuilder {
       this.boardGeom,
       ...this.platedHoleGeoms,
       ...this.viaGeoms,
-      ...this.copperPourGeoms,
     ]
 
     if (this.onCompleteCallback) {
