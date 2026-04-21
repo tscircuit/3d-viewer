@@ -1,17 +1,21 @@
 // Utility for creating copper pour textures for PCB layers
-import * as THREE from "three"
+
 import type {
   AnyCircuitElement,
-  PcbCopperPour,
   PcbBoard,
+  PcbCopperPour,
+  PcbHole,
+  PcbPlatedHole,
   PcbRenderLayer,
+  PcbVia,
 } from "circuit-json"
 import { CircuitToCanvasDrawer } from "circuit-to-canvas"
-import { calculateOutlineBounds } from "../utils/outline-bounds"
+import * as THREE from "three"
 import {
   colors as defaultColors,
   TRACE_TEXTURE_RESOLUTION,
 } from "../geoms/constants"
+import { calculateOutlineBounds } from "../utils/outline-bounds"
 
 const toRgb = (colorArr: number[]) => {
   const [r = 0, g = 0, b = 0] = colorArr
@@ -46,6 +50,16 @@ export function createCopperPourTextureForLayer({
 
   const poursOnLayer = copperPours.filter((p) => p.layer === layer)
   if (poursOnLayer.length === 0) return null
+  const holes = circuitJson.filter((e) => e.type === "pcb_hole") as PcbHole[]
+  const platedHolesOnLayer = circuitJson.filter((e): e is PcbPlatedHole => {
+    if (e.type !== "pcb_plated_hole") return false
+    return !Array.isArray(e.layers) || e.layers.includes(layer)
+  })
+  const viasOnLayer = circuitJson.filter((e): e is PcbVia => {
+    if (e.type !== "pcb_via") return false
+    return !Array.isArray(e.layers) || e.layers.includes(layer)
+  })
+  const drillElements = [...holes, ...platedHolesOnLayer, ...viasOnLayer]
 
   const boardOutlineBounds = calculateOutlineBounds(boardData)
   const canvas = document.createElement("canvas")
@@ -72,6 +86,7 @@ export function createCopperPourTextureForLayer({
 
   const setColorAndDraw = (pours: PcbCopperPour[], copperPourColor: string) => {
     if (pours.length === 0) return
+    const elementsToDraw = [...pours, ...drillElements]
 
     const drawer = new CircuitToCanvasDrawer(ctx)
     drawer.configure({
@@ -114,14 +129,14 @@ export function createCopperPourTextureForLayer({
       minY: boardOutlineBounds.minY,
       maxY: boardOutlineBounds.maxY,
     })
-    drawer.drawElements(pours, {
+    drawer.drawElements(elementsToDraw, {
       layers: [pcbRenderLayer],
       drawSoldermask: false,
       drawSoldermaskTop: false,
       drawSoldermaskBottom: false,
     })
     for (let i = 1; i < COPPER_POUR_OPACITY_COMPENSATION_PASSES; i += 1) {
-      drawer.drawElements(pours, {
+      drawer.drawElements(elementsToDraw, {
         layers: [pcbRenderLayer],
         drawSoldermask: false,
         drawSoldermaskTop: false,
