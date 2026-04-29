@@ -2,7 +2,14 @@
 
 import { su } from "@tscircuit/circuit-json-util"
 import { CircuitToCanvasDrawer } from "circuit-to-canvas"
-import type { AnyCircuitElement, PcbBoard, PcbRenderLayer } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  PcbBoard,
+  PcbHole,
+  PcbPlatedHole,
+  PcbRenderLayer,
+  PcbVia,
+} from "circuit-json"
 import * as THREE from "three"
 import { calculateOutlineBounds } from "./outline-bounds"
 
@@ -22,6 +29,16 @@ export function createPadTextureForLayer({
   const pcbSmtPads = su(circuitJson).pcb_smtpad.list()
   const smtPadsOnLayer = pcbSmtPads.filter((pad) => pad.layer === layer)
   if (smtPadsOnLayer.length === 0) return null
+  const holes = circuitJson.filter((e) => e.type === "pcb_hole") as PcbHole[]
+  const platedHolesOnLayer = circuitJson.filter((e): e is PcbPlatedHole => {
+    if (e.type !== "pcb_plated_hole") return false
+    return !Array.isArray(e.layers) || e.layers.includes(layer)
+  })
+  const viasOnLayer = circuitJson.filter((e): e is PcbVia => {
+    if (e.type !== "pcb_via") return false
+    return !Array.isArray(e.layers) || e.layers.includes(layer)
+  })
+  const drillElements = [...holes, ...platedHolesOnLayer, ...viasOnLayer]
 
   const pcbRenderLayer: PcbRenderLayer =
     layer === "top" ? "top_copper" : "bottom_copper"
@@ -82,7 +99,7 @@ export function createPadTextureForLayer({
     minY: boardOutlineBounds.minY,
     maxY: boardOutlineBounds.maxY,
   })
-  drawer.drawElements(smtPadsOnLayer, {
+  drawer.drawElements([...smtPadsOnLayer, ...drillElements], {
     layers: [pcbRenderLayer],
     drawSoldermask: false,
     drawSoldermaskTop: false,
