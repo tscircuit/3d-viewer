@@ -29,15 +29,13 @@ export function createPadTextureForLayer({
   const pcbSmtPads = su(circuitJson).pcb_smtpad.list()
   const smtPadsOnLayer = pcbSmtPads.filter((pad) => pad.layer === layer)
   if (smtPadsOnLayer.length === 0) return null
-  const holes = circuitJson.filter((e) => e.type === "pcb_hole") as PcbHole[]
-  const platedHolesOnLayer = circuitJson.filter((e): e is PcbPlatedHole => {
-    if (e.type !== "pcb_plated_hole") return false
-    return !Array.isArray(e.layers) || e.layers.includes(layer)
-  })
-  const viasOnLayer = circuitJson.filter((e): e is PcbVia => {
-    if (e.type !== "pcb_via") return false
-    return !Array.isArray(e.layers) || e.layers.includes(layer)
-  })
+  const holes = su(circuitJson).pcb_hole.list()
+  const platedHolesOnLayer = su(circuitJson)
+    .pcb_plated_hole.list()
+    .filter((e) => !Array.isArray(e.layers) || e.layers.includes(layer))
+  const viasOnLayer = su(circuitJson)
+    .pcb_via.list()
+    .filter((e) => !Array.isArray(e.layers) || e.layers.includes(layer))
   const drillElements = [...holes, ...platedHolesOnLayer, ...viasOnLayer]
 
   const pcbRenderLayer: PcbRenderLayer =
