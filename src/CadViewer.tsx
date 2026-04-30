@@ -1,4 +1,3 @@
-import type React from "react"
 import { useState, useCallback, useRef, useEffect } from "react"
 import * as THREE from "three"
 
@@ -27,7 +26,12 @@ import { ContextMenu } from "./components/ContextMenu"
 import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
 import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
 
-const CadViewerInner = (props: any) => {
+import type { Props as JscadProps } from "./CadViewerJscad"
+import type { CadViewerManifoldProps } from "./CadViewerManifold"
+
+export type CadViewerProps = JscadProps | CadViewerManifoldProps
+
+const CadViewerInner = (props: CadViewerProps) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [isKeyboardShortcutsDialogOpen, setIsKeyboardShortcutsDialogOpen] =
@@ -243,7 +247,7 @@ const CadViewerInner = (props: any) => {
     >
       {engine === "jscad" ? (
         <CadViewerJscad
-          {...props}
+          {...(props as JscadProps)}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           cameraType={cameraType}
           onUserInteraction={handleUserInteraction}
@@ -251,7 +255,7 @@ const CadViewerInner = (props: any) => {
         />
       ) : (
         <CadViewerManifold
-          {...props}
+          {...(props as CadViewerManifoldProps)}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           cameraType={cameraType}
           onUserInteraction={handleUserInteraction}
@@ -308,7 +312,7 @@ const CadViewerInner = (props: any) => {
   )
 }
 
-export const CadViewer = (props: any) => {
+export const CadViewer = (props: CadViewerProps) => {
   return (
     <CameraControllerProvider
       defaultTarget={DEFAULT_TARGET}
