@@ -94,17 +94,41 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
 
       const aspect =
         mountRef.current.clientWidth / mountRef.current.clientHeight
+
+      // Compute orthographic frustum half-height from the saved camera state so
+      // the view matches the perspective view when switching camera types.
+      // Fall back to a sensible default (half-height = 10) when no saved state
+      // exists yet (initial load always starts as perspective).
+      const getOrthoHalfHeight = (): number => {
+        if (savedCameraStateRef.current) {
+          const FOV_DEG = 75
+          const distance = savedCameraStateRef.current.position.length()
+          return distance * Math.tan((FOV_DEG * Math.PI) / 360)
+        }
+        // Derive from initial camera position prop when no saved state
+        if (cameraProps?.position) {
+          const [px, py, pz] = cameraProps.position as [number, number, number]
+          const distance = Math.hypot(px, py, pz)
+          const FOV_DEG = 75
+          return distance * Math.tan((FOV_DEG * Math.PI) / 360)
+        }
+        return 10
+      }
+
       const camera =
         cameraType === "perspective"
           ? new THREE.PerspectiveCamera(75, aspect, 0.1, 1000)
-          : new THREE.OrthographicCamera(
-              -10 * aspect,
-              10 * aspect,
-              10,
-              -10,
-              -1000,
-              1000,
-            )
+          : (() => {
+              const h = getOrthoHalfHeight()
+              return new THREE.OrthographicCamera(
+                -h * aspect,
+                h * aspect,
+                h,
+                -h,
+                -1000,
+                1000,
+              )
+            })()
 
       // Restore saved camera state if switching camera types, otherwise use props
       if (savedCameraStateRef.current) {
@@ -156,10 +180,11 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
           if (camera instanceof THREE.PerspectiveCamera) {
             camera.aspect = newAspect
           } else if (camera instanceof THREE.OrthographicCamera) {
-            camera.left = -10 * newAspect
-            camera.right = 10 * newAspect
-            camera.top = 10
-            camera.bottom = -10
+            // Preserve the current half-height (top) and only recalculate
+            // left/right to match the new aspect ratio
+            const h = camera.top
+            camera.left = -h * newAspect
+            camera.right = h * newAspect
           }
           camera.updateProjectionMatrix()
           renderer.setSize(
