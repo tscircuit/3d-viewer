@@ -28,8 +28,8 @@ export function useGlobalObjLoader(
 
   useEffect(() => {
     if (!url) return
-
-    const cacheKey = normalizeObjCacheUrl(url)
+    const fetchUrl = url
+    const cacheKey = normalizeObjCacheUrl(fetchUrl)
 
     const cache = window.TSCIRCUIT_OBJ_LOADER_CACHE
     let hasUrlChanged = false
@@ -37,13 +37,13 @@ export function useGlobalObjLoader(
     async function loadAndParseObj() {
       try {
         if (cacheKey.endsWith(".wrl")) {
-          return await loadVrml(url)
+          return await loadVrml(fetchUrl)
         }
 
-        const response = await fetch(url)
+        const response = await fetch(fetchUrl)
         if (!response.ok) {
           throw new Error(
-            `Failed to fetch "${url}": ${response.status} ${response.statusText}`,
+            `Failed to fetch "${fetchUrl}": ${response.status} ${response.statusText}`,
           )
         }
         const text = await response.text()
