@@ -18,3 +18,17 @@ test("keeps relative model URLs relative when building cache keys", () => {
     ),
   ).toBe("/easyeda-models/abc?pn=C1")
 })
+
+test("keeps host identity for protocol-relative model URLs", () => {
+  expect(
+    getGlobalObjLoaderCacheKey(
+      "//cdn-a.example.com/model.obj?cachebust_origin=http%3A%2F%2Flocalhost%3A3020",
+    ),
+  ).toBe("https://cdn-a.example.com/model.obj")
+
+  expect(
+    getGlobalObjLoaderCacheKey(
+      "//cdn-b.example.com/model.obj?cachebust_origin=http%3A%2F%2Flocalhost%3A3020",
+    ),
+  ).toBe("https://cdn-b.example.com/model.obj")
+})

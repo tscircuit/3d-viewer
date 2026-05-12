@@ -22,11 +22,8 @@ if (typeof window !== "undefined" && !window.TSCIRCUIT_OBJ_LOADER_CACHE) {
 
 export function getGlobalObjLoaderCacheKey(url: string) {
   try {
-    const isAbsoluteUrl = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(url)
-    const parsedUrl = new URL(
-      url,
-      isAbsoluteUrl ? undefined : "https://tscircuit.local",
-    )
+    const isAbsoluteUrl = /^(?:[a-zA-Z][a-zA-Z\d+\-.]*:|\/\/)/.test(url)
+    const parsedUrl = new URL(url, "https://tscircuit.local")
     parsedUrl.searchParams.delete("cachebust_origin")
 
     if (isAbsoluteUrl) {
