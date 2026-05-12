@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
+import { loadVrml } from "src/utils/vrml"
 import type { Object3D } from "three"
 import { MTLLoader, OBJLoader } from "three-stdlib"
-import { loadVrml } from "src/utils/vrml"
 
 // Define the type for our cache
 interface CacheItem {
@@ -20,6 +20,27 @@ if (typeof window !== "undefined" && !window.TSCIRCUIT_OBJ_LOADER_CACHE) {
   window.TSCIRCUIT_OBJ_LOADER_CACHE = new Map<string, CacheItem>()
 }
 
+export function getGlobalObjLoaderCacheKey(url: string) {
+  try {
+    const isAbsoluteUrl = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(url)
+    const parsedUrl = new URL(
+      url,
+      isAbsoluteUrl ? undefined : "https://tscircuit.local",
+    )
+    parsedUrl.searchParams.delete("cachebust_origin")
+
+    if (isAbsoluteUrl) {
+      return parsedUrl.toString()
+    }
+
+    return `${parsedUrl.pathname}${parsedUrl.search}${parsedUrl.hash}`
+  } catch {
+    return url
+      .replace(/([?&])cachebust_origin=[^&]*&?/, "$1")
+      .replace(/[?&]$/, "")
+  }
+}
+
 export function useGlobalObjLoader(
   url: string | null,
 ): Object3D | null | Error {
@@ -28,21 +49,22 @@ export function useGlobalObjLoader(
   useEffect(() => {
     if (!url) return
 
-    const cleanUrl = url.replace(/&cachebust_origin=$/, "")
+    const modelUrl = url
+    const cacheKey = getGlobalObjLoaderCacheKey(modelUrl)
 
     const cache = window.TSCIRCUIT_OBJ_LOADER_CACHE
     let hasUrlChanged = false
 
     async function loadAndParseObj() {
       try {
-        if (cleanUrl.endsWith(".wrl")) {
-          return await loadVrml(cleanUrl)
+        if (modelUrl.endsWith(".wrl")) {
+          return await loadVrml(modelUrl)
         }
 
-        const response = await fetch(cleanUrl)
+        const response = await fetch(modelUrl)
         if (!response.ok) {
           throw new Error(
-            `Failed to fetch "${cleanUrl}": ${response.status} ${response.statusText}`,
+            `Failed to fetch "${modelUrl}": ${response.status} ${response.statusText}`,
           )
         }
         const text = await response.text()
@@ -79,8 +101,8 @@ export function useGlobalObjLoader(
     }
 
     function loadUrl() {
-      if (cache.has(cleanUrl)) {
-        const cacheItem = cache.get(cleanUrl)!
+      if (cache.has(cacheKey)) {
+        const cacheItem = cache.get(cacheKey)!
         if (cacheItem.result) {
           // If we have a result, clone it
           return Promise.resolve(cacheItem.result.clone())
@@ -97,10 +119,10 @@ export function useGlobalObjLoader(
           // If the result is an Error, return it
           return result
         }
-        cache.set(cleanUrl, { ...cache.get(cleanUrl)!, result })
+        cache.set(cacheKey, { ...cache.get(cacheKey)!, result })
         return result
       })
-      cache.set(cleanUrl, { promise, result: null })
+      cache.set(cacheKey, { promise, result: null })
       return promise
     }
 
