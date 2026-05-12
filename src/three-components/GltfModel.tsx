@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react"
 import * as THREE from "three"
-import { GLTFLoader } from "three-stdlib"
 import { useThree } from "src/react-three/ThreeContext"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { getDefaultEnvironmentMap } from "src/react-three/getDefaultEnvironmentMap"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import { loadCachedGltfModel } from "src/utils/load-cached-gltf-model"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 const DEFAULT_ENV_MAP_INTENSITY = 1.25
@@ -55,46 +55,38 @@ export function GltfModel({
 
   useEffect(() => {
     if (!gltfUrl) return
-    const loader = new GLTFLoader()
     let isMounted = true
-    loader.load(
-      gltfUrl,
-      (gltf) => {
-        if (!isMounted) return
-        const scene = gltf.scene
 
-        scene.traverse((child) => {
-          if (child instanceof THREE.Mesh && child.material) {
-            const setMaterialTransparency = (mat: THREE.Material) => {
-              mat.transparent = isTranslucent
-              mat.opacity = isTranslucent ? 0.5 : 1
-              mat.depthWrite = !isTranslucent
-              mat.needsUpdate = true
-            }
+    loadCachedGltfModel(gltfUrl).then((loadedModel) => {
+      if (!isMounted) return
 
-            if (Array.isArray(child.material)) {
-              child.material.forEach(setMaterialTransparency)
-            } else {
-              setMaterialTransparency(child.material)
-            }
+      if (loadedModel instanceof Error) {
+        setLoadError(loadedModel)
+        return
+      }
 
-            child.renderOrder = isTranslucent ? 2 : 1
+      loadedModel.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.material) {
+          const setMaterialTransparency = (mat: THREE.Material) => {
+            mat.transparent = isTranslucent
+            mat.opacity = isTranslucent ? 0.5 : 1
+            mat.depthWrite = !isTranslucent
+            mat.needsUpdate = true
           }
-        })
 
-        setModel(scene)
-      },
-      undefined,
-      (error) => {
-        if (!isMounted) return
-        console.error(`An error happened loading ${gltfUrl}`, error)
-        const err =
-          error instanceof Error
-            ? error
-            : new Error(`Failed to load glTF model from ${gltfUrl}`)
-        setLoadError(err)
-      },
-    )
+          if (Array.isArray(child.material)) {
+            child.material.forEach(setMaterialTransparency)
+          } else {
+            setMaterialTransparency(child.material)
+          }
+
+          child.renderOrder = isTranslucent ? 2 : 1
+        }
+      })
+
+      setModel(loadedModel)
+    })
+
     return () => {
       isMounted = false
     }
