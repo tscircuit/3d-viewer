@@ -11,6 +11,24 @@ test("normalizes cachebust_origin out of OBJ loader cache keys", () => {
   )
 })
 
+test("normalizes cachebust out of OBJ loader cache keys", () => {
+  expect(
+    getGlobalObjLoaderCacheKey(
+      "https://modelcdn.tscircuit.com/easyeda_models/download?uuid=abc&pn=C1&cachebust=123",
+    ),
+  ).toBe(
+    "https://modelcdn.tscircuit.com/easyeda_models/download?uuid=abc&pn=C1",
+  )
+})
+
+test("normalizes multiple volatile cache params while preserving stable params", () => {
+  expect(
+    getGlobalObjLoaderCacheKey(
+      "/easyeda-models/abc?cachebust=123&pn=C1&cachebust_origin=http%3A%2F%2Flocalhost%3A3020&uuid=abc",
+    ),
+  ).toBe("/easyeda-models/abc?pn=C1&uuid=abc")
+})
+
 test("keeps relative model URLs relative when building cache keys", () => {
   expect(
     getGlobalObjLoaderCacheKey(

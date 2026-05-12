@@ -24,6 +24,7 @@ export function getGlobalObjLoaderCacheKey(url: string) {
   try {
     const isAbsoluteUrl = /^(?:[a-zA-Z][a-zA-Z\d+\-.]*:|\/\/)/.test(url)
     const parsedUrl = new URL(url, "https://tscircuit.local")
+    parsedUrl.searchParams.delete("cachebust")
     parsedUrl.searchParams.delete("cachebust_origin")
 
     if (isAbsoluteUrl) {
@@ -33,7 +34,7 @@ export function getGlobalObjLoaderCacheKey(url: string) {
     return `${parsedUrl.pathname}${parsedUrl.search}${parsedUrl.hash}`
   } catch {
     return url
-      .replace(/([?&])cachebust_origin=[^&]*&?/, "$1")
+      .replace(/([?&])cachebust(?:_origin)?=[^&]*&?/g, "$1")
       .replace(/[?&]$/, "")
   }
 }
