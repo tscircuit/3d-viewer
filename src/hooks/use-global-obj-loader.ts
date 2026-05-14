@@ -28,7 +28,7 @@ export function useGlobalObjLoader(
   useEffect(() => {
     if (!url) return
 
-    const cleanUrl = url.replace(/&cachebust_origin=$/, "")
+    const cleanUrl = normalizeObjLoaderCacheUrl(url)
 
     const cache = window.TSCIRCUIT_OBJ_LOADER_CACHE
     let hasUrlChanged = false
@@ -119,4 +119,33 @@ export function useGlobalObjLoader(
   }, [url])
 
   return obj
+}
+
+export function normalizeObjLoaderCacheUrl(url: string): string {
+  try {
+    const hasProtocol = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(url)
+    const parsedUrl = new URL(
+      url,
+      globalThis.location?.href ?? "https://tscircuit.local",
+    )
+    parsedUrl.searchParams.delete("cachebust_origin")
+
+    const sortedParams = new URLSearchParams(
+      Array.from(parsedUrl.searchParams.entries()).sort(([a], [b]) =>
+        a.localeCompare(b),
+      ),
+    )
+    parsedUrl.search = sortedParams.toString()
+
+    if (!hasProtocol) {
+      return `${parsedUrl.pathname}${parsedUrl.search}${parsedUrl.hash}`
+    }
+
+    return parsedUrl.toString()
+  } catch {
+    return url
+      .replace(/([?&])cachebust_origin=[^&]*/g, "$1")
+      .replace(/[?&]$/, "")
+      .replace("?&", "?")
+  }
 }
