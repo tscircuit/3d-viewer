@@ -9,7 +9,7 @@ const modelLoadCache = new Map<string, Promise<THREE.Object3D | null>>()
 type ModelExtension = "stl" | "obj" | "wrl" | "gltf" | "glb"
 
 function isAbsoluteUrl(url: string) {
-  return /^[a-z][a-z\d+\-.]*:/i.test(url)
+  return /^(?:[a-z][a-z\d+\-.]*:)?\/\//i.test(url)
 }
 
 export function getModelExtension(url: string): string | null {

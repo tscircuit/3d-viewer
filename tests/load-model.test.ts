@@ -30,6 +30,15 @@ test("normalizes cachebust_origin without dropping meaningful query params", () 
   )
 })
 
+test("keeps protocol-relative model hosts in cache keys", () => {
+  expect(normalizeModelCacheKey("//cdn-a.example.com/models/chip.glb")).toBe(
+    "https://cdn-a.example.com/models/chip.glb",
+  )
+  expect(normalizeModelCacheKey("//cdn-b.example.com/models/chip.glb")).toBe(
+    "https://cdn-b.example.com/models/chip.glb",
+  )
+})
+
 test("clones model materials so cached templates are not mutated per instance", () => {
   const material = new THREE.MeshStandardMaterial({ color: "red" })
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), material)
