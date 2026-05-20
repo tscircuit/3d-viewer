@@ -1,7 +1,11 @@
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
+import {
+  cloneObject3DWithIndependentMaterials,
+  normalizeModelCacheKey,
+} from "src/utils/load-model"
+import { loadVrml } from "src/utils/vrml"
 import type { Object3D } from "three"
 import { MTLLoader, OBJLoader } from "three-stdlib"
-import { loadVrml } from "src/utils/vrml"
 
 // Define the type for our cache
 interface CacheItem {
@@ -28,7 +32,7 @@ export function useGlobalObjLoader(
   useEffect(() => {
     if (!url) return
 
-    const cleanUrl = url.replace(/&cachebust_origin=$/, "")
+    const cleanUrl = normalizeModelCacheKey(url)
 
     const cache = window.TSCIRCUIT_OBJ_LOADER_CACHE
     let hasUrlChanged = false
@@ -83,18 +87,20 @@ export function useGlobalObjLoader(
         const cacheItem = cache.get(cleanUrl)!
         if (cacheItem.result) {
           // If we have a result, clone it
-          return Promise.resolve(cacheItem.result.clone())
+          return Promise.resolve(
+            cloneObject3DWithIndependentMaterials(cacheItem.result),
+          )
         }
         // If we're still loading, return the existing promise
         return cacheItem.promise.then((result) => {
           if (result instanceof Error) return result
-          return result.clone()
+          return cloneObject3DWithIndependentMaterials(result)
         })
       }
       // If it's not in the cache, create a new promise and cache it
       const promise = loadAndParseObj().then((result) => {
         if (result instanceof Error) {
-          // If the result is an Error, return it
+          cache.delete(cleanUrl)
           return result
         }
         cache.set(cleanUrl, { ...cache.get(cleanUrl)!, result })
