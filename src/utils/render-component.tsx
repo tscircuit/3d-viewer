@@ -7,7 +7,7 @@ import {
 import { executeJscadOperations } from "jscad-planner"
 import * as THREE from "three"
 import * as jscadModeling from "@jscad/modeling"
-import { load3DModel } from "./load-model"
+import { load3DModel, type ModelFormat } from "./load-model"
 import type { CadComponent } from "circuit-json"
 
 export async function renderComponent(
@@ -15,14 +15,20 @@ export async function renderComponent(
   scene: THREE.Scene,
 ) {
   // Handle STL/OBJ models first
-  const url =
-    component.model_obj_url ??
-    component.model_wrl_url ??
-    component.model_stl_url ??
-    component.model_glb_url ??
-    component.model_gltf_url
-  if (url) {
-    const model = await load3DModel(url)
+  const modelSource: { url: string; format: ModelFormat } | null =
+    component.model_obj_url
+      ? { url: component.model_obj_url, format: "obj" }
+      : component.model_wrl_url
+        ? { url: component.model_wrl_url, format: "wrl" }
+        : component.model_stl_url
+          ? { url: component.model_stl_url, format: "stl" }
+          : component.model_glb_url
+            ? { url: component.model_glb_url, format: "glb" }
+            : component.model_gltf_url
+              ? { url: component.model_gltf_url, format: "gltf" }
+              : null
+  if (modelSource) {
+    const model = await load3DModel(modelSource.url, modelSource.format)
     if (model) {
       if (component.position) {
         model.position.set(
