@@ -1,12 +1,13 @@
+import * as jscadModeling from "@jscad/modeling"
 import {
   convertCSGToThreeGeom,
   getJscadModelForFootprint,
 } from "jscad-electronics/vanilla"
-import { useMemo, useEffect } from "react"
-import * as jscadModeling from "@jscad/modeling"
-import * as THREE from "three"
-import { useThree } from "src/react-three/ThreeContext"
+import { useEffect, useMemo } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
+import { useThree } from "src/react-three/ThreeContext"
+import { disposeThreeObjectResources } from "src/utils/dispose-three-object-resources"
+import * as THREE from "three"
 
 export const FootprinterModel = ({
   positionOffset,
@@ -64,6 +65,7 @@ export const FootprinterModel = ({
     rootObject.add(group)
     return () => {
       rootObject.remove(group)
+      disposeThreeObjectResources(group)
     }
   }, [rootObject, group])
 
