@@ -71,10 +71,16 @@ export async function loadCachedGltfScene(
   }
 
   const loader = new GLTFLoader()
-  const promise = loader.loadAsync(gltfUrl).then((gltf) => {
-    cache.set(cacheKey, { promise, scene: gltf.scene })
-    return gltf.scene
-  })
+  const promise = loader
+    .loadAsync(gltfUrl)
+    .then((gltf) => {
+      cache.set(cacheKey, { promise, scene: gltf.scene })
+      return gltf.scene
+    })
+    .catch((error) => {
+      cache.delete(cacheKey)
+      throw error
+    })
 
   cache.set(cacheKey, { promise, scene: null })
 
