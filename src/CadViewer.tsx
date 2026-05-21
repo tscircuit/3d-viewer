@@ -5,6 +5,14 @@ import * as THREE from "three"
 // Constants for camera initialization - defined once, reused across renders
 const DEFAULT_TARGET = new THREE.Vector3(0, 0, 0)
 const INITIAL_CAMERA_POSITION = [5, -5, 5] as const
+
+const readStoredCameraType = (): "perspective" | "orthographic" | undefined => {
+  if (typeof window === "undefined") return undefined
+  const stored = window.localStorage.getItem("cadViewerCameraType")
+  return stored === "orthographic" || stored === "perspective"
+    ? stored
+    : undefined
+}
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
 import { useContextMenu } from "./hooks/useContextMenu"
@@ -28,7 +36,10 @@ import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
 import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
 
 const CadViewerInner = (props: any) => {
-  const [engine, setEngine] = useState<"jscad" | "manifold">("manifold")
+  const [engine, setEngine] = useState<"jscad" | "manifold">(() => {
+    const stored = window.localStorage.getItem("cadViewerEngine")
+    return stored === "jscad" || stored === "manifold" ? stored : "manifold"
+  })
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [isKeyboardShortcutsDialogOpen, setIsKeyboardShortcutsDialogOpen] =
     useState(false)
@@ -188,13 +199,6 @@ const CadViewerInner = (props: any) => {
   }, [])
 
   useEffect(() => {
-    const stored = window.localStorage.getItem("cadViewerEngine")
-    if (stored === "jscad" || stored === "manifold") {
-      setEngine(stored)
-    }
-  }, [])
-
-  useEffect(() => {
     window.localStorage.setItem("cadViewerEngine", engine)
   }, [engine])
 
@@ -208,14 +212,6 @@ const CadViewerInner = (props: any) => {
       String(autoRotateUserToggled),
     )
   }, [autoRotateUserToggled])
-
-  // Initialize camera type from localStorage
-  useEffect(() => {
-    const stored = window.localStorage.getItem("cadViewerCameraType")
-    if (stored === "orthographic" || stored === "perspective") {
-      setCameraType(stored)
-    }
-  }, [setCameraType])
 
   // Sync camera type to localStorage
   useEffect(() => {
@@ -313,6 +309,7 @@ export const CadViewer = (props: any) => {
     <CameraControllerProvider
       defaultTarget={DEFAULT_TARGET}
       initialCameraPosition={INITIAL_CAMERA_POSITION}
+      initialCameraType={readStoredCameraType()}
     >
       <LayerVisibilityProvider>
         <ToastProvider>
