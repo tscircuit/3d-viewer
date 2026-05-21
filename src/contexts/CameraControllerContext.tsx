@@ -91,16 +91,17 @@ interface CameraControllerProviderProps {
   children: React.ReactNode
   defaultTarget: THREE.Vector3
   initialCameraPosition?: readonly [number, number, number]
+  initialCameraType?: "perspective" | "orthographic"
 }
 
 export const CameraControllerProvider: React.FC<
   CameraControllerProviderProps
-> = ({ children, defaultTarget, initialCameraPosition }) => {
+> = ({ children, defaultTarget, initialCameraPosition, initialCameraType }) => {
   const controlsRef = useRef<ThreeOrbitControls | null>(null)
   const mainCameraRef = useRef<THREE.Camera | null>(null)
   const [controller, setController] = useState<CameraController | null>(null)
   const [cameraType, setCameraType] = useState<"perspective" | "orthographic">(
-    "perspective",
+    initialCameraType ?? "perspective",
   )
   const [cameraPosition, setCameraPosition] = useState<
     readonly [number, number, number] | null
