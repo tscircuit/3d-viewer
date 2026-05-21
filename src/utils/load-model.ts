@@ -2,9 +2,17 @@ import * as THREE from "three"
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js"
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js"
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js"
+import { globalModelLoader } from "./cached-model-loader"
 import { loadVrml } from "./vrml"
 
 export async function load3DModel(url: string): Promise<THREE.Object3D | null> {
+  const model = await globalModelLoader.load(url, load3DModelUncached)
+  return model instanceof Error ? null : model
+}
+
+async function load3DModelUncached(
+  url: string,
+): Promise<THREE.Object3D | Error> {
   if (url.endsWith(".stl")) {
     const loader = new STLLoader()
     const geometry = await loader.loadAsync(url)
@@ -32,5 +40,5 @@ export async function load3DModel(url: string): Promise<THREE.Object3D | null> {
   }
 
   console.error("Unsupported file format or failed to load 3D model.")
-  return null
+  return new Error(`Unsupported file format or failed to load 3D model: ${url}`)
 }
