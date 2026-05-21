@@ -1,9 +1,10 @@
 import type { CadComponent } from "circuit-json"
-import { useState, useCallback, useEffect, useMemo } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { Html } from "src/react-three/Html"
 import { Text } from "src/react-three/Text"
 import { useThree } from "src/react-three/ThreeContext"
+import { disposeErrorFallbackMesh } from "src/utils/dispose-error-fallback-mesh"
 import * as THREE from "three"
 
 export const Error3d = ({
@@ -125,6 +126,7 @@ const ErrorBox = ({ parent }: { parent: THREE.Object3D }) => {
     parent.add(mesh)
     return () => {
       parent.remove(mesh)
+      disposeErrorFallbackMesh(mesh)
     }
   }, [parent, mesh])
 
