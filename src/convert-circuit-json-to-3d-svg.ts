@@ -1,13 +1,13 @@
-import type { AnyCircuitElement } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
-import Debug from "debug"
+import type { AnyCircuitElement } from "circuit-json"
 import * as THREE from "three"
 import { SVGRenderer } from "three/examples/jsm/renderers/SVGRenderer.js"
+import { colors } from "./geoms/constants"
 import { createBoardGeomFromCircuitJson } from "./soup-to-3d"
 import { createBoardMaterial } from "./utils/create-board-material"
 import { createGeometryFromPolygons } from "./utils/create-geometry-from-polygons"
+import { disposeObject3D } from "./utils/dispose-object3d"
 import { renderComponent } from "./utils/render-component"
-import { colors } from "./geoms/constants"
 
 interface CircuitToSvgOptions {
   width?: number
@@ -29,8 +29,6 @@ interface CircuitToSvgOptions {
     }
   }
 }
-
-const log = Debug("tscircuit:3d-viewer:convert-circuit-json-to-3d-svg")
 
 export async function convertCircuitJsonTo3dSvg(
   circuitJson: AnyCircuitElement[],
@@ -87,82 +85,85 @@ export async function convertCircuitJsonTo3dSvg(
   pointLight.position.set(-10, -10, 10)
   scene.add(pointLight)
 
-  // Add components
-  const components = su(circuitJson).cad_component.list()
-  for (const component of components) {
-    await renderComponent(component, scene)
-  }
-
-  const boardData = su(circuitJson).pcb_board.list()[0]
-
-  // Add board geometry after components
-  const boardGeom = createBoardGeomFromCircuitJson(circuitJson)
-  if (boardGeom) {
-    // Use green solder mask color for the board
-    const solderMaskColor = colors.fr4SolderMaskGreen
-    const baseColor = new THREE.Color(
-      solderMaskColor[0],
-      solderMaskColor[1],
-      solderMaskColor[2],
-    )
-
-    for (const geom of boardGeom) {
-      const g = geom as any
-      if (!g.polygons || g.polygons.length === 0) continue
-      const geometry = createGeometryFromPolygons(g.polygons)
-
-      const material = createBoardMaterial({
-        material: boardData?.material,
-        color: baseColor,
-        side: THREE.DoubleSide,
-      })
-      const mesh = new THREE.Mesh(geometry, material)
-      scene.add(mesh)
+  try {
+    // Add components
+    const components = su(circuitJson).cad_component.list()
+    for (const component of components) {
+      await renderComponent(component, scene)
     }
-  }
 
-  // Add grid with thin lines and low opacity
-  const gridColor = new THREE.Color(0x888888)
-  const gridHelper = new THREE.GridHelper(100, 100, gridColor, gridColor)
-  gridHelper.rotation.x = Math.PI / 2
-  // Set grid material to have low opacity and proper color
-  const materials = Array.isArray(gridHelper.material)
-    ? gridHelper.material
-    : [gridHelper.material]
-  for (const mat of materials) {
-    mat.transparent = true
-    mat.opacity = 0.3
-    if (mat instanceof THREE.LineBasicMaterial) {
-      mat.color = gridColor
-      mat.vertexColors = false
+    const boardData = su(circuitJson).pcb_board.list()[0]
+
+    // Add board geometry after components
+    const boardGeom = createBoardGeomFromCircuitJson(circuitJson)
+    if (boardGeom) {
+      // Use green solder mask color for the board
+      const solderMaskColor = colors.fr4SolderMaskGreen
+      const baseColor = new THREE.Color(
+        solderMaskColor[0],
+        solderMaskColor[1],
+        solderMaskColor[2],
+      )
+
+      for (const geom of boardGeom) {
+        const g = geom as any
+        if (!g.polygons || g.polygons.length === 0) continue
+        const geometry = createGeometryFromPolygons(g.polygons)
+
+        const material = createBoardMaterial({
+          material: boardData?.material,
+          color: baseColor,
+          side: THREE.DoubleSide,
+        })
+        const mesh = new THREE.Mesh(geometry, material)
+        scene.add(mesh)
+      }
     }
+
+    // Add grid with thin lines and low opacity
+    const gridColor = new THREE.Color(0x888888)
+    const gridHelper = new THREE.GridHelper(100, 100, gridColor, gridColor)
+    gridHelper.rotation.x = Math.PI / 2
+    // Set grid material to have low opacity and proper color
+    const materials = Array.isArray(gridHelper.material)
+      ? gridHelper.material
+      : [gridHelper.material]
+    for (const mat of materials) {
+      mat.transparent = true
+      mat.opacity = 0.3
+      if (mat instanceof THREE.LineBasicMaterial) {
+        mat.color = gridColor
+        mat.vertexColors = false
+      }
+    }
+    scene.add(gridHelper)
+
+    // Center and scale scene
+    const box = new THREE.Box3().setFromObject(scene)
+    const center = box.getCenter(new THREE.Vector3())
+    const size = box.getSize(new THREE.Vector3())
+
+    scene.position.sub(center)
+
+    const maxDim = Math.max(size.x, size.y, size.z)
+    if (maxDim > 0) {
+      const scale = (1.0 - padding / 100) / maxDim
+      scene.scale.multiplyScalar(scale * 100)
+    }
+    // Before rendering, ensure camera is updated
+    camera.updateProjectionMatrix()
+
+    // Render and return SVG with additional checks
+    renderer.render(scene, camera)
+
+    return new global.window.XMLSerializer()
+      .serializeToString(renderer.domElement)
+      .replace(
+        /xmlns="[^"]*"\s+xmlns="[^"]*"/,
+        'xmlns="http://www.w3.org/2000/svg"',
+      )
+  } finally {
+    disposeObject3D(scene)
+    renderer.domElement.replaceChildren()
   }
-  scene.add(gridHelper)
-
-  // Center and scale scene
-  const box = new THREE.Box3().setFromObject(scene)
-  const center = box.getCenter(new THREE.Vector3())
-  const size = box.getSize(new THREE.Vector3())
-
-  scene.position.sub(center)
-
-  const maxDim = Math.max(size.x, size.y, size.z)
-  if (maxDim > 0) {
-    const scale = (1.0 - padding / 100) / maxDim
-    scene.scale.multiplyScalar(scale * 100)
-  }
-  // Before rendering, ensure camera is updated
-  camera.updateProjectionMatrix()
-
-  // Render and return SVG with additional checks
-  renderer.render(scene, camera)
-
-  const serialized = new global.window.XMLSerializer()
-    .serializeToString(renderer.domElement)
-    .replace(
-      /xmlns="[^"]*"\s+xmlns="[^"]*"/,
-      'xmlns="http://www.w3.org/2000/svg"',
-    )
-
-  return serialized
 }
