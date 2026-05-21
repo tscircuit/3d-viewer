@@ -1,11 +1,10 @@
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
+import { loadVrml } from "src/utils/vrml"
 import type { Object3D } from "three"
 import { MTLLoader, OBJLoader } from "three-stdlib"
-import { loadVrml } from "src/utils/vrml"
 
-// Define the type for our cache
-interface CacheItem {
-  promise: Promise<any>
+export interface CacheItem {
+  promise: Promise<Object3D | Error>
   result: Object3D | null
 }
 
@@ -18,6 +17,54 @@ declare global {
 // Ensure the global cache exists
 if (typeof window !== "undefined" && !window.TSCIRCUIT_OBJ_LOADER_CACHE) {
   window.TSCIRCUIT_OBJ_LOADER_CACHE = new Map<string, CacheItem>()
+}
+
+export function loadGlobalObjFromCache({
+  cleanUrl,
+  cache,
+  loadModel,
+}: {
+  cleanUrl: string
+  cache: Map<string, CacheItem>
+  loadModel: () => Promise<Object3D | Error>
+}): Promise<Object3D | Error> {
+  if (cache.has(cleanUrl)) {
+    const cacheItem = cache.get(cleanUrl)!
+    if (cacheItem.result) {
+      // If we have a result, clone it
+      return Promise.resolve(cacheItem.result.clone())
+    }
+    // If we're still loading, return the existing promise
+    return cacheItem.promise.then((result) => {
+      if (result instanceof Error) return result
+      return result.clone()
+    })
+  }
+
+  let promise: Promise<Object3D | Error>
+  promise = Promise.resolve()
+    .then(loadModel)
+    .then((result) => {
+      if (result instanceof Error) {
+        if (cache.get(cleanUrl)?.promise === promise) {
+          cache.delete(cleanUrl)
+        }
+        return result
+      }
+      if (cache.get(cleanUrl)?.promise === promise) {
+        cache.set(cleanUrl, { promise, result })
+      }
+      return result
+    })
+    .catch((error) => {
+      if (cache.get(cleanUrl)?.promise === promise) {
+        cache.delete(cleanUrl)
+      }
+      return error instanceof Error ? error : new Error(String(error))
+    })
+
+  cache.set(cleanUrl, { promise, result: null })
+  return promise
 }
 
 export function useGlobalObjLoader(
@@ -78,33 +125,11 @@ export function useGlobalObjLoader(
       }
     }
 
-    function loadUrl() {
-      if (cache.has(cleanUrl)) {
-        const cacheItem = cache.get(cleanUrl)!
-        if (cacheItem.result) {
-          // If we have a result, clone it
-          return Promise.resolve(cacheItem.result.clone())
-        }
-        // If we're still loading, return the existing promise
-        return cacheItem.promise.then((result) => {
-          if (result instanceof Error) return result
-          return result.clone()
-        })
-      }
-      // If it's not in the cache, create a new promise and cache it
-      const promise = loadAndParseObj().then((result) => {
-        if (result instanceof Error) {
-          // If the result is an Error, return it
-          return result
-        }
-        cache.set(cleanUrl, { ...cache.get(cleanUrl)!, result })
-        return result
-      })
-      cache.set(cleanUrl, { promise, result: null })
-      return promise
-    }
-
-    loadUrl()
+    loadGlobalObjFromCache({
+      cleanUrl,
+      cache,
+      loadModel: loadAndParseObj,
+    })
       .then((result) => {
         if (hasUrlChanged) return
         setObj(result)
