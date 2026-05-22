@@ -1,10 +1,14 @@
-import { useState, useEffect } from "react"
-import * as THREE from "three"
-import { GLTFLoader } from "three-stdlib"
-import { useThree } from "src/react-three/ThreeContext"
+import { useCallback, useEffect, useRef, useState } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { getDefaultEnvironmentMap } from "src/react-three/getDefaultEnvironmentMap"
+import { useThree } from "src/react-three/ThreeContext"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import {
+  applyGltfSceneMaterialState,
+  disposeGltfSceneResources,
+} from "src/utils/gltf-scene-lifecycle"
+import * as THREE from "three"
+import { GLTFLoader } from "three-stdlib"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 const DEFAULT_ENV_MAP_INTENSITY = 1.25
@@ -41,6 +45,16 @@ export function GltfModel({
   const { renderer } = useThree()
   const [model, setModel] = useState<THREE.Group | null>(null)
   const [loadError, setLoadError] = useState<Error | null>(null)
+  const ownedModelRef = useRef<THREE.Group | null>(null)
+  const replaceOwnedModel = useCallback((nextModel: THREE.Group | null) => {
+    setModel((previousModel) => {
+      if (previousModel && previousModel !== nextModel) {
+        disposeGltfSceneResources(previousModel)
+      }
+      ownedModelRef.current = nextModel
+      return nextModel
+    })
+  }, [])
   const { boardTransformGroup } = useCadModelTransformGraph({
     model,
     position,
@@ -54,35 +68,28 @@ export function GltfModel({
   })
 
   useEffect(() => {
-    if (!gltfUrl) return
+    if (!gltfUrl) {
+      setLoadError(null)
+      replaceOwnedModel(null)
+      return
+    }
+
     const loader = new GLTFLoader()
     let isMounted = true
+    setLoadError(null)
+    replaceOwnedModel(null)
+
     loader.load(
       gltfUrl,
       (gltf) => {
-        if (!isMounted) return
         const scene = gltf.scene
 
-        scene.traverse((child) => {
-          if (child instanceof THREE.Mesh && child.material) {
-            const setMaterialTransparency = (mat: THREE.Material) => {
-              mat.transparent = isTranslucent
-              mat.opacity = isTranslucent ? 0.5 : 1
-              mat.depthWrite = !isTranslucent
-              mat.needsUpdate = true
-            }
+        if (!isMounted) {
+          disposeGltfSceneResources(scene)
+          return
+        }
 
-            if (Array.isArray(child.material)) {
-              child.material.forEach(setMaterialTransparency)
-            } else {
-              setMaterialTransparency(child.material)
-            }
-
-            child.renderOrder = isTranslucent ? 2 : 1
-          }
-        })
-
-        setModel(scene)
+        replaceOwnedModel(scene)
       },
       undefined,
       (error) => {
@@ -98,7 +105,21 @@ export function GltfModel({
     return () => {
       isMounted = false
     }
-  }, [gltfUrl, isTranslucent])
+  }, [gltfUrl, replaceOwnedModel])
+
+  useEffect(() => {
+    return () => {
+      if (ownedModelRef.current) {
+        disposeGltfSceneResources(ownedModelRef.current)
+        ownedModelRef.current = null
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!model) return
+    applyGltfSceneMaterialState(model, { isTranslucent })
+  }, [model, isTranslucent])
 
   useEffect(() => {
     if (!model || !renderer) return
@@ -145,11 +166,15 @@ export function GltfModel({
     })
 
     return () => {
-      previousMaterialState.forEach(({ material, envMap, envMapIntensity }) => {
+      for (const {
+        material,
+        envMap,
+        envMapIntensity,
+      } of previousMaterialState) {
         material.envMap = envMap
         material.envMapIntensity = envMapIntensity
         material.needsUpdate = true
-      })
+      }
     }
   }, [model, renderer])
 
