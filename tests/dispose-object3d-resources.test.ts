@@ -52,3 +52,29 @@ test("disposes every material in a multi-material mesh", () => {
 
   expect(disposed).toEqual([true, true])
 })
+
+test("disposes extension material texture maps", () => {
+  const root = new THREE.Group()
+  const geometry = new THREE.BoxGeometry(1, 1, 1)
+  const clearcoatMap = new THREE.Texture()
+  const transmissionMap = new THREE.Texture()
+  const material = new THREE.MeshPhysicalMaterial({
+    clearcoatMap,
+    transmissionMap,
+  })
+  const mesh = new THREE.Mesh(geometry, material)
+
+  root.add(mesh)
+
+  const disposed: string[] = []
+  clearcoatMap.addEventListener("dispose", () => {
+    disposed.push("clearcoat")
+  })
+  transmissionMap.addEventListener("dispose", () => {
+    disposed.push("transmission")
+  })
+
+  disposeObject3DResources(root)
+
+  expect(disposed).toEqual(["clearcoat", "transmission"])
+})
