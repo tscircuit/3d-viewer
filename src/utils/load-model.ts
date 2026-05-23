@@ -19,13 +19,13 @@ import * as THREE from "three"
     if (typeof window !== "undefined") {
       const cache = window.TSCIRCUIT_MODEL_CACHE
       if (cache.has(url)) {
-        const cached = await cache.get(url)!
+        const cached = await cache.get(url)
         // Clone so each usage gets its own independent scene graph node
         return cached ? (cached.clone() as THREE.Object3D) : null
       }
     }
 
-    const loadPromise = _load3DModel(url)
+    const loadPromise = loadModel(url)
 
     if (typeof window !== "undefined") {
       window.TSCIRCUIT_MODEL_CACHE.set(url, loadPromise)
@@ -34,7 +34,7 @@ import * as THREE from "three"
     return loadPromise
   }
 
-  async function _load3DModel(url: string): Promise<THREE.Object3D | null> {
+  async function loadModel(url: string): Promise<THREE.Object3D | null> {
     if (url.endsWith(".stl")) {
       const loader = new STLLoader()
       const geometry = await loader.loadAsync(url)
