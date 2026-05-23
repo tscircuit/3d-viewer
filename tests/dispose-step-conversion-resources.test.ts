@@ -30,17 +30,18 @@ test("disposes every material in mesh material arrays", () => {
   const geometry = new THREE.BoxGeometry()
   const firstMaterial = new THREE.MeshBasicMaterial()
   const secondMaterial = new THREE.MeshBasicMaterial()
-  const materialDisposeCounts = [0, 0]
+  let firstMaterialDisposeCount = 0
+  let secondMaterialDisposeCount = 0
   let geometryDisposeCount = 0
 
   geometry.dispose = () => {
     geometryDisposeCount += 1
   }
   firstMaterial.dispose = () => {
-    materialDisposeCounts[0] += 1
+    firstMaterialDisposeCount += 1
   }
   secondMaterial.dispose = () => {
-    materialDisposeCounts[1] += 1
+    secondMaterialDisposeCount += 1
   }
 
   group.add(new THREE.Mesh(geometry, [firstMaterial, secondMaterial]))
@@ -48,5 +49,6 @@ test("disposes every material in mesh material arrays", () => {
   disposeStepConversionResources(group)
 
   expect(geometryDisposeCount).toBe(1)
-  expect(materialDisposeCounts).toEqual([1, 1])
+  expect(firstMaterialDisposeCount).toBe(1)
+  expect(secondMaterialDisposeCount).toBe(1)
 })
