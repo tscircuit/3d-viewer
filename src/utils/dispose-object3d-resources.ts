@@ -11,7 +11,6 @@ const MATERIAL_TEXTURE_KEYS = [
   "clearcoatRoughnessMap",
   "displacementMap",
   "emissiveMap",
-  "envMap",
   "gradientMap",
   "iridescenceMap",
   "iridescenceThicknessMap",

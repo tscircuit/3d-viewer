@@ -78,3 +78,22 @@ test("disposes extension material texture maps", () => {
 
   expect(disposed).toEqual(["clearcoat", "transmission"])
 })
+
+test("does not dispose shared environment maps", () => {
+  const root = new THREE.Group()
+  const geometry = new THREE.BoxGeometry(1, 1, 1)
+  const envMap = new THREE.Texture()
+  const material = new THREE.MeshStandardMaterial({ envMap })
+  const mesh = new THREE.Mesh(geometry, material)
+
+  root.add(mesh)
+
+  let envMapDisposed = false
+  envMap.addEventListener("dispose", () => {
+    envMapDisposed = true
+  })
+
+  disposeObject3DResources(root)
+
+  expect(envMapDisposed).toBe(false)
+})
