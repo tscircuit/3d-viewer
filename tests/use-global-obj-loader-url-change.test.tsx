@@ -23,6 +23,12 @@ const createObjResponse = () =>
   })
 
 let root: Root | null = null
+const originalFetch = globalThis.fetch
+const originalWindow = globalThis.window
+const originalDocument = globalThis.document
+const originalActEnvironment = (
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT
 
 afterEach(() => {
   if (root) {
@@ -30,6 +36,17 @@ afterEach(() => {
       root?.unmount()
     })
     root = null
+  }
+  globalThis.fetch = originalFetch
+  globalThis.window = originalWindow
+  globalThis.document = originalDocument
+  const globalWithAct = globalThis as typeof globalThis & {
+    IS_REACT_ACT_ENVIRONMENT?: boolean
+  }
+  if (originalActEnvironment === undefined) {
+    delete globalWithAct.IS_REACT_ACT_ENVIRONMENT
+  } else {
+    globalWithAct.IS_REACT_ACT_ENVIRONMENT = originalActEnvironment
   }
 })
 
