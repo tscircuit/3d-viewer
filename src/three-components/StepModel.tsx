@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
 import {
   BufferGeometry,
   Color,
@@ -9,7 +10,6 @@ import {
 } from "three"
 import { GLTFExporter } from "three-stdlib"
 import { GltfModel } from "./GltfModel"
-import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
 
 type OcctImportParams = {
   linearUnit?: "millimeter" | "centimeter" | "meter" | "inch" | "foot"
@@ -240,11 +240,13 @@ export const StepModel = ({
   isTranslucent,
 }: StepModelProps) => {
   const [stepGltfUrl, setStepGltfUrl] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<Error | null>(null)
 
   useEffect(() => {
     let isActive = true
     let objectUrl: string | null = null
     let shouldRevokeObjectUrl = true
+    setLoadError(null)
     const registry = getStepUrlConversionRegistry()
     const cachedGlb = getCachedGlb(stepUrl)
     if (cachedGlb) {
@@ -311,6 +313,11 @@ export const StepModel = ({
       .catch((error) => {
         console.error("Failed to convert STEP file to GLB", error)
         if (isActive) {
+          setLoadError(
+            error instanceof Error
+              ? error
+              : new Error("Failed to convert STEP file to GLB"),
+          )
           setStepGltfUrl(null)
         }
       })
@@ -321,6 +328,10 @@ export const StepModel = ({
       }
     }
   }, [stepUrl])
+
+  if (loadError) {
+    throw loadError
+  }
 
   if (!stepGltfUrl) {
     return null
