@@ -68,7 +68,7 @@ export function processNonPlatedHolesForManifold(
       })
       nonPlatedHoleBoardDrills.push(holeOp)
       manifoldInstancesForCleanup.push(holeOp)
-      return
+      continue
     }
 
     if (holeShape === "pill" || holeShape === "rotated_pill") {
