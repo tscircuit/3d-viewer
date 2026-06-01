@@ -1,6 +1,6 @@
 import { CadViewer } from "../src/CadViewer"
 
-export const CirclePillRectFootprintHoles = () => {
+export const CirclePillRectHoles = () => {
   return (
     <CadViewer>
       <board width="12mm" height="12mm">
@@ -12,7 +12,7 @@ export const CirclePillRectFootprintHoles = () => {
   )
 }
 
-CirclePillRectFootprintHoles.storyName = "Circle, Pill, Rect Footprint Holes"
+CirclePillRectHoles.storyName = "Circle, Pill, Rect Holes"
 
 export default {
   title: "PCB/Hole Shapes",
