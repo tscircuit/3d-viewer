@@ -1,8 +1,8 @@
-import type { ManifoldToplevel } from "manifold-3d"
-import type { AnyCircuitElement, PcbHole } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
-import { createCircleHoleDrill } from "../hole-geoms"
+import type { AnyCircuitElement } from "circuit-json"
+import type { ManifoldToplevel } from "manifold-3d"
 import { SMOOTH_CIRCLE_SEGMENTS } from "../../geoms/constants"
+import { createCircleHoleDrill } from "../hole-geoms"
 import { createRoundedRectPrism } from "../pad-geoms"
 
 export interface ProcessNonPlatedHolesResult {
@@ -46,7 +46,7 @@ export function processNonPlatedHolesForManifold(
     return points
   }
 
-  pcbHoles.forEach((hole: PcbHole) => {
+  for (const hole of pcbHoles) {
     const holeShape = hole.hole_shape
     const holeX = hole.x
     const holeY = hole.y
@@ -111,6 +111,6 @@ export function processNonPlatedHolesForManifold(
       manifoldInstancesForCleanup.push(translatedHole)
       nonPlatedHoleBoardDrills.push(translatedHole)
     }
-  })
+  }
   return { nonPlatedHoleBoardDrills }
 }
