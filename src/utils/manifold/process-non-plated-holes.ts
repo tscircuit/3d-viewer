@@ -31,6 +31,12 @@ export function processNonPlatedHolesForManifold(
     return pillOp
   }
 
+  const createRectOp = (width: number, height: number, depth: number) => {
+    const rectOp = Manifold.cube([width, height, depth], true)
+    manifoldInstancesForCleanup.push(rectOp)
+    return rectOp
+  }
+
   const createEllipsePoints = (w: number, h: number, segments: number) => {
     const points: Array<[number, number]> = []
     for (let i = 0; i < segments; i++) {
@@ -67,6 +73,8 @@ export function processNonPlatedHolesForManifold(
 
     if (holeShape === "pill" || holeShape === "rotated_pill") {
       holeOp = createPillOp(holeW, holeH, drillDepth)
+    } else if (holeShape === "rect") {
+      holeOp = createRectOp(holeW, holeH, drillDepth)
     } else if (holeShape === "oval") {
       let points = createEllipsePoints(holeW, holeH, SMOOTH_CIRCLE_SEGMENTS)
       // Ensure correct winding order
