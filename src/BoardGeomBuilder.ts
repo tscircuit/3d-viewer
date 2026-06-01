@@ -573,6 +573,7 @@ export class BoardGeomBuilder {
     } else if (
       hole.hole_shape === "pill" ||
       hole.hole_shape === "rotated_pill" ||
+      hole.hole_shape === "rect" ||
       hole.hole_shape === "oval"
     ) {
       const holeWidth = (hole as any).hole_width ?? (hole as any).hole_diameter
@@ -588,6 +589,12 @@ export class BoardGeomBuilder {
         isOval: boolean,
       ) => {
         if (w <= 0 || h <= 0) return null
+        if (hole.hole_shape === "rect") {
+          return cuboid({
+            center: [0, 0, 0],
+            size: [w, h, depth],
+          })
+        }
         if (isOval) {
           return translate(
             [0, 0, -depth / 2],

@@ -1,8 +1,8 @@
-import type { ManifoldToplevel } from "manifold-3d"
-import type { AnyCircuitElement, PcbHole } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
-import { createCircleHoleDrill } from "../hole-geoms"
+import type { AnyCircuitElement } from "circuit-json"
+import type { ManifoldToplevel } from "manifold-3d"
 import { SMOOTH_CIRCLE_SEGMENTS } from "../../geoms/constants"
+import { createCircleHoleDrill } from "../hole-geoms"
 import { createRoundedRectPrism } from "../pad-geoms"
 
 export interface ProcessNonPlatedHolesResult {
@@ -31,6 +31,12 @@ export function processNonPlatedHolesForManifold(
     return pillOp
   }
 
+  const createRectOp = (width: number, height: number, depth: number) => {
+    const rectOp = Manifold.cube([width, height, depth], true)
+    manifoldInstancesForCleanup.push(rectOp)
+    return rectOp
+  }
+
   const createEllipsePoints = (w: number, h: number, segments: number) => {
     const points: Array<[number, number]> = []
     for (let i = 0; i < segments; i++) {
@@ -40,7 +46,7 @@ export function processNonPlatedHolesForManifold(
     return points
   }
 
-  pcbHoles.forEach((hole: PcbHole) => {
+  for (const hole of pcbHoles) {
     const holeShape = hole.hole_shape
     const holeX = hole.x
     const holeY = hole.y
@@ -62,11 +68,13 @@ export function processNonPlatedHolesForManifold(
       })
       nonPlatedHoleBoardDrills.push(holeOp)
       manifoldInstancesForCleanup.push(holeOp)
-      return
+      continue
     }
 
     if (holeShape === "pill" || holeShape === "rotated_pill") {
       holeOp = createPillOp(holeW, holeH, drillDepth)
+    } else if (holeShape === "rect") {
+      holeOp = createRectOp(holeW, holeH, drillDepth)
     } else if (holeShape === "oval") {
       let points = createEllipsePoints(holeW, holeH, SMOOTH_CIRCLE_SEGMENTS)
       // Ensure correct winding order
@@ -103,6 +111,6 @@ export function processNonPlatedHolesForManifold(
       manifoldInstancesForCleanup.push(translatedHole)
       nonPlatedHoleBoardDrills.push(translatedHole)
     }
-  })
+  }
   return { nonPlatedHoleBoardDrills }
 }
