@@ -53,7 +53,7 @@ export function useGlobalObjLoader(
 
     async function loadAndParseObj() {
       try {
-        if (requestUrl.split("?")[0].toLowerCase().endsWith(".wrl")) {
+        if ((requestUrl.split("?")[0] ?? "").toLowerCase().endsWith(".wrl")) {
           return await loadVrml(requestUrl)
         }
 

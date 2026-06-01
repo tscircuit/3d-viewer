@@ -18,7 +18,7 @@ test("keeps meaningful query params sorted in model cache keys", () => {
 })
 
 test("normalizes relative model URLs without inventing an origin", () => {
-  expect(getLoad3DModelCacheKey("/models/chip.stl?cachebust_origin=editor")).toBe(
-    "/models/chip.stl",
-  )
+  expect(
+    getLoad3DModelCacheKey("/models/chip.stl?cachebust_origin=editor"),
+  ).toBe("/models/chip.stl")
 })

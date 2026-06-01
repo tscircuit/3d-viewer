@@ -17,7 +17,9 @@ export function getLoad3DModelCacheKey(url: string): string {
       ? normalized
       : normalized.replace("https://tscircuit.local", "")
   } catch {
-    return url.replace(/([?&])cachebust_origin=[^&#]*/g, "$1").replace(/[?&]$/, "")
+    return url
+      .replace(/([?&])cachebust_origin=[^&#]*/g, "$1")
+      .replace(/[?&]$/, "")
   }
 }
 
@@ -40,9 +42,11 @@ function cloneModel(model: THREE.Object3D | null): THREE.Object3D | null {
   return clone
 }
 
-async function load3DModelUncached(url: string): Promise<THREE.Object3D | null> {
+async function load3DModelUncached(
+  url: string,
+): Promise<THREE.Object3D | null> {
   const cacheKey = getLoad3DModelCacheKey(url)
-  const extensionPath = cacheKey.split("?")[0].toLowerCase()
+  const extensionPath = (cacheKey.split("?")[0] ?? "").toLowerCase()
 
   if (extensionPath.endsWith(".stl")) {
     const loader = new STLLoader()

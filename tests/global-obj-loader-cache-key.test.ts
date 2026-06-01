@@ -22,4 +22,3 @@ test("normalizes relative global obj loader URLs without inventing origin", () =
     getGlobalObjLoaderCacheKey("/models/chip.obj?cachebust_origin=editor"),
   ).toBe("/models/chip.obj")
 })
-
