@@ -3,7 +3,7 @@ import { su } from "@tscircuit/circuit-json-util"
 import Debug from "debug"
 import * as THREE from "three"
 import { SVGRenderer } from "three/examples/jsm/renderers/SVGRenderer.js"
-import { createBoardGeomFromCircuitJson } from "./soup-to-3d"
+import { createSimplifiedBoardGeom } from "./soup-to-3d"
 import { createBoardMaterial } from "./utils/create-board-material"
 import { createGeometryFromPolygons } from "./utils/create-geometry-from-polygons"
 import { renderComponent } from "./utils/render-component"
@@ -96,7 +96,7 @@ export async function convertCircuitJsonTo3dSvg(
   const boardData = su(circuitJson).pcb_board.list()[0]
 
   // Add board geometry after components
-  const boardGeom = createBoardGeomFromCircuitJson(circuitJson)
+  const boardGeom = createSimplifiedBoardGeom(circuitJson)
   if (boardGeom) {
     // Use green solder mask color for the board
     const solderMaskColor = colors.fr4SolderMaskGreen

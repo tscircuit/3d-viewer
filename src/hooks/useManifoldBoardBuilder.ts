@@ -11,9 +11,7 @@ import * as THREE from "three"
 import {
   boardMaterialColors,
   colors as defaultColors,
-  soldermaskColors,
   TRACE_TEXTURE_RESOLUTION,
-  tracesMaterialColors,
 } from "../geoms/constants"
 import { getLayerTextureResolution } from "../utils/layer-texture-resolution"
 import { createManifoldBoard } from "../utils/manifold/create-manifold-board"
