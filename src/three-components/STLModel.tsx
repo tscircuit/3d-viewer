@@ -1,13 +1,13 @@
-import { useState, useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useThree } from "src/react-three/ThreeContext"
 import * as THREE from "three"
 import { STLLoader } from "three-stdlib"
-import { useThree } from "src/react-three/ThreeContext"
 import type { LayerType } from "../hooks/use-stls-from-geom"
+import { loadCachedStlGeometry } from "../utils/load-cached-stl-geometry"
 
 export function STLModel({
   stlUrl,
   stlData,
-  mtlUrl,
   color,
   opacity = 1,
   layerType,
@@ -23,8 +23,8 @@ export function STLModel({
   const [geom, setGeom] = useState<THREE.BufferGeometry | null>(null)
 
   useEffect(() => {
-    const loader = new STLLoader()
     if (stlData) {
+      const loader = new STLLoader()
       try {
         const geometry = loader.parse(stlData)
         setGeom(geometry)
@@ -35,10 +35,27 @@ export function STLModel({
       return
     }
     if (stlUrl) {
-      loader.load(stlUrl, (geometry) => {
-        setGeom(geometry)
-      })
+      let isMounted = true
+      loadCachedStlGeometry(stlUrl)
+        .then((geometry) => {
+          if (!isMounted) {
+            geometry.dispose()
+            return
+          }
+          setGeom(geometry)
+        })
+        .catch((error) => {
+          if (!isMounted) return
+          console.error(`Failed to load STL model from ${stlUrl}`, error)
+          setGeom(null)
+        })
+
+      return () => {
+        isMounted = false
+      }
     }
+
+    setGeom(null)
   }, [stlUrl, stlData])
 
   const mesh = useMemo(() => {
@@ -66,7 +83,9 @@ export function STLModel({
       rootObject.remove(mesh)
       mesh.geometry.dispose()
       if (Array.isArray(mesh.material)) {
-        mesh.material.forEach((m) => m.dispose())
+        for (const material of mesh.material) {
+          material.dispose()
+        }
       } else {
         mesh.material.dispose()
       }
