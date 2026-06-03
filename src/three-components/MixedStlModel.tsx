@@ -1,10 +1,44 @@
+import { useEffect, useMemo } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { useGlobalObjLoader } from "src/hooks/use-global-obj-loader"
-import type { Euler, Vector3 } from "three"
-import { useMemo } from "react"
-import * as THREE from "three"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import type { Euler, Vector3 } from "three"
+import * as THREE from "three"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
+
+const MIXED_STL_FALLBACK_MODEL_KEY = "__tscircuitMixedStlFallbackModel"
+
+export function createMixedStlFallbackModel() {
+  const fallbackModel = new THREE.Mesh(
+    new THREE.BoxGeometry(0.5, 0.5, 0.5),
+    new THREE.MeshStandardMaterial({
+      transparent: true,
+      color: "red",
+      opacity: 0.25,
+    }),
+  )
+  fallbackModel.userData[MIXED_STL_FALLBACK_MODEL_KEY] = true
+  return fallbackModel
+}
+
+function isMixedStlFallbackModel(model: THREE.Object3D) {
+  return model.userData[MIXED_STL_FALLBACK_MODEL_KEY] === true
+}
+
+export function disposeObject3DResources(object: THREE.Object3D) {
+  object.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) return
+
+    child.geometry?.dispose()
+    if (Array.isArray(child.material)) {
+      for (const material of child.material) {
+        material.dispose()
+      }
+    } else {
+      child.material?.dispose()
+    }
+  })
+}
 
 export function MixedStlModel({
   url,
@@ -58,16 +92,17 @@ export function MixedStlModel({
       })
       return obj
     }
-    // Fallback mesh
-    return new THREE.Mesh(
-      new THREE.BoxGeometry(0.5, 0.5, 0.5),
-      new THREE.MeshStandardMaterial({
-        transparent: true,
-        color: "red",
-        opacity: 0.25,
-      }),
-    )
+    return createMixedStlFallbackModel()
   }, [obj, isTranslucent])
+
+  useEffect(() => {
+    if (!isMixedStlFallbackModel(model)) return
+
+    return () => {
+      disposeObject3DResources(model)
+    }
+  }, [model])
+
   const { boardTransformGroup } = useCadModelTransformGraph({
     model,
     position: Array.isArray(position)
