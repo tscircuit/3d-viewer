@@ -1,9 +1,10 @@
+import { useEffect, useMemo } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { useGlobalObjLoader } from "src/hooks/use-global-obj-loader"
-import type { Euler, Vector3 } from "three"
-import { useMemo } from "react"
-import * as THREE from "three"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import { disposeOwnedObjectResources } from "src/utils/dispose-owned-object-resources"
+import type { Euler, Vector3 } from "three"
+import * as THREE from "three"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 export function MixedStlModel({
@@ -36,7 +37,7 @@ export function MixedStlModel({
   isTranslucent?: boolean
 }) {
   const obj = useGlobalObjLoader(url)
-  const model = useMemo(() => {
+  const modelState = useMemo(() => {
     if (obj && !(obj instanceof Error)) {
       obj.traverse((child) => {
         if (child instanceof THREE.Mesh && child.material) {
@@ -56,10 +57,9 @@ export function MixedStlModel({
           child.renderOrder = isTranslucent ? 2 : 1
         }
       })
-      return obj
+      return { model: obj, ownsResources: false }
     }
-    // Fallback mesh
-    return new THREE.Mesh(
+    const fallbackMesh = new THREE.Mesh(
       new THREE.BoxGeometry(0.5, 0.5, 0.5),
       new THREE.MeshStandardMaterial({
         transparent: true,
@@ -67,7 +67,18 @@ export function MixedStlModel({
         opacity: 0.25,
       }),
     )
+    return { model: fallbackMesh, ownsResources: true }
   }, [obj, isTranslucent])
+  const { model, ownsResources } = modelState
+
+  useEffect(() => {
+    return () => {
+      if (ownsResources) {
+        disposeOwnedObjectResources(model)
+      }
+    }
+  }, [model, ownsResources])
+
   const { boardTransformGroup } = useCadModelTransformGraph({
     model,
     position: Array.isArray(position)
