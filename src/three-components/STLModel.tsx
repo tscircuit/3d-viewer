@@ -1,13 +1,12 @@
-import { useState, useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useThree } from "src/react-three/ThreeContext"
 import * as THREE from "three"
 import { STLLoader } from "three-stdlib"
-import { useThree } from "src/react-three/ThreeContext"
 import type { LayerType } from "../hooks/use-stls-from-geom"
 
 export function STLModel({
   stlUrl,
   stlData,
-  mtlUrl,
   color,
   opacity = 1,
   layerType,
@@ -15,7 +14,6 @@ export function STLModel({
   stlUrl?: string
   stlData?: ArrayBuffer
   color?: any
-  mtlUrl?: string
   opacity?: number
   layerType?: LayerType
 }) {
@@ -24,20 +22,43 @@ export function STLModel({
 
   useEffect(() => {
     const loader = new STLLoader()
+    let isActive = true
+    const setLoadedGeometry = (geometry: THREE.BufferGeometry) => {
+      if (!isActive) {
+        geometry.dispose()
+        return
+      }
+      setGeom(geometry)
+    }
+
     if (stlData) {
       try {
         const geometry = loader.parse(stlData)
-        setGeom(geometry)
+        setLoadedGeometry(geometry)
       } catch (e) {
         console.error("Failed to parse STL data", e)
         setGeom(null)
       }
-      return
+      return () => {
+        isActive = false
+      }
     }
     if (stlUrl) {
-      loader.load(stlUrl, (geometry) => {
-        setGeom(geometry)
-      })
+      loader.load(
+        stlUrl,
+        (geometry) => {
+          setLoadedGeometry(geometry)
+        },
+        undefined,
+        (error) => {
+          if (!isActive) return
+          console.error(`Failed to load STL model from ${stlUrl}`, error)
+          setGeom(null)
+        },
+      )
+    }
+    return () => {
+      isActive = false
     }
   }, [stlUrl, stlData])
 
@@ -66,7 +87,9 @@ export function STLModel({
       rootObject.remove(mesh)
       mesh.geometry.dispose()
       if (Array.isArray(mesh.material)) {
-        mesh.material.forEach((m) => m.dispose())
+        for (const material of mesh.material) {
+          material.dispose()
+        }
       } else {
         mesh.material.dispose()
       }
