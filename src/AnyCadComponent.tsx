@@ -13,6 +13,7 @@ import { GltfModel } from "./three-components/GltfModel"
 import { JscadModel } from "./three-components/JscadModel"
 import { MixedStlModel } from "./three-components/MixedStlModel"
 import { StepModel } from "./three-components/StepModel"
+import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import {
   getCadLoaderTransformConfig,
   getCadLoaderTransformMatrix,
@@ -25,7 +26,6 @@ import {
 } from "./utils/get-cad-model-type"
 import { resolveModelUrl } from "./utils/resolve-model-url"
 import { tuple } from "./utils/tuple"
-import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 
 const ModelLoadErrorReporter = ({
   error,
@@ -122,7 +122,7 @@ export const AnyCadComponent = ({
   const gltfModelType: CadModelType = cad_component.model_glb_url
     ? "glb"
     : "gltf"
-  const meshModelType: CadModelType = cad_component.model_wrl_url
+  const meshModelType = cad_component.model_wrl_url
     ? "wrl"
     : cad_component.model_stl_url
       ? "stl"
@@ -172,6 +172,7 @@ export const AnyCadComponent = ({
         <MixedStlModel
           key={`${cad_component.cad_component_id}-mixed-${url}`}
           url={url}
+          modelType={meshModelType}
           position={adjustedPosition}
           rotation={rotationOffset}
           modelOffset={modelTransform.modelPosition}

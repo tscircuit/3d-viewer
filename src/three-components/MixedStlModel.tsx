@@ -1,9 +1,12 @@
-import ContainerWithTooltip from "src/ContainerWithTooltip"
-import { useGlobalObjLoader } from "src/hooks/use-global-obj-loader"
-import type { Euler, Vector3 } from "three"
 import { useMemo } from "react"
-import * as THREE from "three"
+import ContainerWithTooltip from "src/ContainerWithTooltip"
+import {
+  type GlobalObjLoaderModelType,
+  useGlobalObjLoader,
+} from "src/hooks/use-global-obj-loader"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import type { Euler, Vector3 } from "three"
+import * as THREE from "three"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 export function MixedStlModel({
@@ -20,8 +23,10 @@ export function MixedStlModel({
   isHovered,
   scale,
   isTranslucent = false,
+  modelType,
 }: {
   url: string
+  modelType?: GlobalObjLoaderModelType
   position?: Vector3 | [number, number, number]
   rotation?: Euler | [number, number, number]
   modelOffset?: [number, number, number]
@@ -35,7 +40,7 @@ export function MixedStlModel({
   scale?: number
   isTranslucent?: boolean
 }) {
-  const obj = useGlobalObjLoader(url)
+  const obj = useGlobalObjLoader(url, modelType)
   const model = useMemo(() => {
     if (obj && !(obj instanceof Error)) {
       obj.traverse((child) => {
