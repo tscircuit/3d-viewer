@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
+import * as THREE from "three"
 import type { Object3D } from "three"
 import { MTLLoader, OBJLoader } from "three-stdlib"
 import { loadVrml } from "src/utils/vrml"
@@ -7,6 +8,38 @@ import { loadVrml } from "src/utils/vrml"
 interface CacheItem {
   promise: Promise<any>
   result: Object3D | null
+}
+
+export function cloneLoadedObject(source: Object3D): Object3D {
+  const clone = source.clone(true)
+  const sourceObjects: Object3D[] = []
+  const clonedObjects: Object3D[] = []
+
+  source.traverse((object) => sourceObjects.push(object))
+  clone.traverse((object) => clonedObjects.push(object))
+
+  clonedObjects.forEach((object, index) => {
+    const sourceObject = sourceObjects[index]
+    if (
+      !(sourceObject instanceof THREE.Mesh) ||
+      !(object instanceof THREE.Mesh)
+    ) {
+      return
+    }
+
+    if (sourceObject.geometry) {
+      object.geometry = sourceObject.geometry
+    }
+    if (Array.isArray(sourceObject.material)) {
+      object.material = sourceObject.material.map((material) =>
+        material.clone(),
+      )
+    } else if (sourceObject.material) {
+      object.material = sourceObject.material.clone()
+    }
+  })
+
+  return clone
 }
 
 declare global {
@@ -82,23 +115,19 @@ export function useGlobalObjLoader(
       if (cache.has(cleanUrl)) {
         const cacheItem = cache.get(cleanUrl)!
         if (cacheItem.result) {
-          // If we have a result, clone it
-          return Promise.resolve(cacheItem.result.clone())
+          return Promise.resolve(cloneLoadedObject(cacheItem.result))
         }
-        // If we're still loading, return the existing promise
         return cacheItem.promise.then((result) => {
           if (result instanceof Error) return result
-          return result.clone()
+          return cloneLoadedObject(result)
         })
       }
-      // If it's not in the cache, create a new promise and cache it
       const promise = loadAndParseObj().then((result) => {
         if (result instanceof Error) {
-          // If the result is an Error, return it
           return result
         }
         cache.set(cleanUrl, { ...cache.get(cleanUrl)!, result })
-        return result
+        return cloneLoadedObject(result)
       })
       cache.set(cleanUrl, { promise, result: null })
       return promise
