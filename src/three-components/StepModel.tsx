@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react"
+import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import { disposeStepConversionResources } from "src/utils/dispose-step-conversion-resources"
 import {
   BufferGeometry,
   Color,
@@ -9,7 +11,6 @@ import {
 } from "three"
 import { GLTFExporter } from "three-stdlib"
 import { GltfModel } from "./GltfModel"
-import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
 
 type OcctImportParams = {
   linearUnit?: "millimeter" | "centimeter" | "meter" | "inch" | "foot"
@@ -121,24 +122,27 @@ async function convertStepUrlToGlb(stepUrl: string): Promise<ArrayBuffer> {
     throw new Error("occt-import-js failed to convert STEP file")
   }
   const group = occtMeshesToGroup(result.meshes)
-  const exporter = new GLTFExporter()
-  const glb = await new Promise<ArrayBuffer>((resolve, reject) => {
-    exporter.parse(
-      group,
-      (output) => {
-        if (output instanceof ArrayBuffer) {
-          resolve(output)
-        } else {
-          reject(new Error("GLTFExporter did not return binary output"))
-        }
-      },
-      (error) => {
-        reject(error)
-      },
-      { binary: true },
-    )
-  })
-  return glb
+  try {
+    const exporter = new GLTFExporter()
+    return await new Promise<ArrayBuffer>((resolve, reject) => {
+      exporter.parse(
+        group,
+        (output) => {
+          if (output instanceof ArrayBuffer) {
+            resolve(output)
+          } else {
+            reject(new Error("GLTFExporter did not return binary output"))
+          }
+        },
+        (error) => {
+          reject(error)
+        },
+        { binary: true },
+      )
+    })
+  } finally {
+    disposeStepConversionResources(group)
+  }
 }
 
 const CACHE_PREFIX = "step-glb-cache:"
