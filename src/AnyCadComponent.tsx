@@ -13,6 +13,7 @@ import { GltfModel } from "./three-components/GltfModel"
 import { JscadModel } from "./three-components/JscadModel"
 import { MixedStlModel } from "./three-components/MixedStlModel"
 import { StepModel } from "./three-components/StepModel"
+import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import {
   getCadLoaderTransformConfig,
   getCadLoaderTransformMatrix,
@@ -25,7 +26,6 @@ import {
 } from "./utils/get-cad-model-type"
 import { resolveModelUrl } from "./utils/resolve-model-url"
 import { tuple } from "./utils/tuple"
-import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 
 const ModelLoadErrorReporter = ({
   error,
@@ -39,6 +39,28 @@ const ModelLoadErrorReporter = ({
   }, [error, onError])
 
   return null
+}
+
+export function getModelFallbackBoundaryKey({
+  cadComponentId,
+  fallbackModelIndex,
+  gltfUrl,
+  url,
+  stepUrl,
+}: {
+  cadComponentId: string
+  fallbackModelIndex: number
+  gltfUrl?: string | null
+  url?: string | null
+  stepUrl?: string | null
+}) {
+  return [
+    cadComponentId,
+    fallbackModelIndex,
+    gltfUrl ?? "",
+    url ?? "",
+    stepUrl ?? "",
+  ].join("|")
 }
 
 export const AnyCadComponent = ({
@@ -251,9 +273,18 @@ export const AnyCadComponent = ({
       return null
     }
 
+    const fallbackBoundaryKey = getModelFallbackBoundaryKey({
+      cadComponentId: cad_component.cad_component_id,
+      fallbackModelIndex,
+      gltfUrl,
+      url,
+      stepUrl,
+    })
+
     modelComponent = (
       <ThreeErrorBoundary
-        key={`${cad_component.cad_component_id}-fallback-${fallbackModelIndex}`}
+        key={fallbackBoundaryKey}
+        resetKey={fallbackBoundaryKey}
         fallback={({ error }) => (
           <ModelLoadErrorReporter
             error={error}
