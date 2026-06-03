@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import * as THREE from "three"
-import { GLTFLoader } from "three-stdlib"
 import { useThree } from "src/react-three/ThreeContext"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { getDefaultEnvironmentMap } from "src/react-three/getDefaultEnvironmentMap"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import { useGlobalGltfLoader } from "src/hooks/use-global-gltf-loader"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 const DEFAULT_ENV_MAP_INTENSITY = 1.25
@@ -39,10 +39,9 @@ export function GltfModel({
   isTranslucent?: boolean
 }) {
   const { renderer } = useThree()
-  const [model, setModel] = useState<THREE.Group | null>(null)
-  const [loadError, setLoadError] = useState<Error | null>(null)
+  const model = useGlobalGltfLoader(gltfUrl)
   const { boardTransformGroup } = useCadModelTransformGraph({
-    model,
+    model: model instanceof Error ? null : model,
     position,
     rotation,
     modelOffset,
@@ -54,54 +53,30 @@ export function GltfModel({
   })
 
   useEffect(() => {
-    if (!gltfUrl) return
-    const loader = new GLTFLoader()
-    let isMounted = true
-    loader.load(
-      gltfUrl,
-      (gltf) => {
-        if (!isMounted) return
-        const scene = gltf.scene
+    if (!model || model instanceof Error) return
 
-        scene.traverse((child) => {
-          if (child instanceof THREE.Mesh && child.material) {
-            const setMaterialTransparency = (mat: THREE.Material) => {
-              mat.transparent = isTranslucent
-              mat.opacity = isTranslucent ? 0.5 : 1
-              mat.depthWrite = !isTranslucent
-              mat.needsUpdate = true
-            }
+    model.traverse((child) => {
+      if (child instanceof THREE.Mesh && child.material) {
+        const setMaterialTransparency = (mat: THREE.Material) => {
+          mat.transparent = isTranslucent
+          mat.opacity = isTranslucent ? 0.5 : 1
+          mat.depthWrite = !isTranslucent
+          mat.needsUpdate = true
+        }
 
-            if (Array.isArray(child.material)) {
-              child.material.forEach(setMaterialTransparency)
-            } else {
-              setMaterialTransparency(child.material)
-            }
+        if (Array.isArray(child.material)) {
+          child.material.forEach(setMaterialTransparency)
+        } else {
+          setMaterialTransparency(child.material)
+        }
 
-            child.renderOrder = isTranslucent ? 2 : 1
-          }
-        })
-
-        setModel(scene)
-      },
-      undefined,
-      (error) => {
-        if (!isMounted) return
-        console.error(`An error happened loading ${gltfUrl}`, error)
-        const err =
-          error instanceof Error
-            ? error
-            : new Error(`Failed to load glTF model from ${gltfUrl}`)
-        setLoadError(err)
-      },
-    )
-    return () => {
-      isMounted = false
-    }
-  }, [gltfUrl, isTranslucent])
+        child.renderOrder = isTranslucent ? 2 : 1
+      }
+    })
+  }, [model, isTranslucent])
 
   useEffect(() => {
-    if (!model || !renderer) return
+    if (!model || model instanceof Error || !renderer) return
 
     const environmentMap = getDefaultEnvironmentMap(renderer)
     if (!environmentMap) return
@@ -154,7 +129,7 @@ export function GltfModel({
   }, [model, renderer])
 
   useEffect(() => {
-    if (!model) return
+    if (!model || model instanceof Error) return
     model.traverse((child) => {
       if (
         child instanceof THREE.Mesh &&
@@ -170,8 +145,8 @@ export function GltfModel({
     })
   }, [isHovered, model])
 
-  if (loadError) {
-    throw loadError
+  if (model instanceof Error) {
+    throw model
   }
 
   if (!model) return null
