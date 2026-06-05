@@ -1,16 +1,17 @@
 import { su } from "@tscircuit/circuit-json-util"
-import type { AnyCircuitElement, CadComponent } from "circuit-json"
+import type { AnyCircuitElement, CadComponent, PcbBoard } from "circuit-json"
 import type { ManifoldToplevel } from "manifold-3d"
 import type React from "react"
 import { useEffect, useMemo, useState } from "react"
-import * as THREE from "three"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
 import type { CameraController } from "./hooks/cameraAnimation"
 import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
+import type { ManifoldGeoms } from "./hooks/useManifoldBoardBuilder"
 import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
 import { useThree } from "./react-three/ThreeContext"
+import type { CombinedBoardTextures } from "./textures"
 import { createTextureMeshes } from "./textures"
 import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
@@ -26,56 +27,28 @@ declare global {
 }
 
 const BoardMeshes = ({
-  geometryMeshes,
-  textureMeshes,
+  geoms,
+  textures,
+  boardData,
+  pcbThickness,
+  isFauxBoard,
 }: {
-  geometryMeshes: THREE.Mesh[]
-  textureMeshes: THREE.Mesh[]
+  geoms: ManifoldGeoms | null
+  textures: CombinedBoardTextures | null
+  boardData: PcbBoard | null
+  pcbThickness: number | null
+  isFauxBoard: boolean
 }) => {
   const { rootObject } = useThree()
   const { visibility } = useLayerVisibility()
 
-  const disposeMesh = (mesh: THREE.Mesh) => {
-    mesh.geometry.dispose()
-    const materials = Array.isArray(mesh.material)
-      ? mesh.material
-      : [mesh.material]
-
-    for (const material of materials) {
-      if (!material) continue
-
-      const textureProps = [
-        "map",
-        "alphaMap",
-        "aoMap",
-        "bumpMap",
-        "displacementMap",
-        "emissiveMap",
-        "lightMap",
-        "metalnessMap",
-        "normalMap",
-        "roughnessMap",
-        "specularMap",
-      ] as const
-      const typedMaterial = material as THREE.Material &
-        Record<(typeof textureProps)[number], THREE.Texture | null | undefined>
-
-      for (const prop of textureProps) {
-        const texture = typedMaterial[prop]
-        if (texture && texture instanceof THREE.Texture) {
-          texture.dispose()
-          typedMaterial[prop] = null
-        }
-      }
-
-      material.dispose()
-    }
-  }
-
+  // Geometry effect: create meshes inside effect so each mount owns its own instances
   useEffect(() => {
-    if (!rootObject) return
+    if (!rootObject || !geoms) return
 
-    geometryMeshes.forEach((mesh) => {
+    const meshes = createGeometryMeshes(geoms)
+
+    meshes.forEach((mesh) => {
       let shouldShow = true
       if (mesh.name === "board-geom") {
         shouldShow = visibility.boardBody
@@ -92,31 +65,53 @@ const BoardMeshes = ({
     })
 
     return () => {
-      geometryMeshes.forEach((mesh) => {
+      meshes.forEach((mesh) => {
         if (mesh.parent === rootObject) {
           rootObject.remove(mesh)
         }
-        disposeMesh(mesh)
+        // Dispose material only (BufferGeometry is owned by geoms state)
+        const materials = Array.isArray(mesh.material)
+          ? mesh.material
+          : [mesh.material]
+        for (const material of materials) {
+          material?.dispose()
+        }
       })
     }
-  }, [rootObject, geometryMeshes, visibility])
+  }, [rootObject, geoms, visibility])
 
+  // Texture effect: create meshes inside effect so each mount owns its own instances
   useEffect(() => {
-    if (!rootObject) return
+    if (!rootObject || !textures || !boardData || pcbThickness === null) return
 
-    textureMeshes.forEach((mesh) => {
+    const meshes = createTextureMeshes(textures, boardData, pcbThickness, isFauxBoard)
+
+    meshes.forEach((mesh) => {
       rootObject.add(mesh)
     })
 
     return () => {
-      textureMeshes.forEach((mesh) => {
+      meshes.forEach((mesh) => {
         if (mesh.parent === rootObject) {
           rootObject.remove(mesh)
         }
-        disposeMesh(mesh)
+        // Dispose PlaneGeometry + Material (created by this effect)
+        // Do NOT dispose CanvasTexture — owned by textures state
+        mesh.geometry.dispose()
+        const materials = Array.isArray(mesh.material)
+          ? mesh.material
+          : [mesh.material]
+        for (const material of materials) {
+          if (!material) continue
+          // Detach texture reference without disposing it
+          if ("map" in material) {
+            ;(material as any).map = null
+          }
+          material.dispose()
+        }
       })
     }
-  }, [rootObject, textureMeshes])
+  }, [rootObject, textures, boardData, pcbThickness, isFauxBoard])
 
   return null
 }
@@ -243,12 +238,6 @@ try {
     isFauxBoard,
   } = useManifoldBoardBuilder(manifoldJSModule, circuitJson, visibility)
 
-  const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
-  const textureMeshes = useMemo(
-    () => createTextureMeshes(textures, boardData, pcbThickness, isFauxBoard),
-    [textures, boardData, pcbThickness, isFauxBoard],
-  )
-
   const cadComponents = useMemo(
     () => su(circuitJson).cad_component.list(),
     [circuitJson],
@@ -326,8 +315,11 @@ try {
       onCameraControllerReady={onCameraControllerReady}
     >
       <BoardMeshes
-        geometryMeshes={geometryMeshes}
-        textureMeshes={textureMeshes}
+        geoms={geoms}
+        textures={textures}
+        boardData={boardData}
+        pcbThickness={pcbThickness}
+        isFauxBoard={isFauxBoard}
       />
       {cadComponents.map((cad_component: CadComponent) => (
         <ThreeErrorBoundary
