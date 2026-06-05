@@ -43,6 +43,9 @@ export function createSilkscreenTextureForLayer({
   const ctx = canvas.getContext("2d")
   if (!ctx) return null
 
+  // Clear canvas to transparent for knockout support
+  ctx.clearRect(0, 0, canvasWidth, canvasHeight)
+
   if (layer === "bottom") {
     ctx.translate(0, canvasHeight)
     ctx.scale(1, -1)
