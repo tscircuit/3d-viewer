@@ -47,7 +47,7 @@ export const drawThroughHoleLayer = ({
       drill: transparent,
       boardOutline: transparent,
       substrate: transparent,
-      keepout: transparent,
+      keepout: { top: transparent, bottom: transparent },
       fabricationNote: transparent,
       silkscreen: { top: transparent, bottom: transparent },
       courtyard: { top: transparent, bottom: transparent },

@@ -89,7 +89,7 @@ export const drawSoldermaskLayer = ({
       drill: palette.transparent,
       boardOutline: palette.transparent,
       substrate: palette.transparent,
-      keepout: palette.transparent,
+      keepout: { top: palette.transparent, bottom: palette.transparent },
       fabricationNote: palette.transparent,
       silkscreen: { top: palette.transparent, bottom: palette.transparent },
       courtyard: { top: palette.transparent, bottom: palette.transparent },
@@ -105,16 +105,19 @@ export const drawSoldermaskLayer = ({
     },
   })
   setDrawerBounds(drawer, bounds)
+  const elementsWithoutKeepouts = elements.filter(
+    (element) => element.type !== "pcb_keepout",
+  )
 
   // Let circuit-to-canvas handle board/panel soldermask composition internally.
-  drawer.drawElements(elements, {
+  drawer.drawElements(elementsWithoutKeepouts, {
     layers: [copperRenderLayer],
     drawSoldermask: true,
     drawSoldermaskTop: layer === "top",
     drawSoldermaskBottom: layer === "bottom",
   })
 
-  const uncoveredPours = elements.filter(
+  const uncoveredPours = elementsWithoutKeepouts.filter(
     (e): e is PcbCopperPour =>
       e.type === "pcb_copper_pour" &&
       e.layer === layer &&

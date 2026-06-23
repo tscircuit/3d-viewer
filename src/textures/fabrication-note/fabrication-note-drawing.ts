@@ -91,7 +91,7 @@ export const drawFabricationNoteLayer = ({
       drill: TRANSPARENT,
       boardOutline: TRANSPARENT,
       substrate: TRANSPARENT,
-      keepout: TRANSPARENT,
+      keepout: { top: TRANSPARENT, bottom: TRANSPARENT },
       courtyard: {
         top: TRANSPARENT,
         bottom: TRANSPARENT,
