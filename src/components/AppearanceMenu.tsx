@@ -176,6 +176,29 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
+                  hoveredItem === "keepout" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                setLayerVisibility("keepout", !visibility.keepout)
+              }}
+              onMouseEnter={() => setHoveredItem("keepout")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("keepout")}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.keepout && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Keepout
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
                   hoveredItem === "topSilkscreen" ? "#404040" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}

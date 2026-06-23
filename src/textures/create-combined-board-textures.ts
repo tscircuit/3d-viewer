@@ -97,6 +97,7 @@ export function createCombinedBoardTextures({
       (layer === "top"
         ? visibility?.topSilkscreen
         : visibility?.bottomSilkscreen) ?? true
+    const showKeepout = visibility?.keepout ?? true
 
     const soldermaskTexture = showMask
       ? createSoldermaskTextureForLayer({
@@ -194,12 +195,14 @@ export function createCombinedBoardTextures({
         })
       : null
 
-    const keepoutTexture = createKeepoutTextureForLayer({
-      layer,
-      circuitJson,
-      boardData,
-      traceTextureResolution,
-    })
+    const keepoutTexture = showKeepout
+      ? createKeepoutTextureForLayer({
+          layer,
+          circuitJson,
+          boardData,
+          traceTextureResolution,
+        })
+      : null
 
     return createCombinedTexture({
       textures: [

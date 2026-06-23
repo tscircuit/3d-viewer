@@ -11,6 +11,7 @@ export interface LayerVisibilityState {
   boardBody: boolean
   topCopper: boolean
   bottomCopper: boolean
+  keepout: boolean
   adhesive: boolean
   solderPaste: boolean
   topSilkscreen: boolean
@@ -42,6 +43,7 @@ const defaultVisibility: LayerVisibilityState = {
   boardBody: true,
   topCopper: true,
   bottomCopper: true,
+  keepout: true,
   adhesive: false,
   solderPaste: false,
   topSilkscreen: true,
