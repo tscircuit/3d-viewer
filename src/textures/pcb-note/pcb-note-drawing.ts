@@ -115,7 +115,7 @@ export const drawPcbNoteLayer = ({
       drill: TRANSPARENT,
       boardOutline: TRANSPARENT,
       substrate: TRANSPARENT,
-      keepout: TRANSPARENT,
+      keepout: { top: TRANSPARENT, bottom: TRANSPARENT },
       courtyard: { top: TRANSPARENT, bottom: TRANSPARENT },
       soldermask: { top: TRANSPARENT, bottom: TRANSPARENT },
       soldermaskWithCopperUnderneath: {

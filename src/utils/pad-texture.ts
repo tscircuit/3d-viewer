@@ -76,7 +76,7 @@ export function createPadTextureForLayer({
       drill: transparent,
       boardOutline: transparent,
       substrate: transparent,
-      keepout: transparent,
+      keepout: { top: transparent, bottom: transparent },
       fabricationNote: transparent,
       courtyard: { top: transparent, bottom: transparent },
       silkscreen: { top: transparent, bottom: transparent },

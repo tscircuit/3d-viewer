@@ -9,6 +9,7 @@ import { createTraceTextureForLayer } from "../utils/trace-texture"
 import { createCopperTextTextureForLayer } from "./create-copper-text-texture-for-layer"
 import { createCopperPourTextureForLayer } from "./create-copper-pour-texture-for-layer"
 import { createFabricationNoteTextureForLayer } from "./create-fabrication-note-texture-for-layer"
+import { createKeepoutTextureForLayer } from "./create-keepout-texture-for-layer"
 import { createPcbNoteTextureForLayer } from "./create-pcb-note-texture-for-layer"
 import { createSilkscreenTextureForLayer } from "./create-silkscreen-texture-for-layer"
 import { createSoldermaskTextureForLayer } from "./create-soldermask-texture-for-layer"
@@ -193,6 +194,13 @@ export function createCombinedBoardTextures({
         })
       : null
 
+    const keepoutTexture = createKeepoutTextureForLayer({
+      layer,
+      circuitJson,
+      boardData,
+      traceTextureResolution,
+    })
+
     return createCombinedTexture({
       textures: [
         copperPourTexture,
@@ -205,6 +213,7 @@ export function createCombinedBoardTextures({
         fabricationNoteTexture,
         pcbNoteTexture,
         panelOutlineTexture,
+        keepoutTexture,
       ],
       boardData,
       traceTextureResolution,
