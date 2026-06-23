@@ -1,6 +1,6 @@
 {
   "name": "@tscircuit/3d-viewer",
-  "version": "0.0.566",
+  "version": "0.0.567",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "type": "module",
