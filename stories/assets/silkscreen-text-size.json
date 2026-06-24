@@ -1,0 +1,112 @@
+[
+  {
+    "type": "source_project_metadata",
+    "source_project_metadata_id": "source_project_metadata_0",
+    "software_used_string": "@tscircuit/core@0.0.408"
+  },
+  {
+    "type": "source_group",
+    "source_group_id": "source_group_0",
+    "is_subcircuit": true,
+    "subcircuit_id": "subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_board",
+    "pcb_board_id": "pcb_board_0",
+    "center": {
+      "x": 0,
+      "y": 0
+    },
+    "thickness": 1.4,
+    "num_layers": 4,
+    "width": 20,
+    "height": 20,
+    "material": "fr4"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "pcb_hole_0",
+    "hole_shape": "circle",
+    "hole_diameter": 1,
+    "x": 7.35,
+    "y": 0,
+    "subcircuit_id": "subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "pcb_hole_1",
+    "hole_shape": "circle",
+    "hole_diameter": 1,
+    "x": -7.65,
+    "y": 0,
+    "subcircuit_id": "subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "pcb_silkscreen_text_0",
+    "anchor_alignment": "center",
+    "anchor_position": {
+      "x": 0,
+      "y": 0
+    },
+    "font": "tscircuit2024",
+    "font_size": 1,
+    "layer": "top",
+    "text": "FROM HOLE TO HOLEI",
+    "pcb_component_id": null,
+    "subcircuit_id": "subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "pcb_hole_2",
+    "hole_shape": "circle",
+    "hole_diameter": 1,
+    "x": 3.95,
+    "y": 2,
+    "subcircuit_id": "subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "pcb_hole_3",
+    "hole_shape": "circle",
+    "hole_diameter": 1,
+    "x": -4.1,
+    "y": 2,
+    "subcircuit_id": "subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "pcb_silkscreen_text_1",
+    "anchor_alignment": "center",
+    "anchor_position": {
+      "x": 0,
+      "y": 2
+    },
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "layer": "top",
+    "text": "FROM HOLE TO HOLEI",
+    "pcb_component_id": null,
+    "subcircuit_id": "subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_trace_error",
+    "pcb_trace_error_id": "pcb_trace_error_0",
+    "error_type": "pcb_trace_error",
+    "message": "Multiple components found with name \"H1\" in subcircuit \"unnamed\". Component names must be unique within a subcircuit.",
+    "source_trace_id": "",
+    "pcb_trace_id": "",
+    "pcb_component_ids": [],
+    "pcb_port_ids": []
+  },
+  {
+    "type": "pcb_trace_error",
+    "pcb_trace_error_id": "pcb_trace_error_1",
+    "error_type": "pcb_trace_error",
+    "message": "Multiple components found with name \"H2\" in subcircuit \"unnamed\". Component names must be unique within a subcircuit.",
+    "source_trace_id": "",
+    "pcb_trace_id": "",
+    "pcb_component_ids": [],
+    "pcb_port_ids": []
+  }
+]
