@@ -1,11 +1,12 @@
-import type { JscadOperation } from "jscad-planner"
-import { executeJscadOperations } from "jscad-planner"
 import jscad from "@jscad/modeling"
 import { convertCSGToThreeGeom } from "jscad-electronics/vanilla"
-import * as THREE from "three"
-import { useMemo, useEffect } from "react"
+import type { JscadOperation } from "jscad-planner"
+import { executeJscadOperations } from "jscad-planner"
+import { useEffect, useMemo } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import { disposeThreeObjectResources } from "src/utils/dispose-three-object-resources"
+import * as THREE from "three"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 export const JscadModel = ({
@@ -73,6 +74,13 @@ export const JscadModel = ({
     modelFitMode,
     scale,
   })
+
+  useEffect(() => {
+    if (!mesh) return
+    return () => {
+      disposeThreeObjectResources(mesh)
+    }
+  }, [mesh])
 
   useEffect(() => {
     if (!material) return
