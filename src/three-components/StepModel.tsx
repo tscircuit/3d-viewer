@@ -1,31 +1,14 @@
 import { useEffect, useState } from "react"
-import {
-  BufferGeometry,
-  Color,
-  Float32BufferAttribute,
-  Group,
-  Mesh,
-  MeshStandardMaterial,
-} from "three"
 import { GLTFExporter } from "three-stdlib"
 import { GltfModel } from "./GltfModel"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import { occtMeshesToGroup, type OcctMesh } from "./step-mesh-to-group"
 
 type OcctImportParams = {
   linearUnit?: "millimeter" | "centimeter" | "meter" | "inch" | "foot"
   linearDeflectionType?: "bounding_box_ratio" | "absolute_value"
   linearDeflection?: number
   angularDeflection?: number
-}
-
-type OcctMesh = {
-  name: string
-  color?: [number, number, number]
-  attributes: {
-    position: { array: number[] }
-    normal?: { array: number[] }
-  }
-  index: { array: number[] }
 }
 
 type OcctImportResult = {
@@ -80,35 +63,6 @@ async function loadOcctImport(): Promise<OcctImport> {
   return occtImportPromise
 }
 
-function occtMeshesToGroup(meshes: OcctMesh[]): Group {
-  const group = new Group()
-  for (const mesh of meshes) {
-    const positions = mesh.attributes.position?.array ?? []
-    const indices = mesh.index?.array ?? []
-    if (!positions.length || !indices.length) {
-      continue
-    }
-    const geometry = new BufferGeometry()
-    geometry.setAttribute("position", new Float32BufferAttribute(positions, 3))
-    const normals = mesh.attributes.normal?.array ?? []
-    if (normals.length) {
-      geometry.setAttribute("normal", new Float32BufferAttribute(normals, 3))
-    } else {
-      geometry.computeVertexNormals()
-    }
-    geometry.setIndex(indices)
-    const material = new MeshStandardMaterial({
-      color: mesh.color
-        ? new Color(mesh.color[0], mesh.color[1], mesh.color[2])
-        : new Color(0.82, 0.82, 0.82),
-    })
-    const threeMesh = new Mesh(geometry, material)
-    threeMesh.name = mesh.name
-    group.add(threeMesh)
-  }
-  return group
-}
-
 async function convertStepUrlToGlb(stepUrl: string): Promise<ArrayBuffer> {
   const response = await fetch(stepUrl)
   if (!response.ok) {
@@ -141,7 +95,7 @@ async function convertStepUrlToGlb(stepUrl: string): Promise<ArrayBuffer> {
   return glb
 }
 
-const CACHE_PREFIX = "step-glb-cache:"
+const CACHE_PREFIX = "step-glb-cache:v2:"
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer)
