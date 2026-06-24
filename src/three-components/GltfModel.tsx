@@ -156,15 +156,20 @@ export function GltfModel({
   useEffect(() => {
     if (!model) return
     model.traverse((child) => {
-      if (
-        child instanceof THREE.Mesh &&
-        child.material instanceof THREE.MeshStandardMaterial
-      ) {
+      if (!(child instanceof THREE.Mesh)) return
+
+      const materials = Array.isArray(child.material)
+        ? child.material
+        : [child.material]
+
+      for (const material of materials) {
+        if (!(material instanceof THREE.MeshStandardMaterial)) continue
+
         if (isHovered) {
-          child.material.emissive.setHex(0x0000ff)
-          child.material.emissiveIntensity = 0.2
+          material.emissive.setHex(0x0000ff)
+          material.emissiveIntensity = 0.2
         } else {
-          child.material.emissiveIntensity = 0
+          material.emissiveIntensity = 0
         }
       }
     })
