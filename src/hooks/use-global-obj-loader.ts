@@ -1,12 +1,46 @@
-import { useState, useEffect } from "react"
-import type { Object3D } from "three"
-import { MTLLoader, OBJLoader } from "three-stdlib"
+import { useEffect, useState } from "react"
 import { loadVrml } from "src/utils/vrml"
+import type { Material, Object3D } from "three"
+import { MTLLoader, OBJLoader } from "three-stdlib"
 
 // Define the type for our cache
 interface CacheItem {
-  promise: Promise<any>
+  promise: Promise<Object3D | Error>
   result: Object3D | null
+}
+
+type ModelMeshLike = Object3D & {
+  geometry?: unknown
+  material?: Material | Material[]
+}
+
+const cloneMaterial = (material: Material | Material[] | undefined) => {
+  if (Array.isArray(material)) {
+    return material.map((item) => item.clone())
+  }
+
+  return material?.clone()
+}
+
+const cloneCachedModel = (model: Object3D) => {
+  const clonedModel = model.clone(true)
+  const sourceNodes: Object3D[] = []
+  const clonedNodes: Object3D[] = []
+
+  model.traverse((node) => sourceNodes.push(node))
+  clonedModel.traverse((node) => clonedNodes.push(node))
+
+  clonedNodes.forEach((clonedNode, index) => {
+    const sourceNode = sourceNodes[index] as ModelMeshLike | undefined
+    const clonedMesh = clonedNode as ModelMeshLike
+
+    if (!sourceNode?.material || !("material" in clonedMesh)) return
+
+    clonedMesh.geometry = sourceNode.geometry
+    clonedMesh.material = cloneMaterial(sourceNode.material)
+  })
+
+  return clonedModel
 }
 
 declare global {
@@ -82,13 +116,12 @@ export function useGlobalObjLoader(
       if (cache.has(cleanUrl)) {
         const cacheItem = cache.get(cleanUrl)!
         if (cacheItem.result) {
-          // If we have a result, clone it
-          return Promise.resolve(cacheItem.result.clone())
+          return Promise.resolve(cloneCachedModel(cacheItem.result))
         }
         // If we're still loading, return the existing promise
         return cacheItem.promise.then((result) => {
           if (result instanceof Error) return result
-          return result.clone()
+          return cloneCachedModel(result)
         })
       }
       // If it's not in the cache, create a new promise and cache it
