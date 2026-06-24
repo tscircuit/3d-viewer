@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import type { Object3D } from "three"
 import { MTLLoader, OBJLoader } from "three-stdlib"
+import { get3DModelCacheKey } from "src/utils/get-3d-model-cache-key"
 import { loadVrml } from "src/utils/vrml"
 
 // Define the type for our cache
@@ -28,7 +29,7 @@ export function useGlobalObjLoader(
   useEffect(() => {
     if (!url) return
 
-    const cleanUrl = url.replace(/&cachebust_origin=$/, "")
+    const cleanUrl = get3DModelCacheKey(url)
 
     const cache = window.TSCIRCUIT_OBJ_LOADER_CACHE
     let hasUrlChanged = false
