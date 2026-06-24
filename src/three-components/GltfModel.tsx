@@ -5,6 +5,7 @@ import { useThree } from "src/react-three/ThreeContext"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { getDefaultEnvironmentMap } from "src/react-three/getDefaultEnvironmentMap"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import { disposeObject3DResources } from "src/utils/dispose-object3d-resources"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 const DEFAULT_ENV_MAP_INTENSITY = 1.25
@@ -57,30 +58,18 @@ export function GltfModel({
     if (!gltfUrl) return
     const loader = new GLTFLoader()
     let isMounted = true
+    let loadedScene: THREE.Group | null = null
+    setModel(null)
+    setLoadError(null)
     loader.load(
       gltfUrl,
       (gltf) => {
-        if (!isMounted) return
+        if (!isMounted) {
+          disposeObject3DResources(gltf.scene)
+          return
+        }
         const scene = gltf.scene
-
-        scene.traverse((child) => {
-          if (child instanceof THREE.Mesh && child.material) {
-            const setMaterialTransparency = (mat: THREE.Material) => {
-              mat.transparent = isTranslucent
-              mat.opacity = isTranslucent ? 0.5 : 1
-              mat.depthWrite = !isTranslucent
-              mat.needsUpdate = true
-            }
-
-            if (Array.isArray(child.material)) {
-              child.material.forEach(setMaterialTransparency)
-            } else {
-              setMaterialTransparency(child.material)
-            }
-
-            child.renderOrder = isTranslucent ? 2 : 1
-          }
-        })
+        loadedScene = scene
 
         setModel(scene)
       },
@@ -97,8 +86,34 @@ export function GltfModel({
     )
     return () => {
       isMounted = false
+      if (loadedScene) {
+        disposeObject3DResources(loadedScene)
+      }
     }
-  }, [gltfUrl, isTranslucent])
+  }, [gltfUrl])
+
+  useEffect(() => {
+    if (!model) return
+
+    model.traverse((child) => {
+      if (!(child instanceof THREE.Mesh) || !child.material) return
+
+      const setMaterialTransparency = (mat: THREE.Material) => {
+        mat.transparent = isTranslucent
+        mat.opacity = isTranslucent ? 0.5 : 1
+        mat.depthWrite = !isTranslucent
+        mat.needsUpdate = true
+      }
+
+      if (Array.isArray(child.material)) {
+        child.material.forEach(setMaterialTransparency)
+      } else {
+        setMaterialTransparency(child.material)
+      }
+
+      child.renderOrder = isTranslucent ? 2 : 1
+    })
+  }, [model, isTranslucent])
 
   useEffect(() => {
     if (!model || !renderer) return
