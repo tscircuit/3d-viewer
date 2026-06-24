@@ -208,6 +208,26 @@ function getStepUrlConversionRegistry(): StepUrlConversionRegistry {
   return globalScope.stepUrlToGltfModelConversions
 }
 
+export function getOrCreateStepConversionFromCachedGlb(
+  stepUrl: string,
+  glb: ArrayBuffer,
+  registry = getStepUrlConversionRegistry(),
+): ConvertedStepFile {
+  const existingCompleted = registry.completed.get(stepUrl)
+  if (existingCompleted) {
+    return existingCompleted
+  }
+
+  const cachedConverted: ConvertedStepFile = {
+    arrayBuffer: glb,
+    blobUrl: URL.createObjectURL(
+      new Blob([glb], { type: "model/gltf-binary" }),
+    ),
+  }
+  registry.completed.set(stepUrl, cachedConverted)
+  return cachedConverted
+}
+
 type StepModelProps = {
   stepUrl: string
   position?: [number, number, number]
@@ -246,18 +266,12 @@ export const StepModel = ({
     let objectUrl: string | null = null
     let shouldRevokeObjectUrl = true
     const registry = getStepUrlConversionRegistry()
-    const cachedGlb = getCachedGlb(stepUrl)
-    if (cachedGlb) {
-      const cachedConverted: ConvertedStepFile = {
-        arrayBuffer: cachedGlb,
-        blobUrl: URL.createObjectURL(
-          new Blob([cachedGlb], { type: "model/gltf-binary" }),
-        ),
-      }
-      registry.completed.set(stepUrl, cachedConverted)
-      objectUrl = cachedConverted.blobUrl
+    const existingCompleted = registry.completed.get(stepUrl)
+    if (existingCompleted) {
+      objectUrl = existingCompleted.blobUrl
       shouldRevokeObjectUrl = false
-      setStepGltfUrl(cachedConverted.blobUrl)
+      setStepGltfUrl(existingCompleted.blobUrl)
+      setCachedGlb(stepUrl, existingCompleted.arrayBuffer)
       return () => {
         isActive = false
         if (objectUrl && shouldRevokeObjectUrl) {
@@ -265,12 +279,16 @@ export const StepModel = ({
         }
       }
     }
-    const existingCompleted = registry.completed.get(stepUrl)
-    if (existingCompleted) {
-      objectUrl = existingCompleted.blobUrl
+    const cachedGlb = getCachedGlb(stepUrl)
+    if (cachedGlb) {
+      const cachedConverted = getOrCreateStepConversionFromCachedGlb(
+        stepUrl,
+        cachedGlb,
+        registry,
+      )
+      objectUrl = cachedConverted.blobUrl
       shouldRevokeObjectUrl = false
-      setStepGltfUrl(existingCompleted.blobUrl)
-      setCachedGlb(stepUrl, existingCompleted.arrayBuffer)
+      setStepGltfUrl(cachedConverted.blobUrl)
       return () => {
         isActive = false
         if (objectUrl && shouldRevokeObjectUrl) {
