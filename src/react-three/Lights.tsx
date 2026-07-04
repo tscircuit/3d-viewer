@@ -76,7 +76,7 @@ export const Lights: React.FC<LightsProps> = ({
 
     addDirectionalLight(
       "cad-viewer-key-light",
-      0xfff0df,
+      0xffffff,
       2.4,
       [lightDistance * 0.22, -lightDistance * 0.28, lightDistance * 1.15],
       shadowsEnabled,

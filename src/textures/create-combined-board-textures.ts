@@ -27,6 +27,48 @@ const toRgb = (colorArr: number[]) => {
   )})`
 }
 
+const clampChannel = (value: number) => Math.max(0, Math.min(255, value))
+
+const applySoldermaskSurfaceFilter = (
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+) => {
+  const imageData = ctx.getImageData(0, 0, width, height)
+  const data = imageData.data
+  const maxX = Math.max(width - 1, 1)
+  const maxY = Math.max(height - 1, 1)
+
+  for (let i = 0; i < data.length; i += 4) {
+    const alpha = data[i + 3] ?? 0
+    if (alpha < 16) continue
+
+    const r = data[i] ?? 0
+    const g = data[i + 1] ?? 0
+    const b = data[i + 2] ?? 0
+    const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+    const isDarkGreen =
+      g > r * 1.35 && g > b * 1.15 && luminance < 90 && r < 80 && b < 80
+
+    if (!isDarkGreen) continue
+
+    const pixelIndex = i / 4
+    const x = pixelIndex % width
+    const y = Math.floor(pixelIndex / width)
+    const u = x / maxX
+    const v = y / maxY
+    const diagonalLight = u * 0.58 + (1 - v) * 0.42
+    const broadVariation = Math.sin((u * 1.15 + v * 0.35) * Math.PI) * 0.04
+    const lightFactor = 0.78 + diagonalLight * 0.18 + broadVariation
+
+    data[i] = clampChannel((r * 1.12 + 6) * lightFactor)
+    data[i + 1] = clampChannel((g * 1.16 + 18) * lightFactor)
+    data[i + 2] = clampChannel((b * 1.12 + 8) * lightFactor)
+  }
+
+  ctx.putImageData(imageData, 0, 0)
+}
+
 const createCombinedTexture = ({
   textures,
   boardData,
@@ -59,6 +101,8 @@ const createCombinedTexture = ({
     const image = texture.image as HTMLCanvasElement
     ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight)
   })
+
+  applySoldermaskSurfaceFilter(ctx, canvasWidth, canvasHeight)
 
   const combinedTexture = new THREE.CanvasTexture(canvas)
   combinedTexture.generateMipmaps = false
