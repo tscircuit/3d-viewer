@@ -26,6 +26,7 @@ import {
   LayerVisibilityProvider,
   useLayerVisibility,
 } from "./contexts/LayerVisibilityContext"
+import { RenderingModeProvider } from "./contexts/RenderingModeContext"
 import {
   CameraControllerProvider,
   useCameraController,
@@ -312,9 +313,11 @@ export const CadViewer = (props: any) => {
       initialCameraType={readStoredCameraType()}
     >
       <LayerVisibilityProvider>
-        <ToastProvider>
-          <CadViewerInner {...props} />
-        </ToastProvider>
+        <RenderingModeProvider>
+          <ToastProvider>
+            <CadViewerInner {...props} />
+          </ToastProvider>
+        </RenderingModeProvider>
       </LayerVisibilityProvider>
     </CameraControllerProvider>
   )

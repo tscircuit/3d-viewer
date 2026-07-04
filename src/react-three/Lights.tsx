@@ -5,17 +5,20 @@ import { useThree } from "./ThreeContext"
 type LightsProps = {
   boardDimensions?: { width?: number; height?: number }
   boardCenter?: { x: number; y: number }
+  shadowsEnabled?: boolean
 }
 
 export const Lights: React.FC<LightsProps> = ({
   boardDimensions,
   boardCenter,
+  shadowsEnabled = false,
 }) => {
   const { scene } = useThree()
 
   const lightRig = useMemo(() => {
     const rig = new THREE.Group()
     rig.name = "cad-viewer-light-rig"
+
     const centerX = boardCenter?.x ?? 0
     const centerY = boardCenter?.y ?? 0
     const largestBoardDimension = Math.max(
@@ -76,7 +79,7 @@ export const Lights: React.FC<LightsProps> = ({
       0xfff0df,
       2.4,
       [lightDistance * 0.45, -lightDistance * 0.6, lightDistance * 0.8],
-      true,
+      shadowsEnabled,
     )
     addDirectionalLight("cad-viewer-fill-light", 0xdde8ff, 0.7, [
       -lightDistance * 0.65,
@@ -90,7 +93,7 @@ export const Lights: React.FC<LightsProps> = ({
     ])
 
     return rig
-  }, [boardCenter, boardDimensions])
+  }, [boardCenter, boardDimensions, shadowsEnabled])
 
   useEffect(() => {
     if (!scene) return

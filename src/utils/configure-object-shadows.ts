@@ -1,6 +1,4 @@
 import * as THREE from "three"
-import type { PcbBoard } from "circuit-json"
-import { calculateOutlineBounds } from "./outline-bounds"
 
 type ShadowOptions = {
   castShadow?: boolean
