@@ -27,7 +27,7 @@ export const createBoardShadowReceiverPlane = ({
   )
   const material = new THREE.ShadowMaterial({
     color: 0x000000,
-    opacity: 0.24,
+    opacity: 0.14,
     transparent: true,
     side: THREE.FrontSide,
     depthWrite: false,

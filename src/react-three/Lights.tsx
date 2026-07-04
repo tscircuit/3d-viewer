@@ -57,8 +57,8 @@ export const Lights: React.FC<LightsProps> = ({
       if (castShadow) {
         light.shadow.mapSize.set(2048, 2048)
         light.shadow.bias = -0.0002
-        light.shadow.normalBias = 0.02
-        light.shadow.radius = 3
+        light.shadow.normalBias = 0.03
+        light.shadow.radius = 5
 
         const shadowCamera = light.shadow.camera
         shadowCamera.left = -shadowHalfSize
@@ -78,7 +78,7 @@ export const Lights: React.FC<LightsProps> = ({
       "cad-viewer-key-light",
       0xfff0df,
       2.4,
-      [lightDistance * 0.45, -lightDistance * 0.6, lightDistance * 0.8],
+      [lightDistance * 0.22, -lightDistance * 0.28, lightDistance * 1.15],
       shadowsEnabled,
     )
     addDirectionalLight("cad-viewer-fill-light", 0xdde8ff, 0.7, [
