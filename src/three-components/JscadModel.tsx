@@ -6,6 +6,7 @@ import * as THREE from "three"
 import { useMemo, useEffect } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import { configureObjectShadows } from "src/utils/configure-object-shadows"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 export const JscadModel = ({
@@ -60,6 +61,10 @@ export const JscadModel = ({
     if (!threeGeom) return null
     const createdMesh = new THREE.Mesh(threeGeom, material)
     createdMesh.renderOrder = isTranslucent ? 2 : 1
+    configureObjectShadows(createdMesh, {
+      castShadow: !isTranslucent,
+      receiveShadow: true,
+    })
     return createdMesh
   }, [threeGeom, material, isTranslucent])
   const { boardTransformGroup } = useCadModelTransformGraph({

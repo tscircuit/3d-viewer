@@ -4,11 +4,14 @@ import { useEffect, useMemo } from "react"
 import { createCombinedBoardTextures } from "src/textures"
 import * as THREE from "three"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
+import { useRenderingMode } from "../contexts/RenderingModeContext"
 import {
   FAUX_BOARD_OPACITY,
   TRACE_TEXTURE_RESOLUTION,
 } from "../geoms/constants"
 import { useThree } from "../react-three/ThreeContext"
+import { configureObjectShadows } from "../utils/configure-object-shadows"
+import { createBoardShadowReceiverPlane } from "../utils/create-board-shadow-receiver-plane"
 import { getLayerTextureResolution } from "../utils/layer-texture-resolution"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
 
@@ -25,6 +28,7 @@ export function JscadBoardTextures({
 }: JscadBoardTexturesProps) {
   const { rootObject } = useThree()
   const { visibility } = useLayerVisibility()
+  const { shadowsEnabled } = useRenderingMode()
 
   const boardData = useMemo(() => {
     // Check for panel first
@@ -145,11 +149,13 @@ export function JscadBoardTextures({
       mesh.name = name
       mesh.renderOrder = renderOrder
       mesh.frustumCulled = false
+      configureObjectShadows(mesh, { castShadow: false, receiveShadow: true })
       return mesh
     }
 
     // Small offset to place textures just above board surface (same as Manifold)
     const SURFACE_OFFSET = 0.005
+    const SHADOW_RECEIVER_OFFSET = SURFACE_OFFSET + 0.002
 
     const topBoardMesh = createTexturePlane(
       textures.topBoard,
@@ -162,6 +168,17 @@ export function JscadBoardTextures({
       meshes.push(topBoardMesh)
       rootObject.add(topBoardMesh)
     }
+    if (shadowsEnabled) {
+      const topShadowReceiver = createBoardShadowReceiverPlane({
+        boardData,
+        offset: pcbThickness / 2 + SHADOW_RECEIVER_OFFSET,
+        isBottomLayer: false,
+        name: "jscad-top-board-shadow-receiver",
+        frustumCulled: false,
+      })
+      meshes.push(topShadowReceiver)
+      rootObject.add(topShadowReceiver)
+    }
 
     const bottomBoardMesh = createTexturePlane(
       textures.bottomBoard,
@@ -173,6 +190,17 @@ export function JscadBoardTextures({
     if (bottomBoardMesh) {
       meshes.push(bottomBoardMesh)
       rootObject.add(bottomBoardMesh)
+    }
+    if (shadowsEnabled) {
+      const bottomShadowReceiver = createBoardShadowReceiverPlane({
+        boardData,
+        offset: -pcbThickness / 2 - SHADOW_RECEIVER_OFFSET,
+        isBottomLayer: true,
+        name: "jscad-bottom-board-shadow-receiver",
+        frustumCulled: false,
+      })
+      meshes.push(bottomShadowReceiver)
+      rootObject.add(bottomShadowReceiver)
     }
 
     return () => {
@@ -191,7 +219,7 @@ export function JscadBoardTextures({
       textures.topBoard?.dispose()
       textures.bottomBoard?.dispose()
     }
-  }, [rootObject, boardData, textures, pcbThickness])
+  }, [rootObject, boardData, textures, pcbThickness, shadowsEnabled])
 
   return null
 }

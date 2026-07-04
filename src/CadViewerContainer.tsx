@@ -9,6 +9,7 @@ import { useFrame, useThree } from "./react-three/ThreeContext"
 import { Lights } from "./react-three/Lights"
 import { CameraAnimatorWithContext } from "./hooks/cameraAnimation"
 import { useCameraController } from "./contexts/CameraControllerContext"
+import { useRenderingMode } from "./contexts/RenderingModeContext"
 import { useCameraSession } from "./hooks/useCameraSession"
 import type { CameraController } from "./hooks/cameraAnimation"
 import { OrientationCubeCanvas } from "./three-components/OrientationCubeCanvas"
@@ -64,6 +65,7 @@ export const CadViewerContainer = forwardRef<
 
     const { mainCameraRef, handleControlsChange, controller } =
       useCameraController()
+    const { shadowsEnabled } = useRenderingMode()
     const {
       handleCameraCreated,
       handleControlsChange: handleSessionControlsChange,
@@ -120,7 +122,11 @@ export const CadViewerContainer = forwardRef<
               }}
             />
           )}
-          <Lights />
+          <Lights
+            boardDimensions={boardDimensions}
+            boardCenter={boardCenter}
+            shadowsEnabled={shadowsEnabled}
+          />
           <Grid
             rotation={[Math.PI / 2, 0, 0]}
             infiniteGrid={true}

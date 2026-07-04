@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
+import { useRenderingMode } from "../contexts/RenderingModeContext"
 import type React from "react"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { CheckIcon, ChevronRightIcon } from "./Icons"
@@ -61,6 +62,7 @@ const iconContainerStyles: React.CSSProperties = {
 
 export const AppearanceMenu = () => {
   const { visibility, setLayerVisibility } = useLayerVisibility()
+  const { renderingMode, setRenderingMode } = useRenderingMode()
   const [appearanceSubOpen, setAppearanceSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
@@ -103,6 +105,54 @@ export const AppearanceMenu = () => {
             collisionPadding={10}
             avoidCollisions={true}
           >
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "engineeringMode" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                setRenderingMode("engineering")
+              }}
+              onMouseEnter={() => setHoveredItem("engineeringMode")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("engineeringMode")}
+            >
+              <span style={iconContainerStyles}>
+                {renderingMode === "engineering" && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Engineering Mode
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "realisticMode" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                setRenderingMode("realistic")
+              }}
+              onMouseEnter={() => setHoveredItem("realisticMode")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("realisticMode")}
+            >
+              <span style={iconContainerStyles}>
+                {renderingMode === "realistic" && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Lighting Mode
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Separator style={separatorStyles} />
+
             <DropdownMenu.Item
               style={{
                 ...itemStyles,

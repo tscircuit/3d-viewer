@@ -7,6 +7,7 @@ import * as jscadModeling from "@jscad/modeling"
 import * as THREE from "three"
 import { useThree } from "src/react-three/ThreeContext"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
+import { configureObjectShadows } from "src/utils/configure-object-shadows"
 
 export const FootprinterModel = ({
   positionOffset,
@@ -53,6 +54,10 @@ export const FootprinterModel = ({
       })
       const mesh = new THREE.Mesh(threeGeom, material)
       mesh.renderOrder = isTranslucent ? 2 : 1
+      configureObjectShadows(mesh, {
+        castShadow: !isTranslucent,
+        receiveShadow: true,
+      })
       group.add(mesh)
     }
 

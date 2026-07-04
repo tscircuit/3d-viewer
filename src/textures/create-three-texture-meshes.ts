@@ -1,6 +1,8 @@
 import type { PcbBoard } from "circuit-json"
 import * as THREE from "three"
 import { FAUX_BOARD_OPACITY } from "../geoms/constants"
+import { configureObjectShadows } from "../utils/configure-object-shadows"
+import { createBoardShadowReceiverPlane } from "../utils/create-board-shadow-receiver-plane"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
 import type { CombinedBoardTextures } from "./index"
 
@@ -56,6 +58,7 @@ function createTexturePlane(
   }
   mesh.name = `${isBottomLayer ? "bottom" : "top"}-board-texture-plane`
   mesh.renderOrder = renderOrder
+  configureObjectShadows(mesh, { castShadow: false, receiveShadow: true })
   return mesh
 }
 
@@ -64,10 +67,12 @@ export function createTextureMeshes(
   boardData: PcbBoard | null,
   pcbThickness: number | null,
   isFaux: boolean = false,
+  options: { shadowsEnabled?: boolean } = {},
 ): THREE.Mesh[] {
   const meshes: THREE.Mesh[] = []
   if (!textures || !boardData || pcbThickness === null) return meshes
   const SURFACE_OFFSET = 0.005
+  const SHADOW_RECEIVER_OFFSET = SURFACE_OFFSET + 0.002
 
   const topBoardMesh = createTexturePlane(
     {
@@ -81,6 +86,15 @@ export function createTextureMeshes(
     boardData,
   )
   if (topBoardMesh) meshes.push(topBoardMesh)
+  if (options.shadowsEnabled) {
+    meshes.push(
+      createBoardShadowReceiverPlane({
+        boardData,
+        offset: pcbThickness / 2 + SHADOW_RECEIVER_OFFSET,
+        isBottomLayer: false,
+      }),
+    )
+  }
 
   const bottomBoardMesh = createTexturePlane(
     {
@@ -94,6 +108,15 @@ export function createTextureMeshes(
     boardData,
   )
   if (bottomBoardMesh) meshes.push(bottomBoardMesh)
+  if (options.shadowsEnabled) {
+    meshes.push(
+      createBoardShadowReceiverPlane({
+        boardData,
+        offset: -pcbThickness / 2 - SHADOW_RECEIVER_OFFSET,
+        isBottomLayer: true,
+      }),
+    )
+  }
 
   return meshes
 }
