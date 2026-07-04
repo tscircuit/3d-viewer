@@ -1,13 +1,35 @@
-import { useState, useEffect } from "react"
-import * as THREE from "three"
-import { GLTFLoader } from "three-stdlib"
-import { useThree } from "src/react-three/ThreeContext"
+import { useEffect, useRef, useState } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { getDefaultEnvironmentMap } from "src/react-three/getDefaultEnvironmentMap"
+import { useThree } from "src/react-three/ThreeContext"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import { disposeObject3DResources } from "src/utils/dispose-object3d-resources"
+import * as THREE from "three"
+import { GLTFLoader } from "three-stdlib"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 const DEFAULT_ENV_MAP_INTENSITY = 1.25
+
+function applyModelTransparency(scene: THREE.Group, isTranslucent: boolean) {
+  scene.traverse((child) => {
+    if (!(child instanceof THREE.Mesh) || !child.material) return
+
+    const setMaterialTransparency = (mat: THREE.Material) => {
+      mat.transparent = isTranslucent
+      mat.opacity = isTranslucent ? 0.5 : 1
+      mat.depthWrite = !isTranslucent
+      mat.needsUpdate = true
+    }
+
+    if (Array.isArray(child.material)) {
+      child.material.forEach(setMaterialTransparency)
+    } else {
+      setMaterialTransparency(child.material)
+    }
+
+    child.renderOrder = isTranslucent ? 2 : 1
+  })
+}
 
 export function GltfModel({
   gltfUrl,
@@ -41,6 +63,7 @@ export function GltfModel({
   const { renderer } = useThree()
   const [model, setModel] = useState<THREE.Group | null>(null)
   const [loadError, setLoadError] = useState<Error | null>(null)
+  const isTranslucentRef = useRef(isTranslucent)
   const { boardTransformGroup } = useCadModelTransformGraph({
     model,
     position,
@@ -54,34 +77,24 @@ export function GltfModel({
   })
 
   useEffect(() => {
+    isTranslucentRef.current = isTranslucent
+  }, [isTranslucent])
+
+  useEffect(() => {
     if (!gltfUrl) return
     const loader = new GLTFLoader()
     let isMounted = true
+    setModel(null)
+    setLoadError(null)
     loader.load(
       gltfUrl,
       (gltf) => {
-        if (!isMounted) return
+        if (!isMounted) {
+          disposeObject3DResources(gltf.scene)
+          return
+        }
         const scene = gltf.scene
-
-        scene.traverse((child) => {
-          if (child instanceof THREE.Mesh && child.material) {
-            const setMaterialTransparency = (mat: THREE.Material) => {
-              mat.transparent = isTranslucent
-              mat.opacity = isTranslucent ? 0.5 : 1
-              mat.depthWrite = !isTranslucent
-              mat.needsUpdate = true
-            }
-
-            if (Array.isArray(child.material)) {
-              child.material.forEach(setMaterialTransparency)
-            } else {
-              setMaterialTransparency(child.material)
-            }
-
-            child.renderOrder = isTranslucent ? 2 : 1
-          }
-        })
-
+        applyModelTransparency(scene, isTranslucentRef.current)
         setModel(scene)
       },
       undefined,
@@ -98,7 +111,12 @@ export function GltfModel({
     return () => {
       isMounted = false
     }
-  }, [gltfUrl, isTranslucent])
+  }, [gltfUrl])
+
+  useEffect(() => {
+    if (!model) return
+    applyModelTransparency(model, isTranslucent)
+  }, [model, isTranslucent])
 
   useEffect(() => {
     if (!model || !renderer) return
@@ -145,13 +163,24 @@ export function GltfModel({
     })
 
     return () => {
-      previousMaterialState.forEach(({ material, envMap, envMapIntensity }) => {
+      for (const {
+        material,
+        envMap,
+        envMapIntensity,
+      } of previousMaterialState) {
         material.envMap = envMap
         material.envMapIntensity = envMapIntensity
         material.needsUpdate = true
-      })
+      }
     }
   }, [model, renderer])
+
+  useEffect(() => {
+    if (!model) return
+    return () => {
+      disposeObject3DResources(model)
+    }
+  }, [model])
 
   useEffect(() => {
     if (!model) return
