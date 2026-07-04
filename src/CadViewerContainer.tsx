@@ -120,7 +120,7 @@ export const CadViewerContainer = forwardRef<
               }}
             />
           )}
-          <Lights />
+          <Lights boardDimensions={boardDimensions} boardCenter={boardCenter} />
           <Grid
             rotation={[Math.PI / 2, 0, 0]}
             infiniteGrid={true}

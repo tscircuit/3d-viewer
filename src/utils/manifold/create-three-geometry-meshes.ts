@@ -1,5 +1,6 @@
 import * as THREE from "three"
 import type { ManifoldGeoms } from "../../hooks/useManifoldBoardBuilder"
+import { configureObjectShadows } from "../configure-object-shadows"
 import { createBoardMaterial } from "../create-board-material"
 
 export function createGeometryMeshes(
@@ -19,6 +20,7 @@ export function createGeometryMeshes(
       }),
     )
     mesh.name = "board-geom"
+    configureObjectShadows(mesh, { castShadow: false, receiveShadow: true })
     meshes.push(mesh)
   }
 
@@ -40,6 +42,7 @@ export function createGeometryMeshes(
           }),
         )
         mesh.name = comp.key // Use provided key for identification
+        configureObjectShadows(mesh)
         meshes.push(mesh)
       })
     }

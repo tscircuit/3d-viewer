@@ -4,6 +4,7 @@ import { GLTFLoader } from "three-stdlib"
 import { useThree } from "src/react-three/ThreeContext"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { getDefaultEnvironmentMap } from "src/react-three/getDefaultEnvironmentMap"
+import { configureObjectShadows } from "src/utils/configure-object-shadows"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
@@ -80,6 +81,10 @@ export function GltfModel({
 
             child.renderOrder = isTranslucent ? 2 : 1
           }
+        })
+        configureObjectShadows(scene, {
+          castShadow: !isTranslucent,
+          receiveShadow: true,
         })
 
         setModel(scene)

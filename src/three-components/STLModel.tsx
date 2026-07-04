@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react"
 import * as THREE from "three"
 import { STLLoader } from "three-stdlib"
 import { useThree } from "src/react-three/ThreeContext"
+import { configureObjectShadows } from "src/utils/configure-object-shadows"
 import type { LayerType } from "../hooks/use-stls-from-geom"
 
 export function STLModel({
@@ -56,6 +57,10 @@ export function STLModel({
     })
     const createdMesh = new THREE.Mesh(geom, material)
     createdMesh.renderOrder = isBoardLayer ? -1 : 1
+    configureObjectShadows(createdMesh, {
+      castShadow: !isBoardLayer && opacity === 1,
+      receiveShadow: true,
+    })
     return createdMesh
   }, [geom, color, opacity, layerType])
 

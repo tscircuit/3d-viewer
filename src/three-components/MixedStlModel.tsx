@@ -4,6 +4,7 @@ import type { Euler, Vector3 } from "three"
 import { useMemo } from "react"
 import * as THREE from "three"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import { configureObjectShadows } from "src/utils/configure-object-shadows"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 export function MixedStlModel({
@@ -56,10 +57,14 @@ export function MixedStlModel({
           child.renderOrder = isTranslucent ? 2 : 1
         }
       })
+      configureObjectShadows(obj, {
+        castShadow: !isTranslucent,
+        receiveShadow: true,
+      })
       return obj
     }
     // Fallback mesh
-    return new THREE.Mesh(
+    const fallbackMesh = new THREE.Mesh(
       new THREE.BoxGeometry(0.5, 0.5, 0.5),
       new THREE.MeshStandardMaterial({
         transparent: true,
@@ -67,6 +72,11 @@ export function MixedStlModel({
         opacity: 0.25,
       }),
     )
+    configureObjectShadows(fallbackMesh, {
+      castShadow: false,
+      receiveShadow: true,
+    })
+    return fallbackMesh
   }, [obj, isTranslucent])
   const { boardTransformGroup } = useCadModelTransformGraph({
     model,
