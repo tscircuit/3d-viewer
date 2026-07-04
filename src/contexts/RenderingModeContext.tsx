@@ -12,10 +12,13 @@ export type RenderingMode = "engineering" | "realistic"
 interface RenderingModeContextType {
   renderingMode: RenderingMode
   setRenderingMode: (mode: RenderingMode) => void
+  lightingEnabled: boolean
+  setLightingEnabled: (enabled: boolean) => void
   shadowsEnabled: boolean
 }
 
 const STORAGE_KEY = "cadViewerRenderingMode"
+const LIGHTING_STORAGE_KEY = "cadViewerLightingEnabled"
 
 const readStoredRenderingMode = (): RenderingMode => {
   if (typeof window === "undefined") return "engineering"
@@ -23,6 +26,11 @@ const readStoredRenderingMode = (): RenderingMode => {
   return stored === "realistic" || stored === "engineering"
     ? stored
     : "engineering"
+}
+
+const readStoredLightingEnabled = (): boolean => {
+  if (typeof window === "undefined") return true
+  return window.localStorage.getItem(LIGHTING_STORAGE_KEY) !== "false"
 }
 
 const RenderingModeContext = createContext<
@@ -35,6 +43,9 @@ export const RenderingModeProvider: React.FC<{
   const [renderingMode, setRenderingModeState] = useState<RenderingMode>(
     readStoredRenderingMode,
   )
+  const [lightingEnabled, setLightingEnabled] = useState<boolean>(
+    readStoredLightingEnabled,
+  )
 
   const setRenderingMode = useCallback((mode: RenderingMode) => {
     setRenderingModeState(mode)
@@ -44,13 +55,22 @@ export const RenderingModeProvider: React.FC<{
     window.localStorage.setItem(STORAGE_KEY, renderingMode)
   }, [renderingMode])
 
+  useEffect(() => {
+    window.localStorage.setItem(
+      LIGHTING_STORAGE_KEY,
+      lightingEnabled ? "true" : "false",
+    )
+  }, [lightingEnabled])
+
   const value = useMemo(
     () => ({
       renderingMode,
       setRenderingMode,
-      shadowsEnabled: renderingMode === "realistic",
+      lightingEnabled,
+      setLightingEnabled,
+      shadowsEnabled: lightingEnabled && renderingMode === "realistic",
     }),
-    [renderingMode, setRenderingMode],
+    [lightingEnabled, renderingMode, setRenderingMode],
   )
 
   return (
