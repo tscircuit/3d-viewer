@@ -33,6 +33,7 @@ const applySoldermaskSurfaceFilter = (
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
+  options: { includeReflection?: boolean } = {},
 ) => {
   const imageData = ctx.getImageData(0, 0, width, height)
   const data = imageData.data
@@ -57,16 +58,34 @@ const applySoldermaskSurfaceFilter = (
     const y = Math.floor(pixelIndex / width)
     const u = x / maxX
     const v = y / maxY
-    const diagonalLight = u * 0.58 + (1 - v) * 0.42
+    const diagonalLight = u * 0.62 + (1 - v) * 0.38
     const broadVariation = Math.sin((u * 1.15 + v * 0.35) * Math.PI) * 0.04
-    const sheenPosition = u * 0.72 + (1 - v) * 0.28
-    const softSheen =
-      Math.max(0, 1 - Math.abs(sheenPosition - 0.68) / 0.18) * 0.07
-    const lightFactor = 0.78 + diagonalLight * 0.18 + broadVariation + softSheen
+    const lightFactor = 0.74 + diagonalLight * 0.18 + broadVariation
 
-    data[i] = clampChannel((r * 0.9 + 3) * lightFactor)
-    data[i + 1] = clampChannel((g * 1.08 + 15) * lightFactor)
-    data[i + 2] = clampChannel((b * 1.28 + 13) * lightFactor)
+    const whiteReflection = options.includeReflection
+      ? (() => {
+          const reflectionX = 0.36
+          const reflectionY = 0.22
+          const dx = u - reflectionX
+          const dy = v - reflectionY
+          const radialFalloff = Math.max(0, 1 - Math.hypot(dx, dy) / 0.38)
+          return radialFalloff * radialFalloff * 0.07
+        })()
+      : 0
+
+    const filteredR = (r * 0.9 + 3) * lightFactor
+    const filteredG = (g * 1.08 + 15) * lightFactor
+    const filteredB = (b * 1.28 + 13) * lightFactor
+
+    data[i] = clampChannel(
+      filteredR * (1 - whiteReflection) + 255 * whiteReflection,
+    )
+    data[i + 1] = clampChannel(
+      filteredG * (1 - whiteReflection) + 255 * whiteReflection,
+    )
+    data[i + 2] = clampChannel(
+      filteredB * (1 - whiteReflection) + 255 * whiteReflection,
+    )
   }
 
   ctx.putImageData(imageData, 0, 0)
@@ -76,10 +95,12 @@ const createCombinedTexture = ({
   textures,
   boardData,
   traceTextureResolution,
+  layer,
 }: {
   textures: Array<THREE.CanvasTexture | null | undefined>
   boardData: PcbBoard
   traceTextureResolution: number
+  layer: "top" | "bottom"
 }): THREE.CanvasTexture | null => {
   const hasImage = textures.some((texture) => texture?.image)
   if (!hasImage) return null
@@ -105,7 +126,9 @@ const createCombinedTexture = ({
     ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight)
   })
 
-  applySoldermaskSurfaceFilter(ctx, canvasWidth, canvasHeight)
+  applySoldermaskSurfaceFilter(ctx, canvasWidth, canvasHeight, {
+    includeReflection: layer === "top",
+  })
 
   const combinedTexture = new THREE.CanvasTexture(canvas)
   combinedTexture.generateMipmaps = false
@@ -267,6 +290,7 @@ export function createCombinedBoardTextures({
       ],
       boardData,
       traceTextureResolution,
+      layer,
     })
   }
 
