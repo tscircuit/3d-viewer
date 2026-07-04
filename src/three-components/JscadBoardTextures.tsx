@@ -5,26 +5,31 @@ import { createCombinedBoardTextures } from "src/textures"
 import * as THREE from "three"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import { useRenderingMode } from "../contexts/RenderingModeContext"
-import {
-  FAUX_BOARD_OPACITY,
-  TRACE_TEXTURE_RESOLUTION,
-} from "../geoms/constants"
+import { TRACE_TEXTURE_RESOLUTION } from "../geoms/constants"
 import { useThree } from "../react-three/ThreeContext"
 import { configureObjectShadows } from "../utils/configure-object-shadows"
 import { createBoardShadowReceiverPlane } from "../utils/create-board-shadow-receiver-plane"
-import { getLayerTextureResolution } from "../utils/layer-texture-resolution"
+import { createBoardTextureMaterial } from "../utils/create-board-texture-material"
+import {
+  getLayerTextureResolution,
+  type TextureResolutionOptions,
+} from "../utils/layer-texture-resolution"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
 
 interface JscadBoardTexturesProps {
   circuitJson: AnyCircuitElement[]
   pcbThickness: number
   isFaux?: boolean
+  textureResolution?: number
+  textureResolutionOptions?: TextureResolutionOptions
 }
 
 export function JscadBoardTextures({
   circuitJson,
   pcbThickness,
   isFaux = false,
+  textureResolution,
+  textureResolutionOptions,
 }: JscadBoardTexturesProps) {
   const { rootObject } = useThree()
   const { visibility } = useLayerVisibility()
@@ -64,8 +69,12 @@ export function JscadBoardTextures({
 
   const traceTextureResolution = useMemo(() => {
     if (!boardData) return TRACE_TEXTURE_RESOLUTION
-    return getLayerTextureResolution(boardData, TRACE_TEXTURE_RESOLUTION)
-  }, [boardData])
+    return getLayerTextureResolution(
+      boardData,
+      textureResolution ?? TRACE_TEXTURE_RESOLUTION,
+      textureResolutionOptions,
+    )
+  }, [boardData, textureResolution, textureResolutionOptions])
 
   const textures = useMemo(() => {
     if (!boardData || !boardData.width || !boardData.height) return null
@@ -126,16 +135,14 @@ export function JscadBoardTextures({
         boardOutlineBounds.width,
         boardOutlineBounds.height,
       )
-      const material = new THREE.MeshBasicMaterial({
-        map: texture,
-        transparent: true,
-        alphaTest: 0.08,
+      const material = createBoardTextureMaterial({
+        texture,
         side: THREE.FrontSide,
         depthWrite,
         polygonOffset: usePolygonOffset,
         polygonOffsetFactor: usePolygonOffset ? -4 : 0,
         polygonOffsetUnits: usePolygonOffset ? -4 : 0,
-        opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
+        isFaux,
       })
       const mesh = new THREE.Mesh(planeGeom, material)
       mesh.position.set(

@@ -1,8 +1,8 @@
 import type { PcbBoard } from "circuit-json"
 import * as THREE from "three"
-import { FAUX_BOARD_OPACITY } from "../geoms/constants"
 import { configureObjectShadows } from "../utils/configure-object-shadows"
 import { createBoardShadowReceiverPlane } from "../utils/create-board-shadow-receiver-plane"
+import { createBoardTextureMaterial } from "../utils/create-board-texture-material"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
 import type { CombinedBoardTextures } from "./index"
 
@@ -36,16 +36,14 @@ function createTexturePlane(
     boardOutlineBounds.width,
     boardOutlineBounds.height,
   )
-  const material = new THREE.MeshBasicMaterial({
-    map: texture,
-    transparent: true,
-    alphaTest: 0.08,
+  const material = createBoardTextureMaterial({
+    texture,
     side: THREE.FrontSide,
     depthWrite: true,
     polygonOffset: usePolygonOffset,
-    polygonOffsetFactor: usePolygonOffset ? -4 : 0, // Increased for better z-fighting prevention
+    polygonOffsetFactor: usePolygonOffset ? -4 : 0,
     polygonOffsetUnits: usePolygonOffset ? -4 : 0,
-    opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
+    isFaux,
   })
   const mesh = new THREE.Mesh(planeGeom, material)
   mesh.position.set(

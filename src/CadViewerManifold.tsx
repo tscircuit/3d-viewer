@@ -17,6 +17,7 @@ import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
+import type { TextureResolutionOptions } from "./utils/layer-texture-resolution"
 
 declare global {
   interface Window {
@@ -129,6 +130,8 @@ type CadViewerManifoldProps = {
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
   resolveStaticAsset?: (modelUrl: string) => string
+  textureResolution?: number
+  textureResolutionOptions?: TextureResolutionOptions
 } & (
   | { circuitJson: AnyCircuitElement[]; children?: React.ReactNode }
   | { circuitJson?: never; children: React.ReactNode }
@@ -144,6 +147,8 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   children,
   onCameraControllerReady,
   resolveStaticAsset,
+  textureResolution,
+  textureResolutionOptions,
 }) => {
   const childrenCircuitJson = useConvertChildrenToCircuitJson(children)
   const circuitJson = useMemo(() => {
@@ -243,7 +248,13 @@ try {
     isLoading: builderIsLoading,
     boardData,
     isFauxBoard,
-  } = useManifoldBoardBuilder(manifoldJSModule, circuitJson, visibility)
+  } = useManifoldBoardBuilder(
+    manifoldJSModule,
+    circuitJson,
+    visibility,
+    textureResolution,
+    textureResolutionOptions,
+  )
 
   const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
   const textureMeshes = useMemo(

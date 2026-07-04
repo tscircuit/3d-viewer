@@ -15,6 +15,7 @@ import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { JscadBoardTextures } from "./three-components/JscadBoardTextures"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
+import type { TextureResolutionOptions } from "./utils/layer-texture-resolution"
 
 interface Props {
   /**
@@ -28,6 +29,8 @@ interface Props {
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
   resolveStaticAsset?: (modelUrl: string) => string
+  textureResolution?: number
+  textureResolutionOptions?: TextureResolutionOptions
 }
 
 export const CadViewerJscad = forwardRef<
@@ -43,6 +46,8 @@ export const CadViewerJscad = forwardRef<
       onUserInteraction,
       onCameraControllerReady,
       resolveStaticAsset,
+      textureResolution,
+      textureResolutionOptions,
     },
     ref,
   ) => {
@@ -148,6 +153,8 @@ export const CadViewerJscad = forwardRef<
           circuitJson={internalCircuitJson}
           pcbThickness={pcbThickness}
           isFaux={isFauxBoard}
+          textureResolution={textureResolution}
+          textureResolutionOptions={textureResolutionOptions}
         />
         {cad_components.map((cad_component) => (
           <ThreeErrorBoundary

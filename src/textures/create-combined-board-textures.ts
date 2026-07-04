@@ -60,7 +60,7 @@ const applySoldermaskSurfaceFilter = (
     const v = y / maxY
     const diagonalLight = u * 0.62 + (1 - v) * 0.38
     const broadVariation = Math.sin((u * 1.15 + v * 0.35) * Math.PI) * 0.04
-    const lightFactor = 0.74 + diagonalLight * 0.18 + broadVariation
+    const lightFactor = 0.82 + diagonalLight * 0.17 + broadVariation
 
     const whiteReflection = options.includeReflection
       ? (() => {

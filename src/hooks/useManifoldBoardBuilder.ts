@@ -13,7 +13,10 @@ import {
   colors as defaultColors,
   TRACE_TEXTURE_RESOLUTION,
 } from "../geoms/constants"
-import { getLayerTextureResolution } from "../utils/layer-texture-resolution"
+import {
+  getLayerTextureResolution,
+  type TextureResolutionOptions,
+} from "../utils/layer-texture-resolution"
 import { createManifoldBoard } from "../utils/manifold/create-manifold-board"
 import { processCutoutsForManifold } from "../utils/manifold/process-cutouts"
 import { processNonPlatedHolesForManifold } from "../utils/manifold/process-non-plated-holes"
@@ -56,6 +59,8 @@ export const useManifoldBoardBuilder = (
   manifoldJSModule: ManifoldToplevel | null,
   circuitJson: AnyCircuitElement[],
   visibility: LayerVisibilityState,
+  textureResolution = TRACE_TEXTURE_RESOLUTION,
+  textureResolutionOptions?: TextureResolutionOptions,
 ): UseManifoldBoardBuilderResult => {
   const [geoms, setGeoms] = useState<ManifoldGeoms | null>(null)
   const [pcbThickness, setPcbThickness] = useState<number | null>(null)
@@ -103,8 +108,12 @@ export const useManifoldBoardBuilder = (
 
   const traceTextureResolution = useMemo(() => {
     if (!boardData) return TRACE_TEXTURE_RESOLUTION
-    return getLayerTextureResolution(boardData, TRACE_TEXTURE_RESOLUTION)
-  }, [boardData])
+    return getLayerTextureResolution(
+      boardData,
+      textureResolution,
+      textureResolutionOptions,
+    )
+  }, [boardData, textureResolution, textureResolutionOptions])
 
   useEffect(() => {
     if (!manifoldJSModule || !boardData) {

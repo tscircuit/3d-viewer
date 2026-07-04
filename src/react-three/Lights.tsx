@@ -94,6 +94,11 @@ export const Lights: React.FC<LightsProps> = ({
       lightDistance * 0.45,
       lightDistance * 0.35,
     ])
+    addDirectionalLight("cad-viewer-lower-fill-light", 0xffffff, 0.24, [
+      lightDistance * 0.15,
+      -lightDistance * 0.1,
+      -lightDistance * 0.55,
+    ])
     addDirectionalLight("cad-viewer-rim-light", 0xffffff, 1.1, [
       -lightDistance * 0.25,
       lightDistance * 0.75,
