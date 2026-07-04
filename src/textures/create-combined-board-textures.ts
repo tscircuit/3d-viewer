@@ -61,9 +61,9 @@ const applySoldermaskSurfaceFilter = (
     const broadVariation = Math.sin((u * 1.15 + v * 0.35) * Math.PI) * 0.04
     const lightFactor = 0.78 + diagonalLight * 0.18 + broadVariation
 
-    data[i] = clampChannel((r * 1.12 + 6) * lightFactor)
-    data[i + 1] = clampChannel((g * 1.16 + 18) * lightFactor)
-    data[i + 2] = clampChannel((b * 1.12 + 8) * lightFactor)
+    data[i] = clampChannel((r * 0.9 + 3) * lightFactor)
+    data[i + 1] = clampChannel((g * 1.08 + 15) * lightFactor)
+    data[i + 2] = clampChannel((b * 1.28 + 13) * lightFactor)
   }
 
   ctx.putImageData(imageData, 0, 0)
