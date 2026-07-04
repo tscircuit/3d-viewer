@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import type { Object3D } from "three"
 import { MTLLoader, OBJLoader } from "three-stdlib"
+import { cloneObject3DWithMaterials } from "src/utils/clone-object3d-with-materials"
 import { loadVrml } from "src/utils/vrml"
 
 // Define the type for our cache
@@ -82,13 +83,12 @@ export function useGlobalObjLoader(
       if (cache.has(cleanUrl)) {
         const cacheItem = cache.get(cleanUrl)!
         if (cacheItem.result) {
-          // If we have a result, clone it
-          return Promise.resolve(cacheItem.result.clone())
+          return Promise.resolve(cloneObject3DWithMaterials(cacheItem.result))
         }
         // If we're still loading, return the existing promise
         return cacheItem.promise.then((result) => {
           if (result instanceof Error) return result
-          return result.clone()
+          return cloneObject3DWithMaterials(result)
         })
       }
       // If it's not in the cache, create a new promise and cache it
@@ -98,7 +98,7 @@ export function useGlobalObjLoader(
           return result
         }
         cache.set(cleanUrl, { ...cache.get(cleanUrl)!, result })
-        return result
+        return cloneObject3DWithMaterials(result)
       })
       cache.set(cleanUrl, { promise, result: null })
       return promise
