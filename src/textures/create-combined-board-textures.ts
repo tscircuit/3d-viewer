@@ -59,7 +59,10 @@ const applySoldermaskSurfaceFilter = (
     const v = y / maxY
     const diagonalLight = u * 0.58 + (1 - v) * 0.42
     const broadVariation = Math.sin((u * 1.15 + v * 0.35) * Math.PI) * 0.04
-    const lightFactor = 0.78 + diagonalLight * 0.18 + broadVariation
+    const sheenPosition = u * 0.72 + (1 - v) * 0.28
+    const softSheen =
+      Math.max(0, 1 - Math.abs(sheenPosition - 0.68) / 0.18) * 0.07
+    const lightFactor = 0.78 + diagonalLight * 0.18 + broadVariation + softSheen
 
     data[i] = clampChannel((r * 0.9 + 3) * lightFactor)
     data[i + 1] = clampChannel((g * 1.08 + 15) * lightFactor)
