@@ -28,6 +28,7 @@ export const Lights: React.FC<LightsProps> = ({
     )
     const shadowHalfSize = largestBoardDimension * 0.8
     const lightDistance = largestBoardDimension
+    const keyLightDistance = largestBoardDimension * 8.3
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.18)
     ambientLight.name = "cad-viewer-soft-ambient"
@@ -66,7 +67,10 @@ export const Lights: React.FC<LightsProps> = ({
         shadowCamera.top = shadowHalfSize
         shadowCamera.bottom = -shadowHalfSize
         shadowCamera.near = 0.5
-        shadowCamera.far = largestBoardDimension * 4
+        shadowCamera.far = Math.max(
+          largestBoardDimension * 4,
+          Math.hypot(...position) + largestBoardDimension * 2,
+        )
         shadowCamera.updateProjectionMatrix()
       }
 
@@ -76,9 +80,13 @@ export const Lights: React.FC<LightsProps> = ({
 
     addDirectionalLight(
       "cad-viewer-key-light",
-      0xfff0df,
+      0xffffff,
       2.4,
-      [lightDistance * 0.22, -lightDistance * 0.28, lightDistance * 1.15],
+      [
+        keyLightDistance * 0.22,
+        -keyLightDistance * 0.28,
+        keyLightDistance * 1.15,
+      ],
       shadowsEnabled,
     )
     addDirectionalLight("cad-viewer-fill-light", 0xdde8ff, 0.7, [
