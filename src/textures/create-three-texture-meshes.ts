@@ -13,6 +13,7 @@ interface TexturePlaneConfig {
   usePolygonOffset?: boolean
   renderOrder?: number
   isFaux?: boolean
+  reliefEnabled?: boolean
 }
 
 function createTexturePlane(
@@ -26,6 +27,7 @@ function createTexturePlane(
     usePolygonOffset = false,
     renderOrder = 0,
     isFaux = false,
+    reliefEnabled = true,
   } = config
 
   if (!texture) return null
@@ -44,6 +46,7 @@ function createTexturePlane(
     polygonOffsetFactor: usePolygonOffset ? -4 : 0,
     polygonOffsetUnits: usePolygonOffset ? -4 : 0,
     isFaux,
+    reliefEnabled,
   })
   const mesh = new THREE.Mesh(planeGeom, material)
   mesh.position.set(
@@ -65,7 +68,7 @@ export function createTextureMeshes(
   boardData: PcbBoard | null,
   pcbThickness: number | null,
   isFaux: boolean = false,
-  options: { shadowsEnabled?: boolean } = {},
+  options: { shadowsEnabled?: boolean; lightingEnabled?: boolean } = {},
 ): THREE.Mesh[] {
   const meshes: THREE.Mesh[] = []
   if (!textures || !boardData || pcbThickness === null) return meshes
@@ -80,6 +83,7 @@ export function createTextureMeshes(
       usePolygonOffset: true,
       renderOrder: 1,
       isFaux,
+      reliefEnabled: options.lightingEnabled ?? true,
     },
     boardData,
   )
@@ -102,6 +106,7 @@ export function createTextureMeshes(
       usePolygonOffset: true,
       renderOrder: 1,
       isFaux,
+      reliefEnabled: options.lightingEnabled ?? true,
     },
     boardData,
   )

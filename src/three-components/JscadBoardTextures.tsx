@@ -33,7 +33,7 @@ export function JscadBoardTextures({
 }: JscadBoardTexturesProps) {
   const { rootObject } = useThree()
   const { visibility } = useLayerVisibility()
-  const { shadowsEnabled } = useRenderingMode()
+  const { lightingEnabled, shadowsEnabled } = useRenderingMode()
 
   const boardData = useMemo(() => {
     // Check for panel first
@@ -143,6 +143,7 @@ export function JscadBoardTextures({
         polygonOffsetFactor: usePolygonOffset ? -4 : 0,
         polygonOffsetUnits: usePolygonOffset ? -4 : 0,
         isFaux,
+        reliefEnabled: lightingEnabled,
       })
       const mesh = new THREE.Mesh(planeGeom, material)
       mesh.position.set(
@@ -226,7 +227,14 @@ export function JscadBoardTextures({
       textures.topBoard?.dispose()
       textures.bottomBoard?.dispose()
     }
-  }, [rootObject, boardData, textures, pcbThickness, shadowsEnabled])
+  }, [
+    rootObject,
+    boardData,
+    textures,
+    pcbThickness,
+    lightingEnabled,
+    shadowsEnabled,
+  ])
 
   return null
 }

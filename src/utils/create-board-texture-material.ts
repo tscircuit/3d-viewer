@@ -9,6 +9,7 @@ interface CreateBoardTextureMaterialOptions {
   polygonOffsetFactor?: number
   polygonOffsetUnits?: number
   isFaux?: boolean
+  reliefEnabled?: boolean
 }
 
 const PLAIN_SOLDERMASK_HEIGHT = 0.22
@@ -148,11 +149,14 @@ export const createBoardTextureMaterial = ({
   polygonOffsetFactor = 0,
   polygonOffsetUnits = 0,
   isFaux = false,
+  reliefEnabled = true,
 }: CreateBoardTextureMaterialOptions): THREE.MeshStandardMaterial => {
   texture.colorSpace = THREE.SRGBColorSpace
   texture.needsUpdate = true
 
-  const reliefTextures = createBoardReliefTextures(texture)
+  const reliefTextures = reliefEnabled
+    ? createBoardReliefTextures(texture)
+    : null
 
   return new THREE.MeshStandardMaterial({
     map: texture,

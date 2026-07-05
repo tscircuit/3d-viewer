@@ -33,7 +33,7 @@ const applySoldermaskSurfaceFilter = (
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
-  options: { includeReflection?: boolean } = {},
+  options: { includeReflection?: boolean; brightnessBoost?: number } = {},
 ) => {
   const imageData = ctx.getImageData(0, 0, width, height)
   const data = imageData.data
@@ -60,7 +60,11 @@ const applySoldermaskSurfaceFilter = (
     const v = y / maxY
     const diagonalLight = u * 0.62 + (1 - v) * 0.38
     const broadVariation = Math.sin((u * 1.15 + v * 0.35) * Math.PI) * 0.04
-    const lightFactor = 0.82 + diagonalLight * 0.17 + broadVariation
+    const lightFactor =
+      0.82 +
+      diagonalLight * 0.17 +
+      broadVariation +
+      (options.brightnessBoost ?? 0)
 
     const whiteReflection = options.includeReflection
       ? (() => {
@@ -128,6 +132,7 @@ const createCombinedTexture = ({
 
   applySoldermaskSurfaceFilter(ctx, canvasWidth, canvasHeight, {
     includeReflection: layer === "top",
+    brightnessBoost: layer === "bottom" ? 0.08 : 0,
   })
 
   const combinedTexture = new THREE.CanvasTexture(canvas)
