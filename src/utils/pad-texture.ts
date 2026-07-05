@@ -1,15 +1,8 @@
 // Utility for creating SMT pad textures for PCB layers
 
 import { su } from "@tscircuit/circuit-json-util"
+import type { AnyCircuitElement, PcbBoard, PcbRenderLayer } from "circuit-json"
 import { CircuitToCanvasDrawer } from "circuit-to-canvas"
-import type {
-  AnyCircuitElement,
-  PcbBoard,
-  PcbHole,
-  PcbPlatedHole,
-  PcbRenderLayer,
-  PcbVia,
-} from "circuit-json"
 import * as THREE from "three"
 import { calculateOutlineBounds } from "./outline-bounds"
 
@@ -36,6 +29,7 @@ export function createPadTextureForLayer({
   const viasOnLayer = su(circuitJson)
     .pcb_via.list()
     .filter((e) => !Array.isArray(e.layers) || e.layers.includes(layer))
+  const cutouts = su(circuitJson).pcb_cutout.list()
   const drillElements = [...holes, ...platedHolesOnLayer, ...viasOnLayer]
 
   const pcbRenderLayer: PcbRenderLayer =
@@ -97,7 +91,7 @@ export function createPadTextureForLayer({
     minY: boardOutlineBounds.minY,
     maxY: boardOutlineBounds.maxY,
   })
-  drawer.drawElements([...smtPadsOnLayer, ...drillElements], {
+  drawer.drawElements([...smtPadsOnLayer, ...drillElements, ...cutouts], {
     layers: [pcbRenderLayer],
     drawSoldermask: false,
     drawSoldermaskTop: false,
