@@ -8,8 +8,8 @@ const REF_CENTER_X = 120.2
 const REF_CENTER_Y = 78.95
 
 const modulePadPosition = (x: number, y: number) => ({
-  pcbX: Number((x - 120.2).toFixed(3)),
-  pcbY: Number((79 - y).toFixed(3)),
+  pcbX: Number((x - REF_CENTER_X).toFixed(3)),
+  pcbY: Number((REF_CENTER_Y - y).toFixed(3)),
 })
 
 const edgeHole = (x: number, y: number) => ({
