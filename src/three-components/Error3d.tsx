@@ -4,6 +4,7 @@ import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { Html } from "src/react-three/Html"
 import { Text } from "src/react-three/Text"
 import { useThree } from "src/react-three/ThreeContext"
+import { disposeMeshResources } from "src/utils/dispose-mesh-resources"
 import * as THREE from "three"
 
 export const Error3d = ({
@@ -125,6 +126,7 @@ const ErrorBox = ({ parent }: { parent: THREE.Object3D }) => {
     parent.add(mesh)
     return () => {
       parent.remove(mesh)
+      disposeMeshResources(mesh)
     }
   }, [parent, mesh])
 
