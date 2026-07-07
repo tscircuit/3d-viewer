@@ -1,12 +1,27 @@
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
+import { loadVrml } from "src/utils/vrml"
 import type { Object3D } from "three"
 import { MTLLoader, OBJLoader } from "three-stdlib"
-import { loadVrml } from "src/utils/vrml"
 
 // Define the type for our cache
 interface CacheItem {
   promise: Promise<any>
   result: Object3D | null
+}
+
+const getObjLoaderCacheKey = (url: string) => {
+  try {
+    const parsedUrl = new URL(
+      url,
+      typeof window !== "undefined" ? window.location.href : "http://localhost",
+    )
+    parsedUrl.searchParams.delete("cachebust_origin")
+    return parsedUrl.toString()
+  } catch {
+    return url.replace(/([?&])cachebust_origin=[^&#]*&?/g, (match, prefix) =>
+      match.endsWith("&") ? prefix : "",
+    )
+  }
 }
 
 declare global {
@@ -29,6 +44,7 @@ export function useGlobalObjLoader(
     if (!url) return
 
     const cleanUrl = url.replace(/&cachebust_origin=$/, "")
+    const cacheKey = getObjLoaderCacheKey(url)
 
     const cache = window.TSCIRCUIT_OBJ_LOADER_CACHE
     let hasUrlChanged = false
@@ -79,8 +95,8 @@ export function useGlobalObjLoader(
     }
 
     function loadUrl() {
-      if (cache.has(cleanUrl)) {
-        const cacheItem = cache.get(cleanUrl)!
+      if (cache.has(cacheKey)) {
+        const cacheItem = cache.get(cacheKey)!
         if (cacheItem.result) {
           // If we have a result, clone it
           return Promise.resolve(cacheItem.result.clone())
@@ -94,13 +110,13 @@ export function useGlobalObjLoader(
       // If it's not in the cache, create a new promise and cache it
       const promise = loadAndParseObj().then((result) => {
         if (result instanceof Error) {
-          // If the result is an Error, return it
+          cache.delete(cacheKey)
           return result
         }
-        cache.set(cleanUrl, { ...cache.get(cleanUrl)!, result })
+        cache.set(cacheKey, { ...cache.get(cacheKey)!, result })
         return result
       })
-      cache.set(cleanUrl, { promise, result: null })
+      cache.set(cacheKey, { promise, result: null })
       return promise
     }
 
