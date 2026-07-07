@@ -245,10 +245,18 @@ export const AnyCadComponent = ({
 
   if (fallbackModelComponents.length > 0) {
     if (fallbackModelIndex >= fallbackModelComponents.length) {
-      if (lastModelError) {
-        throw lastModelError
-      }
-      return null
+      // Every model URL fallback failed to load. Surface the failure as a
+      // visible error (via the enclosing ThreeErrorBoundary -> Error3d) rather
+      // than silently returning null, which would make the component vanish
+      // from the 3D view with no indication of what went wrong.
+      throw (
+        lastModelError ??
+        new Error(
+          `Failed to load CAD model for ${
+            componentName ?? cad_component.cad_component_id
+          }`,
+        )
+      )
     }
 
     modelComponent = (

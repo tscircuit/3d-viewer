@@ -137,6 +137,13 @@ type CadViewerManifoldProps = {
 
 const MANIFOLD_CDN_BASE_URL = "https://cdn.jsdelivr.net/npm/manifold-3d@3.2.1"
 
+// If the CDN request or the WASM fetch stalls (rather than failing cleanly), the
+// dynamic module import can hang forever without ever firing the `manifoldLoaded`
+// event or the script `error` handler. This timeout guarantees the UI recovers
+// into the `manifoldLoadingError` state (with a retry) instead of hanging on
+// "Loading Manifold module..." indefinitely.
+const MANIFOLD_LOAD_TIMEOUT_MS = 30_000
+
 const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   circuitJson: circuitJsonProp,
   autoRotateDisabled,
@@ -156,6 +163,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   const [manifoldLoadingError, setManifoldLoadingError] = useState<
     string | null
   >(null)
+  const [manifoldLoadAttempt, setManifoldLoadAttempt] = useState(0)
   const { visibility } = useLayerVisibility()
   const { shadowsEnabled } = useRenderingMode()
 
@@ -169,14 +177,19 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
       return
     }
 
+    let didCancel = false
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
+
     const initManifold = async (ManifoldModule: any) => {
       try {
         const loadedModule: ManifoldToplevel = await ManifoldModule()
         loadedModule.setup()
         window.ManifoldModule = loadedModule
+        if (didCancel) return
         setManifoldJSModule(loadedModule)
       } catch (error) {
         console.error("Failed to initialize Manifold:", error)
+        if (didCancel) return
         setManifoldLoadingError(
           `Failed to initialize Manifold: ${error instanceof Error ? error.message : "Unknown error"}`,
         )
@@ -193,6 +206,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
 
     const eventName = "manifoldLoaded"
     const handleLoad = () => {
+      if (timeoutId !== undefined) clearTimeout(timeoutId)
       const loadedManifold =
         window.ManifoldModule ?? window.MANIFOLD ?? window.MANIFOLD_MODULE
       if (loadedManifold) {
@@ -201,7 +215,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
       } else {
         const errText = "ManifoldModule not found on window after script load."
         console.error(errText)
-        setManifoldLoadingError(errText)
+        if (!didCancel) setManifoldLoadingError(errText)
       }
     }
 
@@ -221,20 +235,39 @@ try {
     `.trim()
 
     const scriptError = (err: any) => {
+      if (timeoutId !== undefined) clearTimeout(timeoutId)
       const errText = "Failed to load Manifold loader script."
       console.error(errText, err)
-      setManifoldLoadingError(errText)
+      if (!didCancel) setManifoldLoadingError(errText)
       window.removeEventListener(eventName, handleLoad)
     }
 
     script.addEventListener("error", scriptError)
     document.body.appendChild(script)
 
+    // A stalled module import fires neither `manifoldLoaded` nor the script's
+    // `error` event, so without this timeout the UI would hang forever. If the
+    // module still hasn't appeared on `window`, flip into the recoverable error
+    // state instead.
+    timeoutId = setTimeout(() => {
+      if (didCancel) return
+      if (window.ManifoldModule) return
+      const errText =
+        `Timed out loading Manifold module from ${MANIFOLD_CDN_BASE_URL} ` +
+        `after ${Math.round(MANIFOLD_LOAD_TIMEOUT_MS / 1000)}s. ` +
+        `Check your network connection and retry.`
+      console.error(errText)
+      setManifoldLoadingError(errText)
+      window.removeEventListener(eventName, handleLoad)
+    }, MANIFOLD_LOAD_TIMEOUT_MS)
+
     return () => {
+      didCancel = true
+      if (timeoutId !== undefined) clearTimeout(timeoutId)
       window.removeEventListener(eventName, handleLoad)
       script.removeEventListener("error", scriptError)
     }
-  }, [])
+  }, [manifoldLoadAttempt])
 
   const {
     geoms,
@@ -296,7 +329,17 @@ try {
           margin: "1em",
         }}
       >
-        Error: {manifoldLoadingError}
+        <div>Error: {manifoldLoadingError}</div>
+        <button
+          type="button"
+          onClick={() => {
+            setManifoldLoadingError(null)
+            setManifoldLoadAttempt((attempt) => attempt + 1)
+          }}
+          style={{ marginTop: "0.75em" }}
+        >
+          Retry
+        </button>
       </div>
     )
   }
