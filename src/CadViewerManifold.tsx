@@ -26,7 +26,7 @@ declare global {
   }
 }
 
-const BoardMeshes = ({
+export const BoardMeshes = ({
   geometryMeshes,
   textureMeshes,
 }: {
@@ -65,7 +65,8 @@ const BoardMeshes = ({
         const texture = typedMaterial[prop]
         if (texture && texture instanceof THREE.Texture) {
           texture.dispose()
-          typedMaterial[prop] = null
+          // StrictMode can immediately replay this effect with the same
+          // memoized mesh. Keep the map attached so Three.js can re-upload it.
         }
       }
 
