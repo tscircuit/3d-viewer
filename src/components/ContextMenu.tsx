@@ -274,7 +274,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               </span>
             </DropdownMenu.Item>
 
-            {/* Board Surface Texture Submenu */}
+            {/* Realistic Board Fixture Submenu */}
             <DropdownMenu.Sub onOpenChange={setSurfaceSubOpen}>
               <DropdownMenu.SubTrigger
                 style={{
@@ -292,7 +292,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 <span
                   style={{ flex: 1, display: "flex", alignItems: "center" }}
                 >
-                  Board Surface Texture
+                  Realistic Board Fixture
                 </span>
                 <div
                   style={{
