@@ -188,28 +188,6 @@ const CadViewerInner = (props: CadViewerProps) => {
     cameraControllerRef.current?.animateToPreset(props.cameraPreset)
   }, [cameraPreset, props.cameraPreset])
 
-  const exportHeroPng = useCallback(() => {
-    const canvas = containerRef.current?.querySelector("canvas")
-    if (!(canvas instanceof HTMLCanvasElement)) {
-      showToast("No canvas available to export", 1800)
-      return
-    }
-
-    try {
-      const dataUrl = canvas.toDataURL("image/png")
-      const link = document.createElement("a")
-      link.href = dataUrl
-      link.download = "tscircuit-hero-render.png"
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      showToast("Hero PNG exported", 1800)
-    } catch (error) {
-      console.error("Failed to export hero PNG", error)
-      showToast("Hero PNG export failed", 2200)
-    }
-  }, [showToast])
-
   useRegisteredHotkey(
     "open_keyboard_shortcuts_dialog",
     () => {
@@ -370,10 +348,6 @@ const CadViewerInner = (props: CadViewerProps) => {
           }}
           onDownloadGltf={() => {
             downloadGltf()
-            closeMenu()
-          }}
-          onExportHeroPng={() => {
-            exportHeroPng()
             closeMenu()
           }}
           onOpenKeyboardShortcuts={() => {

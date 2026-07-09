@@ -1,5 +1,10 @@
 import type { PcbBoard } from "circuit-json"
 import * as THREE from "three"
+import {
+  DEFAULT_BOARD_SURFACE_TEXTURE_ID,
+  getBoardSurfaceTextureOption,
+  type BoardSurfaceTextureId,
+} from "../board-surface-textures"
 import type { RenderingMode } from "../contexts/RenderingModeContext"
 import { FAUX_BOARD_OPACITY } from "../geoms/constants"
 import { createBoardReliefTextures } from "../utils/create-board-relief-textures"
@@ -16,6 +21,7 @@ interface TexturePlaneConfig {
   renderOrder?: number
   isFaux?: boolean
   renderingMode?: RenderingMode
+  boardSurfaceTexture?: BoardSurfaceTextureId
 }
 
 function createTexturePlane(
@@ -30,6 +36,7 @@ function createTexturePlane(
     renderOrder = 0,
     isFaux = false,
     renderingMode = "engineering",
+    boardSurfaceTexture = DEFAULT_BOARD_SURFACE_TEXTURE_ID,
   } = config
 
   if (!texture) return null
@@ -55,20 +62,30 @@ function createTexturePlane(
   } satisfies THREE.MeshBasicMaterialParameters
 
   const reliefTextures =
-    renderingMode === "realistic" ? createBoardReliefTextures(texture) : null
+    renderingMode === "realistic"
+      ? createBoardReliefTextures(texture, {
+          surfaceTexture: boardSurfaceTexture,
+        })
+      : null
+  const surfaceMaterial =
+    getBoardSurfaceTextureOption(boardSurfaceTexture).material
 
   const material =
     renderingMode === "realistic"
       ? new THREE.MeshPhysicalMaterial({
           ...sharedMaterialOptions,
           bumpMap: reliefTextures?.bumpMap ?? null,
-          bumpScale: 0.85,
+          bumpScale: surfaceMaterial.bumpScale,
           normalMap: reliefTextures?.normalMap ?? null,
-          normalScale: new THREE.Vector2(1.4, 1.4),
-          roughness: 0.42,
+          normalScale: new THREE.Vector2(
+            surfaceMaterial.normalScale,
+            surfaceMaterial.normalScale,
+          ),
+          roughnessMap: reliefTextures?.roughnessMap ?? null,
+          roughness: surfaceMaterial.roughness,
           metalness: 0.03,
-          clearcoat: 0.35,
-          clearcoatRoughness: 0.55,
+          clearcoat: surfaceMaterial.clearcoat,
+          clearcoatRoughness: surfaceMaterial.clearcoatRoughness,
           envMapIntensity: 0.85,
         })
       : new THREE.MeshBasicMaterial(sharedMaterialOptions)
@@ -92,7 +109,11 @@ export function createTextureMeshes(
   boardData: PcbBoard | null,
   pcbThickness: number | null,
   isFaux: boolean = false,
-  options: { shadowsEnabled?: boolean; renderingMode?: RenderingMode } = {},
+  options: {
+    shadowsEnabled?: boolean
+    renderingMode?: RenderingMode
+    boardSurfaceTexture?: BoardSurfaceTextureId
+  } = {},
 ): THREE.Mesh[] {
   const meshes: THREE.Mesh[] = []
   if (!textures || !boardData || pcbThickness === null) return meshes
@@ -108,6 +129,7 @@ export function createTextureMeshes(
       renderOrder: 1,
       isFaux,
       renderingMode: options.renderingMode,
+      boardSurfaceTexture: options.boardSurfaceTexture,
     },
     boardData,
   )
@@ -131,6 +153,7 @@ export function createTextureMeshes(
       renderOrder: 1,
       isFaux,
       renderingMode: options.renderingMode,
+      boardSurfaceTexture: options.boardSurfaceTexture,
     },
     boardData,
   )

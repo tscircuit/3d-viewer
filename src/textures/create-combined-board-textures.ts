@@ -29,23 +29,10 @@ const toRgb = (colorArr: number[]) => {
 
 const clampChannel = (value: number) => Math.max(0, Math.min(255, value))
 
-const pseudoRandom = (seed: number) => {
-  const value = Math.sin(seed * 12.9898) * 43758.5453
-  return value - Math.floor(value)
-}
-
-const gaussianNoise = (x: number, y: number, layerSalt: number) => {
-  const seed = (x + 1) * 374761393 + (y + 1) * 668265263 + layerSalt
-  const u1 = Math.max(pseudoRandom(seed), 0.000001)
-  const u2 = pseudoRandom(seed + 1442695041)
-  return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2)
-}
-
 const applySoldermaskSurfaceFilter = (
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
-  options: { includeReflection?: boolean; layerSalt?: number } = {},
 ) => {
   const imageData = ctx.getImageData(0, 0, width, height)
   const data = imageData.data
@@ -60,27 +47,14 @@ const applySoldermaskSurfaceFilter = (
     const g = data[i + 1] ?? 0
     const b = data[i + 2] ?? 0
     const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
-    const isExposedCopper =
-      r > 120 && g > 70 && b < 130 && r > g * 1.04 && g > b * 1.18
-    const isBrightLegend = r > 170 && g > 170 && b > 160
-    const isBoardSurface =
-      !isExposedCopper && !isBrightLegend && luminance < 220
     const isDarkGreen =
       g > r * 1.35 && g > b * 1.15 && luminance < 90 && r < 80 && b < 80
 
     const pixelIndex = i / 4
     const x = pixelIndex % width
     const y = Math.floor(pixelIndex / width)
-    const surfaceGrain = isBoardSurface
-      ? gaussianNoise(x, y, options.layerSalt ?? 0) * 2.6
-      : 0
 
     if (!isDarkGreen) {
-      if (surfaceGrain !== 0) {
-        data[i] = clampChannel(r + surfaceGrain)
-        data[i + 1] = clampChannel(g + surfaceGrain * 1.04)
-        data[i + 2] = clampChannel(b + surfaceGrain * 0.96)
-      }
       continue
     }
 
@@ -90,34 +64,13 @@ const applySoldermaskSurfaceFilter = (
     const broadVariation = Math.sin((u * 1.15 + v * 0.35) * Math.PI) * 0.04
     const lightFactor = 0.74 + diagonalLight * 0.18 + broadVariation
 
-    const whiteReflection = options.includeReflection
-      ? (() => {
-          const reflectionX = 0.36
-          const reflectionY = 0.22
-          const dx = u - reflectionX
-          const dy = v - reflectionY
-          const radialFalloff = Math.max(0, 1 - Math.hypot(dx, dy) / 0.38)
-          return radialFalloff * radialFalloff * 0.07
-        })()
-      : 0
-
     const filteredR = (r * 0.9 + 3) * lightFactor
     const filteredG = (g * 1.08 + 15) * lightFactor
     const filteredB = (b * 1.28 + 13) * lightFactor
 
-    data[i] = clampChannel(
-      filteredR * (1 - whiteReflection) + 255 * whiteReflection + surfaceGrain,
-    )
-    data[i + 1] = clampChannel(
-      filteredG * (1 - whiteReflection) +
-        255 * whiteReflection +
-        surfaceGrain * 1.04,
-    )
-    data[i + 2] = clampChannel(
-      filteredB * (1 - whiteReflection) +
-        255 * whiteReflection +
-        surfaceGrain * 0.96,
-    )
+    data[i] = clampChannel(filteredR)
+    data[i + 1] = clampChannel(filteredG)
+    data[i + 2] = clampChannel(filteredB)
   }
 
   ctx.putImageData(imageData, 0, 0)
@@ -158,10 +111,7 @@ const createCombinedTexture = ({
     ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight)
   })
 
-  applySoldermaskSurfaceFilter(ctx, canvasWidth, canvasHeight, {
-    includeReflection: layer === "top",
-    layerSalt: layer === "top" ? 17 : 53,
-  })
+  applySoldermaskSurfaceFilter(ctx, canvasWidth, canvasHeight)
 
   const combinedTexture = new THREE.CanvasTexture(canvas)
   combinedTexture.generateMipmaps = false

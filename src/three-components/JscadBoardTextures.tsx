@@ -3,6 +3,7 @@ import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
 import { useEffect, useMemo } from "react"
 import { createCombinedBoardTextures } from "src/textures"
 import * as THREE from "three"
+import { getBoardSurfaceTextureOption } from "../board-surface-textures"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import { useRenderingMode } from "../contexts/RenderingModeContext"
 import {
@@ -29,7 +30,8 @@ export function JscadBoardTextures({
 }: JscadBoardTexturesProps) {
   const { rootObject } = useThree()
   const { visibility } = useLayerVisibility()
-  const { renderingMode, shadowsEnabled } = useRenderingMode()
+  const { renderingMode, shadowsEnabled, boardSurfaceTexture } =
+    useRenderingMode()
 
   const boardData = useMemo(() => {
     // Check for panel first
@@ -141,20 +143,28 @@ export function JscadBoardTextures({
       } satisfies THREE.MeshBasicMaterialParameters
       const reliefTextures =
         renderingMode === "realistic"
-          ? createBoardReliefTextures(texture)
+          ? createBoardReliefTextures(texture, {
+              surfaceTexture: boardSurfaceTexture,
+            })
           : null
+      const surfaceMaterial =
+        getBoardSurfaceTextureOption(boardSurfaceTexture).material
       const material =
         renderingMode === "realistic"
           ? new THREE.MeshPhysicalMaterial({
               ...sharedMaterialOptions,
               bumpMap: reliefTextures?.bumpMap ?? null,
-              bumpScale: 0.85,
+              bumpScale: surfaceMaterial.bumpScale,
               normalMap: reliefTextures?.normalMap ?? null,
-              normalScale: new THREE.Vector2(1.4, 1.4),
-              roughness: 0.42,
+              normalScale: new THREE.Vector2(
+                surfaceMaterial.normalScale,
+                surfaceMaterial.normalScale,
+              ),
+              roughnessMap: reliefTextures?.roughnessMap ?? null,
+              roughness: surfaceMaterial.roughness,
               metalness: 0.03,
-              clearcoat: 0.35,
-              clearcoatRoughness: 0.55,
+              clearcoat: surfaceMaterial.clearcoat,
+              clearcoatRoughness: surfaceMaterial.clearcoatRoughness,
               envMapIntensity: 0.85,
             })
           : new THREE.MeshBasicMaterial(sharedMaterialOptions)
@@ -247,6 +257,7 @@ export function JscadBoardTextures({
     pcbThickness,
     renderingMode,
     shadowsEnabled,
+    boardSurfaceTexture,
   ])
 
   return null

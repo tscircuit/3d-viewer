@@ -169,7 +169,8 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
     string | null
   >(null)
   const { visibility } = useLayerVisibility()
-  const { renderingMode, shadowsEnabled } = useRenderingMode()
+  const { renderingMode, shadowsEnabled, boardSurfaceTexture } =
+    useRenderingMode()
 
   useEffect(() => {
     if (
@@ -264,6 +265,7 @@ try {
       createTextureMeshes(textures, boardData, pcbThickness, isFauxBoard, {
         shadowsEnabled,
         renderingMode,
+        boardSurfaceTexture,
       }),
     [
       textures,
@@ -272,6 +274,7 @@ try {
       isFauxBoard,
       shadowsEnabled,
       renderingMode,
+      boardSurfaceTexture,
     ],
   )
 
