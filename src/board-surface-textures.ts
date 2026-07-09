@@ -1,14 +1,23 @@
 export type BoardSurfaceTextureId =
+  | "PaintSubstance001"
   | "Wallpaper001A"
   | "Concrete030"
   | "Plaster002"
   | "Fabric019"
+  | "Leather039"
+  | "Leather035D"
+  | "Leather028"
   | "Asphalt023S"
+  | "Road010A"
+  | "Rubber004"
   | "Plastic010"
   | "Road014A"
   | "Concrete036"
   | "Plaster003"
   | "Plastic012B"
+  | "Ivory002A"
+  | "Paper001"
+  | "Paper006"
 
 export interface BoardSurfaceTextureOption {
   id: BoardSurfaceTextureId
@@ -27,6 +36,21 @@ export interface BoardSurfaceTextureOption {
 }
 
 export const BOARD_SURFACE_TEXTURE_OPTIONS: BoardSurfaceTextureOption[] = [
+  {
+    id: "PaintSubstance001",
+    label: "Paint Substance 001",
+    sourceUrl: "https://ambientcg.com/view?id=PaintSubstance001",
+    material: {
+      bumpScale: 0.7,
+      normalScale: 1.14,
+      roughness: 0.62,
+      roughnessBias: 0.08,
+      roughnessVariance: 0.07,
+      clearcoat: 0.1,
+      clearcoatRoughness: 0.78,
+      detailStrength: 0.034,
+    },
+  },
   {
     id: "Wallpaper001A",
     label: "Wallpaper 001 A",
@@ -88,6 +112,51 @@ export const BOARD_SURFACE_TEXTURE_OPTIONS: BoardSurfaceTextureOption[] = [
     },
   },
   {
+    id: "Leather039",
+    label: "Leather 039",
+    sourceUrl: "https://ambientcg.com/view?id=Leather039",
+    material: {
+      bumpScale: 0.82,
+      normalScale: 1.26,
+      roughness: 0.68,
+      roughnessBias: 0.12,
+      roughnessVariance: 0.1,
+      clearcoat: 0.06,
+      clearcoatRoughness: 0.88,
+      detailStrength: 0.05,
+    },
+  },
+  {
+    id: "Leather035D",
+    label: "Leather 035 D",
+    sourceUrl: "https://ambientcg.com/view?id=Leather035D",
+    material: {
+      bumpScale: 0.74,
+      normalScale: 1.18,
+      roughness: 0.6,
+      roughnessBias: 0.08,
+      roughnessVariance: 0.08,
+      clearcoat: 0.12,
+      clearcoatRoughness: 0.74,
+      detailStrength: 0.04,
+    },
+  },
+  {
+    id: "Leather028",
+    label: "Leather 028",
+    sourceUrl: "https://ambientcg.com/view?id=Leather028",
+    material: {
+      bumpScale: 0.9,
+      normalScale: 1.32,
+      roughness: 0.66,
+      roughnessBias: 0.1,
+      roughnessVariance: 0.12,
+      clearcoat: 0.08,
+      clearcoatRoughness: 0.82,
+      detailStrength: 0.056,
+    },
+  },
+  {
     id: "Asphalt023S",
     label: "Asphalt 023 S",
     sourceUrl: "https://ambientcg.com/view?id=Asphalt023S",
@@ -100,6 +169,36 @@ export const BOARD_SURFACE_TEXTURE_OPTIONS: BoardSurfaceTextureOption[] = [
       clearcoat: 0.03,
       clearcoatRoughness: 0.94,
       detailStrength: 0.078,
+    },
+  },
+  {
+    id: "Road010A",
+    label: "Road 010 A",
+    sourceUrl: "https://ambientcg.com/view?id=Road010A",
+    material: {
+      bumpScale: 1.12,
+      normalScale: 1.44,
+      roughness: 0.8,
+      roughnessBias: 0.18,
+      roughnessVariance: 0.18,
+      clearcoat: 0.03,
+      clearcoatRoughness: 0.96,
+      detailStrength: 0.082,
+    },
+  },
+  {
+    id: "Rubber004",
+    label: "Rubber 004",
+    sourceUrl: "https://ambientcg.com/view?id=Rubber004",
+    material: {
+      bumpScale: 0.96,
+      normalScale: 1.34,
+      roughness: 0.72,
+      roughnessBias: 0.14,
+      roughnessVariance: 0.14,
+      clearcoat: 0.08,
+      clearcoatRoughness: 0.86,
+      detailStrength: 0.064,
     },
   },
   {
@@ -175,6 +274,51 @@ export const BOARD_SURFACE_TEXTURE_OPTIONS: BoardSurfaceTextureOption[] = [
       clearcoat: 0.18,
       clearcoatRoughness: 0.76,
       detailStrength: 0.04,
+    },
+  },
+  {
+    id: "Ivory002A",
+    label: "Ivory 002 A",
+    sourceUrl: "https://ambientcg.com/view?id=Ivory002A",
+    material: {
+      bumpScale: 0.52,
+      normalScale: 1.02,
+      roughness: 0.5,
+      roughnessBias: 0.03,
+      roughnessVariance: 0.06,
+      clearcoat: 0.16,
+      clearcoatRoughness: 0.7,
+      detailStrength: 0.028,
+    },
+  },
+  {
+    id: "Paper001",
+    label: "Paper 001",
+    sourceUrl: "https://ambientcg.com/view?id=Paper001",
+    material: {
+      bumpScale: 0.68,
+      normalScale: 1.16,
+      roughness: 0.7,
+      roughnessBias: 0.12,
+      roughnessVariance: 0.1,
+      clearcoat: 0.02,
+      clearcoatRoughness: 0.94,
+      detailStrength: 0.046,
+    },
+  },
+  {
+    id: "Paper006",
+    label: "Paper 006",
+    sourceUrl: "https://ambientcg.com/view?id=Paper006",
+    material: {
+      bumpScale: 0.78,
+      normalScale: 1.22,
+      roughness: 0.76,
+      roughnessBias: 0.16,
+      roughnessVariance: 0.12,
+      clearcoat: 0.02,
+      clearcoatRoughness: 0.96,
+      detailStrength: 0.058,
     },
   },
 ]
