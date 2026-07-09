@@ -101,6 +101,7 @@ export function createTraceTextureForLayer({
     drawSoldermask: false,
     drawSoldermaskTop: false,
     drawSoldermaskBottom: false,
+    showPcbNotes: false,
   })
   const texture = new THREE.CanvasTexture(canvas)
   texture.generateMipmaps = true
