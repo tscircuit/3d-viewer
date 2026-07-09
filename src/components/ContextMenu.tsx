@@ -18,11 +18,13 @@ interface ContextMenuProps {
   onCameraPresetSelect: (preset: CameraPreset) => void
   onAutoRotateToggle: () => void
   onDownloadGltf: () => void
+  onExportHeroPng: () => void
   onOpenKeyboardShortcuts: () => void
 }
 
 const cameraOptions: CameraPreset[] = [
   "Custom",
+  "Hero",
   "Top Center Angled",
   "Top Down",
   "Top Left Corner",
@@ -109,6 +111,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onCameraPresetSelect,
   onAutoRotateToggle,
   onDownloadGltf,
+  onExportHeroPng,
   onOpenKeyboardShortcuts,
 }) => {
   const { cameraType, setCameraType } = useCameraController()
@@ -279,6 +282,23 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             >
               <span style={{ display: "flex", alignItems: "center" }}>
                 Download GLTF
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                ...itemPaddingStyles,
+                backgroundColor:
+                  hoveredItem === "exportHeroPng" ? "#404040" : "transparent",
+              }}
+              onSelect={onExportHeroPng}
+              onMouseEnter={() => setHoveredItem("exportHeroPng")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("exportHeroPng")}
+            >
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Export Hero PNG
               </span>
             </DropdownMenu.Item>
 

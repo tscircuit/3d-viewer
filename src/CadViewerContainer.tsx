@@ -7,6 +7,7 @@ import { OrbitControls } from "./react-three/OrbitControls"
 import { Grid } from "./react-three/Grid"
 import { useFrame, useThree } from "./react-three/ThreeContext"
 import { Lights } from "./react-three/Lights"
+import { PresentationStage } from "./react-three/PresentationStage"
 import { CameraAnimatorWithContext } from "./hooks/cameraAnimation"
 import { useCameraController } from "./contexts/CameraControllerContext"
 import { useRenderingMode } from "./contexts/RenderingModeContext"
@@ -14,6 +15,7 @@ import { useCameraSession } from "./hooks/useCameraSession"
 import type { CameraController } from "./hooks/cameraAnimation"
 import { OrientationCubeCanvas } from "./three-components/OrientationCubeCanvas"
 import { zIndexMap } from "../lib/utils/z-index-map"
+import type { CadViewerBackground } from "./presentation-types"
 export type {
   CameraController,
   CameraPreset,
@@ -38,6 +40,9 @@ interface Props {
   clickToInteractEnabled?: boolean
   boardDimensions?: { width?: number; height?: number }
   boardCenter?: { x: number; y: number }
+  pcbThickness?: number | null
+  background?: CadViewerBackground
+  cameraSessionRestoreEnabled?: boolean
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
 }
@@ -54,6 +59,9 @@ export const CadViewerContainer = forwardRef<
       clickToInteractEnabled = false,
       boardDimensions,
       boardCenter,
+      pcbThickness,
+      background,
+      cameraSessionRestoreEnabled = true,
       onUserInteraction,
       onCameraControllerReady,
     },
@@ -65,11 +73,11 @@ export const CadViewerContainer = forwardRef<
 
     const { mainCameraRef, handleControlsChange, controller } =
       useCameraController()
-    const { shadowsEnabled } = useRenderingMode()
+    const { renderingMode, shadowsEnabled } = useRenderingMode()
     const {
       handleCameraCreated,
       handleControlsChange: handleSessionControlsChange,
-    } = useCameraSession()
+    } = useCameraSession({ restoreEnabled: cameraSessionRestoreEnabled })
 
     useEffect(() => {
       if (onCameraControllerReady) {
@@ -91,8 +99,24 @@ export const CadViewerContainer = forwardRef<
       return [boardCenter.x, boardCenter.y, 0] as [number, number, number]
     }, [boardCenter])
 
+    const presentationStageEnabled = renderingMode === "realistic"
+    const effectiveBackground =
+      background ?? (presentationStageEnabled ? "studio" : "transparent")
+    const containerBackground =
+      effectiveBackground === "studio"
+        ? "radial-gradient(circle at 50% 30%, #102547 0%, #050814 55%, #01030a 100%)"
+        : "transparent"
+
     return (
-      <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          height: "100%",
+          background: containerBackground,
+          overflow: "hidden",
+        }}
+      >
         <OrientationCubeCanvas />
         <Canvas
           ref={ref}
@@ -127,13 +151,21 @@ export const CadViewerContainer = forwardRef<
             boardCenter={boardCenter}
             shadowsEnabled={shadowsEnabled}
           />
-          <Grid
-            rotation={[Math.PI / 2, 0, 0]}
-            infiniteGrid={true}
-            cellSize={3}
-            sectionSize={gridSectionSize}
-            args={[gridSectionSize, gridSectionSize]}
+          <PresentationStage
+            enabled={presentationStageEnabled}
+            boardDimensions={boardDimensions}
+            boardCenter={boardCenter}
+            pcbThickness={pcbThickness}
           />
+          {!presentationStageEnabled && (
+            <Grid
+              rotation={[Math.PI / 2, 0, 0]}
+              infiniteGrid={true}
+              cellSize={3}
+              sectionSize={gridSectionSize}
+              args={[gridSectionSize, gridSectionSize]}
+            />
+          )}
           {children}
         </Canvas>
         <div

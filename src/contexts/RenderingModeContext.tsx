@@ -39,9 +39,10 @@ const RenderingModeContext = createContext<
 
 export const RenderingModeProvider: React.FC<{
   children: React.ReactNode
-}> = ({ children }) => {
+  initialMode?: RenderingMode
+}> = ({ children, initialMode }) => {
   const [renderingMode, setRenderingModeState] = useState<RenderingMode>(
-    readStoredRenderingMode,
+    initialMode ?? readStoredRenderingMode,
   )
   const [lightingEnabled, setLightingEnabled] = useState<boolean>(
     readStoredLightingEnabled,
