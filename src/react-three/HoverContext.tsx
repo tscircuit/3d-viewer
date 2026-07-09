@@ -41,6 +41,8 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
   hoverablesRef.current = hoverables
 
   const hoveredObjectRef = useRef<HoverableObject | null>(null)
+  const lastHoverPointRef = useRef<[number, number, number] | null>(null)
+  const lastHoverDispatchMsRef = useRef(0)
 
   const addHoverable = useCallback((hoverable: HoverableObject) => {
     setHoverables((prev) => [...prev, hoverable])
@@ -62,6 +64,7 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
         // The object being removed contains the hovered object.
         hoveredObjectRef.current.onUnhover()
         hoveredObjectRef.current = null
+        lastHoverPointRef.current = null
       }
     }
     setHoverables((prev) => prev.filter((h) => h.object !== object))
@@ -94,6 +97,7 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
         if (hoveredObjectRef.current) {
           hoveredObjectRef.current.onUnhover()
           hoveredObjectRef.current = null
+          lastHoverPointRef.current = null
         }
         return
       }
@@ -116,19 +120,38 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
             hoveredObjectRef.current?.onUnhover()
             newHovered.onHover(eventPayload)
             hoveredObjectRef.current = newHovered
+            lastHoverPointRef.current = eventPayload.mousePosition
+            lastHoverDispatchMsRef.current = performance.now()
           } else {
-            newHovered.onHover(eventPayload)
+            const lastPoint = lastHoverPointRef.current
+            const [x, y, z] = eventPayload.mousePosition
+            const movedEnough =
+              !lastPoint ||
+              (x - lastPoint[0]) ** 2 +
+                (y - lastPoint[1]) ** 2 +
+                (z - lastPoint[2]) ** 2 >
+                0.5 ** 2
+            const now = performance.now()
+            const enoughTimePassed = now - lastHoverDispatchMsRef.current >= 33
+
+            if (movedEnough && enoughTimePassed) {
+              newHovered.onHover(eventPayload)
+              lastHoverPointRef.current = eventPayload.mousePosition
+              lastHoverDispatchMsRef.current = now
+            }
           }
         } else {
           if (hoveredObjectRef.current) {
             hoveredObjectRef.current.onUnhover()
             hoveredObjectRef.current = null
+            lastHoverPointRef.current = null
           }
         }
       } else {
         if (hoveredObjectRef.current) {
           hoveredObjectRef.current.onUnhover()
           hoveredObjectRef.current = null
+          lastHoverPointRef.current = null
         }
       }
     },
