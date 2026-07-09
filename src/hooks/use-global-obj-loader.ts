@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
+import { normalizeLoaderUrl } from "src/utils/normalize-loader-url"
+import { loadVrml } from "src/utils/vrml"
 import type { Object3D } from "three"
 import { MTLLoader, OBJLoader } from "three-stdlib"
-import { loadVrml } from "src/utils/vrml"
 
 // Define the type for our cache
 interface CacheItem {
@@ -28,7 +29,7 @@ export function useGlobalObjLoader(
   useEffect(() => {
     if (!url) return
 
-    const cleanUrl = url.replace(/&cachebust_origin=$/, "")
+    const cleanUrl = normalizeLoaderUrl(url)
 
     const cache = window.TSCIRCUIT_OBJ_LOADER_CACHE
     let hasUrlChanged = false
