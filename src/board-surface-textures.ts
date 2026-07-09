@@ -338,3 +338,32 @@ export const getBoardSurfaceTextureOption = (
   BOARD_SURFACE_TEXTURE_OPTIONS.find(
     (option) => option.id === DEFAULT_BOARD_SURFACE_TEXTURE_ID,
   )!
+
+export type PadCopperTextureId = "Metal048A"
+
+export interface PadCopperTextureProfile {
+  id: PadCopperTextureId
+  label: string
+  sourceUrl: string
+  material: {
+    roughness: number
+    roughnessVariance: number
+    detailStrength: number
+  }
+}
+
+export const DEFAULT_PAD_COPPER_TEXTURE_ID: PadCopperTextureId = "Metal048A"
+
+export const PAD_COPPER_TEXTURE_PROFILE: PadCopperTextureProfile = {
+  id: DEFAULT_PAD_COPPER_TEXTURE_ID,
+  label: "Metal 048 A",
+  sourceUrl: "https://ambientcg.com/view?id=Metal048A",
+  material: {
+    roughness: 0.24,
+    roughnessVariance: 0.06,
+    detailStrength: 0.02,
+  },
+}
+
+export const getPadCopperTextureProfile = (): PadCopperTextureProfile =>
+  PAD_COPPER_TEXTURE_PROFILE

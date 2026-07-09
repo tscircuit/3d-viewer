@@ -7,6 +7,11 @@ import { getDefaultEnvironmentMap } from "src/react-three/getDefaultEnvironmentM
 import { configureObjectShadows } from "src/utils/configure-object-shadows"
 import { useRenderingMode } from "src/contexts/RenderingModeContext"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import {
+  applyComponentMaterialTextureProfile,
+  restoreComponentMaterialTextureProfile,
+  type ComponentMaterialProfileSnapshot,
+} from "src/utils/component-material-textures"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 const DEFAULT_ENV_MAP_INTENSITY = 1.25
@@ -113,13 +118,7 @@ export function GltfModel({
     const environmentMap = getDefaultEnvironmentMap(renderer)
     if (!environmentMap) return
 
-    const previousMaterialState: Array<{
-      material: THREE.MeshStandardMaterial
-      envMap: THREE.Texture | null
-      envMapIntensity: number
-      roughness: number
-      metalness: number
-    }> = []
+    const previousMaterialState: ComponentMaterialProfileSnapshot[] = []
 
     const applyEnvironmentToMaterial = (
       material: THREE.Material,
@@ -127,32 +126,16 @@ export function GltfModel({
     ) => {
       if (!(material instanceof THREE.MeshStandardMaterial)) return
 
-      previousMaterialState.push({
-        material,
-        envMap: material.envMap ?? null,
-        envMapIntensity: material.envMapIntensity ?? 1,
-        roughness: material.roughness,
-        metalness: material.metalness,
-      })
-
-      material.envMap = environmentMap
-
-      const targetEnvMapIntensity =
-        renderingMode === "realistic" ? 1.8 : DEFAULT_ENV_MAP_INTENSITY
-      if (material.envMapIntensity < targetEnvMapIntensity) {
-        material.envMapIntensity = targetEnvMapIntensity
-      }
-
-      if (renderingMode === "realistic") {
-        material.roughness = Math.min(material.roughness ?? 0.7, 0.55)
-
-        if (/pin|lead|metal|terminal/i.test(`${material.name} ${meshName}`)) {
-          material.metalness = Math.max(material.metalness ?? 0, 0.85)
-          material.roughness = Math.min(material.roughness, 0.25)
-        }
-      }
-
-      material.needsUpdate = true
+      previousMaterialState.push(
+        applyComponentMaterialTextureProfile({
+          material,
+          meshName,
+          renderingMode,
+          environmentMap,
+          defaultEnvMapIntensity: DEFAULT_ENV_MAP_INTENSITY,
+          realisticEnvMapIntensity: 1.8,
+        }),
+      )
     }
 
     model.traverse((child) => {
@@ -167,15 +150,7 @@ export function GltfModel({
     })
 
     return () => {
-      previousMaterialState.forEach(
-        ({ material, envMap, envMapIntensity, roughness, metalness }) => {
-          material.envMap = envMap
-          material.envMapIntensity = envMapIntensity
-          material.roughness = roughness
-          material.metalness = metalness
-          material.needsUpdate = true
-        },
-      )
+      previousMaterialState.forEach(restoreComponentMaterialTextureProfile)
     }
   }, [model, renderer, renderingMode])
 

@@ -2,6 +2,7 @@ import * as THREE from "three"
 import {
   DEFAULT_BOARD_SURFACE_TEXTURE_ID,
   getBoardSurfaceTextureOption,
+  getPadCopperTextureProfile,
   type BoardSurfaceTextureId,
 } from "../board-surface-textures"
 
@@ -13,6 +14,7 @@ type BoardSurfaceProfile = {
   height: number
   microSurfaceWeight: number
   roughness: number
+  isExposedCopper: boolean
 }
 
 const invertSurfaceHeight = (height: number) => 1 - height
@@ -241,6 +243,25 @@ const createBoardSurfaceTextureDetail = (
   }
 }
 
+const createPadCopperTextureDetail = (
+  x: number,
+  y: number,
+  layerSalt: number,
+) => {
+  const material = getPadCopperTextureProfile().material
+  const cloudy =
+    (valueNoise(x, y, 20, layerSalt + 307) - 0.5) * 0.45 +
+    (valueNoise(x, y, 58, layerSalt + 311) - 0.5) * 0.35
+  const fineNoise = (hashNoise(x, y, layerSalt + 313) - 0.5) * 0.34
+  const satinBrush =
+    Math.sin(x * 0.15 + valueNoise(x, y, 64, layerSalt + 359) * 3.5) * 0.13 +
+    Math.sin(y * 0.055 + valueNoise(x, y, 86, layerSalt + 367) * 3) * 0.08
+
+  return (
+    (satinBrush + cloudy * 0.22 + fineNoise * 0.08) * material.detailStrength
+  )
+}
+
 const getBoardSurfaceProfile = (
   r: number,
   g: number,
@@ -252,8 +273,9 @@ const getBoardSurfaceProfile = (
   if (isExposedCopper) {
     return {
       height: EXPOSED_COPPER_HEIGHT,
-      microSurfaceWeight: 0.15,
+      microSurfaceWeight: 0.9,
       roughness: 0.32,
+      isExposedCopper: true,
     }
   }
 
@@ -263,6 +285,7 @@ const getBoardSurfaceProfile = (
       height: PLAIN_SOLDERMASK_HEIGHT,
       microSurfaceWeight: 0.45,
       roughness: 0.68,
+      isExposedCopper: false,
     }
   }
 
@@ -274,6 +297,7 @@ const getBoardSurfaceProfile = (
       height: PLAIN_SOLDERMASK_HEIGHT,
       microSurfaceWeight: 0.8,
       roughness: 0.58,
+      isExposedCopper: false,
     }
   }
 
@@ -283,11 +307,13 @@ const getBoardSurfaceProfile = (
         height: MASKED_COPPER_HEIGHT,
         microSurfaceWeight: 0.65,
         roughness: 0.54,
+        isExposedCopper: false,
       }
     : {
         height: PLAIN_SOLDERMASK_HEIGHT,
         microSurfaceWeight: 1,
         roughness: 0.62,
+        isExposedCopper: false,
       }
 }
 
@@ -318,6 +344,7 @@ export const createBoardReliefTextures = (
   const surfaceTexture =
     options.surfaceTexture ?? DEFAULT_BOARD_SURFACE_TEXTURE_ID
   const surfaceMaterial = getBoardSurfaceTextureOption(surfaceTexture).material
+  const padCopperMaterial = getPadCopperTextureProfile().material
   const sourceCanvas = texture.image as HTMLCanvasElement | undefined
   if (!sourceCanvas?.width || !sourceCanvas.height) return null
 
@@ -367,13 +394,15 @@ export const createBoardReliefTextures = (
     const g = data[i + 1] ?? 0
     const b = data[i + 2] ?? 0
     const profile = getBoardSurfaceProfile(r, g, b)
-    const microSurface =
-      createBoardSurfaceTextureDetail(
-        x,
-        y,
-        sourceCanvas.width + 137,
-        surfaceTexture,
-      ) * profile.microSurfaceWeight
+    const detailTexture = profile.isExposedCopper
+      ? createPadCopperTextureDetail(x, y, sourceCanvas.width + 277)
+      : createBoardSurfaceTextureDetail(
+          x,
+          y,
+          sourceCanvas.width + 137,
+          surfaceTexture,
+        )
+    const microSurface = detailTexture * profile.microSurfaceWeight
     const height = clamp01(invertSurfaceHeight(profile.height) + microSurface)
     heights[pixelIndex] = height
 
@@ -383,12 +412,17 @@ export const createBoardReliefTextures = (
     data[i + 2] = heightChannel
     data[i + 3] = 255
 
+    const roughnessBase = profile.isExposedCopper
+      ? padCopperMaterial.roughness
+      : profile.roughness + surfaceMaterial.roughnessBias
+    const roughnessVariance = profile.isExposedCopper
+      ? padCopperMaterial.roughnessVariance
+      : surfaceMaterial.roughnessVariance
     const roughness = clamp01(
-      profile.roughness +
-        surfaceMaterial.roughnessBias +
-        microSurface * 1.25 +
+      roughnessBase +
+        microSurface * 1.2 +
         (valueNoise(x, y, 32, sourceCanvas.height + 211) - 0.5) *
-          surfaceMaterial.roughnessVariance,
+          roughnessVariance,
     )
     const roughnessChannel = roughness * 255
     roughnessData[i] = roughnessChannel
