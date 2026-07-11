@@ -24,12 +24,12 @@ export const BOARD_SURFACE_TEXTURE_OPTIONS: BoardSurfaceTextureOption[] = [
     material: {
       bumpScale: 1.1,
       normalScale: 0.26,
-      roughness: 0.48,
+      roughness: 0.40,
       roughnessBias: 0.12,
-      roughnessVariance: 0.0,
+      roughnessVariance: 0.03,
       clearcoat: 0.6,
       clearcoatRoughness: 1.88,
-      detailStrength: 0.0,
+      detailStrength: 0.1,
     },
   },
 ]

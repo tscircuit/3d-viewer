@@ -1,22 +1,11 @@
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { useGlobalObjLoader } from "src/hooks/use-global-obj-loader"
 import type { Euler, Vector3 } from "three"
-import { useEffect, useMemo } from "react"
+import { useMemo } from "react"
 import * as THREE from "three"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
 import { configureObjectShadows } from "src/utils/configure-object-shadows"
-import { getDefaultEnvironmentMap } from "src/react-three/getDefaultEnvironmentMap"
-import { useRenderingMode } from "src/contexts/RenderingModeContext"
-import { useThree } from "src/react-three/ThreeContext"
-import {
-  applyComponentMaterialTextureProfile,
-  normalizeComponentMaterial,
-  restoreComponentMaterialTextureProfile,
-  type ComponentMaterialProfileSnapshot,
-} from "src/utils/component-material-textures"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
-
-const DEFAULT_ENV_MAP_INTENSITY = 1.25
 
 export function MixedStlModel({
   url,
@@ -47,26 +36,22 @@ export function MixedStlModel({
   scale?: number
   isTranslucent?: boolean
 }) {
-  const { renderer } = useThree()
-  const { renderingMode } = useRenderingMode()
   const obj = useGlobalObjLoader(url)
   const model = useMemo(() => {
     if (obj && !(obj instanceof Error)) {
       obj.traverse((child) => {
         if (child instanceof THREE.Mesh && child.material) {
-          const prepareMaterial = (mat: THREE.Material) => {
-            const normalizedMaterial = normalizeComponentMaterial(mat.clone())
-            normalizedMaterial.transparent = isTranslucent
-            normalizedMaterial.opacity = isTranslucent ? 0.5 : 1
-            normalizedMaterial.depthWrite = !isTranslucent
-            normalizedMaterial.needsUpdate = true
-            return normalizedMaterial
+          const setMaterialTransparency = (mat: THREE.Material) => {
+            mat.transparent = isTranslucent
+            mat.opacity = isTranslucent ? 0.5 : 1
+            mat.depthWrite = !isTranslucent
+            mat.needsUpdate = true
           }
 
           if (Array.isArray(child.material)) {
-            child.material = child.material.map(prepareMaterial)
+            child.material.forEach(setMaterialTransparency)
           } else {
-            child.material = prepareMaterial(child.material)
+            setMaterialTransparency(child.material)
           }
 
           child.renderOrder = isTranslucent ? 2 : 1
@@ -93,48 +78,6 @@ export function MixedStlModel({
     })
     return fallbackMesh
   }, [obj, isTranslucent])
-
-  useEffect(() => {
-    if (!model || !renderer) return
-
-    const environmentMap = getDefaultEnvironmentMap(renderer)
-    if (!environmentMap) return
-
-    const previousMaterialState: ComponentMaterialProfileSnapshot[] = []
-
-    const applyProfileToMaterial = (
-      material: THREE.Material,
-      meshName: string,
-    ) => {
-      if (!(material instanceof THREE.MeshStandardMaterial)) return
-
-      previousMaterialState.push(
-        applyComponentMaterialTextureProfile({
-          material,
-          meshName,
-          renderingMode,
-          environmentMap,
-          defaultEnvMapIntensity: DEFAULT_ENV_MAP_INTENSITY,
-          realisticEnvMapIntensity: 1.8,
-        }),
-      )
-    }
-
-    model.traverse((child) => {
-      if (!(child instanceof THREE.Mesh)) return
-
-      const material = child.material
-      if (Array.isArray(material)) {
-        material.forEach((mat) => applyProfileToMaterial(mat, child.name))
-      } else if (material) {
-        applyProfileToMaterial(material, child.name)
-      }
-    })
-
-    return () => {
-      previousMaterialState.forEach(restoreComponentMaterialTextureProfile)
-    }
-  }, [model, renderer, renderingMode])
 
   const { boardTransformGroup } = useCadModelTransformGraph({
     model,
