@@ -1,6 +1,6 @@
 import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, PcbPlatedHole } from "circuit-json"
-import type { Manifold, ManifoldToplevel } from "manifold-3d"
+import type { Manifold, ManifoldToplevel } from "@tscircuit/manifold-2d"
 import * as THREE from "three"
 import {
   colors as defaultColors,

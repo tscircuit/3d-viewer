@@ -1,5 +1,5 @@
 import * as THREE from "three"
-import type { Mesh } from "manifold-3d"
+import type { Mesh } from "@tscircuit/manifold-2d"
 
 export function manifoldMeshToThreeGeometry(
   manifoldMesh: Mesh,
