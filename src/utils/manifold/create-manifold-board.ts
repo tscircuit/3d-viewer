@@ -1,7 +1,7 @@
 import type {
   ManifoldToplevel,
   CrossSection as ManifoldCrossSection,
-} from "manifold-3d"
+} from "@tscircuit/manifold-2d"
 import type { PcbBoard } from "circuit-json"
 
 const arePointsClockwise = (points: Array<[number, number]>): boolean => {
