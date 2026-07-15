@@ -5,8 +5,8 @@ import {
 } from "jscad-electronics/vanilla"
 import { useEffect, useMemo } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
-import { configureObjectShadows } from "src/utils/configure-object-shadows"
 import { useThree } from "src/react-three/ThreeContext"
+import { configureObjectShadows } from "src/utils/configure-object-shadows"
 import { disposeThreeObjectResources } from "src/utils/dispose-three-object-resources"
 import * as THREE from "three"
 
