@@ -103,9 +103,7 @@ export const CadViewerContainer = forwardRef<
     const effectiveBackground =
       background ?? (presentationStageEnabled ? "studio" : "transparent")
     const containerBackground =
-      effectiveBackground === "studio"
-        ? "radial-gradient(circle at 50% 30%, #102547 0%, #050814 55%, #01030a 100%)"
-        : "transparent"
+      effectiveBackground === "studio" ? "#f1f3f5" : "transparent"
 
     return (
       <div
@@ -174,8 +172,8 @@ export const CadViewerContainer = forwardRef<
             right: 24,
             bottom: 24,
             fontFamily: "sans-serif",
-            color: "white",
-            WebkitTextStroke: "0.5px rgba(0, 0, 0, 0.5)",
+            color: "#3f4852",
+            WebkitTextStroke: "0.5px rgba(255, 255, 255, 0.7)",
             fontSize: 11,
           }}
         >

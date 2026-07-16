@@ -1,9 +1,9 @@
 import * as THREE from "three"
 import {
+  type BoardSurfaceTextureId,
   DEFAULT_BOARD_SURFACE_TEXTURE_ID,
   getBoardSurfaceTextureOption,
   getPadCopperTextureProfile,
-  type BoardSurfaceTextureId,
 } from "../board-surface-textures"
 
 const PLAIN_SOLDERMASK_HEIGHT = 0.22
@@ -55,7 +55,11 @@ const createBoardSurfaceTextureDetail = (
 ) => {
   switch (surfaceTexture) {
     case "Leather039": {
-      return 0.0
+      const material = getBoardSurfaceTextureOption(surfaceTexture).material
+      const microGrain =
+        (valueNoise(_x, _y, 3.25, _layerSalt + 17) - 0.5) * 0.16
+
+      return microGrain * material.detailStrength
     }
   }
 }
