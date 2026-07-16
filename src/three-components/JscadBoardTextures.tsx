@@ -3,6 +3,7 @@ import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
 import { useEffect, useMemo } from "react"
 import { createCombinedBoardTextures } from "src/textures"
 import * as THREE from "three"
+import { REALISTIC_BOARD_SURFACE_MATERIAL } from "../board-surface-textures"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import { useRenderingMode } from "../contexts/RenderingModeContext"
 import {
@@ -10,6 +11,7 @@ import {
   TRACE_TEXTURE_RESOLUTION,
 } from "../geoms/constants"
 import { useThree } from "../react-three/ThreeContext"
+import { createBoardReliefTextures } from "../utils/create-board-relief-textures"
 import { configureObjectShadows } from "../utils/configure-object-shadows"
 import { createBoardShadowReceiverPlane } from "../utils/create-board-shadow-receiver-plane"
 import { getLayerTextureResolution } from "../utils/layer-texture-resolution"
@@ -28,7 +30,7 @@ export function JscadBoardTextures({
 }: JscadBoardTexturesProps) {
   const { rootObject } = useThree()
   const { visibility } = useLayerVisibility()
-  const { shadowsEnabled } = useRenderingMode()
+  const { renderingMode, shadowsEnabled } = useRenderingMode()
 
   const boardData = useMemo(() => {
     // Check for panel first
@@ -126,7 +128,8 @@ export function JscadBoardTextures({
         boardOutlineBounds.width,
         boardOutlineBounds.height,
       )
-      const material = new THREE.MeshBasicMaterial({
+      texture.colorSpace = THREE.SRGBColorSpace
+      const sharedMaterialOptions = {
         map: texture,
         transparent: true,
         alphaTest: 0.08,
@@ -136,7 +139,31 @@ export function JscadBoardTextures({
         polygonOffsetFactor: usePolygonOffset ? -4 : 0,
         polygonOffsetUnits: usePolygonOffset ? -4 : 0,
         opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
-      })
+      } satisfies THREE.MeshBasicMaterialParameters
+      const reliefTextures =
+        renderingMode === "realistic"
+          ? createBoardReliefTextures(texture)
+          : null
+      const surfaceMaterial = REALISTIC_BOARD_SURFACE_MATERIAL
+      const material =
+        renderingMode === "realistic"
+          ? new THREE.MeshPhysicalMaterial({
+              ...sharedMaterialOptions,
+              bumpMap: reliefTextures?.bumpMap ?? null,
+              bumpScale: surfaceMaterial.bumpScale,
+              normalMap: reliefTextures?.normalMap ?? null,
+              normalScale: new THREE.Vector2(
+                surfaceMaterial.normalScale,
+                surfaceMaterial.normalScale,
+              ),
+              roughnessMap: reliefTextures?.roughnessMap ?? null,
+              roughness: surfaceMaterial.roughness,
+              metalness: 0.03,
+              clearcoat: surfaceMaterial.clearcoat,
+              clearcoatRoughness: surfaceMaterial.clearcoatRoughness,
+              envMapIntensity: 0.85,
+            })
+          : new THREE.MeshBasicMaterial(sharedMaterialOptions)
       const mesh = new THREE.Mesh(planeGeom, material)
       mesh.position.set(
         boardOutlineBounds.centerX,
@@ -219,7 +246,14 @@ export function JscadBoardTextures({
       textures.topBoard?.dispose()
       textures.bottomBoard?.dispose()
     }
-  }, [rootObject, boardData, textures, pcbThickness, shadowsEnabled])
+  }, [
+    rootObject,
+    boardData,
+    textures,
+    pcbThickness,
+    renderingMode,
+    shadowsEnabled,
+  ])
 
   return null
 }

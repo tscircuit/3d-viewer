@@ -1,6 +1,9 @@
 import type { PcbBoard } from "circuit-json"
 import * as THREE from "three"
+import { REALISTIC_BOARD_SURFACE_MATERIAL } from "../board-surface-textures"
+import type { RenderingMode } from "../contexts/RenderingModeContext"
 import { FAUX_BOARD_OPACITY } from "../geoms/constants"
+import { createBoardReliefTextures } from "../utils/create-board-relief-textures"
 import { configureObjectShadows } from "../utils/configure-object-shadows"
 import { createBoardShadowReceiverPlane } from "../utils/create-board-shadow-receiver-plane"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
@@ -13,6 +16,7 @@ interface TexturePlaneConfig {
   usePolygonOffset?: boolean
   renderOrder?: number
   isFaux?: boolean
+  renderingMode?: RenderingMode
 }
 
 function createTexturePlane(
@@ -26,6 +30,7 @@ function createTexturePlane(
     usePolygonOffset = false,
     renderOrder = 0,
     isFaux = false,
+    renderingMode = "engineering",
   } = config
 
   if (!texture) return null
@@ -36,17 +41,43 @@ function createTexturePlane(
     boardOutlineBounds.width,
     boardOutlineBounds.height,
   )
-  const material = new THREE.MeshBasicMaterial({
+  texture.colorSpace = THREE.SRGBColorSpace
+
+  const sharedMaterialOptions = {
     map: texture,
     transparent: true,
     alphaTest: 0.08,
     side: THREE.FrontSide,
     depthWrite: true,
     polygonOffset: usePolygonOffset,
-    polygonOffsetFactor: usePolygonOffset ? -4 : 0, // Increased for better z-fighting prevention
+    polygonOffsetFactor: usePolygonOffset ? -4 : 0,
     polygonOffsetUnits: usePolygonOffset ? -4 : 0,
     opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
-  })
+  } satisfies THREE.MeshBasicMaterialParameters
+
+  const reliefTextures =
+    renderingMode === "realistic" ? createBoardReliefTextures(texture) : null
+  const surfaceMaterial = REALISTIC_BOARD_SURFACE_MATERIAL
+
+  const material =
+    renderingMode === "realistic"
+      ? new THREE.MeshPhysicalMaterial({
+          ...sharedMaterialOptions,
+          bumpMap: reliefTextures?.bumpMap ?? null,
+          bumpScale: surfaceMaterial.bumpScale,
+          normalMap: reliefTextures?.normalMap ?? null,
+          normalScale: new THREE.Vector2(
+            surfaceMaterial.normalScale,
+            surfaceMaterial.normalScale,
+          ),
+          roughnessMap: reliefTextures?.roughnessMap ?? null,
+          roughness: surfaceMaterial.roughness,
+          metalness: 0.03,
+          clearcoat: surfaceMaterial.clearcoat,
+          clearcoatRoughness: surfaceMaterial.clearcoatRoughness,
+          envMapIntensity: 0.85,
+        })
+      : new THREE.MeshBasicMaterial(sharedMaterialOptions)
   const mesh = new THREE.Mesh(planeGeom, material)
   mesh.position.set(
     boardOutlineBounds.centerX,
@@ -67,7 +98,10 @@ export function createTextureMeshes(
   boardData: PcbBoard | null,
   pcbThickness: number | null,
   isFaux: boolean = false,
-  options: { shadowsEnabled?: boolean } = {},
+  options: {
+    shadowsEnabled?: boolean
+    renderingMode?: RenderingMode
+  } = {},
 ): THREE.Mesh[] {
   const meshes: THREE.Mesh[] = []
   if (!textures || !boardData || pcbThickness === null) return meshes
@@ -82,6 +116,7 @@ export function createTextureMeshes(
       usePolygonOffset: true,
       renderOrder: 1,
       isFaux,
+      renderingMode: options.renderingMode,
     },
     boardData,
   )
@@ -104,6 +139,7 @@ export function createTextureMeshes(
       usePolygonOffset: true,
       renderOrder: 1,
       isFaux,
+      renderingMode: options.renderingMode,
     },
     boardData,
   )
