@@ -8,20 +8,15 @@ import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
 import { useRenderingMode } from "./contexts/RenderingModeContext"
-import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
+import type { CameraController } from "./hooks/cameraAnimation"
 import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
 import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
 import { useThree } from "./react-three/ThreeContext"
 import { createTextureMeshes } from "./textures"
-import { CalloutLayer } from "./three-components/CalloutLayer"
 import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
-import type {
-  CadViewerBackground,
-  CadViewerCallout,
-} from "./presentation-types"
 
 declare global {
   interface Window {
@@ -129,19 +124,16 @@ export const BoardMeshes = ({
 }
 
 type CadViewerManifoldProps = {
-  circuitJson?: AnyCircuitElement[]
-  children?: React.ReactNode
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
   cameraType?: "orthographic" | "perspective"
-  cameraPreset?: CameraPreset
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
   resolveStaticAsset?: (modelUrl: string) => string
-  background?: CadViewerBackground
-  showCallouts?: boolean
-  callouts?: CadViewerCallout[]
-}
+} & (
+  | { circuitJson: AnyCircuitElement[]; children?: React.ReactNode }
+  | { circuitJson?: never; children: React.ReactNode }
+)
 
 const MANIFOLD_CDN_BASE_URL = "https://cdn.jsdelivr.net/npm/manifold-3d@3.2.1"
 
@@ -149,14 +141,10 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   circuitJson: circuitJsonProp,
   autoRotateDisabled,
   clickToInteractEnabled,
-  cameraPreset,
   onUserInteraction,
   children,
   onCameraControllerReady,
   resolveStaticAsset,
-  background,
-  showCallouts,
-  callouts,
 }) => {
   const childrenCircuitJson = useConvertChildrenToCircuitJson(children)
   const circuitJson = useMemo(() => {
@@ -169,8 +157,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
     string | null
   >(null)
   const { visibility } = useLayerVisibility()
-  const { renderingMode, shadowsEnabled, boardSurfaceTexture } =
-    useRenderingMode()
+  const { renderingMode, shadowsEnabled } = useRenderingMode()
 
   useEffect(() => {
     if (
@@ -265,7 +252,6 @@ try {
       createTextureMeshes(textures, boardData, pcbThickness, isFauxBoard, {
         shadowsEnabled,
         renderingMode,
-        boardSurfaceTexture,
       }),
     [
       textures,
@@ -274,7 +260,6 @@ try {
       isFauxBoard,
       shadowsEnabled,
       renderingMode,
-      boardSurfaceTexture,
     ],
   )
 
@@ -351,9 +336,6 @@ try {
       clickToInteractEnabled={clickToInteractEnabled}
       boardDimensions={boardDimensions}
       boardCenter={boardCenter}
-      pcbThickness={pcbThickness}
-      background={background}
-      cameraSessionRestoreEnabled={!cameraPreset}
       onUserInteraction={onUserInteraction}
       onCameraControllerReady={onCameraControllerReady}
     >
@@ -375,15 +357,6 @@ try {
           />
         </ThreeErrorBoundary>
       ))}
-      {showCallouts ? (
-        <CalloutLayer
-          callouts={callouts}
-          circuitJson={circuitJson}
-          cadComponents={cadComponents}
-          boardDimensions={boardDimensions}
-          boardCenter={boardCenter}
-        />
-      ) : null}
     </CadViewerContainer>
   )
 }

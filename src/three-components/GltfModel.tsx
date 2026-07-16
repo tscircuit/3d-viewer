@@ -5,7 +5,6 @@ import { useThree } from "src/react-three/ThreeContext"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { getDefaultEnvironmentMap } from "src/react-three/getDefaultEnvironmentMap"
 import { configureObjectShadows } from "src/utils/configure-object-shadows"
-import { useRenderingMode } from "src/contexts/RenderingModeContext"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
@@ -41,7 +40,6 @@ export function GltfModel({
   isTranslucent?: boolean
 }) {
   const { renderer } = useThree()
-  const { renderingMode } = useRenderingMode()
   const [model, setModel] = useState<THREE.Group | null>(null)
   const [loadError, setLoadError] = useState<Error | null>(null)
   const { boardTransformGroup } = useCadModelTransformGraph({
@@ -117,39 +115,24 @@ export function GltfModel({
       material: THREE.MeshStandardMaterial
       envMap: THREE.Texture | null
       envMapIntensity: number
-      roughness: number
-      metalness: number
     }> = []
 
-    const applyEnvironmentToMaterial = (
-      material: THREE.Material,
-      meshName: string,
-    ) => {
+    const applyEnvironmentToMaterial = (material: THREE.Material) => {
       if (!(material instanceof THREE.MeshStandardMaterial)) return
 
       previousMaterialState.push({
         material,
         envMap: material.envMap ?? null,
         envMapIntensity: material.envMapIntensity ?? 1,
-        roughness: material.roughness,
-        metalness: material.metalness,
       })
 
       material.envMap = environmentMap
 
-      const targetEnvMapIntensity =
-        renderingMode === "realistic" ? 1.8 : DEFAULT_ENV_MAP_INTENSITY
-      if (material.envMapIntensity < targetEnvMapIntensity) {
-        material.envMapIntensity = targetEnvMapIntensity
-      }
-
-      if (renderingMode === "realistic") {
-        material.roughness = Math.min(material.roughness ?? 0.7, 0.55)
-
-        if (/pin|lead|metal|terminal/i.test(`${material.name} ${meshName}`)) {
-          material.metalness = Math.max(material.metalness ?? 0, 0.85)
-          material.roughness = Math.min(material.roughness, 0.25)
-        }
+      if (
+        typeof material.envMapIntensity !== "number" ||
+        material.envMapIntensity < DEFAULT_ENV_MAP_INTENSITY
+      ) {
+        material.envMapIntensity = DEFAULT_ENV_MAP_INTENSITY
       }
 
       material.needsUpdate = true
@@ -160,24 +143,20 @@ export function GltfModel({
 
       const material = child.material
       if (Array.isArray(material)) {
-        material.forEach((mat) => applyEnvironmentToMaterial(mat, child.name))
+        material.forEach(applyEnvironmentToMaterial)
       } else if (material) {
-        applyEnvironmentToMaterial(material, child.name)
+        applyEnvironmentToMaterial(material)
       }
     })
 
     return () => {
-      previousMaterialState.forEach(
-        ({ material, envMap, envMapIntensity, roughness, metalness }) => {
-          material.envMap = envMap
-          material.envMapIntensity = envMapIntensity
-          material.roughness = roughness
-          material.metalness = metalness
-          material.needsUpdate = true
-        },
-      )
+      previousMaterialState.forEach(({ material, envMap, envMapIntensity }) => {
+        material.envMap = envMap
+        material.envMapIntensity = envMapIntensity
+        material.needsUpdate = true
+      })
     }
-  }, [model, renderer, renderingMode])
+  }, [model, renderer])
 
   useEffect(() => {
     if (!model) return

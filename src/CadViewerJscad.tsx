@@ -15,7 +15,6 @@ import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { JscadBoardTextures } from "./three-components/JscadBoardTextures"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
-import type { CameraPreset } from "./hooks/cameraAnimation"
 
 interface Props {
   /**
@@ -26,7 +25,6 @@ interface Props {
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
   cameraType?: "orthographic" | "perspective"
-  cameraPreset?: CameraPreset
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
   resolveStaticAsset?: (modelUrl: string) => string
@@ -42,7 +40,6 @@ export const CadViewerJscad = forwardRef<
       children,
       autoRotateDisabled,
       clickToInteractEnabled,
-      cameraPreset,
       onUserInteraction,
       onCameraControllerReady,
       resolveStaticAsset,
@@ -135,7 +132,6 @@ export const CadViewerJscad = forwardRef<
         clickToInteractEnabled={clickToInteractEnabled}
         boardDimensions={boardDimensions}
         boardCenter={boardCenter}
-        cameraSessionRestoreEnabled={!cameraPreset}
         onUserInteraction={onUserInteraction}
         onCameraControllerReady={onCameraControllerReady}
       >

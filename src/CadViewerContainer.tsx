@@ -7,7 +7,6 @@ import { OrbitControls } from "./react-three/OrbitControls"
 import { Grid } from "./react-three/Grid"
 import { useFrame, useThree } from "./react-three/ThreeContext"
 import { Lights } from "./react-three/Lights"
-import { PresentationStage } from "./react-three/PresentationStage"
 import { CameraAnimatorWithContext } from "./hooks/cameraAnimation"
 import { useCameraController } from "./contexts/CameraControllerContext"
 import { useRenderingMode } from "./contexts/RenderingModeContext"
@@ -15,7 +14,6 @@ import { useCameraSession } from "./hooks/useCameraSession"
 import type { CameraController } from "./hooks/cameraAnimation"
 import { OrientationCubeCanvas } from "./three-components/OrientationCubeCanvas"
 import { zIndexMap } from "../lib/utils/z-index-map"
-import type { CadViewerBackground } from "./presentation-types"
 export type {
   CameraController,
   CameraPreset,
@@ -40,9 +38,6 @@ interface Props {
   clickToInteractEnabled?: boolean
   boardDimensions?: { width?: number; height?: number }
   boardCenter?: { x: number; y: number }
-  pcbThickness?: number | null
-  background?: CadViewerBackground
-  cameraSessionRestoreEnabled?: boolean
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
 }
@@ -59,9 +54,6 @@ export const CadViewerContainer = forwardRef<
       clickToInteractEnabled = false,
       boardDimensions,
       boardCenter,
-      pcbThickness,
-      background,
-      cameraSessionRestoreEnabled = true,
       onUserInteraction,
       onCameraControllerReady,
     },
@@ -73,11 +65,11 @@ export const CadViewerContainer = forwardRef<
 
     const { mainCameraRef, handleControlsChange, controller } =
       useCameraController()
-    const { renderingMode, shadowsEnabled } = useRenderingMode()
+    const { shadowsEnabled } = useRenderingMode()
     const {
       handleCameraCreated,
       handleControlsChange: handleSessionControlsChange,
-    } = useCameraSession({ restoreEnabled: cameraSessionRestoreEnabled })
+    } = useCameraSession()
 
     useEffect(() => {
       if (onCameraControllerReady) {
@@ -99,22 +91,8 @@ export const CadViewerContainer = forwardRef<
       return [boardCenter.x, boardCenter.y, 0] as [number, number, number]
     }, [boardCenter])
 
-    const presentationStageEnabled = renderingMode === "realistic"
-    const effectiveBackground =
-      background ?? (presentationStageEnabled ? "studio" : "transparent")
-    const containerBackground =
-      effectiveBackground === "studio" ? "#f1f3f5" : "transparent"
-
     return (
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          height: "100%",
-          background: containerBackground,
-          overflow: "hidden",
-        }}
-      >
+      <div style={{ position: "relative", width: "100%", height: "100%" }}>
         <OrientationCubeCanvas />
         <Canvas
           ref={ref}
@@ -149,21 +127,13 @@ export const CadViewerContainer = forwardRef<
             boardCenter={boardCenter}
             shadowsEnabled={shadowsEnabled}
           />
-          <PresentationStage
-            enabled={presentationStageEnabled}
-            boardDimensions={boardDimensions}
-            boardCenter={boardCenter}
-            pcbThickness={pcbThickness}
+          <Grid
+            rotation={[Math.PI / 2, 0, 0]}
+            infiniteGrid={true}
+            cellSize={3}
+            sectionSize={gridSectionSize}
+            args={[gridSectionSize, gridSectionSize]}
           />
-          {!presentationStageEnabled && (
-            <Grid
-              rotation={[Math.PI / 2, 0, 0]}
-              infiniteGrid={true}
-              cellSize={3}
-              sectionSize={gridSectionSize}
-              args={[gridSectionSize, gridSectionSize]}
-            />
-          )}
           {children}
         </Canvas>
         <div
@@ -172,8 +142,8 @@ export const CadViewerContainer = forwardRef<
             right: 24,
             bottom: 24,
             fontFamily: "sans-serif",
-            color: "#3f4852",
-            WebkitTextStroke: "0.5px rgba(255, 255, 255, 0.7)",
+            color: "white",
+            WebkitTextStroke: "0.5px rgba(0, 0, 0, 0.5)",
             fontSize: 11,
           }}
         >

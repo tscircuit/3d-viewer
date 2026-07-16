@@ -1,9 +1,7 @@
 import * as THREE from "three"
 import {
-  type BoardSurfaceTextureId,
-  DEFAULT_BOARD_SURFACE_TEXTURE_ID,
-  getBoardSurfaceTextureOption,
-  getPadCopperTextureProfile,
+  PAD_COPPER_TEXTURE_MATERIAL,
+  REALISTIC_BOARD_SURFACE_MATERIAL,
 } from "../board-surface-textures"
 
 const PLAIN_SOLDERMASK_HEIGHT = 0.22
@@ -48,20 +46,12 @@ const valueNoise = (x: number, y: number, scale: number, salt: number) => {
 }
 
 const createBoardSurfaceTextureDetail = (
-  _x: number,
-  _y: number,
-  _layerSalt: number,
-  surfaceTexture: BoardSurfaceTextureId,
+  x: number,
+  y: number,
+  layerSalt: number,
 ) => {
-  switch (surfaceTexture) {
-    case "Leather039": {
-      const material = getBoardSurfaceTextureOption(surfaceTexture).material
-      const microGrain =
-        (valueNoise(_x, _y, 3.25, _layerSalt + 17) - 0.5) * 0.16
-
-      return microGrain * material.detailStrength
-    }
-  }
+  const microGrain = (valueNoise(x, y, 3.25, layerSalt + 17) - 0.5) * 0.16
+  return microGrain * REALISTIC_BOARD_SURFACE_MATERIAL.detailStrength
 }
 
 const createPadCopperTextureDetail = (
@@ -69,7 +59,7 @@ const createPadCopperTextureDetail = (
   y: number,
   layerSalt: number,
 ) => {
-  const material = getPadCopperTextureProfile().material
+  const material = PAD_COPPER_TEXTURE_MATERIAL
   const cloudy =
     (valueNoise(x, y, 20, layerSalt + 307) - 0.5) * 0.45 +
     (valueNoise(x, y, 58, layerSalt + 311) - 0.5) * 0.35
@@ -154,18 +144,13 @@ const createHeightTexture = (
 
 export const createBoardReliefTextures = (
   texture: THREE.CanvasTexture,
-  options: {
-    surfaceTexture?: BoardSurfaceTextureId
-  } = {},
 ): {
   bumpMap: THREE.CanvasTexture
   normalMap: THREE.CanvasTexture
   roughnessMap: THREE.CanvasTexture
 } | null => {
-  const surfaceTexture =
-    options.surfaceTexture ?? DEFAULT_BOARD_SURFACE_TEXTURE_ID
-  const surfaceMaterial = getBoardSurfaceTextureOption(surfaceTexture).material
-  const padCopperMaterial = getPadCopperTextureProfile().material
+  const surfaceMaterial = REALISTIC_BOARD_SURFACE_MATERIAL
+  const padCopperMaterial = PAD_COPPER_TEXTURE_MATERIAL
   const sourceCanvas = texture.image as HTMLCanvasElement | undefined
   if (!sourceCanvas?.width || !sourceCanvas.height) return null
 
@@ -217,12 +202,7 @@ export const createBoardReliefTextures = (
     const profile = getBoardSurfaceProfile(r, g, b)
     const detailTexture = profile.isExposedCopper
       ? createPadCopperTextureDetail(x, y, sourceCanvas.width + 277)
-      : createBoardSurfaceTextureDetail(
-          x,
-          y,
-          sourceCanvas.width + 137,
-          surfaceTexture,
-        )
+      : createBoardSurfaceTextureDetail(x, y, sourceCanvas.width + 137)
     const microSurface = detailTexture * profile.microSurfaceWeight
     const height = clamp01(invertSurfaceHeight(profile.height) + microSurface)
     heights[pixelIndex] = height

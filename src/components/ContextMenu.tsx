@@ -4,14 +4,9 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { AppearanceMenu } from "./AppearanceMenu"
 import type { CameraPreset } from "../hooks/cameraAnimation"
 import { useCameraController } from "../contexts/CameraControllerContext"
-import { useRenderingMode } from "../contexts/RenderingModeContext"
 import packageJson from "../../package.json"
 import { CheckIcon, ChevronRightIcon, DotIcon } from "./Icons"
 import { zIndexMap } from "../../lib/utils/z-index-map"
-import {
-  BOARD_SURFACE_TEXTURE_OPTIONS,
-  getBoardSurfaceTextureOption,
-} from "../board-surface-textures"
 
 interface ContextMenuProps {
   menuRef: React.RefObject<HTMLDivElement | null>
@@ -28,7 +23,6 @@ interface ContextMenuProps {
 
 const cameraOptions: CameraPreset[] = [
   "Custom",
-  "Hero",
   "Top Center Angled",
   "Top Down",
   "Top Left Corner",
@@ -118,17 +112,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onOpenKeyboardShortcuts,
 }) => {
   const { cameraType, setCameraType } = useCameraController()
-  const {
-    boardSurfaceTexture,
-    setBoardSurfaceTexture,
-    setRenderingMode,
-    setLightingEnabled,
-  } = useRenderingMode()
   const [cameraSubOpen, setCameraSubOpen] = useState(false)
-  const [surfaceSubOpen, setSurfaceSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
-  const selectedSurfaceTexture =
-    getBoardSurfaceTextureOption(boardSurfaceTexture)
 
   return (
     <div
@@ -273,83 +258,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 Orthographic Camera
               </span>
             </DropdownMenu.Item>
-
-            {/* Realistic Board Fixture Submenu */}
-            <DropdownMenu.Sub onOpenChange={setSurfaceSubOpen}>
-              <DropdownMenu.SubTrigger
-                style={{
-                  ...itemStyles,
-                  ...itemPaddingStyles,
-                  backgroundColor:
-                    surfaceSubOpen || hoveredItem === "surfaceTexture"
-                      ? "#404040"
-                      : "transparent",
-                }}
-                onMouseEnter={() => setHoveredItem("surfaceTexture")}
-                onMouseLeave={() => setHoveredItem(null)}
-                onTouchStart={() => setHoveredItem("surfaceTexture")}
-              >
-                <span
-                  style={{ flex: 1, display: "flex", alignItems: "center" }}
-                >
-                  Realistic Board Fixture
-                </span>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-end",
-                    gap: 6,
-                    marginLeft: "auto",
-                  }}
-                >
-                  <span style={{ opacity: 0.55, fontSize: 13 }}>
-                    {selectedSurfaceTexture.label}
-                  </span>
-                  <ChevronRightIcon isOpen={surfaceSubOpen} />
-                </div>
-              </DropdownMenu.SubTrigger>
-
-              <DropdownMenu.Portal>
-                <DropdownMenu.SubContent
-                  style={{ ...contentStyles, marginLeft: -2, minWidth: 196 }}
-                  collisionPadding={10}
-                  avoidCollisions={true}
-                >
-                  {BOARD_SURFACE_TEXTURE_OPTIONS.map((option) => {
-                    const hoveredKey = `surface-${option.id}`
-                    return (
-                      <DropdownMenu.Item
-                        key={option.id}
-                        style={{
-                          ...itemStyles,
-                          backgroundColor:
-                            hoveredItem === hoveredKey
-                              ? "#404040"
-                              : "transparent",
-                        }}
-                        onSelect={(e) => e.preventDefault()}
-                        onPointerDown={(e) => {
-                          e.preventDefault()
-                          setBoardSurfaceTexture(option.id)
-                          setRenderingMode("realistic")
-                          setLightingEnabled(true)
-                        }}
-                        onMouseEnter={() => setHoveredItem(hoveredKey)}
-                        onMouseLeave={() => setHoveredItem(null)}
-                        onTouchStart={() => setHoveredItem(hoveredKey)}
-                      >
-                        <span style={iconContainerStyles}>
-                          {boardSurfaceTexture === option.id && <DotIcon />}
-                        </span>
-                        <span style={{ display: "flex", alignItems: "center" }}>
-                          {option.label}
-                        </span>
-                      </DropdownMenu.Item>
-                    )
-                  })}
-                </DropdownMenu.SubContent>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Sub>
 
             {/* Appearance Menu */}
             <AppearanceMenu />

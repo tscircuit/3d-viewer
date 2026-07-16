@@ -6,11 +6,7 @@ import {
   useCameraController,
 } from "../contexts/CameraControllerContext"
 
-export const useCameraSession = ({
-  restoreEnabled = true,
-}: {
-  restoreEnabled?: boolean
-} = {}) => {
+export const useCameraSession = () => {
   const { controlsRef } = useCameraController()
   const cameraRef = useRef<THREE.Camera | null>(null)
   const cameraRestoredRef = useRef(false)
@@ -19,21 +15,21 @@ export const useCameraSession = ({
   const handleCameraCreated = useCallback(
     (camera: THREE.Camera) => {
       cameraRef.current = camera
-      if (restoreEnabled && !cameraRestoredRef.current && controlsRef.current) {
+      if (!cameraRestoredRef.current && controlsRef.current) {
         const restored = loadCameraFromSession(camera, controlsRef.current)
         if (restored) {
           cameraRestoredRef.current = true
         }
       }
     },
-    [controlsRef, restoreEnabled],
+    [controlsRef],
   )
 
   const handleControlsChange = useCallback(() => {
     if (!cameraRef.current || !controlsRef.current) return
 
     // Attempt one-time restore on first controls change
-    if (restoreEnabled && !cameraRestoredRef.current) {
+    if (!cameraRestoredRef.current) {
       const restored = loadCameraFromSession(
         cameraRef.current,
         controlsRef.current,
@@ -51,7 +47,7 @@ export const useCameraSession = ({
         saveCameraToSession(cameraRef.current, controlsRef.current)
       }
     }, 150)
-  }, [controlsRef, restoreEnabled])
+  }, [controlsRef])
 
   return {
     handleCameraCreated,

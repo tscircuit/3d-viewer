@@ -6,11 +6,6 @@ import React, {
   useMemo,
   useState,
 } from "react"
-import {
-  DEFAULT_BOARD_SURFACE_TEXTURE_ID,
-  isBoardSurfaceTextureId,
-  type BoardSurfaceTextureId,
-} from "../board-surface-textures"
 
 export type RenderingMode = "engineering" | "realistic"
 
@@ -20,13 +15,10 @@ interface RenderingModeContextType {
   lightingEnabled: boolean
   setLightingEnabled: (enabled: boolean) => void
   shadowsEnabled: boolean
-  boardSurfaceTexture: BoardSurfaceTextureId
-  setBoardSurfaceTexture: (texture: BoardSurfaceTextureId) => void
 }
 
 const STORAGE_KEY = "cadViewerRenderingMode"
 const LIGHTING_STORAGE_KEY = "cadViewerLightingEnabled"
-const BOARD_SURFACE_TEXTURE_STORAGE_KEY = "cadViewerBoardSurfaceTexture"
 
 const readStoredRenderingMode = (): RenderingMode => {
   if (typeof window === "undefined") return "engineering"
@@ -41,30 +33,19 @@ const readStoredLightingEnabled = (): boolean => {
   return window.localStorage.getItem(LIGHTING_STORAGE_KEY) !== "false"
 }
 
-const readStoredBoardSurfaceTexture = (): BoardSurfaceTextureId => {
-  if (typeof window === "undefined") return DEFAULT_BOARD_SURFACE_TEXTURE_ID
-  const stored = window.localStorage.getItem(BOARD_SURFACE_TEXTURE_STORAGE_KEY)
-  return isBoardSurfaceTextureId(stored)
-    ? stored
-    : DEFAULT_BOARD_SURFACE_TEXTURE_ID
-}
-
 const RenderingModeContext = createContext<
   RenderingModeContextType | undefined
 >(undefined)
 
 export const RenderingModeProvider: React.FC<{
   children: React.ReactNode
-  initialMode?: RenderingMode
-}> = ({ children, initialMode }) => {
+}> = ({ children }) => {
   const [renderingMode, setRenderingModeState] = useState<RenderingMode>(
-    initialMode ?? readStoredRenderingMode,
+    readStoredRenderingMode,
   )
   const [lightingEnabled, setLightingEnabled] = useState<boolean>(
     readStoredLightingEnabled,
   )
-  const [boardSurfaceTexture, setBoardSurfaceTexture] =
-    useState<BoardSurfaceTextureId>(readStoredBoardSurfaceTexture)
 
   const setRenderingMode = useCallback((mode: RenderingMode) => {
     setRenderingModeState(mode)
@@ -81,13 +62,6 @@ export const RenderingModeProvider: React.FC<{
     )
   }, [lightingEnabled])
 
-  useEffect(() => {
-    window.localStorage.setItem(
-      BOARD_SURFACE_TEXTURE_STORAGE_KEY,
-      boardSurfaceTexture,
-    )
-  }, [boardSurfaceTexture])
-
   const value = useMemo(
     () => ({
       renderingMode,
@@ -95,10 +69,8 @@ export const RenderingModeProvider: React.FC<{
       lightingEnabled,
       setLightingEnabled,
       shadowsEnabled: lightingEnabled && renderingMode === "realistic",
-      boardSurfaceTexture,
-      setBoardSurfaceTexture,
     }),
-    [lightingEnabled, renderingMode, setRenderingMode, boardSurfaceTexture],
+    [lightingEnabled, renderingMode, setRenderingMode],
   )
 
   return (

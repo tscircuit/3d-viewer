@@ -26,11 +26,7 @@ import {
   LayerVisibilityProvider,
   useLayerVisibility,
 } from "./contexts/LayerVisibilityContext"
-import {
-  RenderingModeProvider,
-  useRenderingMode,
-  type RenderingMode,
-} from "./contexts/RenderingModeContext"
+import { RenderingModeProvider } from "./contexts/RenderingModeContext"
 import {
   CameraControllerProvider,
   useCameraController,
@@ -39,38 +35,8 @@ import { ToastProvider, useToast } from "./contexts/ToastContext"
 import { ContextMenu } from "./components/ContextMenu"
 import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
 import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
-import type {
-  CadViewerBackground,
-  CadViewerCallout,
-  CadViewerVisualStyle,
-} from "./presentation-types"
 
-export type { CadViewerBackground, CadViewerCallout, CadViewerVisualStyle }
-
-export type CadViewerProps = {
-  visualStyle?: CadViewerVisualStyle
-  renderingMode?: RenderingMode
-  cameraPreset?: CameraPreset
-  showCallouts?: boolean
-  callouts?: CadViewerCallout[]
-  background?: CadViewerBackground
-  resolveStaticAsset?: (modelUrl: string) => string
-  onCameraControllerReady?: (controller: CameraController | null) => void
-  autoRotateDisabled?: boolean
-  clickToInteractEnabled?: boolean
-  circuitJson?: any[]
-  children?: React.ReactNode
-}
-
-const getRenderingModeFromVisualStyle = (
-  visualStyle?: CadViewerVisualStyle,
-): RenderingMode | undefined => {
-  if (visualStyle === "presentation") return "realistic"
-  if (visualStyle === "engineering") return "engineering"
-  return undefined
-}
-
-const CadViewerInner = (props: CadViewerProps) => {
+const CadViewerInner = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
     return stored === "jscad" || stored === "manifold" ? stored : "manifold"
@@ -79,7 +45,6 @@ const CadViewerInner = (props: CadViewerProps) => {
   const [isKeyboardShortcutsDialogOpen, setIsKeyboardShortcutsDialogOpen] =
     useState(false)
   const [autoRotate, setAutoRotate] = useState(() => {
-    if (props.cameraPreset && props.cameraPreset !== "Custom") return false
     const stored = window.localStorage.getItem("cadViewerAutoRotate")
     return stored === "false" ? false : true
   })
@@ -87,12 +52,9 @@ const CadViewerInner = (props: CadViewerProps) => {
     const stored = window.localStorage.getItem("cadViewerAutoRotateUserToggled")
     return stored === "true"
   })
-  const [cameraPreset, setCameraPreset] = useState<CameraPreset>(
-    props.cameraPreset ?? "Custom",
-  )
+  const [cameraPreset, setCameraPreset] = useState<CameraPreset>("Custom")
   const { cameraType, setCameraType } = useCameraController()
   const { visibility, setLayerVisibility } = useLayerVisibility()
-  const { renderingMode, setRenderingMode } = useRenderingMode()
   const { showToast } = useToast()
 
   const cameraControllerRef = useRef<CameraController | null>(null)
@@ -166,27 +128,6 @@ const CadViewerInner = (props: CadViewerProps) => {
     isAnimatingRef,
     lastPresetSelectTime,
   })
-
-  const requestedRenderingMode =
-    props.renderingMode ?? getRenderingModeFromVisualStyle(props.visualStyle)
-
-  useEffect(() => {
-    if (requestedRenderingMode && requestedRenderingMode !== renderingMode) {
-      setRenderingMode(requestedRenderingMode)
-    }
-  }, [renderingMode, requestedRenderingMode, setRenderingMode])
-
-  useEffect(() => {
-    if (!props.cameraPreset || props.cameraPreset === cameraPreset) return
-
-    setCameraPreset(props.cameraPreset)
-    if (props.cameraPreset === "Custom") return
-
-    setAutoRotate(false)
-    setAutoRotateUserToggled(true)
-    lastPresetSelectTime.current = Date.now()
-    cameraControllerRef.current?.animateToPreset(props.cameraPreset)
-  }, [cameraPreset, props.cameraPreset])
 
   useRegisteredHotkey(
     "open_keyboard_shortcuts_dialog",
@@ -364,10 +305,7 @@ const CadViewerInner = (props: CadViewerProps) => {
   )
 }
 
-export const CadViewer = (props: CadViewerProps) => {
-  const initialRenderingMode =
-    props.renderingMode ?? getRenderingModeFromVisualStyle(props.visualStyle)
-
+export const CadViewer = (props: any) => {
   return (
     <CameraControllerProvider
       defaultTarget={DEFAULT_TARGET}
@@ -375,7 +313,7 @@ export const CadViewer = (props: CadViewerProps) => {
       initialCameraType={readStoredCameraType()}
     >
       <LayerVisibilityProvider>
-        <RenderingModeProvider initialMode={initialRenderingMode}>
+        <RenderingModeProvider>
           <ToastProvider>
             <CadViewerInner {...props} />
           </ToastProvider>

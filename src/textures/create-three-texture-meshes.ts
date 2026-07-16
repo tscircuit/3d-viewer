@@ -1,10 +1,6 @@
 import type { PcbBoard } from "circuit-json"
 import * as THREE from "three"
-import {
-  DEFAULT_BOARD_SURFACE_TEXTURE_ID,
-  getBoardSurfaceTextureOption,
-  type BoardSurfaceTextureId,
-} from "../board-surface-textures"
+import { REALISTIC_BOARD_SURFACE_MATERIAL } from "../board-surface-textures"
 import type { RenderingMode } from "../contexts/RenderingModeContext"
 import { FAUX_BOARD_OPACITY } from "../geoms/constants"
 import { createBoardReliefTextures } from "../utils/create-board-relief-textures"
@@ -21,7 +17,6 @@ interface TexturePlaneConfig {
   renderOrder?: number
   isFaux?: boolean
   renderingMode?: RenderingMode
-  boardSurfaceTexture?: BoardSurfaceTextureId
 }
 
 function createTexturePlane(
@@ -36,7 +31,6 @@ function createTexturePlane(
     renderOrder = 0,
     isFaux = false,
     renderingMode = "engineering",
-    boardSurfaceTexture = DEFAULT_BOARD_SURFACE_TEXTURE_ID,
   } = config
 
   if (!texture) return null
@@ -62,13 +56,8 @@ function createTexturePlane(
   } satisfies THREE.MeshBasicMaterialParameters
 
   const reliefTextures =
-    renderingMode === "realistic"
-      ? createBoardReliefTextures(texture, {
-          surfaceTexture: boardSurfaceTexture,
-        })
-      : null
-  const surfaceMaterial =
-    getBoardSurfaceTextureOption(boardSurfaceTexture).material
+    renderingMode === "realistic" ? createBoardReliefTextures(texture) : null
+  const surfaceMaterial = REALISTIC_BOARD_SURFACE_MATERIAL
 
   const material =
     renderingMode === "realistic"
@@ -112,7 +101,6 @@ export function createTextureMeshes(
   options: {
     shadowsEnabled?: boolean
     renderingMode?: RenderingMode
-    boardSurfaceTexture?: BoardSurfaceTextureId
   } = {},
 ): THREE.Mesh[] {
   const meshes: THREE.Mesh[] = []
@@ -129,7 +117,6 @@ export function createTextureMeshes(
       renderOrder: 1,
       isFaux,
       renderingMode: options.renderingMode,
-      boardSurfaceTexture: options.boardSurfaceTexture,
     },
     boardData,
   )
@@ -153,7 +140,6 @@ export function createTextureMeshes(
       renderOrder: 1,
       isFaux,
       renderingMode: options.renderingMode,
-      boardSurfaceTexture: options.boardSurfaceTexture,
     },
     boardData,
   )

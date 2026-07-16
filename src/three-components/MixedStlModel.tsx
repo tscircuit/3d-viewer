@@ -78,7 +78,6 @@ export function MixedStlModel({
     })
     return fallbackMesh
   }, [obj, isTranslucent])
-
   const { boardTransformGroup } = useCadModelTransformGraph({
     model,
     position: Array.isArray(position)

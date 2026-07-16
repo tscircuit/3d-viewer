@@ -3,7 +3,7 @@ import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
 import { useEffect, useMemo } from "react"
 import { createCombinedBoardTextures } from "src/textures"
 import * as THREE from "three"
-import { getBoardSurfaceTextureOption } from "../board-surface-textures"
+import { REALISTIC_BOARD_SURFACE_MATERIAL } from "../board-surface-textures"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import { useRenderingMode } from "../contexts/RenderingModeContext"
 import {
@@ -30,8 +30,7 @@ export function JscadBoardTextures({
 }: JscadBoardTexturesProps) {
   const { rootObject } = useThree()
   const { visibility } = useLayerVisibility()
-  const { renderingMode, shadowsEnabled, boardSurfaceTexture } =
-    useRenderingMode()
+  const { renderingMode, shadowsEnabled } = useRenderingMode()
 
   const boardData = useMemo(() => {
     // Check for panel first
@@ -143,12 +142,9 @@ export function JscadBoardTextures({
       } satisfies THREE.MeshBasicMaterialParameters
       const reliefTextures =
         renderingMode === "realistic"
-          ? createBoardReliefTextures(texture, {
-              surfaceTexture: boardSurfaceTexture,
-            })
+          ? createBoardReliefTextures(texture)
           : null
-      const surfaceMaterial =
-        getBoardSurfaceTextureOption(boardSurfaceTexture).material
+      const surfaceMaterial = REALISTIC_BOARD_SURFACE_MATERIAL
       const material =
         renderingMode === "realistic"
           ? new THREE.MeshPhysicalMaterial({
@@ -257,7 +253,6 @@ export function JscadBoardTextures({
     pcbThickness,
     renderingMode,
     shadowsEnabled,
-    boardSurfaceTexture,
   ])
 
   return null
