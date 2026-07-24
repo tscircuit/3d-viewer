@@ -28,19 +28,14 @@ function computePointInFront(
 export const OrientationCubeCanvas = () => {
   const { mainCameraRef } = useCameraController()
   const containerRef = useRef<HTMLDivElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
-  const sceneRef = useRef<THREE.Scene | null>(null)
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
-  const animationFrameRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (!containerRef.current) return
 
     // Create canvas
+    const container = containerRef.current
     const canvas = document.createElement("canvas")
-    canvasRef.current = canvas
-    containerRef.current.appendChild(canvas)
+    container.appendChild(canvas)
 
     // Create renderer
     const renderer = new THREE.WebGLRenderer({
@@ -50,16 +45,13 @@ export const OrientationCubeCanvas = () => {
     })
     renderer.setSize(120, 120)
     renderer.setPixelRatio(window.devicePixelRatio)
-    rendererRef.current = renderer
 
     // Create scene
     const scene = new THREE.Scene()
-    sceneRef.current = scene
 
     // Create camera
     const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000)
     camera.up.set(0, 0, 1)
-    cameraRef.current = camera
 
     // Add ambient light
     const ambientLight = new THREE.AmbientLight(0xffffff, Math.PI / 2)
@@ -146,6 +138,7 @@ export const OrientationCubeCanvas = () => {
     group.add(bottomText)
 
     // Animation loop
+    let animationFrameId: number | null = null
     const animate = () => {
       if (mainCameraRef.current) {
         const cameraPosition = computePointInFront(
@@ -160,15 +153,19 @@ export const OrientationCubeCanvas = () => {
       }
 
       renderer.render(scene, camera)
-      animationFrameRef.current = requestAnimationFrame(animate)
+      animationFrameId = requestAnimationFrame(animate)
     }
 
     animate()
 
     // Cleanup
     return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current)
+      // StrictMode clears DOM refs before replaying passive effects, so clean up
+      // the canvas owned by this effect instead of reading containerRef.current.
+      canvas.remove()
+
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId)
       }
 
       frontText.dispose()
@@ -186,10 +183,6 @@ export const OrientationCubeCanvas = () => {
       scene.clear()
       renderer.dispose()
       renderer.forceContextLoss()
-
-      if (canvasRef.current && containerRef.current) {
-        containerRef.current.removeChild(canvasRef.current)
-      }
     }
   }, [mainCameraRef])
 
