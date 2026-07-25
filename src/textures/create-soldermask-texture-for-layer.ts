@@ -42,6 +42,7 @@ export function createSoldermaskTextureForLayer({
     bounds,
     elements,
     boardMaterial: boardData.material,
+    solderMaskColor: boardData.solder_mask_color,
   })
 
   const texture = new THREE.CanvasTexture(canvas)
