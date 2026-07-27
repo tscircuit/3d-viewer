@@ -3,6 +3,17 @@ import type { Object3D } from "three"
 import { MTLLoader, OBJLoader } from "three-stdlib"
 import { loadVrml } from "src/utils/vrml"
 
+function normalizeModelCacheUrl(url: string): string {
+  return url
+    .replace(/([?&])cachebust_origin=[^&]*&?/g, (match, separator) => {
+      if (separator === "?" && match.endsWith("&")) return "?"
+      if (separator === "&" && match.endsWith("&")) return "&"
+      return separator
+    })
+    .replace(/\?&/, "?")
+    .replace(/[?&]$/, "")
+}
+
 // Define the type for our cache
 interface CacheItem {
   promise: Promise<any>
@@ -28,7 +39,7 @@ export function useGlobalObjLoader(
   useEffect(() => {
     if (!url) return
 
-    const cleanUrl = url.replace(/&cachebust_origin=$/, "")
+    const cleanUrl = normalizeModelCacheUrl(url)
 
     const cache = window.TSCIRCUIT_OBJ_LOADER_CACHE
     let hasUrlChanged = false
