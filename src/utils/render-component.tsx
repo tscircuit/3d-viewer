@@ -1,28 +1,45 @@
-import jscad from "@jscad/modeling"
-import type { AnyCircuitElement } from "circuit-json"
+import jscad, * as jscadModeling from "@jscad/modeling"
+import type { CadComponent } from "circuit-json"
 import {
   convertCSGToThreeGeom,
   getJscadModelForFootprint,
 } from "jscad-electronics/vanilla"
 import { executeJscadOperations } from "jscad-planner"
 import * as THREE from "three"
-import * as jscadModeling from "@jscad/modeling"
-import { load3DModel } from "./load-model"
-import type { CadComponent } from "circuit-json"
+import { load3DModel, type ModelFileFormat } from "./load-model"
+
+function getCadModelUrlAndFormat(
+  component: CadComponent,
+): { url: string; modelFormat: ModelFileFormat } | null {
+  if (component.model_obj_url) {
+    return { url: component.model_obj_url, modelFormat: "obj" }
+  }
+  if (component.model_wrl_url) {
+    return { url: component.model_wrl_url, modelFormat: "wrl" }
+  }
+  if (component.model_stl_url) {
+    return { url: component.model_stl_url, modelFormat: "stl" }
+  }
+  if (component.model_glb_url) {
+    return { url: component.model_glb_url, modelFormat: "glb" }
+  }
+  if (component.model_gltf_url) {
+    return { url: component.model_gltf_url, modelFormat: "gltf" }
+  }
+
+  return null
+}
 
 export async function renderComponent(
   component: CadComponent,
   scene: THREE.Scene,
 ) {
   // Handle STL/OBJ models first
-  const url =
-    component.model_obj_url ??
-    component.model_wrl_url ??
-    component.model_stl_url ??
-    component.model_glb_url ??
-    component.model_gltf_url
-  if (url) {
-    const model = await load3DModel(url)
+  const cadModel = getCadModelUrlAndFormat(component)
+  if (cadModel) {
+    const model = await load3DModel(cadModel.url, {
+      modelFormat: cadModel.modelFormat,
+    })
     if (model) {
       if (component.position) {
         model.position.set(
