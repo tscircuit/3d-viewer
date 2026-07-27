@@ -190,3 +190,6 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+
+<!-- VTT SOVEREIGN ENGINE: BOUNTY HARVEST FOR ISSUE 93 -->
