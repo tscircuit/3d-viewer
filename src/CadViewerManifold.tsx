@@ -1,6 +1,5 @@
 import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, CadComponent } from "circuit-json"
-import type { ManifoldToplevel } from "manifold-3d"
 import type React from "react"
 import { useEffect, useMemo, useState } from "react"
 import * as THREE from "three"
@@ -16,15 +15,8 @@ import { createTextureMeshes } from "./textures"
 import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
+import { loadManifoldRuntime } from "./utils/manifold/load-manifold-runtime"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
-
-declare global {
-  interface Window {
-    ManifoldModule: any
-    MANIFOLD?: any
-    MANIFOLD_MODULE?: any
-  }
-}
 
 export const BoardMeshes = ({
   geometryMeshes,
@@ -135,8 +127,6 @@ type CadViewerManifoldProps = {
   | { circuitJson?: never; children: React.ReactNode }
 )
 
-const MANIFOLD_CDN_BASE_URL = "https://cdn.jsdelivr.net/npm/manifold-3d@3.2.1"
-
 const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   circuitJson: circuitJsonProp,
   autoRotateDisabled,
@@ -160,22 +150,16 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   const { shadowsEnabled } = useRenderingMode()
 
   useEffect(() => {
-    if (
-      window.ManifoldModule &&
-      typeof window.ManifoldModule === "object" &&
-      window.ManifoldModule.setup
-    ) {
-      setManifoldJSModule(window.ManifoldModule)
-      return
-    }
+    let cancelled = false
 
-    const initManifold = async (ManifoldModule: any) => {
+    const initManifold = async () => {
       try {
-        const loadedModule: ManifoldToplevel = await ManifoldModule()
-        loadedModule.setup()
-        window.ManifoldModule = loadedModule
+        const loadedModule = await loadManifoldRuntime()
+
+        if (cancelled) return
         setManifoldJSModule(loadedModule)
       } catch (error) {
+        if (cancelled) return
         console.error("Failed to initialize Manifold:", error)
         setManifoldLoadingError(
           `Failed to initialize Manifold: ${error instanceof Error ? error.message : "Unknown error"}`,
@@ -183,56 +167,10 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
       }
     }
 
-    const existingManifold =
-      window.ManifoldModule ?? window.MANIFOLD ?? window.MANIFOLD_MODULE
-    if (existingManifold) {
-      window.ManifoldModule = existingManifold
-      initManifold(window.ManifoldModule)
-      return
-    }
-
-    const eventName = "manifoldLoaded"
-    const handleLoad = () => {
-      const loadedManifold =
-        window.ManifoldModule ?? window.MANIFOLD ?? window.MANIFOLD_MODULE
-      if (loadedManifold) {
-        window.ManifoldModule = loadedManifold
-        initManifold(window.ManifoldModule)
-      } else {
-        const errText = "ManifoldModule not found on window after script load."
-        console.error(errText)
-        setManifoldLoadingError(errText)
-      }
-    }
-
-    window.addEventListener(eventName, handleLoad, { once: true })
-
-    const script = document.createElement("script")
-    script.type = "module"
-    script.innerHTML = `
-try {
-  const { default: ManifoldModule } = await import('${MANIFOLD_CDN_BASE_URL}/manifold.js');
-  window.ManifoldModule = ManifoldModule;
-} catch (e) {
-  console.error('Error importing manifold in dynamic script:', e);
-} finally {
-  window.dispatchEvent(new CustomEvent('${eventName}'));
-}
-    `.trim()
-
-    const scriptError = (err: any) => {
-      const errText = "Failed to load Manifold loader script."
-      console.error(errText, err)
-      setManifoldLoadingError(errText)
-      window.removeEventListener(eventName, handleLoad)
-    }
-
-    script.addEventListener("error", scriptError)
-    document.body.appendChild(script)
+    void initManifold()
 
     return () => {
-      window.removeEventListener(eventName, handleLoad)
-      script.removeEventListener("error", scriptError)
+      cancelled = true
     }
   }, [])
 

@@ -1,4 +1,4 @@
-import type { ManifoldToplevel, CrossSection } from "manifold-3d"
+import type { CrossSection, ManifoldToplevel } from "@tscircuit/manifold-2d"
 import type { AnyCircuitElement, PcbCutout } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import { SMOOTH_CIRCLE_SEGMENTS } from "../../geoms/constants"

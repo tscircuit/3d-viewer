@@ -1,6 +1,6 @@
 import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
-import type { ManifoldToplevel } from "manifold-3d"
+import type { ManifoldToplevel } from "@tscircuit/manifold-2d"
 import { useEffect, useMemo, useRef, useState } from "react"
 import type { LayerVisibilityState } from "src/contexts/LayerVisibilityContext"
 import {

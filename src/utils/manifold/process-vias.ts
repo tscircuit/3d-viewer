@@ -1,4 +1,4 @@
-import type { ManifoldToplevel } from "manifold-3d"
+import type { ManifoldToplevel } from "@tscircuit/manifold-2d"
 import type { AnyCircuitElement, PcbVia } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
 import * as THREE from "three"
