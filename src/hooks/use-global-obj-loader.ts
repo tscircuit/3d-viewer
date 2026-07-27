@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import type { Object3D } from "three"
 import { MTLLoader, OBJLoader } from "three-stdlib"
+import { normalizeObjCacheUrl } from "src/utils/normalize-obj-cache-url"
 import { loadVrml } from "src/utils/vrml"
 
 // Define the type for our cache
@@ -27,22 +28,22 @@ export function useGlobalObjLoader(
 
   useEffect(() => {
     if (!url) return
-
-    const cleanUrl = url.replace(/&cachebust_origin=$/, "")
+    const currentUrl = url
+    const cacheKey = normalizeObjCacheUrl(currentUrl)
 
     const cache = window.TSCIRCUIT_OBJ_LOADER_CACHE
     let hasUrlChanged = false
 
     async function loadAndParseObj() {
       try {
-        if (cleanUrl.endsWith(".wrl")) {
-          return await loadVrml(cleanUrl)
+        if (cacheKey.endsWith(".wrl")) {
+          return await loadVrml(currentUrl)
         }
 
-        const response = await fetch(cleanUrl)
+        const response = await fetch(currentUrl)
         if (!response.ok) {
           throw new Error(
-            `Failed to fetch "${cleanUrl}": ${response.status} ${response.statusText}`,
+            `Failed to fetch "${currentUrl}": ${response.status} ${response.statusText}`,
           )
         }
         const text = await response.text()
@@ -79,8 +80,8 @@ export function useGlobalObjLoader(
     }
 
     function loadUrl() {
-      if (cache.has(cleanUrl)) {
-        const cacheItem = cache.get(cleanUrl)!
+      if (cache.has(cacheKey)) {
+        const cacheItem = cache.get(cacheKey)!
         if (cacheItem.result) {
           // If we have a result, clone it
           return Promise.resolve(cacheItem.result.clone())
@@ -97,10 +98,10 @@ export function useGlobalObjLoader(
           // If the result is an Error, return it
           return result
         }
-        cache.set(cleanUrl, { ...cache.get(cleanUrl)!, result })
+        cache.set(cacheKey, { ...cache.get(cacheKey)!, result })
         return result
       })
-      cache.set(cleanUrl, { promise, result: null })
+      cache.set(cacheKey, { promise, result: null })
       return promise
     }
 
