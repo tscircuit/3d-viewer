@@ -65,5 +65,6 @@ export const drawThroughHoleLayer = ({
   setDrawerBounds(drawer, bounds)
   drawer.drawElements(elements, {
     layers: [renderLayer],
+    showPcbNotes: false,
   })
 }
