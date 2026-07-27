@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react"
 import type { Object3D } from "three"
 import { MTLLoader, OBJLoader } from "three-stdlib"
+import {
+  cloneObjModelForScene,
+  getObjModelCacheKey,
+} from "src/utils/obj-model-cache"
 import { loadVrml } from "src/utils/vrml"
 
 // Define the type for our cache
 interface CacheItem {
-  promise: Promise<any>
+  promise: Promise<Object3D | Error>
   result: Object3D | null
 }
 
@@ -28,21 +32,22 @@ export function useGlobalObjLoader(
   useEffect(() => {
     if (!url) return
 
-    const cleanUrl = url.replace(/&cachebust_origin=$/, "")
+    const modelUrl = url
+    const cacheKey = getObjModelCacheKey(modelUrl)
 
     const cache = window.TSCIRCUIT_OBJ_LOADER_CACHE
     let hasUrlChanged = false
 
     async function loadAndParseObj() {
       try {
-        if (cleanUrl.endsWith(".wrl")) {
-          return await loadVrml(cleanUrl)
+        if (modelUrl.endsWith(".wrl")) {
+          return await loadVrml(modelUrl)
         }
 
-        const response = await fetch(cleanUrl)
+        const response = await fetch(modelUrl)
         if (!response.ok) {
           throw new Error(
-            `Failed to fetch "${cleanUrl}": ${response.status} ${response.statusText}`,
+            `Failed to fetch "${modelUrl}": ${response.status} ${response.statusText}`,
           )
         }
         const text = await response.text()
@@ -79,16 +84,15 @@ export function useGlobalObjLoader(
     }
 
     function loadUrl() {
-      if (cache.has(cleanUrl)) {
-        const cacheItem = cache.get(cleanUrl)!
+      if (cache.has(cacheKey)) {
+        const cacheItem = cache.get(cacheKey)!
         if (cacheItem.result) {
-          // If we have a result, clone it
-          return Promise.resolve(cacheItem.result.clone())
+          return Promise.resolve(cloneObjModelForScene(cacheItem.result))
         }
         // If we're still loading, return the existing promise
         return cacheItem.promise.then((result) => {
           if (result instanceof Error) return result
-          return result.clone()
+          return cloneObjModelForScene(result)
         })
       }
       // If it's not in the cache, create a new promise and cache it
@@ -97,11 +101,14 @@ export function useGlobalObjLoader(
           // If the result is an Error, return it
           return result
         }
-        cache.set(cleanUrl, { ...cache.get(cleanUrl)!, result })
+        cache.set(cacheKey, { ...cache.get(cacheKey)!, result })
         return result
       })
-      cache.set(cleanUrl, { promise, result: null })
-      return promise
+      cache.set(cacheKey, { promise, result: null })
+      return promise.then((result) => {
+        if (result instanceof Error) return result
+        return cloneObjModelForScene(result)
+      })
     }
 
     loadUrl()
