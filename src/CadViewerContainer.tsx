@@ -65,7 +65,7 @@ export const CadViewerContainer = forwardRef<
 
     const { mainCameraRef, handleControlsChange, controller } =
       useCameraController()
-    const { shadowsEnabled } = useRenderingMode()
+    const { renderingMode, shadowsEnabled } = useRenderingMode()
     const {
       handleCameraCreated,
       handleControlsChange: handleSessionControlsChange,
@@ -126,14 +126,17 @@ export const CadViewerContainer = forwardRef<
             boardDimensions={boardDimensions}
             boardCenter={boardCenter}
             shadowsEnabled={shadowsEnabled}
+            renderingMode={renderingMode}
           />
-          <Grid
-            rotation={[Math.PI / 2, 0, 0]}
-            infiniteGrid={true}
-            cellSize={3}
-            sectionSize={gridSectionSize}
-            args={[gridSectionSize, gridSectionSize]}
-          />
+          {renderingMode !== "realistic" && (
+            <Grid
+              rotation={[Math.PI / 2, 0, 0]}
+              infiniteGrid={true}
+              cellSize={3}
+              sectionSize={gridSectionSize}
+              args={[gridSectionSize, gridSectionSize]}
+            />
+          )}
           {children}
         </Canvas>
         <div

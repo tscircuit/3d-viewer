@@ -6,8 +6,8 @@ import { calculateOutlineBounds } from "../utils/outline-bounds"
 import { createPadTextureForLayer } from "../utils/pad-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
-import { createCopperTextTextureForLayer } from "./create-copper-text-texture-for-layer"
 import { createCopperPourTextureForLayer } from "./create-copper-pour-texture-for-layer"
+import { createCopperTextTextureForLayer } from "./create-copper-text-texture-for-layer"
 import { createFabricationNoteTextureForLayer } from "./create-fabrication-note-texture-for-layer"
 import { createKeepoutTextureForLayer } from "./create-keepout-texture-for-layer"
 import { createPcbNoteTextureForLayer } from "./create-pcb-note-texture-for-layer"
@@ -18,6 +18,9 @@ import { createThroughHoleTextureForLayer } from "./create-through-hole-texture-
 export interface CombinedBoardTextures {
   topBoard?: THREE.CanvasTexture | null
   bottomBoard?: THREE.CanvasTexture | null
+  /** Geometry-only alpha masks used for relief, never as color maps. */
+  topMaskedCopper?: THREE.CanvasTexture | null
+  bottomMaskedCopper?: THREE.CanvasTexture | null
 }
 
 const toRgb = (colorArr: number[]) => {
@@ -120,11 +123,11 @@ const createCombinedTexture = ({
   const ctx = canvas.getContext("2d")
   if (!ctx) return null
 
-  textures.forEach((texture) => {
-    if (!texture?.image) return
+  for (const texture of textures) {
+    if (!texture?.image) continue
     const image = texture.image as HTMLCanvasElement
     ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight)
-  })
+  }
 
   applySoldermaskSurfaceFilter(ctx, canvasWidth, canvasHeight, {
     includeReflection: layer === "top",
@@ -138,6 +141,44 @@ const createCombinedTexture = ({
   combinedTexture.anisotropy = 16
   combinedTexture.needsUpdate = true
   return combinedTexture
+}
+
+const createMaskedCopperMask = ({
+  textures,
+  boardData,
+  traceTextureResolution,
+}: {
+  textures: Array<THREE.CanvasTexture | null | undefined>
+  boardData: PcbBoard
+  traceTextureResolution: number
+}): THREE.CanvasTexture | null => {
+  if (!textures.some((texture) => texture?.image)) return null
+
+  const bounds = calculateOutlineBounds(boardData)
+  const width = Math.floor(bounds.width * traceTextureResolution)
+  const height = Math.floor(bounds.height * traceTextureResolution)
+  if (width <= 0 || height <= 0) return null
+
+  const canvas = document.createElement("canvas")
+  canvas.width = width
+  // Match the board color texture dimensions; this avoids UV resampling.
+  canvas.height = height + 1
+  const ctx = canvas.getContext("2d")
+  if (!ctx) return null
+
+  for (const texture of textures) {
+    if (!texture?.image) continue
+    ctx.drawImage(texture.image as HTMLCanvasElement, 0, 0, width, height)
+  }
+
+  const maskTexture = new THREE.CanvasTexture(canvas)
+  maskTexture.colorSpace = THREE.NoColorSpace
+  maskTexture.generateMipmaps = false
+  maskTexture.minFilter = THREE.LinearFilter
+  maskTexture.magFilter = THREE.LinearFilter
+  maskTexture.premultiplyAlpha = false
+  maskTexture.needsUpdate = true
+  return maskTexture
 }
 
 export function createCombinedBoardTextures({
@@ -197,6 +238,18 @@ export function createCombinedBoardTextures({
           copperColor,
         })
       : null
+
+    const maskedCopperPourTexture =
+      showMask && showCopper
+        ? createCopperPourTextureForLayer({
+            layer,
+            circuitJson,
+            boardData,
+            traceTextureResolution,
+            copperColor,
+            onlyCoveredBySoldermask: true,
+          })
+        : null
 
     const copperTextTexture = showCopper
       ? createCopperTextTextureForLayer({
@@ -274,7 +327,7 @@ export function createCombinedBoardTextures({
         })
       : null
 
-    return createCombinedTexture({
+    const boardTexture = createCombinedTexture({
       textures: [
         copperPourTexture,
         traceTexture,
@@ -292,12 +345,27 @@ export function createCombinedBoardTextures({
       traceTextureResolution,
       layer,
     })
+    const maskedCopperTexture =
+      showMask && showCopper
+        ? createMaskedCopperMask({
+            textures: [traceTexture, maskedCopperPourTexture],
+            boardData,
+            traceTextureResolution,
+          })
+        : null
+
+    return { boardTexture, maskedCopperTexture }
   }
 
   const numLayers = boardData.num_layers ?? 2
 
+  const top = buildForLayer("top")
+  const bottom = numLayers < 2 ? null : buildForLayer("bottom")
+
   return {
-    topBoard: buildForLayer("top"),
-    bottomBoard: numLayers < 2 ? null : buildForLayer("bottom"),
+    topBoard: top.boardTexture,
+    bottomBoard: bottom?.boardTexture ?? null,
+    topMaskedCopper: top.maskedCopperTexture,
+    bottomMaskedCopper: bottom?.maskedCopperTexture ?? null,
   }
 }

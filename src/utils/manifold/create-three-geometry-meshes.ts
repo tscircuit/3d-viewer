@@ -1,10 +1,12 @@
 import * as THREE from "three"
+import type { RenderingMode } from "../../contexts/RenderingModeContext"
 import type { ManifoldGeoms } from "../../hooks/useManifoldBoardBuilder"
 import { configureObjectShadows } from "../configure-object-shadows"
 import { createBoardMaterial } from "../create-board-material"
 
 export function createGeometryMeshes(
   geoms: ManifoldGeoms | null,
+  renderingMode: RenderingMode = "engineering",
 ): THREE.Mesh[] {
   const meshes: THREE.Mesh[] = []
   if (!geoms) return meshes
@@ -17,6 +19,7 @@ export function createGeometryMeshes(
         color: geoms.board.color,
         side: THREE.DoubleSide,
         isFaux: geoms.board.isFaux,
+        renderingMode,
       }),
     )
     mesh.name = "board-geom"
