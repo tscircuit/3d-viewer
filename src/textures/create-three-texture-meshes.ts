@@ -71,8 +71,11 @@ function createTexturePlane(
             surfaceMaterial.normalScale,
           ),
           roughnessMap: reliefTextures?.roughnessMap ?? null,
-          roughness: surfaceMaterial.roughness,
-          metalness: 0.03,
+          // The relief maps carry the material values per pixel: matte solder
+          // mask and ENIG-finished exposed copper need different responses.
+          roughness: 1,
+          metalnessMap: reliefTextures?.metalnessMap ?? null,
+          metalness: 1,
           clearcoat: surfaceMaterial.clearcoat,
           clearcoatRoughness: surfaceMaterial.clearcoatRoughness,
           envMapIntensity: 0.85,

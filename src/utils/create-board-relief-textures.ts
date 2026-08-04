@@ -12,6 +12,7 @@ type BoardSurfaceProfile = {
   height: number
   microSurfaceWeight: number
   roughness: number
+  metalness: number
   isExposedCopper: boolean
 }
 
@@ -85,7 +86,8 @@ const getBoardSurfaceProfile = (
     return {
       height: EXPOSED_COPPER_HEIGHT,
       microSurfaceWeight: 0.9,
-      roughness: 0.32,
+      roughness: PAD_COPPER_TEXTURE_MATERIAL.roughness,
+      metalness: PAD_COPPER_TEXTURE_MATERIAL.metalness,
       isExposedCopper: true,
     }
   }
@@ -96,6 +98,7 @@ const getBoardSurfaceProfile = (
       height: PLAIN_SOLDERMASK_HEIGHT,
       microSurfaceWeight: 0.45,
       roughness: 0.68,
+      metalness: 0,
       isExposedCopper: false,
     }
   }
@@ -108,6 +111,7 @@ const getBoardSurfaceProfile = (
       height: PLAIN_SOLDERMASK_HEIGHT,
       microSurfaceWeight: 0.8,
       roughness: 0.58,
+      metalness: 0,
       isExposedCopper: false,
     }
   }
@@ -118,12 +122,14 @@ const getBoardSurfaceProfile = (
         height: MASKED_COPPER_HEIGHT,
         microSurfaceWeight: 0.65,
         roughness: 0.54,
+        metalness: 0,
         isExposedCopper: false,
       }
     : {
         height: PLAIN_SOLDERMASK_HEIGHT,
         microSurfaceWeight: 1,
         roughness: 0.62,
+        metalness: 0,
         isExposedCopper: false,
       }
 }
@@ -148,6 +154,7 @@ export const createBoardReliefTextures = (
   bumpMap: THREE.CanvasTexture
   normalMap: THREE.CanvasTexture
   roughnessMap: THREE.CanvasTexture
+  metalnessMap: THREE.CanvasTexture
 } | null => {
   const surfaceMaterial = REALISTIC_BOARD_SURFACE_MATERIAL
   const padCopperMaterial = PAD_COPPER_TEXTURE_MATERIAL
@@ -166,15 +173,24 @@ export const createBoardReliefTextures = (
   const data = imageData.data
   const heights = new Float32Array(sourceCanvas.width * sourceCanvas.height)
   const roughnessCanvas = document.createElement("canvas")
+  const metalnessCanvas = document.createElement("canvas")
   roughnessCanvas.width = sourceCanvas.width
   roughnessCanvas.height = sourceCanvas.height
+  metalnessCanvas.width = sourceCanvas.width
+  metalnessCanvas.height = sourceCanvas.height
   const roughnessCtx = roughnessCanvas.getContext("2d")
-  if (!roughnessCtx) return null
+  const metalnessCtx = metalnessCanvas.getContext("2d")
+  if (!roughnessCtx || !metalnessCtx) return null
   const roughnessImageData = roughnessCtx.createImageData(
     sourceCanvas.width,
     sourceCanvas.height,
   )
   const roughnessData = roughnessImageData.data
+  const metalnessImageData = metalnessCtx.createImageData(
+    sourceCanvas.width,
+    sourceCanvas.height,
+  )
+  const metalnessData = metalnessImageData.data
 
   for (let i = 0; i < data.length; i += 4) {
     const pixelIndex = i / 4
@@ -193,6 +209,10 @@ export const createBoardReliefTextures = (
       roughnessData[i + 1] = 0
       roughnessData[i + 2] = 0
       roughnessData[i + 3] = 0
+      metalnessData[i] = 0
+      metalnessData[i + 1] = 0
+      metalnessData[i + 2] = 0
+      metalnessData[i + 3] = 0
       continue
     }
 
@@ -230,8 +250,15 @@ export const createBoardReliefTextures = (
     roughnessData[i + 1] = roughnessChannel
     roughnessData[i + 2] = roughnessChannel
     roughnessData[i + 3] = 255
+
+    const metalnessChannel = profile.metalness * 255
+    metalnessData[i] = metalnessChannel
+    metalnessData[i + 1] = metalnessChannel
+    metalnessData[i + 2] = metalnessChannel
+    metalnessData[i + 3] = 255
   }
   roughnessCtx.putImageData(roughnessImageData, 0, 0)
+  metalnessCtx.putImageData(metalnessImageData, 0, 0)
 
   const bumpCanvas = document.createElement("canvas")
   bumpCanvas.width = sourceCanvas.width
@@ -279,5 +306,6 @@ export const createBoardReliefTextures = (
     bumpMap: createHeightTexture(bumpCanvas),
     normalMap: createHeightTexture(normalCanvas),
     roughnessMap: createHeightTexture(roughnessCanvas),
+    metalnessMap: createHeightTexture(metalnessCanvas),
   }
 }

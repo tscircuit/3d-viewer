@@ -10,7 +10,8 @@ export const REALISTIC_BOARD_SURFACE_MATERIAL = {
 }
 
 export const PAD_COPPER_TEXTURE_MATERIAL = {
-  roughness: 0.24,
+  roughness: 0.42,
+  metalness: 0.5,
   roughnessVariance: 0.06,
   detailStrength: 0.02,
 }
