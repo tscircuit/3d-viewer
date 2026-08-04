@@ -1,5 +1,5 @@
 import type React from "react"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import * as THREE from "three"
 
 // Constants for camera initialization - defined once, reused across renders
@@ -13,29 +13,28 @@ const readStoredCameraType = (): "perspective" | "orthographic" | undefined => {
     ? stored
     : undefined
 }
-
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
-import { ContextMenu } from "./components/ContextMenu"
-import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
+import { useContextMenu } from "./hooks/useContextMenu"
+import { useCameraPreset } from "./hooks/useCameraPreset"
+import { useGlobalDownloadGltf } from "./hooks/useGlobalDownloadGltf"
 import {
-  CameraControllerProvider,
-  useCameraController,
-} from "./contexts/CameraControllerContext"
+  useRegisteredHotkey,
+  registerHotkeyViewer,
+} from "./hooks/useRegisteredHotkey"
 import {
   LayerVisibilityProvider,
   useLayerVisibility,
 } from "./contexts/LayerVisibilityContext"
-import { LightingProvider } from "./contexts/lighting-context"
-import { ToastProvider, useToast } from "./contexts/ToastContext"
-import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
-import { useCameraPreset } from "./hooks/useCameraPreset"
-import { useContextMenu } from "./hooks/useContextMenu"
-import { useGlobalDownloadGltf } from "./hooks/useGlobalDownloadGltf"
+import { RenderingModeProvider } from "./contexts/RenderingModeContext"
 import {
-  registerHotkeyViewer,
-  useRegisteredHotkey,
-} from "./hooks/useRegisteredHotkey"
+  CameraControllerProvider,
+  useCameraController,
+} from "./contexts/CameraControllerContext"
+import { ToastProvider, useToast } from "./contexts/ToastContext"
+import { ContextMenu } from "./components/ContextMenu"
+import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
+import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
 
 const CadViewerInner = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">(() => {
@@ -314,11 +313,11 @@ export const CadViewer = (props: any) => {
       initialCameraType={readStoredCameraType()}
     >
       <LayerVisibilityProvider>
-        <LightingProvider>
+        <RenderingModeProvider>
           <ToastProvider>
             <CadViewerInner {...props} />
           </ToastProvider>
-        </LightingProvider>
+        </RenderingModeProvider>
       </LayerVisibilityProvider>
     </CameraControllerProvider>
   )

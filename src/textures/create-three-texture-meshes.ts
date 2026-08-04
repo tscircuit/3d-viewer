@@ -1,9 +1,10 @@
 import type { PcbBoard } from "circuit-json"
 import * as THREE from "three"
 import { REALISTIC_BOARD_SURFACE_MATERIAL } from "../board-surface-textures"
+import type { RenderingMode } from "../contexts/RenderingModeContext"
 import { FAUX_BOARD_OPACITY } from "../geoms/constants"
-import { configureObjectShadows } from "../utils/configure-object-shadows"
 import { createBoardReliefTextures } from "../utils/create-board-relief-textures"
+import { configureObjectShadows } from "../utils/configure-object-shadows"
 import { createBoardShadowReceiverPlane } from "../utils/create-board-shadow-receiver-plane"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
 import type { CombinedBoardTextures } from "./index"
@@ -15,6 +16,7 @@ interface TexturePlaneConfig {
   usePolygonOffset?: boolean
   renderOrder?: number
   isFaux?: boolean
+  renderingMode?: RenderingMode
 }
 
 function createTexturePlane(
@@ -28,6 +30,7 @@ function createTexturePlane(
     usePolygonOffset = false,
     renderOrder = 0,
     isFaux = false,
+    renderingMode = "engineering",
   } = config
 
   if (!texture) return null
@@ -52,28 +55,32 @@ function createTexturePlane(
     opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
   } satisfies THREE.MeshBasicMaterialParameters
 
-  const reliefTextures = createBoardReliefTextures(texture)
+  const reliefTextures =
+    renderingMode === "realistic" ? createBoardReliefTextures(texture) : null
   const surfaceMaterial = REALISTIC_BOARD_SURFACE_MATERIAL
 
-  const material = new THREE.MeshPhysicalMaterial({
-    ...sharedMaterialOptions,
-    bumpMap: reliefTextures?.bumpMap ?? null,
-    bumpScale: surfaceMaterial.bumpScale,
-    normalMap: reliefTextures?.normalMap ?? null,
-    normalScale: new THREE.Vector2(
-      surfaceMaterial.normalScale,
-      surfaceMaterial.normalScale,
-    ),
-    roughnessMap: reliefTextures?.roughnessMap ?? null,
-    // The relief maps carry the material values per pixel: matte solder mask
-    // and ENIG-finished exposed copper need different responses.
-    roughness: 1,
-    metalnessMap: reliefTextures?.metalnessMap ?? null,
-    metalness: 1,
-    clearcoat: surfaceMaterial.clearcoat,
-    clearcoatRoughness: surfaceMaterial.clearcoatRoughness,
-    envMapIntensity: 0.85,
-  })
+  const material =
+    renderingMode === "realistic"
+      ? new THREE.MeshPhysicalMaterial({
+          ...sharedMaterialOptions,
+          bumpMap: reliefTextures?.bumpMap ?? null,
+          bumpScale: surfaceMaterial.bumpScale,
+          normalMap: reliefTextures?.normalMap ?? null,
+          normalScale: new THREE.Vector2(
+            surfaceMaterial.normalScale,
+            surfaceMaterial.normalScale,
+          ),
+          roughnessMap: reliefTextures?.roughnessMap ?? null,
+          // The relief maps carry the material values per pixel: matte solder
+          // mask and ENIG-finished exposed copper need different responses.
+          roughness: 1,
+          metalnessMap: reliefTextures?.metalnessMap ?? null,
+          metalness: 1,
+          clearcoat: surfaceMaterial.clearcoat,
+          clearcoatRoughness: surfaceMaterial.clearcoatRoughness,
+          envMapIntensity: 0.85,
+        })
+      : new THREE.MeshBasicMaterial(sharedMaterialOptions)
   const mesh = new THREE.Mesh(planeGeom, material)
   mesh.position.set(
     boardOutlineBounds.centerX,
@@ -96,6 +103,7 @@ export function createTextureMeshes(
   isFaux: boolean = false,
   options: {
     shadowsEnabled?: boolean
+    renderingMode?: RenderingMode
   } = {},
 ): THREE.Mesh[] {
   const meshes: THREE.Mesh[] = []
@@ -111,6 +119,7 @@ export function createTextureMeshes(
       usePolygonOffset: true,
       renderOrder: 1,
       isFaux,
+      renderingMode: options.renderingMode,
     },
     boardData,
   )
@@ -133,6 +142,7 @@ export function createTextureMeshes(
       usePolygonOffset: true,
       renderOrder: 1,
       isFaux,
+      renderingMode: options.renderingMode,
     },
     boardData,
   )

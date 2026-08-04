@@ -1,20 +1,19 @@
 import type * as React from "react"
 import { forwardRef, useEffect, useMemo, useState } from "react"
 import * as THREE from "three"
-import { zIndexMap } from "../lib/utils/z-index-map"
 import packageJson from "../package.json"
-import { useCameraController } from "./contexts/CameraControllerContext"
-import { useLighting } from "./contexts/lighting-context"
-import type { CameraController } from "./hooks/cameraAnimation"
-import { CameraAnimatorWithContext } from "./hooks/cameraAnimation"
-import { useCameraSession } from "./hooks/useCameraSession"
 import { Canvas } from "./react-three/Canvas"
-import { Grid } from "./react-three/Grid"
-import { Lights } from "./react-three/Lights"
 import { OrbitControls } from "./react-three/OrbitControls"
+import { Grid } from "./react-three/Grid"
 import { useFrame, useThree } from "./react-three/ThreeContext"
+import { Lights } from "./react-three/Lights"
+import { CameraAnimatorWithContext } from "./hooks/cameraAnimation"
+import { useCameraController } from "./contexts/CameraControllerContext"
+import { useRenderingMode } from "./contexts/RenderingModeContext"
+import { useCameraSession } from "./hooks/useCameraSession"
+import type { CameraController } from "./hooks/cameraAnimation"
 import { OrientationCubeCanvas } from "./three-components/OrientationCubeCanvas"
-
+import { zIndexMap } from "../lib/utils/z-index-map"
 export type {
   CameraController,
   CameraPreset,
@@ -66,7 +65,7 @@ export const CadViewerContainer = forwardRef<
 
     const { mainCameraRef, handleControlsChange, controller } =
       useCameraController()
-    const { shadowsEnabled } = useLighting()
+    const { shadowsEnabled } = useRenderingMode()
     const {
       handleCameraCreated,
       handleControlsChange: handleSessionControlsChange,

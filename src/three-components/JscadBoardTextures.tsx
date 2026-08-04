@@ -5,14 +5,14 @@ import { createCombinedBoardTextures } from "src/textures"
 import * as THREE from "three"
 import { REALISTIC_BOARD_SURFACE_MATERIAL } from "../board-surface-textures"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
-import { useLighting } from "../contexts/lighting-context"
+import { useRenderingMode } from "../contexts/RenderingModeContext"
 import {
   FAUX_BOARD_OPACITY,
   TRACE_TEXTURE_RESOLUTION,
 } from "../geoms/constants"
 import { useThree } from "../react-three/ThreeContext"
-import { configureObjectShadows } from "../utils/configure-object-shadows"
 import { createBoardReliefTextures } from "../utils/create-board-relief-textures"
+import { configureObjectShadows } from "../utils/configure-object-shadows"
 import { createBoardShadowReceiverPlane } from "../utils/create-board-shadow-receiver-plane"
 import { getLayerTextureResolution } from "../utils/layer-texture-resolution"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
@@ -30,7 +30,7 @@ export function JscadBoardTextures({
 }: JscadBoardTexturesProps) {
   const { rootObject } = useThree()
   const { visibility } = useLayerVisibility()
-  const { shadowsEnabled } = useLighting()
+  const { renderingMode, shadowsEnabled } = useRenderingMode()
 
   const boardData = useMemo(() => {
     // Check for panel first
@@ -140,27 +140,34 @@ export function JscadBoardTextures({
         polygonOffsetUnits: usePolygonOffset ? -4 : 0,
         opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
       } satisfies THREE.MeshBasicMaterialParameters
-      const reliefTextures = createBoardReliefTextures(texture)
+      const reliefTextures =
+        renderingMode === "realistic"
+          ? createBoardReliefTextures(texture)
+          : null
       const surfaceMaterial = REALISTIC_BOARD_SURFACE_MATERIAL
-      const material = new THREE.MeshPhysicalMaterial({
-        ...sharedMaterialOptions,
-        bumpMap: reliefTextures?.bumpMap ?? null,
-        bumpScale: surfaceMaterial.bumpScale,
-        normalMap: reliefTextures?.normalMap ?? null,
-        normalScale: new THREE.Vector2(
-          surfaceMaterial.normalScale,
-          surfaceMaterial.normalScale,
-        ),
-        roughnessMap: reliefTextures?.roughnessMap ?? null,
-        // The relief maps carry the material values per pixel: matte solder
-        // mask and ENIG-finished exposed copper need different responses.
-        roughness: 1,
-        metalnessMap: reliefTextures?.metalnessMap ?? null,
-        metalness: 1,
-        clearcoat: surfaceMaterial.clearcoat,
-        clearcoatRoughness: surfaceMaterial.clearcoatRoughness,
-        envMapIntensity: 0.85,
-      })
+      const material =
+        renderingMode === "realistic"
+          ? new THREE.MeshPhysicalMaterial({
+              ...sharedMaterialOptions,
+              bumpMap: reliefTextures?.bumpMap ?? null,
+              bumpScale: surfaceMaterial.bumpScale,
+              normalMap: reliefTextures?.normalMap ?? null,
+              normalScale: new THREE.Vector2(
+                surfaceMaterial.normalScale,
+                surfaceMaterial.normalScale,
+              ),
+              roughnessMap: reliefTextures?.roughnessMap ?? null,
+              // The relief maps carry the material values per pixel: matte
+              // solder mask and ENIG-finished exposed copper need different
+              // responses.
+              roughness: 1,
+              metalnessMap: reliefTextures?.metalnessMap ?? null,
+              metalness: 1,
+              clearcoat: surfaceMaterial.clearcoat,
+              clearcoatRoughness: surfaceMaterial.clearcoatRoughness,
+              envMapIntensity: 0.85,
+            })
+          : new THREE.MeshBasicMaterial(sharedMaterialOptions)
       const mesh = new THREE.Mesh(planeGeom, material)
       mesh.position.set(
         boardOutlineBounds.centerX,
@@ -234,9 +241,7 @@ export function JscadBoardTextures({
         }
         mesh.geometry.dispose()
         if (Array.isArray(mesh.material)) {
-          mesh.material.forEach((material) => {
-            disposeTextureMaterial(material)
-          })
+          mesh.material.forEach((material) => disposeTextureMaterial(material))
         } else if (mesh.material instanceof THREE.Material) {
           disposeTextureMaterial(mesh.material)
         }
@@ -245,7 +250,14 @@ export function JscadBoardTextures({
       textures.topBoard?.dispose()
       textures.bottomBoard?.dispose()
     }
-  }, [rootObject, boardData, textures, pcbThickness, shadowsEnabled])
+  }, [
+    rootObject,
+    boardData,
+    textures,
+    pcbThickness,
+    renderingMode,
+    shadowsEnabled,
+  ])
 
   return null
 }

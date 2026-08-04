@@ -7,7 +7,7 @@ import * as THREE from "three"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
-import { useLighting } from "./contexts/lighting-context"
+import { useRenderingMode } from "./contexts/RenderingModeContext"
 import type { CameraController } from "./hooks/cameraAnimation"
 import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
 import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
@@ -157,7 +157,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
     string | null
   >(null)
   const { visibility } = useLayerVisibility()
-  const { shadowsEnabled } = useLighting()
+  const { renderingMode, shadowsEnabled } = useRenderingMode()
 
   useEffect(() => {
     if (
@@ -251,8 +251,16 @@ try {
     () =>
       createTextureMeshes(textures, boardData, pcbThickness, isFauxBoard, {
         shadowsEnabled,
+        renderingMode,
       }),
-    [textures, boardData, pcbThickness, isFauxBoard, shadowsEnabled],
+    [
+      textures,
+      boardData,
+      pcbThickness,
+      isFauxBoard,
+      shadowsEnabled,
+      renderingMode,
+    ],
   )
 
   const cadComponents = useMemo(
