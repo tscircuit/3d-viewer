@@ -13,7 +13,7 @@ type LightsProps = {
 export const Lights: React.FC<LightsProps> = ({
   boardDimensions,
   boardCenter,
-  darkBackgroundEnabled = true,
+  darkBackgroundEnabled = false,
   shadowsEnabled = false,
 }) => {
   const { scene } = useThree()

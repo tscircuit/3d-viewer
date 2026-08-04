@@ -1,5 +1,4 @@
-import type React from "react"
-import { useState, useCallback, useRef, useEffect } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import * as THREE from "three"
 
 // Constants for camera initialization - defined once, reused across renders
@@ -13,28 +12,29 @@ const readStoredCameraType = (): "perspective" | "orthographic" | undefined => {
     ? stored
     : undefined
 }
+
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
-import { useContextMenu } from "./hooks/useContextMenu"
-import { useCameraPreset } from "./hooks/useCameraPreset"
-import { useGlobalDownloadGltf } from "./hooks/useGlobalDownloadGltf"
-import {
-  useRegisteredHotkey,
-  registerHotkeyViewer,
-} from "./hooks/useRegisteredHotkey"
-import {
-  LayerVisibilityProvider,
-  useLayerVisibility,
-} from "./contexts/LayerVisibilityContext"
-import { RenderingModeProvider } from "./contexts/RenderingModeContext"
+import { ContextMenu } from "./components/ContextMenu"
+import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
+import { AppearanceProvider } from "./contexts/appearance-context"
 import {
   CameraControllerProvider,
   useCameraController,
 } from "./contexts/CameraControllerContext"
+import {
+  LayerVisibilityProvider,
+  useLayerVisibility,
+} from "./contexts/LayerVisibilityContext"
 import { ToastProvider, useToast } from "./contexts/ToastContext"
-import { ContextMenu } from "./components/ContextMenu"
-import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
 import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
+import { useCameraPreset } from "./hooks/useCameraPreset"
+import { useContextMenu } from "./hooks/useContextMenu"
+import { useGlobalDownloadGltf } from "./hooks/useGlobalDownloadGltf"
+import {
+  registerHotkeyViewer,
+  useRegisteredHotkey,
+} from "./hooks/useRegisteredHotkey"
 
 const CadViewerInner = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">(() => {
@@ -46,14 +46,14 @@ const CadViewerInner = (props: any) => {
     useState(false)
   const [autoRotate, setAutoRotate] = useState(() => {
     const stored = window.localStorage.getItem("cadViewerAutoRotate")
-    return stored === "false" ? false : true
+    return stored !== "false"
   })
   const [autoRotateUserToggled, setAutoRotateUserToggled] = useState(() => {
     const stored = window.localStorage.getItem("cadViewerAutoRotateUserToggled")
     return stored === "true"
   })
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>("Custom")
-  const { cameraType, setCameraType } = useCameraController()
+  const { cameraType } = useCameraController()
   const { visibility, setLayerVisibility } = useLayerVisibility()
   const { showToast } = useToast()
 
@@ -313,11 +313,11 @@ export const CadViewer = (props: any) => {
       initialCameraType={readStoredCameraType()}
     >
       <LayerVisibilityProvider>
-        <RenderingModeProvider>
+        <AppearanceProvider>
           <ToastProvider>
             <CadViewerInner {...props} />
           </ToastProvider>
-        </RenderingModeProvider>
+        </AppearanceProvider>
       </LayerVisibilityProvider>
     </CameraControllerProvider>
   )

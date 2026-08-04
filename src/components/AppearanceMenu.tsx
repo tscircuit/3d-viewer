@@ -2,8 +2,8 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import type React from "react"
 import { useState } from "react"
 import { zIndexMap } from "../../lib/utils/z-index-map"
+import { useAppearance } from "../contexts/appearance-context"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
-import { useRenderingMode } from "../contexts/RenderingModeContext"
 import { CheckIcon, ChevronRightIcon } from "./Icons"
 
 const itemStyles: React.CSSProperties = {
@@ -67,7 +67,7 @@ export const AppearanceMenu = () => {
     setDarkBackgroundEnabled,
     lightingEnabled,
     setLightingEnabled,
-  } = useRenderingMode()
+  } = useAppearance()
   const [appearanceSubOpen, setAppearanceSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 

@@ -3,8 +3,8 @@ import { forwardRef, useEffect, useMemo, useState } from "react"
 import * as THREE from "three"
 import { zIndexMap } from "../lib/utils/z-index-map"
 import packageJson from "../package.json"
+import { useAppearance } from "./contexts/appearance-context"
 import { useCameraController } from "./contexts/CameraControllerContext"
-import { useRenderingMode } from "./contexts/RenderingModeContext"
 import type { CameraController } from "./hooks/cameraAnimation"
 import { CameraAnimatorWithContext } from "./hooks/cameraAnimation"
 import { useCameraSession } from "./hooks/useCameraSession"
@@ -65,7 +65,7 @@ export const CadViewerContainer = forwardRef<
 
     const { mainCameraRef, handleControlsChange, controller } =
       useCameraController()
-    const { darkBackgroundEnabled, shadowsEnabled } = useRenderingMode()
+    const { darkBackgroundEnabled, lightingEnabled } = useAppearance()
     const {
       handleCameraCreated,
       handleControlsChange: handleSessionControlsChange,
@@ -117,7 +117,7 @@ export const CadViewerContainer = forwardRef<
             boardDimensions={boardDimensions}
             boardCenter={boardCenter}
             darkBackgroundEnabled={darkBackgroundEnabled}
-            shadowsEnabled={shadowsEnabled}
+            shadowsEnabled={lightingEnabled}
           />
           {children}
         </Canvas>
