@@ -3,7 +3,10 @@ import type React from "react"
 import { useState } from "react"
 import { zIndexMap } from "../../lib/utils/z-index-map"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
-import { useRenderingMode } from "../contexts/RenderingModeContext"
+import {
+  type BackgroundMode,
+  useRenderingMode,
+} from "../contexts/RenderingModeContext"
 import { CheckIcon, ChevronRightIcon } from "./Icons"
 
 const itemStyles: React.CSSProperties = {
@@ -62,9 +65,21 @@ const iconContainerStyles: React.CSSProperties = {
 
 export const AppearanceMenu = () => {
   const { visibility, setLayerVisibility } = useLayerVisibility()
-  const { lightingEnabled, setLightingEnabled } = useRenderingMode()
+  const {
+    backgroundMode,
+    setBackgroundMode,
+    lightingEnabled,
+    setLightingEnabled,
+  } = useRenderingMode()
   const [appearanceSubOpen, setAppearanceSubOpen] = useState(false)
+  const [backgroundSubOpen, setBackgroundSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
+
+  const selectBackgroundMode = (mode: string) => {
+    if (mode === "dark" || mode === "light" || mode === "transparent") {
+      setBackgroundMode(mode as BackgroundMode)
+    }
+  }
 
   return (
     <>
@@ -105,6 +120,84 @@ export const AppearanceMenu = () => {
             collisionPadding={10}
             avoidCollisions={true}
           >
+            <DropdownMenu.Sub onOpenChange={setBackgroundSubOpen}>
+              <DropdownMenu.SubTrigger
+                style={{
+                  ...itemStyles,
+                  backgroundColor:
+                    backgroundSubOpen || hoveredItem === "background"
+                      ? "#404040"
+                      : "transparent",
+                }}
+                onMouseEnter={() => setHoveredItem("background")}
+                onMouseLeave={() => setHoveredItem(null)}
+                onTouchStart={() => setHoveredItem("background")}
+              >
+                <span
+                  style={{ flex: 1, display: "flex", alignItems: "center" }}
+                >
+                  Background
+                </span>
+                <div
+                  style={{
+                    marginLeft: "auto",
+                    display: "flex",
+                    alignItems: "flex-end",
+                    marginBottom: "-5px",
+                  }}
+                >
+                  <ChevronRightIcon isOpen={backgroundSubOpen} />
+                </div>
+              </DropdownMenu.SubTrigger>
+
+              <DropdownMenu.Portal>
+                <DropdownMenu.SubContent
+                  style={{ ...contentStyles, marginLeft: -2 }}
+                  collisionPadding={10}
+                  avoidCollisions={true}
+                >
+                  <DropdownMenu.RadioGroup
+                    value={backgroundMode}
+                    onValueChange={selectBackgroundMode}
+                  >
+                    {[
+                      ["dark", "Dark Studio"],
+                      ["light", "Light Studio"],
+                      ["transparent", "Transparent"],
+                    ].map(([mode, label]) => (
+                      <DropdownMenu.RadioItem
+                        key={mode}
+                        value={mode}
+                        style={{
+                          ...itemStyles,
+                          backgroundColor:
+                            hoveredItem === `background-${mode}`
+                              ? "#404040"
+                              : "transparent",
+                        }}
+                        onMouseEnter={() =>
+                          setHoveredItem(`background-${mode}`)
+                        }
+                        onMouseLeave={() => setHoveredItem(null)}
+                        onTouchStart={() =>
+                          setHoveredItem(`background-${mode}`)
+                        }
+                      >
+                        <span style={iconContainerStyles}>
+                          {backgroundMode === mode && <CheckIcon />}
+                        </span>
+                        <span style={{ display: "flex", alignItems: "center" }}>
+                          {label}
+                        </span>
+                      </DropdownMenu.RadioItem>
+                    ))}
+                  </DropdownMenu.RadioGroup>
+                </DropdownMenu.SubContent>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Sub>
+
+            <DropdownMenu.Separator style={separatorStyles} />
+
             <DropdownMenu.Item
               style={{
                 ...itemStyles,

@@ -1,15 +1,18 @@
 import type React from "react"
 import { useEffect, useMemo } from "react"
 import * as THREE from "three"
+import type { BackgroundMode } from "../contexts/RenderingModeContext"
 import { useThree } from "./ThreeContext"
 
 type LightsProps = {
+  backgroundMode?: BackgroundMode
   boardDimensions?: { width?: number; height?: number }
   boardCenter?: { x: number; y: number }
   shadowsEnabled?: boolean
 }
 
 export const Lights: React.FC<LightsProps> = ({
+  backgroundMode = "dark",
   boardDimensions,
   boardCenter,
   shadowsEnabled = false,
@@ -107,7 +110,10 @@ export const Lights: React.FC<LightsProps> = ({
   useEffect(() => {
     const previousBackground = scene.background
     const previousEnvironment = scene.environment
-    scene.background = new THREE.Color(0x101310)
+    scene.background =
+      backgroundMode === "transparent"
+        ? null
+        : new THREE.Color(backgroundMode === "dark" ? 0x101310 : 0xe8ece9)
     // The generic RoomEnvironment is very bright and makes a green solder
     // mask look white. The controlled key/fill/rim rig provides the tighter,
     // product-render highlights used for the board itself.
@@ -117,7 +123,7 @@ export const Lights: React.FC<LightsProps> = ({
       scene.background = previousBackground
       scene.environment = previousEnvironment
     }
-  }, [scene])
+  }, [backgroundMode, scene])
 
   useEffect(() => {
     if (!scene) return
