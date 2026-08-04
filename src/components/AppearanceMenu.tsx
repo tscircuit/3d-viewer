@@ -1,10 +1,10 @@
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
+import type React from "react"
 import { useState } from "react"
+import { zIndexMap } from "../../lib/utils/z-index-map"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import { useRenderingMode } from "../contexts/RenderingModeContext"
-import type React from "react"
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { CheckIcon, ChevronRightIcon } from "./Icons"
-import { zIndexMap } from "../../lib/utils/z-index-map"
 
 const itemStyles: React.CSSProperties = {
   padding: "6px 8px",
@@ -62,12 +62,7 @@ const iconContainerStyles: React.CSSProperties = {
 
 export const AppearanceMenu = () => {
   const { visibility, setLayerVisibility } = useLayerVisibility()
-  const {
-    renderingMode,
-    setRenderingMode,
-    lightingEnabled,
-    setLightingEnabled,
-  } = useRenderingMode()
+  const { lightingEnabled, setLightingEnabled } = useRenderingMode()
   const [appearanceSubOpen, setAppearanceSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
@@ -110,34 +105,6 @@ export const AppearanceMenu = () => {
             collisionPadding={10}
             avoidCollisions={true}
           >
-            <DropdownMenu.Item
-              style={{
-                ...itemStyles,
-                backgroundColor:
-                  hoveredItem === "presentation" ? "#404040" : "transparent",
-              }}
-              onSelect={(e) => e.preventDefault()}
-              onPointerDown={(e) => {
-                e.preventDefault()
-                if (renderingMode === "realistic") {
-                  setRenderingMode("engineering")
-                } else {
-                  setRenderingMode("realistic")
-                  setLightingEnabled(true)
-                }
-              }}
-              onMouseEnter={() => setHoveredItem("presentation")}
-              onMouseLeave={() => setHoveredItem(null)}
-              onTouchStart={() => setHoveredItem("presentation")}
-            >
-              <span style={iconContainerStyles}>
-                {renderingMode === "realistic" && <CheckIcon />}
-              </span>
-              <span style={{ display: "flex", alignItems: "center" }}>
-                Realistic Presentation Mode
-              </span>
-            </DropdownMenu.Item>
-
             <DropdownMenu.Item
               style={{
                 ...itemStyles,

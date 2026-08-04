@@ -1,19 +1,19 @@
 import type * as React from "react"
 import { forwardRef, useEffect, useMemo, useState } from "react"
 import * as THREE from "three"
+import { zIndexMap } from "../lib/utils/z-index-map"
 import packageJson from "../package.json"
-import { Canvas } from "./react-three/Canvas"
-import { OrbitControls } from "./react-three/OrbitControls"
-import { Grid } from "./react-three/Grid"
-import { useFrame, useThree } from "./react-three/ThreeContext"
-import { Lights } from "./react-three/Lights"
-import { CameraAnimatorWithContext } from "./hooks/cameraAnimation"
 import { useCameraController } from "./contexts/CameraControllerContext"
 import { useRenderingMode } from "./contexts/RenderingModeContext"
-import { useCameraSession } from "./hooks/useCameraSession"
 import type { CameraController } from "./hooks/cameraAnimation"
+import { CameraAnimatorWithContext } from "./hooks/cameraAnimation"
+import { useCameraSession } from "./hooks/useCameraSession"
+import { Canvas } from "./react-three/Canvas"
+import { Lights } from "./react-three/Lights"
+import { OrbitControls } from "./react-three/OrbitControls"
+import { useFrame, useThree } from "./react-three/ThreeContext"
 import { OrientationCubeCanvas } from "./three-components/OrientationCubeCanvas"
-import { zIndexMap } from "../lib/utils/z-index-map"
+
 export type {
   CameraController,
   CameraPreset,
@@ -65,7 +65,7 @@ export const CadViewerContainer = forwardRef<
 
     const { mainCameraRef, handleControlsChange, controller } =
       useCameraController()
-    const { renderingMode, shadowsEnabled } = useRenderingMode()
+    const { shadowsEnabled } = useRenderingMode()
     const {
       handleCameraCreated,
       handleControlsChange: handleSessionControlsChange,
@@ -76,15 +76,6 @@ export const CadViewerContainer = forwardRef<
         onCameraControllerReady(controller)
       }
     }, [controller, onCameraControllerReady])
-
-    const gridSectionSize = useMemo(() => {
-      if (!boardDimensions) return 10
-      const width = boardDimensions.width ?? 0
-      const height = boardDimensions.height ?? 0
-      const largest = Math.max(width, height)
-      const desired = largest * 1.5
-      return desired > 10 ? desired : 10
-    }, [boardDimensions])
 
     const orbitTarget = useMemo(() => {
       if (!boardCenter) return undefined
@@ -126,17 +117,7 @@ export const CadViewerContainer = forwardRef<
             boardDimensions={boardDimensions}
             boardCenter={boardCenter}
             shadowsEnabled={shadowsEnabled}
-            renderingMode={renderingMode}
           />
-          {renderingMode !== "realistic" && (
-            <Grid
-              rotation={[Math.PI / 2, 0, 0]}
-              infiniteGrid={true}
-              cellSize={3}
-              sectionSize={gridSectionSize}
-              args={[gridSectionSize, gridSectionSize]}
-            />
-          )}
           {children}
         </Canvas>
         <div

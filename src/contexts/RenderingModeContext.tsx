@@ -1,32 +1,13 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react"
-
-export type RenderingMode = "engineering" | "realistic"
+import type React from "react"
+import { createContext, useContext, useEffect, useMemo, useState } from "react"
 
 interface RenderingModeContextType {
-  renderingMode: RenderingMode
-  setRenderingMode: (mode: RenderingMode) => void
   lightingEnabled: boolean
   setLightingEnabled: (enabled: boolean) => void
   shadowsEnabled: boolean
 }
 
-const STORAGE_KEY = "cadViewerRenderingMode"
 const LIGHTING_STORAGE_KEY = "cadViewerLightingEnabled"
-
-const readStoredRenderingMode = (): RenderingMode => {
-  if (typeof window === "undefined") return "engineering"
-  const stored = window.localStorage.getItem(STORAGE_KEY)
-  return stored === "realistic" || stored === "engineering"
-    ? stored
-    : "engineering"
-}
 
 const readStoredLightingEnabled = (): boolean => {
   if (typeof window === "undefined") return true
@@ -40,20 +21,9 @@ const RenderingModeContext = createContext<
 export const RenderingModeProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
-  const [renderingMode, setRenderingModeState] = useState<RenderingMode>(
-    readStoredRenderingMode,
-  )
   const [lightingEnabled, setLightingEnabled] = useState<boolean>(
     readStoredLightingEnabled,
   )
-
-  const setRenderingMode = useCallback((mode: RenderingMode) => {
-    setRenderingModeState(mode)
-  }, [])
-
-  useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, renderingMode)
-  }, [renderingMode])
 
   useEffect(() => {
     window.localStorage.setItem(
@@ -64,13 +34,11 @@ export const RenderingModeProvider: React.FC<{
 
   const value = useMemo(
     () => ({
-      renderingMode,
-      setRenderingMode,
       lightingEnabled,
       setLightingEnabled,
-      shadowsEnabled: lightingEnabled && renderingMode === "realistic",
+      shadowsEnabled: lightingEnabled,
     }),
-    [lightingEnabled, renderingMode, setRenderingMode],
+    [lightingEnabled],
   )
 
   return (

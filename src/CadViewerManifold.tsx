@@ -7,7 +7,6 @@ import * as THREE from "three"
 import { AnyCadComponent } from "./AnyCadComponent"
 import { CadViewerContainer } from "./CadViewerContainer"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
-import { useRenderingMode } from "./contexts/RenderingModeContext"
 import type { CameraController } from "./hooks/cameraAnimation"
 import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
 import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
@@ -77,7 +76,7 @@ export const BoardMeshes = ({
   useEffect(() => {
     if (!rootObject) return
 
-    geometryMeshes.forEach((mesh) => {
+    for (const mesh of geometryMeshes) {
       let shouldShow = true
       if (mesh.name === "board-geom") {
         shouldShow = visibility.boardBody
@@ -91,32 +90,32 @@ export const BoardMeshes = ({
       if (shouldShow) {
         rootObject.add(mesh)
       }
-    })
+    }
 
     return () => {
-      geometryMeshes.forEach((mesh) => {
+      for (const mesh of geometryMeshes) {
         if (mesh.parent === rootObject) {
           rootObject.remove(mesh)
         }
         disposeMesh(mesh)
-      })
+      }
     }
   }, [rootObject, geometryMeshes, visibility])
 
   useEffect(() => {
     if (!rootObject) return
 
-    textureMeshes.forEach((mesh) => {
+    for (const mesh of textureMeshes) {
       rootObject.add(mesh)
-    })
+    }
 
     return () => {
-      textureMeshes.forEach((mesh) => {
+      for (const mesh of textureMeshes) {
         if (mesh.parent === rootObject) {
           rootObject.remove(mesh)
         }
         disposeMesh(mesh)
-      })
+      }
     }
   }, [rootObject, textureMeshes])
 
@@ -157,7 +156,6 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
     string | null
   >(null)
   const { visibility } = useLayerVisibility()
-  const { renderingMode, shadowsEnabled } = useRenderingMode()
 
   useEffect(() => {
     if (
@@ -246,24 +244,10 @@ try {
     isFauxBoard,
   } = useManifoldBoardBuilder(manifoldJSModule, circuitJson, visibility)
 
-  const geometryMeshes = useMemo(
-    () => createGeometryMeshes(geoms, renderingMode),
-    [geoms, renderingMode],
-  )
+  const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
   const textureMeshes = useMemo(
-    () =>
-      createTextureMeshes(textures, boardData, pcbThickness, isFauxBoard, {
-        shadowsEnabled,
-        renderingMode,
-      }),
-    [
-      textures,
-      boardData,
-      pcbThickness,
-      isFauxBoard,
-      renderingMode,
-      shadowsEnabled,
-    ],
+    () => createTextureMeshes(textures, boardData, pcbThickness, isFauxBoard),
+    [textures, boardData, pcbThickness, isFauxBoard],
   )
 
   const cadComponents = useMemo(
