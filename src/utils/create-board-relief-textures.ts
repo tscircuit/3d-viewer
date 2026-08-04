@@ -5,7 +5,6 @@ import {
 } from "../board-surface-textures"
 
 const PLAIN_SOLDERMASK_HEIGHT = 0.22
-const MASKED_COPPER_HEIGHT = 0.58
 const EXPOSED_COPPER_HEIGHT = 0.86
 
 type BoardSurfaceProfile = {
@@ -116,22 +115,15 @@ const getBoardSurfaceProfile = (
     }
   }
 
-  const isCopperUnderSoldermask = r > b * 0.62 || g > 34
-  return isCopperUnderSoldermask
-    ? {
-        height: MASKED_COPPER_HEIGHT,
-        microSurfaceWeight: 0.65,
-        roughness: 0.54,
-        metalness: 0,
-        isExposedCopper: false,
-      }
-    : {
-        height: PLAIN_SOLDERMASK_HEIGHT,
-        microSurfaceWeight: 1,
-        roughness: 0.62,
-        metalness: 0,
-        isExposedCopper: false,
-      }
+  // Copper covered by solder mask has the same physical finish as the rest
+  // of the board. Its distinct color is enough to show the routing below.
+  return {
+    height: PLAIN_SOLDERMASK_HEIGHT,
+    microSurfaceWeight: 1,
+    roughness: 0.62,
+    metalness: 0,
+    isExposedCopper: false,
+  }
 }
 
 const createHeightTexture = (

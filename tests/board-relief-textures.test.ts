@@ -71,3 +71,36 @@ test("ENIG pixels use the configured copper roughness and metalness", () => {
     Object.assign(globalThis, { document: previousDocument })
   }
 })
+
+test("masked traces share the solder-mask surface finish", () => {
+  const previousDocument = globalThis.document
+  Object.assign(globalThis, {
+    document: {
+      createElement: () => new TestCanvas(1, 1),
+    },
+  })
+
+  try {
+    const createRelief = (color: [number, number, number, number]) => {
+      const source = new TestCanvas(1, 1)
+      source.setPixel(color)
+      return createBoardReliefTextures(
+        new THREE.CanvasTexture(source as unknown as HTMLCanvasElement),
+      )!
+    }
+    const solderMask = createRelief([15, 79, 48, 255])
+    const copperUnderMask = createRelief([23, 97, 59, 255])
+
+    for (const map of ["bumpMap", "roughnessMap", "metalnessMap"] as const) {
+      const boardChannel = (
+        solderMask[map].image as unknown as TestCanvas
+      ).channel(0)
+      const traceChannel = (
+        copperUnderMask[map].image as unknown as TestCanvas
+      ).channel(0)
+      expect(traceChannel).toBe(boardChannel)
+    }
+  } finally {
+    Object.assign(globalThis, { document: previousDocument })
+  }
+})
