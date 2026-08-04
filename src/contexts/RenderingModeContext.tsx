@@ -1,23 +1,20 @@
 import type React from "react"
 import { createContext, useContext, useEffect, useMemo, useState } from "react"
 
-export type BackgroundMode = "dark" | "light" | "transparent"
-
 interface RenderingModeContextType {
-  backgroundMode: BackgroundMode
-  setBackgroundMode: (mode: BackgroundMode) => void
+  darkBackgroundEnabled: boolean
+  setDarkBackgroundEnabled: (enabled: boolean) => void
   lightingEnabled: boolean
   setLightingEnabled: (enabled: boolean) => void
   shadowsEnabled: boolean
 }
 
-const BACKGROUND_STORAGE_KEY = "cadViewerBackgroundMode"
+const DARK_BACKGROUND_STORAGE_KEY = "cadViewerDarkBackgroundEnabled"
 const LIGHTING_STORAGE_KEY = "cadViewerLightingEnabled"
 
-const readStoredBackgroundMode = (): BackgroundMode => {
-  if (typeof window === "undefined") return "dark"
-  const stored = window.localStorage.getItem(BACKGROUND_STORAGE_KEY)
-  return stored === "light" || stored === "transparent" ? stored : "dark"
+const readStoredDarkBackgroundEnabled = (): boolean => {
+  if (typeof window === "undefined") return true
+  return window.localStorage.getItem(DARK_BACKGROUND_STORAGE_KEY) !== "false"
 }
 
 const readStoredLightingEnabled = (): boolean => {
@@ -32,16 +29,19 @@ const RenderingModeContext = createContext<
 export const RenderingModeProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
-  const [backgroundMode, setBackgroundMode] = useState<BackgroundMode>(
-    readStoredBackgroundMode,
+  const [darkBackgroundEnabled, setDarkBackgroundEnabled] = useState<boolean>(
+    readStoredDarkBackgroundEnabled,
   )
   const [lightingEnabled, setLightingEnabled] = useState<boolean>(
     readStoredLightingEnabled,
   )
 
   useEffect(() => {
-    window.localStorage.setItem(BACKGROUND_STORAGE_KEY, backgroundMode)
-  }, [backgroundMode])
+    window.localStorage.setItem(
+      DARK_BACKGROUND_STORAGE_KEY,
+      darkBackgroundEnabled ? "true" : "false",
+    )
+  }, [darkBackgroundEnabled])
 
   useEffect(() => {
     window.localStorage.setItem(
@@ -52,13 +52,13 @@ export const RenderingModeProvider: React.FC<{
 
   const value = useMemo(
     () => ({
-      backgroundMode,
-      setBackgroundMode,
+      darkBackgroundEnabled,
+      setDarkBackgroundEnabled,
       lightingEnabled,
       setLightingEnabled,
       shadowsEnabled: lightingEnabled,
     }),
-    [backgroundMode, lightingEnabled],
+    [darkBackgroundEnabled, lightingEnabled],
   )
 
   return (

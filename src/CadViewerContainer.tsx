@@ -65,7 +65,7 @@ export const CadViewerContainer = forwardRef<
 
     const { mainCameraRef, handleControlsChange, controller } =
       useCameraController()
-    const { backgroundMode, shadowsEnabled } = useRenderingMode()
+    const { darkBackgroundEnabled, shadowsEnabled } = useRenderingMode()
     const {
       handleCameraCreated,
       handleControlsChange: handleSessionControlsChange,
@@ -114,9 +114,9 @@ export const CadViewerContainer = forwardRef<
             />
           )}
           <Lights
-            backgroundMode={backgroundMode}
             boardDimensions={boardDimensions}
             boardCenter={boardCenter}
+            darkBackgroundEnabled={darkBackgroundEnabled}
             shadowsEnabled={shadowsEnabled}
           />
           {children}
