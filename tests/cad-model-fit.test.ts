@@ -55,3 +55,33 @@ test("fit includes loader transform group rotation in measured bounds", () => {
   expect(scale[1]).toBeCloseTo(1.25)
   expect(scale[2]).toBeCloseTo(2.5)
 })
+
+test("a rotated ancestor does not shrink the model", () => {
+  // Mirrors the viewer's graph: the board group carries the component's
+  // rotation, and the fit measures the model subtree beneath it. A model whose
+  // declared size already matches its mesh must render 1:1 at every angle --
+  // the fit is meant to cancel the ancestor transform, not accumulate it.
+  const natural: [number, number, number] = [9.5, 6.05, 15]
+
+  for (const degrees of [0, 15, 30, 45, 90, 180]) {
+    const boardGroup = new THREE.Group()
+    const fitGroup = new THREE.Group()
+    const modelGroup = new THREE.Group()
+    boardGroup.add(fitGroup)
+    fitGroup.add(modelGroup)
+    modelGroup.add(new THREE.Mesh(new THREE.BoxGeometry(...natural)))
+
+    boardGroup.rotation.z = (degrees * Math.PI) / 180
+    fitGroup.updateWorldMatrix(true, true)
+
+    const scale = getCadModelFitScale(
+      modelGroup,
+      natural,
+      "contain_within_bounds",
+    )
+
+    expect(scale[0]).toBeCloseTo(1)
+    expect(scale[1]).toBeCloseTo(1)
+    expect(scale[2]).toBeCloseTo(1)
+  }
+})
