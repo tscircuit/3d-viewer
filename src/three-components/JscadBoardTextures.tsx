@@ -108,16 +108,25 @@ export function JscadBoardTextures({
       material.dispose()
     }
 
-    const createTexturePlane = (
-      texture: THREE.CanvasTexture | null | undefined,
-      maskedCopperMask: THREE.CanvasTexture | null | undefined,
-      zOffset: number,
-      isBottomLayer: boolean,
-      name: string,
+    const createTexturePlane = ({
+      texture,
+      maskedCopperMask,
+      zOffset,
+      isBottomLayer,
+      name,
       usePolygonOffset = false,
       depthWrite = true,
       renderOrder = 1,
-    ) => {
+    }: {
+      texture: THREE.CanvasTexture | null | undefined
+      maskedCopperMask: THREE.CanvasTexture | null | undefined
+      zOffset: number
+      isBottomLayer: boolean
+      name: string
+      usePolygonOffset?: boolean
+      depthWrite?: boolean
+      renderOrder?: number
+    }) => {
       if (!texture) return null
 
       // Use board outline bounds for plane geometry to match texture dimensions
@@ -178,27 +187,27 @@ export function JscadBoardTextures({
     // Small offset to place textures just above board surface (same as Manifold)
     const SURFACE_OFFSET = 0.005
 
-    const topBoardMesh = createTexturePlane(
-      textures.topBoard,
-      textures.topMaskedCopper,
-      pcbThickness / 2 + SURFACE_OFFSET,
-      false,
-      "jscad-top-board-texture",
-      true,
-    )
+    const topBoardMesh = createTexturePlane({
+      texture: textures.topBoard,
+      maskedCopperMask: textures.topMaskedCopper,
+      zOffset: pcbThickness / 2 + SURFACE_OFFSET,
+      isBottomLayer: false,
+      name: "jscad-top-board-texture",
+      usePolygonOffset: true,
+    })
     if (topBoardMesh) {
       meshes.push(topBoardMesh)
       rootObject.add(topBoardMesh)
     }
 
-    const bottomBoardMesh = createTexturePlane(
-      textures.bottomBoard,
-      textures.bottomMaskedCopper,
-      -pcbThickness / 2 - SURFACE_OFFSET,
-      true,
-      "jscad-bottom-board-texture",
-      true,
-    )
+    const bottomBoardMesh = createTexturePlane({
+      texture: textures.bottomBoard,
+      maskedCopperMask: textures.bottomMaskedCopper,
+      zOffset: -pcbThickness / 2 - SURFACE_OFFSET,
+      isBottomLayer: true,
+      name: "jscad-bottom-board-texture",
+      usePolygonOffset: true,
+    })
     if (bottomBoardMesh) {
       meshes.push(bottomBoardMesh)
       rootObject.add(bottomBoardMesh)
