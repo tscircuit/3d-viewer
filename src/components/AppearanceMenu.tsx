@@ -1,10 +1,10 @@
-import { useState } from "react"
-import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
-import { useRenderingMode } from "../contexts/RenderingModeContext"
-import type React from "react"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
-import { CheckIcon, ChevronRightIcon } from "./Icons"
+import type React from "react"
+import { useState } from "react"
 import { zIndexMap } from "../../lib/utils/z-index-map"
+import { useAppearance } from "../contexts/appearance-context"
+import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
+import { CheckIcon, ChevronRightIcon } from "./Icons"
 
 const itemStyles: React.CSSProperties = {
   padding: "6px 8px",
@@ -62,7 +62,12 @@ const iconContainerStyles: React.CSSProperties = {
 
 export const AppearanceMenu = () => {
   const { visibility, setLayerVisibility } = useLayerVisibility()
-  const { lightingEnabled, setLightingEnabled } = useRenderingMode()
+  const {
+    darkBackgroundEnabled,
+    setDarkBackgroundEnabled,
+    lightingEnabled,
+    setLightingEnabled,
+  } = useAppearance()
   const [appearanceSubOpen, setAppearanceSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
@@ -105,6 +110,29 @@ export const AppearanceMenu = () => {
             collisionPadding={10}
             avoidCollisions={true}
           >
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "darkBackground" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                setDarkBackgroundEnabled(!darkBackgroundEnabled)
+              }}
+              onMouseEnter={() => setHoveredItem("darkBackground")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("darkBackground")}
+            >
+              <span style={iconContainerStyles}>
+                {darkBackgroundEnabled && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Dark Background
+              </span>
+            </DropdownMenu.Item>
+
             <DropdownMenu.Item
               style={{
                 ...itemStyles,

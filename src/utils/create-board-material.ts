@@ -1,5 +1,5 @@
-import * as THREE from "three"
 import type { PcbBoard } from "circuit-json"
+import * as THREE from "three"
 import { FAUX_BOARD_OPACITY } from "../geoms/constants"
 
 type BoardMaterialType = PcbBoard["material"]
@@ -21,14 +21,17 @@ export const createBoardMaterial = ({
 }: CreateBoardMaterialOptions): THREE.MeshStandardMaterial => {
   if (material === "fr4") {
     return new THREE.MeshPhysicalMaterial({
-      color,
+      // A dark edge lets the green solder mask read as a finished PCB rather
+      // than a tan substrate with a decal placed on top.
+      color: 0x103a26,
       side,
       metalness: 0.0,
-      roughness: 0.8,
-      specularIntensity: 0.2,
+      roughness: 0.48,
+      specularIntensity: 0.3,
       ior: 1.45,
       sheen: 0.0,
-      clearcoat: 0.0,
+      clearcoat: 0.16,
+      clearcoatRoughness: 0.3,
       transparent: isFaux,
       opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
       flatShading: true,

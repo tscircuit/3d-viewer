@@ -35,12 +35,15 @@ export function createCopperPourTextureForLayer({
   boardData,
   traceTextureResolution = TRACE_TEXTURE_RESOLUTION,
   copperColor = toRgb(defaultColors.copper),
+  onlyCoveredBySoldermask = false,
 }: {
   layer: "top" | "bottom"
   circuitJson: AnyCircuitElement[]
   boardData: PcbBoard
   traceTextureResolution?: number
   copperColor?: string
+  /** Used only for the realistic relief mask; excludes exposed pours. */
+  onlyCoveredBySoldermask?: boolean
 }): THREE.CanvasTexture | null {
   const copperPours = circuitJson.filter(
     (e) => e.type === "pcb_copper_pour",
@@ -48,7 +51,11 @@ export function createCopperPourTextureForLayer({
   const pcbRenderLayer: PcbRenderLayer =
     layer === "top" ? "top_copper" : "bottom_copper"
 
-  const poursOnLayer = copperPours.filter((p) => p.layer === layer)
+  const poursOnLayer = copperPours.filter(
+    (pour) =>
+      pour.layer === layer &&
+      (!onlyCoveredBySoldermask || pour.covered_with_solder_mask !== false),
+  )
   if (poursOnLayer.length === 0) return null
   const holes = circuitJson.filter((e) => e.type === "pcb_hole") as PcbHole[]
   const platedHolesOnLayer = circuitJson.filter((e): e is PcbPlatedHole => {
@@ -153,7 +160,9 @@ export function createCopperPourTextureForLayer({
   )
 
   setColorAndDraw(coveredPours, coveredColor)
-  setColorAndDraw(uncoveredPours, uncoveredColor)
+  if (!onlyCoveredBySoldermask) {
+    setColorAndDraw(uncoveredPours, uncoveredColor)
+  }
 
   const texture = new THREE.CanvasTexture(canvas)
   texture.generateMipmaps = true

@@ -9,7 +9,7 @@ export function createGeometryMeshes(
   const meshes: THREE.Mesh[] = []
   if (!geoms) return meshes
 
-  if (geoms.board && geoms.board.geometry) {
+  if (geoms.board?.geometry) {
     const mesh = new THREE.Mesh(
       geoms.board.geometry,
       createBoardMaterial({
@@ -32,7 +32,7 @@ export function createGeometryMeshes(
     }>,
   ) => {
     if (geomArray) {
-      geomArray.forEach((comp) => {
+      for (const comp of geomArray) {
         const mesh = new THREE.Mesh(
           comp.geometry,
           new THREE.MeshStandardMaterial({
@@ -44,7 +44,7 @@ export function createGeometryMeshes(
         mesh.name = comp.key // Use provided key for identification
         configureObjectShadows(mesh)
         meshes.push(mesh)
-      })
+      }
     }
   }
 

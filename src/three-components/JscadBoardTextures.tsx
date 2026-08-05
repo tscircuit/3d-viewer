@@ -3,15 +3,15 @@ import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
 import { useEffect, useMemo } from "react"
 import { createCombinedBoardTextures } from "src/textures"
 import * as THREE from "three"
+import { REALISTIC_BOARD_SURFACE_MATERIAL } from "../board-surface-textures"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
-import { useRenderingMode } from "../contexts/RenderingModeContext"
 import {
   FAUX_BOARD_OPACITY,
   TRACE_TEXTURE_RESOLUTION,
 } from "../geoms/constants"
 import { useThree } from "../react-three/ThreeContext"
 import { configureObjectShadows } from "../utils/configure-object-shadows"
-import { createBoardShadowReceiverPlane } from "../utils/create-board-shadow-receiver-plane"
+import { createBoardReliefTextures } from "../utils/create-board-relief-textures"
 import { getLayerTextureResolution } from "../utils/layer-texture-resolution"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
 
@@ -28,7 +28,6 @@ export function JscadBoardTextures({
 }: JscadBoardTexturesProps) {
   const { rootObject } = useThree()
   const { visibility } = useLayerVisibility()
-  const { shadowsEnabled } = useRenderingMode()
 
   const boardData = useMemo(() => {
     // Check for panel first
@@ -68,7 +67,7 @@ export function JscadBoardTextures({
   }, [boardData])
 
   const textures = useMemo(() => {
-    if (!boardData || !boardData.width || !boardData.height) return null
+    if (!boardData?.width || !boardData.height) return null
     return createCombinedBoardTextures({
       circuitJson,
       boardData,
@@ -109,15 +108,25 @@ export function JscadBoardTextures({
       material.dispose()
     }
 
-    const createTexturePlane = (
-      texture: THREE.CanvasTexture | null | undefined,
-      zOffset: number,
-      isBottomLayer: boolean,
-      name: string,
+    const createTexturePlane = ({
+      texture,
+      maskedCopperMask,
+      zOffset,
+      isBottomLayer,
+      name,
       usePolygonOffset = false,
       depthWrite = true,
       renderOrder = 1,
-    ) => {
+    }: {
+      texture: THREE.CanvasTexture | null | undefined
+      maskedCopperMask: THREE.CanvasTexture | null | undefined
+      zOffset: number
+      isBottomLayer: boolean
+      name: string
+      usePolygonOffset?: boolean
+      depthWrite?: boolean
+      renderOrder?: number
+    }) => {
       if (!texture) return null
 
       // Use board outline bounds for plane geometry to match texture dimensions
@@ -126,7 +135,8 @@ export function JscadBoardTextures({
         boardOutlineBounds.width,
         boardOutlineBounds.height,
       )
-      const material = new THREE.MeshBasicMaterial({
+      texture.colorSpace = THREE.SRGBColorSpace
+      const sharedMaterialOptions = {
         map: texture,
         transparent: true,
         alphaTest: 0.08,
@@ -136,6 +146,27 @@ export function JscadBoardTextures({
         polygonOffsetFactor: usePolygonOffset ? -4 : 0,
         polygonOffsetUnits: usePolygonOffset ? -4 : 0,
         opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
+      } satisfies THREE.MeshBasicMaterialParameters
+      const reliefTextures = createBoardReliefTextures(
+        texture,
+        maskedCopperMask,
+      )
+      const material = new THREE.MeshPhysicalMaterial({
+        ...sharedMaterialOptions,
+        bumpMap: reliefTextures?.bumpMap ?? null,
+        bumpScale: REALISTIC_BOARD_SURFACE_MATERIAL.bumpScale,
+        normalMap: reliefTextures?.normalMap ?? null,
+        normalScale: new THREE.Vector2(
+          REALISTIC_BOARD_SURFACE_MATERIAL.normalScale,
+          REALISTIC_BOARD_SURFACE_MATERIAL.normalScale,
+        ),
+        roughnessMap: reliefTextures?.roughnessMap ?? null,
+        roughness: 1,
+        metalnessMap: reliefTextures?.metalnessMap ?? null,
+        metalness: 1,
+        clearcoat: REALISTIC_BOARD_SURFACE_MATERIAL.clearcoat,
+        clearcoatRoughness: REALISTIC_BOARD_SURFACE_MATERIAL.clearcoatRoughness,
+        envMapIntensity: 0.18,
       })
       const mesh = new THREE.Mesh(planeGeom, material)
       mesh.position.set(
@@ -155,71 +186,52 @@ export function JscadBoardTextures({
 
     // Small offset to place textures just above board surface (same as Manifold)
     const SURFACE_OFFSET = 0.005
-    const SHADOW_RECEIVER_OFFSET = SURFACE_OFFSET + 0.002
 
-    const topBoardMesh = createTexturePlane(
-      textures.topBoard,
-      pcbThickness / 2 + SURFACE_OFFSET,
-      false,
-      "jscad-top-board-texture",
-      true,
-    )
+    const topBoardMesh = createTexturePlane({
+      texture: textures.topBoard,
+      maskedCopperMask: textures.topMaskedCopper,
+      zOffset: pcbThickness / 2 + SURFACE_OFFSET,
+      isBottomLayer: false,
+      name: "jscad-top-board-texture",
+      usePolygonOffset: true,
+    })
     if (topBoardMesh) {
       meshes.push(topBoardMesh)
       rootObject.add(topBoardMesh)
     }
-    if (shadowsEnabled) {
-      const topShadowReceiver = createBoardShadowReceiverPlane({
-        boardData,
-        offset: pcbThickness / 2 + SHADOW_RECEIVER_OFFSET,
-        isBottomLayer: false,
-        name: "jscad-top-board-shadow-receiver",
-        frustumCulled: false,
-      })
-      meshes.push(topShadowReceiver)
-      rootObject.add(topShadowReceiver)
-    }
 
-    const bottomBoardMesh = createTexturePlane(
-      textures.bottomBoard,
-      -pcbThickness / 2 - SURFACE_OFFSET,
-      true,
-      "jscad-bottom-board-texture",
-      true,
-    )
+    const bottomBoardMesh = createTexturePlane({
+      texture: textures.bottomBoard,
+      maskedCopperMask: textures.bottomMaskedCopper,
+      zOffset: -pcbThickness / 2 - SURFACE_OFFSET,
+      isBottomLayer: true,
+      name: "jscad-bottom-board-texture",
+      usePolygonOffset: true,
+    })
     if (bottomBoardMesh) {
       meshes.push(bottomBoardMesh)
       rootObject.add(bottomBoardMesh)
     }
-    if (shadowsEnabled) {
-      const bottomShadowReceiver = createBoardShadowReceiverPlane({
-        boardData,
-        offset: -pcbThickness / 2 - SHADOW_RECEIVER_OFFSET,
-        isBottomLayer: true,
-        name: "jscad-bottom-board-shadow-receiver",
-        frustumCulled: false,
-      })
-      meshes.push(bottomShadowReceiver)
-      rootObject.add(bottomShadowReceiver)
-    }
 
     return () => {
-      meshes.forEach((mesh) => {
+      for (const mesh of meshes) {
         if (mesh.parent === rootObject) {
           rootObject.remove(mesh)
         }
         mesh.geometry.dispose()
         if (Array.isArray(mesh.material)) {
-          mesh.material.forEach((material) => disposeTextureMaterial(material))
+          for (const material of mesh.material) {
+            disposeTextureMaterial(material)
+          }
         } else if (mesh.material instanceof THREE.Material) {
           disposeTextureMaterial(mesh.material)
         }
-      })
+      }
 
       textures.topBoard?.dispose()
       textures.bottomBoard?.dispose()
     }
-  }, [rootObject, boardData, textures, pcbThickness, shadowsEnabled])
+  }, [rootObject, boardData, textures, pcbThickness])
 
   return null
 }

@@ -4,10 +4,12 @@ import type { PcbBoard } from "circuit-json"
 export const M = 0.01
 
 export const colors = {
-  copper: [0.9, 0.6, 0.2],
+  // Warm ENIG gold, rather than saturated orange, matches manufactured pads.
+  copper: [0.78, 0.63, 0.39],
   fr4Tan: [0.6, 0.43, 0.28],
-  fr4SolderMaskGreen: [0.015, 0.059, 0.027],
-  fr4TracesWithMaskGreen: [0.063, 0.141, 0.023],
+  // Deep, slightly blue-green solder mask keeps detail visible on dark UI.
+  fr4SolderMaskGreen: [0.06, 0.31, 0.19],
+  fr4TracesWithMaskGreen: [0.09, 0.38, 0.23],
   fr4TracesWithoutMaskTan: [0.6, 0.43, 0.28],
   fr1Tan: [0.8, 0.4, 0.2],
   fr1TracesWithMaskCopper: [0.9, 0.6, 0.2],
