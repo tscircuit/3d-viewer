@@ -2,6 +2,7 @@ import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import type {
   AnyCircuitElement,
   PcbBoard,
+  PcbPlatedHole,
   PcbRenderLayer,
   PcbVia,
 } from "circuit-json"
@@ -33,26 +34,44 @@ const toRgb = (colorArr: number[]) => {
   )})`
 }
 
-const eraseRasterizedVias = ({
+type RasterizedThroughHole = PcbVia | PcbPlatedHole
+
+export const getRasterizedThroughHolesForLayer = (
+  circuitJson: AnyCircuitElement[],
+  layer: "top" | "bottom",
+) =>
+  circuitJson.filter(
+    (element): element is RasterizedThroughHole =>
+      (element.type === "pcb_via" || element.type === "pcb_plated_hole") &&
+      (!Array.isArray(element.layers) || element.layers.includes(layer)),
+  )
+
+export const makeMaskPixelsOpaque = (pixels: Uint8ClampedArray) => {
+  for (let alphaIndex = 3; alphaIndex < pixels.length; alphaIndex += 4) {
+    if (pixels[alphaIndex] !== 0) pixels[alphaIndex] = 255
+  }
+}
+
+const eraseRasterizedThroughHoles = ({
   ctx,
   layer,
-  vias,
+  throughHoles,
   boardData,
   canvasWidth,
   canvasHeight,
 }: {
   ctx: CanvasRenderingContext2D
   layer: "top" | "bottom"
-  vias: PcbVia[]
+  throughHoles: RasterizedThroughHole[]
   boardData: PcbBoard
   canvasWidth: number
   canvasHeight: number
 }) => {
-  if (vias.length === 0) return
+  if (throughHoles.length === 0) return
 
-  // Draw the via disks into a temporary mask with the same transform used by
-  // the layer textures, then remove them from the combined bitmap. The sharp
-  // annular copper is supplied by the analytic preview mesh instead.
+  // Draw through-hole pads into a temporary mask with the same transform used
+  // by the layer textures, then remove them from the combined bitmap. Sharp
+  // copper is supplied by the analytic via mesh or plated-hole geometry.
   const maskCanvas = document.createElement("canvas")
   maskCanvas.width = canvasWidth
   maskCanvas.height = canvasHeight
@@ -90,7 +109,14 @@ const eraseRasterizedVias = ({
   })
   const renderLayer: PcbRenderLayer =
     layer === "top" ? "top_copper" : "bottom_copper"
-  drawer.drawElements(vias, { layers: [renderLayer] })
+  drawer.drawElements(throughHoles, { layers: [renderLayer] })
+
+  // destination-out multiplies partially transparent edge pixels instead of
+  // removing them. Make every covered mask pixel opaque so the raster pad
+  // cannot leave a blurred fringe behind the sharp preview geometry.
+  const maskImage = maskCtx.getImageData(0, 0, canvasWidth, canvasHeight)
+  makeMaskPixelsOpaque(maskImage.data)
+  maskCtx.putImageData(maskImage, 0, 0)
 
   ctx.save()
   ctx.globalCompositeOperation = "destination-out"
@@ -103,13 +129,13 @@ const createCombinedTexture = ({
   boardData,
   traceTextureResolution,
   layer,
-  vias,
+  throughHoles,
 }: {
   textures: Array<THREE.CanvasTexture | null | undefined>
   boardData: PcbBoard
   traceTextureResolution: number
   layer: "top" | "bottom"
-  vias: PcbVia[]
+  throughHoles: RasterizedThroughHole[]
 }): THREE.CanvasTexture | null => {
   const hasImage = textures.some((texture) => texture?.image)
   if (!hasImage) return null
@@ -135,10 +161,10 @@ const createCombinedTexture = ({
     ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight)
   })
 
-  eraseRasterizedVias({
+  eraseRasterizedThroughHoles({
     ctx,
     layer,
-    vias,
+    throughHoles,
     boardData,
     canvasWidth,
     canvasHeight,
@@ -185,11 +211,7 @@ export function createCombinedBoardTextures({
         ? visibility?.topSilkscreen
         : visibility?.bottomSilkscreen) ?? true
     const showKeepout = visibility?.keepout ?? true
-    const vias = circuitJson.filter(
-      (element): element is PcbVia =>
-        element.type === "pcb_via" &&
-        (!Array.isArray(element.layers) || element.layers.includes(layer)),
-    )
+    const throughHoles = getRasterizedThroughHolesForLayer(circuitJson, layer)
 
     const soldermaskTexture = showMask
       ? createSoldermaskTextureForLayer({
@@ -313,7 +335,7 @@ export function createCombinedBoardTextures({
       boardData,
       traceTextureResolution,
       layer,
-      vias,
+      throughHoles,
     })
   }
 
