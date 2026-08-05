@@ -22,9 +22,16 @@ function getObjectBoundsRelativeToParent(
       }
 
       if (node.geometry.boundingBox) {
+        // Compose into a single matrix before applying it. `Box3.applyMatrix4`
+        // re-derives an axis-aligned box around the transformed corners, so it
+        // is not invertible: transforming to world and back again would widen
+        // the box twice for any rotation that is not a multiple of 90 degrees,
+        // and the caller would then shrink the model to fit that phantom size.
+        const localMatrix = parentInverseMatrix
+          .clone()
+          .multiply(node.matrixWorld)
         const transformedBounds = node.geometry.boundingBox.clone()
-        transformedBounds.applyMatrix4(node.matrixWorld)
-        transformedBounds.applyMatrix4(parentInverseMatrix)
+        transformedBounds.applyMatrix4(localMatrix)
 
         if (!hasBounds) {
           bounds.copy(transformedBounds)
