@@ -1,4 +1,10 @@
-import type { AnyCircuitElement, PcbBoard } from "circuit-json"
+import { CircuitToCanvasDrawer } from "circuit-to-canvas"
+import type {
+  AnyCircuitElement,
+  PcbBoard,
+  PcbRenderLayer,
+  PcbVia,
+} from "circuit-json"
 import * as THREE from "three"
 import type { LayerVisibilityState } from "../contexts/LayerVisibilityContext"
 import { colors as defaultColors } from "../geoms/constants"
@@ -27,14 +33,83 @@ const toRgb = (colorArr: number[]) => {
   )})`
 }
 
+const eraseRasterizedVias = ({
+  ctx,
+  layer,
+  vias,
+  boardData,
+  canvasWidth,
+  canvasHeight,
+}: {
+  ctx: CanvasRenderingContext2D
+  layer: "top" | "bottom"
+  vias: PcbVia[]
+  boardData: PcbBoard
+  canvasWidth: number
+  canvasHeight: number
+}) => {
+  if (vias.length === 0) return
+
+  // Draw the via disks into a temporary mask with the same transform used by
+  // the layer textures, then remove them from the combined bitmap. The sharp
+  // annular copper is supplied by the analytic preview mesh instead.
+  const maskCanvas = document.createElement("canvas")
+  maskCanvas.width = canvasWidth
+  maskCanvas.height = canvasHeight
+  const maskCtx = maskCanvas.getContext("2d")
+  if (!maskCtx) return
+
+  if (layer === "bottom") {
+    maskCtx.translate(0, canvasHeight)
+    maskCtx.scale(1, -1)
+  }
+
+  const opaque = "rgb(255,255,255)"
+  const drawer = new CircuitToCanvasDrawer(maskCtx)
+  drawer.configure({
+    colorOverrides: {
+      copper: {
+        top: opaque,
+        bottom: opaque,
+        inner1: opaque,
+        inner2: opaque,
+        inner3: opaque,
+        inner4: opaque,
+        inner5: opaque,
+        inner6: opaque,
+      },
+      drill: opaque,
+    },
+  })
+  const bounds = calculateOutlineBounds(boardData)
+  drawer.setCameraBounds({
+    minX: bounds.minX,
+    maxX: bounds.maxX,
+    minY: bounds.minY,
+    maxY: bounds.maxY,
+  })
+  const renderLayer: PcbRenderLayer =
+    layer === "top" ? "top_copper" : "bottom_copper"
+  drawer.drawElements(vias, { layers: [renderLayer] })
+
+  ctx.save()
+  ctx.globalCompositeOperation = "destination-out"
+  ctx.drawImage(maskCanvas, 0, 0, canvasWidth, canvasHeight)
+  ctx.restore()
+}
+
 const createCombinedTexture = ({
   textures,
   boardData,
   traceTextureResolution,
+  layer,
+  vias,
 }: {
   textures: Array<THREE.CanvasTexture | null | undefined>
   boardData: PcbBoard
   traceTextureResolution: number
+  layer: "top" | "bottom"
+  vias: PcbVia[]
 }): THREE.CanvasTexture | null => {
   const hasImage = textures.some((texture) => texture?.image)
   if (!hasImage) return null
@@ -58,6 +133,15 @@ const createCombinedTexture = ({
     if (!texture?.image) return
     const image = texture.image as HTMLCanvasElement
     ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight)
+  })
+
+  eraseRasterizedVias({
+    ctx,
+    layer,
+    vias,
+    boardData,
+    canvasWidth,
+    canvasHeight,
   })
 
   const combinedTexture = new THREE.CanvasTexture(canvas)
@@ -101,6 +185,11 @@ export function createCombinedBoardTextures({
         ? visibility?.topSilkscreen
         : visibility?.bottomSilkscreen) ?? true
     const showKeepout = visibility?.keepout ?? true
+    const vias = circuitJson.filter(
+      (element): element is PcbVia =>
+        element.type === "pcb_via" &&
+        (!Array.isArray(element.layers) || element.layers.includes(layer)),
+    )
 
     const soldermaskTexture = showMask
       ? createSoldermaskTextureForLayer({
@@ -223,6 +312,8 @@ export function createCombinedBoardTextures({
       ],
       boardData,
       traceTextureResolution,
+      layer,
+      vias,
     })
   }
 

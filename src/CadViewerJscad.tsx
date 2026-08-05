@@ -14,6 +14,7 @@ import { Error3d } from "./three-components/Error3d"
 import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { JscadBoardTextures } from "./three-components/JscadBoardTextures"
+import { ViaPadMeshes } from "./three-components/ViaPadMeshes"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 
 interface Props {
@@ -148,6 +149,10 @@ export const CadViewerJscad = forwardRef<
           circuitJson={internalCircuitJson}
           pcbThickness={pcbThickness}
           isFaux={isFauxBoard}
+        />
+        <ViaPadMeshes
+          circuitJson={internalCircuitJson}
+          pcbThickness={pcbThickness}
         />
         {cad_components.map((cad_component) => (
           <ThreeErrorBoundary

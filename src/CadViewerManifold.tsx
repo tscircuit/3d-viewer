@@ -15,6 +15,7 @@ import { useThree } from "./react-three/ThreeContext"
 import { createTextureMeshes } from "./textures"
 import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
+import { ViaPadMeshes } from "./three-components/ViaPadMeshes"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 
@@ -333,6 +334,10 @@ try {
       <BoardMeshes
         geometryMeshes={geometryMeshes}
         textureMeshes={textureMeshes}
+      />
+      <ViaPadMeshes
+        circuitJson={circuitJson}
+        pcbThickness={pcbThickness ?? 0}
       />
       {cadComponents.map((cad_component: CadComponent) => (
         <ThreeErrorBoundary

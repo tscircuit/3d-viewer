@@ -49,7 +49,7 @@ export function createViaCopper({
     segments: SMOOTH_CIRCLE_SEGMENTS,
   })
 
-  // Keep only through-board barrel; top/bottom annular copper is rendered in texture
+  // Top/bottom annular copper is rendered by a GPU-instanced preview layer.
   const viaSolid = barrel
 
   // Create drill hole to subtract

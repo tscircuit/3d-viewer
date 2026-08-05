@@ -25,7 +25,7 @@ export function createViaCopper({
   // Central barrel connecting the pads
   const barrel = Manifold.cylinder(thickness, barrelRadius, -1, segments, true)
 
-  // Keep only through-board barrel; top/bottom annular copper is rendered in texture
+  // Top/bottom annular copper is rendered by a GPU-instanced preview layer.
   const viaSolid = barrel
 
   // Create the hole to drill through

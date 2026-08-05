@@ -2,6 +2,7 @@ import type * as React from "react"
 import type * as THREE from "three"
 import { GLTFExporter, type GLTFExporterOptions } from "three-stdlib"
 import { useEffect, useState, useMemo, useCallback } from "react"
+import { hidePreviewOnlyObjects } from "../../utils/hide-preview-only-objects"
 
 type Options = Omit<
   GLTFExporterOptions,
@@ -65,19 +66,29 @@ function useParser(options = {} as Options) {
   const exporter = useMemo(() => new GLTFExporter(), [])
   return (instance: THREE.Object3D) => {
     const { promise, resolve, reject } = Promise.withResolvers<string>()
-    exporter.parse(
-      instance,
-      (gltf) => {
-        const type = options.binary ? "gltf-binary" : "gltf+json"
-        const blob = new Blob(
-          [gltf instanceof ArrayBuffer ? gltf : JSON.stringify(gltf)],
-          { type: `model/${type}` },
-        )
-        resolve(URL.createObjectURL(blob))
-      },
-      reject,
-      options,
-    )
+    const restorePreviewObjects = hidePreviewOnlyObjects(instance)
+    try {
+      exporter.parse(
+        instance,
+        (gltf) => {
+          restorePreviewObjects()
+          const type = options.binary ? "gltf-binary" : "gltf+json"
+          const blob = new Blob(
+            [gltf instanceof ArrayBuffer ? gltf : JSON.stringify(gltf)],
+            { type: `model/${type}` },
+          )
+          resolve(URL.createObjectURL(blob))
+        },
+        (error) => {
+          restorePreviewObjects()
+          reject(error)
+        },
+        { ...options, onlyVisible: true },
+      )
+    } catch (error) {
+      restorePreviewObjects()
+      reject(error)
+    }
     return promise
   }
 }
