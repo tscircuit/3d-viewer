@@ -33,6 +33,18 @@ export const FootprinterModel = ({
     if (!footprint) return null
     const { geometries } = getJscadModelForFootprint(footprint, jscadModeling)
 
+    // jscad-electronics answers "I have no body for this" with an empty model
+    // rather than an error, and an empty group renders as nothing at all -- the
+    // component silently vanishes from the board with no way to tell it apart
+    // from a part that was never placed. Throwing puts it in front of the
+    // ThreeErrorBoundary the viewers already wrap every model in, which draws
+    // the red error cube and shows this message on hover.
+    if (geometries.flat(Infinity).length === 0) {
+      throw new Error(
+        `No 3D model for footprint "${footprint}" (jscad-electronics returned no geometry)`,
+      )
+    }
+
     const group = new THREE.Group()
 
     for (const geomInfo of geometries.flat(Infinity) as any[]) {
