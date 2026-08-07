@@ -37,11 +37,12 @@ export const REFERENCE_OBJECT_SPECS: Record<
   banana: {
     type: "banana",
     label: "Show Banana",
-    // Bananas vary; this represents a typical medium banana.
+    // USDA describes a medium banana as 7 to 7 7/8 inches long. The 190 mm
+    // envelope is near the midpoint of that range.
     width: 190,
-    height: 65,
-    depth: 30,
-    zCenter: 15,
+    height: 60,
+    depth: 34,
+    zCenter: 17,
   },
   "credit-card": {
     type: "credit-card",

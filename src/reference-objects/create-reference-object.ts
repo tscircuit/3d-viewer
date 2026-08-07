@@ -54,57 +54,97 @@ const createRoundedPrismGeometry = (
   depth: number,
   radius: number,
 ) => {
-  const geometry = new THREE.ExtrudeGeometry(
+  return createPrismGeometryFromShape(
     createRoundedRectangleShape(width, height, radius),
-    {
-      depth,
-      bevelEnabled: false,
-      curveSegments: 24,
-    },
+    depth,
   )
+}
+
+const createPrismGeometryFromShape = (shape: THREE.Shape, depth: number) => {
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth,
+    bevelEnabled: false,
+    curveSegments: 24,
+  })
   geometry.translate(0, 0, -depth / 2)
   geometry.computeVertexNormals()
   return geometry
 }
 
+const normalizeObjectToSpec = (
+  object: THREE.Object3D,
+  type: ReferenceObjectType,
+) => {
+  const spec = REFERENCE_OBJECT_SPECS[type]
+  object.updateMatrixWorld(true)
+  const initialBounds = new THREE.Box3().setFromObject(object)
+  const initialSize = initialBounds.getSize(new THREE.Vector3())
+  object.scale.set(
+    spec.width / initialSize.x,
+    spec.height / initialSize.y,
+    spec.depth / initialSize.z,
+  )
+  object.updateMatrixWorld(true)
+
+  const scaledBounds = new THREE.Box3().setFromObject(object)
+  const scaledCenter = scaledBounds.getCenter(new THREE.Vector3())
+  object.position.set(
+    -scaledCenter.x,
+    -scaledCenter.y,
+    spec.zCenter - scaledCenter.z,
+  )
+  object.updateMatrixWorld(true)
+}
+
 const createBananaGeometry = () => {
   const curve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-88, 9, 12),
-    new THREE.Vector3(-60, -1, 12),
-    new THREE.Vector3(-30, -7, 12),
-    new THREE.Vector3(0, -9, 12),
-    new THREE.Vector3(30, -7, 12),
-    new THREE.Vector3(60, -1, 12),
-    new THREE.Vector3(88, 9, 12),
+    new THREE.Vector3(-82, 18, 16),
+    new THREE.Vector3(-67, 7, 15),
+    new THREE.Vector3(-43, -9, 14),
+    new THREE.Vector3(-15, -18, 14),
+    new THREE.Vector3(16, -18, 14),
+    new THREE.Vector3(47, -8, 14.5),
+    new THREE.Vector3(72, 8, 16),
+    new THREE.Vector3(84, 19, 17),
   ])
-  const tubularSegments = 72
-  const radialSegments = 24
+  const tubularSegments = 84
+  const radialSegments = 30
   const frames = curve.computeFrenetFrames(tubularSegments, false)
   const positions: number[] = []
   const normals: number[] = []
+  const colors: number[] = []
   const uvs: number[] = []
   const indices: number[] = []
+  const ripeYellow = new THREE.Color(0xffd447)
+  const stemGreen = new THREE.Color(0xb7b335)
 
   for (let segment = 0; segment <= tubularSegments; segment++) {
     const t = segment / tubularSegments
     const point = curve.getPointAt(t)
     const normal = frames.normals[segment]!
     const binormal = frames.binormals[segment]!
-    const taper = Math.sin(Math.PI * t) ** 0.55
-    const radius = 3.2 + 8.5 * taper
+    const taper = Math.sin(Math.PI * t) ** 0.48
+    const radius = 3.4 + 12.4 * taper
+    const stemBlend = Math.max(0, (t - 0.82) / 0.18) * 0.38
+    const ringColor = ripeYellow.clone().lerp(stemGreen, stemBlend)
 
     for (let side = 0; side <= radialSegments; side++) {
       const angle = (side / radialSegments) * Math.PI * 2
       const sin = Math.sin(angle)
       const cos = Math.cos(angle)
+      const ridgeScale = 1 + Math.cos(angle * 5 + 0.35) * 0.035
       const radialNormal = new THREE.Vector3()
         .addScaledVector(normal, cos)
-        .addScaledVector(binormal, sin)
+        .addScaledVector(binormal, sin * 0.9)
         .normalize()
-      const vertex = point.clone().addScaledVector(radialNormal, radius)
+      const vertex = point
+        .clone()
+        .addScaledVector(normal, cos * radius * ridgeScale)
+        .addScaledVector(binormal, sin * radius * 0.9 * ridgeScale)
 
       positions.push(vertex.x, vertex.y, vertex.z)
       normals.push(radialNormal.x, radialNormal.y, radialNormal.z)
+      colors.push(ringColor.r, ringColor.g, ringColor.b)
       uvs.push(t, side / radialSegments)
     }
   }
@@ -127,6 +167,7 @@ const createBananaGeometry = () => {
     new THREE.Float32BufferAttribute(positions, 3),
   )
   geometry.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3))
+  geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3))
   geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2))
   geometry.computeBoundingBox()
   geometry.computeBoundingSphere()
@@ -136,34 +177,96 @@ const createBananaGeometry = () => {
 
 const createBanana = () => {
   const group = new THREE.Group()
+  const banana = new THREE.Group()
   const { geometry, curve } = createBananaGeometry()
   const peel = new THREE.Mesh(
     geometry,
     new THREE.MeshStandardMaterial({
-      color: 0xf4ce2f,
-      roughness: 0.76,
+      color: 0xffffff,
+      roughness: 0.72,
       metalness: 0,
+      vertexColors: true,
     }),
   )
   peel.name = "banana-peel"
-  group.add(peel)
+  banana.add(peel)
 
-  const tipMaterial = new THREE.MeshStandardMaterial({
-    color: 0x70501e,
-    roughness: 0.9,
-  })
-  for (const t of [0, 1]) {
-    const tip = new THREE.Mesh(
-      new THREE.SphereGeometry(3.7, 20, 12),
-      tipMaterial,
-    )
-    tip.position.copy(curve.getPointAt(t))
-    tip.scale.set(1.25, 0.8, 0.8)
-    tip.name = "banana-tip"
-    group.add(tip)
-  }
+  const blossomTip = new THREE.Mesh(
+    new THREE.SphereGeometry(3.4, 20, 12),
+    new THREE.MeshStandardMaterial({
+      color: 0x5f421c,
+      roughness: 0.92,
+    }),
+  )
+  blossomTip.position.copy(curve.getPointAt(0))
+  blossomTip.scale.set(1.15, 0.78, 0.78)
+  blossomTip.name = "banana-blossom-tip"
+  banana.add(blossomTip)
+
+  const stemLength = 11
+  const stemTangent = curve.getTangentAt(1).normalize()
+  const stem = new THREE.Mesh(
+    new THREE.CylinderGeometry(2.5, 4.1, stemLength, 18),
+    new THREE.MeshStandardMaterial({
+      color: 0x817329,
+      roughness: 0.82,
+    }),
+  )
+  stem.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), stemTangent)
+  stem.position
+    .copy(curve.getPointAt(1))
+    .addScaledVector(stemTangent, stemLength / 2)
+  stem.name = "banana-stem"
+  banana.add(stem)
+
+  const stemTip = new THREE.Mesh(
+    new THREE.SphereGeometry(2.55, 18, 10),
+    new THREE.MeshStandardMaterial({
+      color: 0x5b451e,
+      roughness: 0.9,
+    }),
+  )
+  stemTip.position
+    .copy(curve.getPointAt(1))
+    .addScaledVector(stemTangent, stemLength)
+  stemTip.name = "banana-stem-tip"
+  banana.add(stemTip)
+
+  normalizeObjectToSpec(banana, "banana")
+  group.add(banana)
 
   return group
+}
+
+const createMacbookLidGeometry = (
+  width: number,
+  height: number,
+  depth: number,
+  radius: number,
+  indentRadius: number,
+) => {
+  const lidShape = createRoundedRectangleShape(width, height, radius)
+  const indent = new THREE.Path()
+  indent.absarc(0, 0, indentRadius, 0, Math.PI * 2, true)
+  lidShape.holes.push(indent)
+  return createPrismGeometryFromShape(lidShape, depth)
+}
+
+const createMacbookIndent = (topZ: number, radius: number) => {
+  const indentDepth = 0.35
+  const diskDepth = 0.25
+  const disk = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius - 0.15, radius - 0.15, diskDepth, 48),
+    new THREE.MeshStandardMaterial({
+      color: 0x9ba0a2,
+      roughness: 0.48,
+      metalness: 0.28,
+    }),
+  )
+  disk.rotation.x = Math.PI / 2
+  disk.position.z = topZ - indentDepth - diskDepth / 2
+  disk.name = "macbook-lid-indent"
+  return disk
 }
 
 const createCreditCard = () => {
@@ -227,11 +330,21 @@ const createMacbook = () => {
   body.name = "macbook-body"
   group.add(body)
 
+  const lidDepth = 2
+  const lidCenterZ = 6.75
+  const lidTopZ = lidCenterZ + lidDepth / 2
+  const indentRadius = 12
   const lid = new THREE.Mesh(
-    createRoundedPrismGeometry(spec.width - 1.8, spec.height - 1.8, 2, 8.2),
+    createMacbookLidGeometry(
+      spec.width - 1.8,
+      spec.height - 1.8,
+      lidDepth,
+      8.2,
+      indentRadius,
+    ),
     aluminumMaterial.clone(),
   )
-  lid.position.z = 6.75
+  lid.position.z = lidCenterZ
   lid.name = "macbook-lid"
   group.add(lid)
 
@@ -247,18 +360,7 @@ const createMacbook = () => {
   hinge.name = "macbook-hinge"
   group.add(hinge)
 
-  const lidMark = new THREE.Mesh(
-    new THREE.CircleGeometry(13, 40),
-    new THREE.MeshStandardMaterial({
-      color: 0x92979b,
-      roughness: 0.34,
-      metalness: 0.82,
-      side: THREE.DoubleSide,
-    }),
-  )
-  lidMark.position.z = 7.77
-  lidMark.name = "macbook-lid-mark"
-  group.add(lidMark)
+  group.add(createMacbookIndent(lidTopZ, indentRadius))
 
   const frontNotch = new THREE.Mesh(
     new THREE.BoxGeometry(54, 1.2, 0.8),

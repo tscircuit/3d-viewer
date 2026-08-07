@@ -59,6 +59,35 @@ describe("reference object placement", () => {
       depth: 15.5,
     })
   })
+
+  test("normalizes the banana mesh to its medium-banana envelope", () => {
+    const banana = createReferenceObject("banana")
+    banana.updateMatrixWorld(true)
+    const size = new THREE.Box3()
+      .setFromObject(banana)
+      .getSize(new THREE.Vector3())
+    const spec = REFERENCE_OBJECT_SPECS.banana
+
+    expect(size.x).toBeCloseTo(spec.width, 4)
+    expect(size.y).toBeCloseTo(spec.height, 4)
+    expect(size.z).toBeCloseTo(spec.depth, 4)
+    expect(banana.getObjectByName("banana-stem")).toBeTruthy()
+    expect(banana.getObjectByName("banana-blossom-tip")).toBeTruthy()
+    disposeReferenceObject(banana)
+  })
+
+  test("uses a physically recessed MacBook lid circle", () => {
+    const macbook = createReferenceObject("14in-macbook")
+    macbook.updateMatrixWorld(true)
+    const lid = macbook.getObjectByName("macbook-lid")!
+    const indent = macbook.getObjectByName("macbook-lid-indent")!
+    const lidBounds = new THREE.Box3().setFromObject(lid)
+    const indentBounds = new THREE.Box3().setFromObject(indent)
+
+    expect(macbook.getObjectByName("macbook-lid-mark")).toBeUndefined()
+    expect(indentBounds.max.z).toBeLessThan(lidBounds.max.z - 0.2)
+    disposeReferenceObject(macbook)
+  })
 })
 
 describe("comparison camera fit", () => {
