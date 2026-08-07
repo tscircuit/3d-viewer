@@ -10,10 +10,12 @@ import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to
 import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { useBoardGeomBuilder } from "./hooks/useBoardGeomBuilder"
 import { usePcbThickness } from "./hooks/usePcbThickness"
+import type { ReferenceObjectType } from "./reference-objects/reference-object"
 import { Error3d } from "./three-components/Error3d"
-import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
-import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { JscadBoardTextures } from "./three-components/JscadBoardTextures"
+import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
+import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
+import { calculateOutlineBounds } from "./utils/outline-bounds"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 
 interface Props {
@@ -28,6 +30,7 @@ interface Props {
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
   resolveStaticAsset?: (modelUrl: string) => string
+  referenceObject?: ReferenceObjectType | null
 }
 
 export const CadViewerJscad = forwardRef<
@@ -43,6 +46,7 @@ export const CadViewerJscad = forwardRef<
       onUserInteraction,
       onCameraControllerReady,
       resolveStaticAsset,
+      referenceObject,
     },
     ref,
   ) => {
@@ -98,7 +102,8 @@ export const CadViewerJscad = forwardRef<
       try {
         const board = su(internalCircuitJson as any).pcb_board.list()[0]
         if (!board) return undefined
-        return { width: board.width ?? 0, height: board.height ?? 0 }
+        const bounds = calculateOutlineBounds(board)
+        return { width: bounds.width, height: bounds.height }
       } catch (e) {
         console.error(e)
         return undefined
@@ -109,8 +114,9 @@ export const CadViewerJscad = forwardRef<
       if (!internalCircuitJson) return undefined
       try {
         const board = su(internalCircuitJson as any).pcb_board.list()[0]
-        if (!board || !board.center) return undefined
-        return { x: board.center.x, y: board.center.y }
+        if (!board) return undefined
+        const bounds = calculateOutlineBounds(board)
+        return { x: bounds.centerX, y: bounds.centerY }
       } catch (e) {
         console.error(e)
         return undefined
@@ -132,6 +138,7 @@ export const CadViewerJscad = forwardRef<
         clickToInteractEnabled={clickToInteractEnabled}
         boardDimensions={boardDimensions}
         boardCenter={boardCenter}
+        referenceObject={referenceObject}
         onUserInteraction={onUserInteraction}
         onCameraControllerReady={onCameraControllerReady}
       >

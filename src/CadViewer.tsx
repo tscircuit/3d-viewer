@@ -35,6 +35,7 @@ import {
   registerHotkeyViewer,
   useRegisteredHotkey,
 } from "./hooks/useRegisteredHotkey"
+import type { ReferenceObjectType } from "./reference-objects/reference-object"
 
 const CadViewerInner = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">(() => {
@@ -53,6 +54,8 @@ const CadViewerInner = (props: any) => {
     return stored === "true"
   })
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>("Custom")
+  const [referenceObject, setReferenceObject] =
+    useState<ReferenceObjectType | null>(null)
   const { cameraType } = useCameraController()
   const { visibility, setLayerVisibility } = useLayerVisibility()
   const { showToast } = useToast()
@@ -245,6 +248,7 @@ const CadViewerInner = (props: any) => {
           cameraType={cameraType}
           onUserInteraction={handleUserInteraction}
           onCameraControllerReady={handleCameraControllerReady}
+          referenceObject={referenceObject}
         />
       ) : (
         <CadViewerManifold
@@ -253,6 +257,7 @@ const CadViewerInner = (props: any) => {
           cameraType={cameraType}
           onUserInteraction={handleUserInteraction}
           onCameraControllerReady={handleCameraControllerReady}
+          referenceObject={referenceObject}
         />
       )}
       <div
@@ -278,6 +283,7 @@ const CadViewerInner = (props: any) => {
           engine={engine}
           cameraPreset={cameraPreset}
           autoRotate={autoRotate}
+          referenceObject={referenceObject}
           onEngineSwitch={(newEngine) => {
             setEngine(newEngine)
             closeMenu()
@@ -285,6 +291,13 @@ const CadViewerInner = (props: any) => {
           onCameraPresetSelect={handleCameraPresetSelect}
           onAutoRotateToggle={() => {
             toggleAutoRotate()
+            closeMenu()
+          }}
+          onReferenceObjectSelect={(nextReferenceObject) => {
+            setReferenceObject(nextReferenceObject)
+            setAutoRotate(false)
+            setAutoRotateUserToggled(true)
+            setCameraPreset("Custom")
             closeMenu()
           }}
           onDownloadGltf={() => {

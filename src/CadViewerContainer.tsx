@@ -13,7 +13,15 @@ import { Grid } from "./react-three/Grid"
 import { Lights } from "./react-three/Lights"
 import { OrbitControls } from "./react-three/OrbitControls"
 import { useFrame, useThree } from "./react-three/ThreeContext"
+import {
+  getComparisonBounds,
+  type ReferenceObjectType,
+} from "./reference-objects/reference-object"
 import { OrientationCubeCanvas } from "./three-components/OrientationCubeCanvas"
+import {
+  FitCameraToComparison,
+  ReferenceObject,
+} from "./three-components/reference-object"
 
 export type {
   CameraController,
@@ -39,6 +47,7 @@ interface Props {
   clickToInteractEnabled?: boolean
   boardDimensions?: { width?: number; height?: number }
   boardCenter?: { x: number; y: number }
+  referenceObject?: ReferenceObjectType | null
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
 }
@@ -55,6 +64,7 @@ export const CadViewerContainer = forwardRef<
       clickToInteractEnabled = false,
       boardDimensions,
       boardCenter,
+      referenceObject,
       onUserInteraction,
       onCameraControllerReady,
     },
@@ -79,6 +89,11 @@ export const CadViewerContainer = forwardRef<
       }
     }, [controller, onCameraControllerReady])
 
+    const comparisonBounds = useMemo(() => {
+      if (!referenceObject) return undefined
+      return getComparisonBounds(referenceObject, boardDimensions, boardCenter)
+    }, [referenceObject, boardDimensions, boardCenter])
+
     const gridSectionSize = useMemo(() => {
       if (!boardDimensions) return 10
       const width = boardDimensions.width ?? 0
@@ -87,9 +102,16 @@ export const CadViewerContainer = forwardRef<
     }, [boardDimensions])
 
     const orbitTarget = useMemo(() => {
+      if (comparisonBounds) {
+        return [
+          (comparisonBounds.minX + comparisonBounds.maxX) / 2,
+          (comparisonBounds.minY + comparisonBounds.maxY) / 2,
+          (comparisonBounds.minZ + comparisonBounds.maxZ) / 2,
+        ] as [number, number, number]
+      }
       if (!boardCenter) return undefined
       return [boardCenter.x, boardCenter.y, 0] as [number, number, number]
-    }, [boardCenter])
+    }, [boardCenter, comparisonBounds])
 
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -128,6 +150,16 @@ export const CadViewerContainer = forwardRef<
             darkBackgroundEnabled={darkBackgroundEnabled}
             shadowsEnabled={lightingEnabled}
           />
+          {referenceObject && (
+            <ReferenceObject
+              type={referenceObject}
+              boardDimensions={boardDimensions}
+              boardCenter={boardCenter}
+            />
+          )}
+          {comparisonBounds && (
+            <FitCameraToComparison bounds={comparisonBounds} />
+          )}
           {gridEnabled && (
             <Grid
               rotation={[Math.PI / 2, 0, 0]}

@@ -11,10 +11,12 @@ import type { CameraController } from "./hooks/cameraAnimation"
 import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
 import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
 import { useThree } from "./react-three/ThreeContext"
+import type { ReferenceObjectType } from "./reference-objects/reference-object"
 import { createTextureMeshes } from "./textures"
 import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
+import { calculateOutlineBounds } from "./utils/outline-bounds"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 
 declare global {
@@ -129,6 +131,7 @@ type CadViewerManifoldProps = {
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
   resolveStaticAsset?: (modelUrl: string) => string
+  referenceObject?: ReferenceObjectType | null
 } & (
   | { circuitJson: AnyCircuitElement[]; children?: React.ReactNode }
   | { circuitJson?: never; children: React.ReactNode }
@@ -144,6 +147,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   children,
   onCameraControllerReady,
   resolveStaticAsset,
+  referenceObject,
 }) => {
   const childrenCircuitJson = useConvertChildrenToCircuitJson(children)
   const circuitJson = useMemo(() => {
@@ -257,15 +261,14 @@ try {
 
   const boardDimensions = useMemo(() => {
     if (!boardData) return undefined
-    const { width = 0, height = 0 } = boardData
-    return { width, height }
+    const bounds = calculateOutlineBounds(boardData)
+    return { width: bounds.width, height: bounds.height }
   }, [boardData])
 
   const boardCenter = useMemo(() => {
     if (!boardData) return undefined
-    const { center } = boardData
-    if (!center) return undefined
-    return { x: center.x, y: center.y }
+    const bounds = calculateOutlineBounds(boardData)
+    return { x: bounds.centerX, y: bounds.centerY }
   }, [boardData])
 
   const initialCameraPosition = useMemo(() => {
@@ -323,6 +326,7 @@ try {
       clickToInteractEnabled={clickToInteractEnabled}
       boardDimensions={boardDimensions}
       boardCenter={boardCenter}
+      referenceObject={referenceObject}
       onUserInteraction={onUserInteraction}
       onCameraControllerReady={onCameraControllerReady}
     >
