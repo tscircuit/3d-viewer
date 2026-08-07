@@ -4,6 +4,8 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react"
 interface AppearanceContextType {
   darkBackgroundEnabled: boolean
   setDarkBackgroundEnabled: (enabled: boolean) => void
+  gridEnabled: boolean
+  setGridEnabled: (enabled: boolean) => void
   lightingEnabled: boolean
   setLightingEnabled: (enabled: boolean) => void
 }
@@ -25,6 +27,7 @@ export const AppearanceProvider: React.FC<{ children: React.ReactNode }> = ({
   // Transparent is the default. The dark studio backdrop is an opt-in review
   // aid and intentionally does not persist between new viewer sessions.
   const [darkBackgroundEnabled, setDarkBackgroundEnabled] = useState(false)
+  const [gridEnabled, setGridEnabled] = useState(false)
   const [lightingEnabled, setLightingEnabled] = useState<boolean>(
     readStoredLightingEnabled,
   )
@@ -40,10 +43,12 @@ export const AppearanceProvider: React.FC<{ children: React.ReactNode }> = ({
     () => ({
       darkBackgroundEnabled,
       setDarkBackgroundEnabled,
+      gridEnabled,
+      setGridEnabled,
       lightingEnabled,
       setLightingEnabled,
     }),
-    [darkBackgroundEnabled, lightingEnabled],
+    [darkBackgroundEnabled, gridEnabled, lightingEnabled],
   )
 
   return (

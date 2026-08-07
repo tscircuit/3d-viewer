@@ -4,6 +4,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import { AppearanceMenu } from "./AppearanceMenu"
 import type { CameraPreset } from "../hooks/cameraAnimation"
 import { useCameraController } from "../contexts/CameraControllerContext"
+import { useAppearance } from "../contexts/appearance-context"
 import packageJson from "../../package.json"
 import { CheckIcon, ChevronRightIcon, DotIcon } from "./Icons"
 import { zIndexMap } from "../../lib/utils/z-index-map"
@@ -112,6 +113,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onOpenKeyboardShortcuts,
 }) => {
   const { cameraType, setCameraType } = useCameraController()
+  const { gridEnabled, setGridEnabled } = useAppearance()
   const [cameraSubOpen, setCameraSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
@@ -256,6 +258,30 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               </span>
               <span style={{ display: "flex", alignItems: "center" }}>
                 Orthographic Camera
+              </span>
+            </DropdownMenu.Item>
+
+            {/* Grid Toggle */}
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "grid" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                setGridEnabled(!gridEnabled)
+              }}
+              onMouseEnter={() => setHoveredItem("grid")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("grid")}
+            >
+              <span style={iconContainerStyles}>
+                {gridEnabled && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Show Grid
               </span>
             </DropdownMenu.Item>
 
