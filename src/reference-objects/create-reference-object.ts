@@ -156,7 +156,7 @@ const createBananaGeometry = () => {
       const b = rowSize * segment + (side - 1)
       const c = rowSize * segment + side
       const d = rowSize * (segment - 1) + side
-      indices.push(a, b, d, b, c, d)
+      indices.push(a, d, b, b, d, c)
     }
   }
 

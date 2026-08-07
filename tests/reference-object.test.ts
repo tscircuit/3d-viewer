@@ -73,6 +73,37 @@ describe("reference object placement", () => {
     expect(size.z).toBeCloseTo(spec.depth, 4)
     expect(banana.getObjectByName("banana-stem")).toBeTruthy()
     expect(banana.getObjectByName("banana-blossom-tip")).toBeTruthy()
+
+    const peel = banana.getObjectByName("banana-peel") as THREE.Mesh
+    const geometry = peel.geometry as THREE.BufferGeometry
+    const positions = geometry.getAttribute("position")
+    const normals = geometry.getAttribute("normal")
+    const indices = geometry.index!
+
+    for (let offset = 0; offset < indices.count; offset += 3) {
+      const vertexIndices = [
+        indices.getX(offset),
+        indices.getX(offset + 1),
+        indices.getX(offset + 2),
+      ]
+      const [a, b, c] = vertexIndices.map((index) =>
+        new THREE.Vector3().fromBufferAttribute(positions, index),
+      )
+      const faceNormal = new THREE.Vector3()
+        .crossVectors(b!.clone().sub(a!), c!.clone().sub(a!))
+        .normalize()
+      const averageVertexNormal = vertexIndices
+        .reduce(
+          (average, index) =>
+            average.add(
+              new THREE.Vector3().fromBufferAttribute(normals, index),
+            ),
+          new THREE.Vector3(),
+        )
+        .normalize()
+
+      expect(faceNormal.dot(averageVertexNormal)).toBeGreaterThan(0)
+    }
     disposeReferenceObject(banana)
   })
 
