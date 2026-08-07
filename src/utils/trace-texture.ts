@@ -98,6 +98,7 @@ export function createTraceTextureForLayer({
   })
   drawer.drawElements(elementsToDraw, {
     layers: [pcbRenderLayer],
+    clipContextElements: circuitJson,
     drawSoldermask: false,
     drawSoldermaskTop: false,
     drawSoldermaskBottom: false,
