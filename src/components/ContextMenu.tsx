@@ -3,6 +3,7 @@ import type React from "react"
 import { useState } from "react"
 import { zIndexMap } from "../../lib/utils/z-index-map"
 import packageJson from "../../package.json"
+import { useAppearance } from "../contexts/appearance-context"
 import { useCameraController } from "../contexts/CameraControllerContext"
 import type { CameraPreset } from "../hooks/cameraAnimation"
 import {
@@ -18,11 +19,11 @@ interface ContextMenuProps {
   engine: "jscad" | "manifold"
   cameraPreset: CameraPreset
   autoRotate: boolean
-  referenceObject: ReferenceObjectType | null
+  referenceObject?: ReferenceObjectType | null
   onEngineSwitch: (engine: "jscad" | "manifold") => void
   onCameraPresetSelect: (preset: CameraPreset) => void
   onAutoRotateToggle: () => void
-  onReferenceObjectSelect: (referenceObject: ReferenceObjectType) => void
+  onReferenceObjectSelect?: (referenceObject: ReferenceObjectType) => void
   onDownloadGltf: () => void
   onOpenKeyboardShortcuts: () => void
 }
@@ -111,15 +112,16 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   engine,
   cameraPreset,
   autoRotate,
-  referenceObject,
+  referenceObject = null,
   onEngineSwitch,
   onCameraPresetSelect,
   onAutoRotateToggle,
-  onReferenceObjectSelect,
+  onReferenceObjectSelect = () => {},
   onDownloadGltf,
   onOpenKeyboardShortcuts,
 }) => {
   const { cameraType, setCameraType } = useCameraController()
+  const { gridEnabled, setGridEnabled } = useAppearance()
   const [cameraSubOpen, setCameraSubOpen] = useState(false)
   const [referenceObjectSubOpen, setReferenceObjectSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
@@ -336,6 +338,30 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 </DropdownMenu.SubContent>
               </DropdownMenu.Portal>
             </DropdownMenu.Sub>
+
+            {/* Grid Toggle */}
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "grid" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                setGridEnabled(!gridEnabled)
+              }}
+              onMouseEnter={() => setHoveredItem("grid")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("grid")}
+            >
+              <span style={iconContainerStyles}>
+                {gridEnabled && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Show Grid
+              </span>
+            </DropdownMenu.Item>
 
             {/* Appearance Menu */}
             <AppearanceMenu />

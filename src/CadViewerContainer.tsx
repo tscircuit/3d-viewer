@@ -9,6 +9,7 @@ import type { CameraController } from "./hooks/cameraAnimation"
 import { CameraAnimatorWithContext } from "./hooks/cameraAnimation"
 import { useCameraSession } from "./hooks/useCameraSession"
 import { Canvas } from "./react-three/Canvas"
+import { Grid } from "./react-three/Grid"
 import { Lights } from "./react-three/Lights"
 import { OrbitControls } from "./react-three/OrbitControls"
 import { useFrame, useThree } from "./react-three/ThreeContext"
@@ -75,7 +76,8 @@ export const CadViewerContainer = forwardRef<
 
     const { mainCameraRef, handleControlsChange, controller } =
       useCameraController()
-    const { darkBackgroundEnabled, lightingEnabled } = useAppearance()
+    const { darkBackgroundEnabled, gridEnabled, lightingEnabled } =
+      useAppearance()
     const {
       handleCameraCreated,
       handleControlsChange: handleSessionControlsChange,
@@ -91,6 +93,13 @@ export const CadViewerContainer = forwardRef<
       if (!referenceObject) return undefined
       return getComparisonBounds(referenceObject, boardDimensions, boardCenter)
     }, [referenceObject, boardDimensions, boardCenter])
+
+    const gridSectionSize = useMemo(() => {
+      if (!boardDimensions) return 10
+      const width = boardDimensions.width ?? 0
+      const height = boardDimensions.height ?? 0
+      return Math.max(Math.max(width, height) * 1.5, 10)
+    }, [boardDimensions])
 
     const orbitTarget = useMemo(() => {
       if (comparisonBounds) {
@@ -150,6 +159,14 @@ export const CadViewerContainer = forwardRef<
           )}
           {comparisonBounds && (
             <FitCameraToComparison bounds={comparisonBounds} />
+          )}
+          {gridEnabled && (
+            <Grid
+              rotation={[Math.PI / 2, 0, 0]}
+              infiniteGrid
+              cellSize={3}
+              sectionSize={gridSectionSize}
+            />
           )}
           {children}
         </Canvas>
