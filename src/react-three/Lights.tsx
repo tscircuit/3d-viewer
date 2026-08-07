@@ -3,6 +3,10 @@ import { useEffect, useMemo } from "react"
 import * as THREE from "three"
 import { useThree } from "./ThreeContext"
 
+// Underside lights mirror the top rig across the board plane so the bottom view is
+// legible. Kept below 1 so the top stays the hero side.
+const UNDERSIDE_LIGHT_FACTOR = 0.75
+
 type LightsProps = {
   boardDimensions?: { width?: number; height?: number }
   boardCenter?: { x: number; y: number }
@@ -102,6 +106,31 @@ export const Lights: React.FC<LightsProps> = ({
       lightDistance * 0.85,
       lightDistance * 0.95,
     ])
+
+    // A directional light below the board contributes nothing to the upward facing
+    // normals, so these only affect the bottom view and grazing side faces.
+    addDirectionalLight(
+      "cad-viewer-underside-key-light",
+      0xfff8ee,
+      1.35 * UNDERSIDE_LIGHT_FACTOR,
+      [
+        keyLightDistance * 0.68,
+        -keyLightDistance * 0.8,
+        -keyLightDistance * 1.08,
+      ],
+    )
+    addDirectionalLight(
+      "cad-viewer-underside-fill-light",
+      0xdce8f2,
+      0.25 * UNDERSIDE_LIGHT_FACTOR,
+      [-lightDistance * 0.85, lightDistance * 0.55, -lightDistance * 0.75],
+    )
+    addDirectionalLight(
+      "cad-viewer-underside-rim-light",
+      0xb9ead3,
+      0.5 * UNDERSIDE_LIGHT_FACTOR,
+      [-lightDistance * 0.35, lightDistance * 0.85, -lightDistance * 0.95],
+    )
 
     return rig
   }, [boardCenter, boardDimensions, shadowsEnabled])
