@@ -1,12 +1,16 @@
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import type React from "react"
 import { useState } from "react"
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
-import { AppearanceMenu } from "./AppearanceMenu"
-import type { CameraPreset } from "../hooks/cameraAnimation"
-import { useCameraController } from "../contexts/CameraControllerContext"
-import packageJson from "../../package.json"
-import { CheckIcon, ChevronRightIcon, DotIcon } from "./Icons"
 import { zIndexMap } from "../../lib/utils/z-index-map"
+import packageJson from "../../package.json"
+import { useCameraController } from "../contexts/CameraControllerContext"
+import type { CameraPreset } from "../hooks/cameraAnimation"
+import {
+  REFERENCE_OBJECT_OPTIONS,
+  type ReferenceObjectType,
+} from "../reference-objects/reference-object"
+import { AppearanceMenu } from "./AppearanceMenu"
+import { CheckIcon, ChevronRightIcon, DotIcon } from "./Icons"
 
 interface ContextMenuProps {
   menuRef: React.RefObject<HTMLDivElement | null>
@@ -14,9 +18,11 @@ interface ContextMenuProps {
   engine: "jscad" | "manifold"
   cameraPreset: CameraPreset
   autoRotate: boolean
+  referenceObject: ReferenceObjectType | null
   onEngineSwitch: (engine: "jscad" | "manifold") => void
   onCameraPresetSelect: (preset: CameraPreset) => void
   onAutoRotateToggle: () => void
+  onReferenceObjectSelect: (referenceObject: ReferenceObjectType) => void
   onDownloadGltf: () => void
   onOpenKeyboardShortcuts: () => void
 }
@@ -105,14 +111,17 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   engine,
   cameraPreset,
   autoRotate,
+  referenceObject,
   onEngineSwitch,
   onCameraPresetSelect,
   onAutoRotateToggle,
+  onReferenceObjectSelect,
   onDownloadGltf,
   onOpenKeyboardShortcuts,
 }) => {
   const { cameraType, setCameraType } = useCameraController()
   const [cameraSubOpen, setCameraSubOpen] = useState(false)
+  const [referenceObjectSubOpen, setReferenceObjectSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
   return (
@@ -258,6 +267,75 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 Orthographic Camera
               </span>
             </DropdownMenu.Item>
+
+            {/* Reference Object Submenu */}
+            <DropdownMenu.Sub onOpenChange={setReferenceObjectSubOpen}>
+              <DropdownMenu.SubTrigger
+                style={{
+                  ...itemStyles,
+                  ...itemPaddingStyles,
+                  backgroundColor:
+                    referenceObjectSubOpen || hoveredItem === "reference-object"
+                      ? "#404040"
+                      : "transparent",
+                }}
+                onMouseEnter={() => setHoveredItem("reference-object")}
+                onMouseLeave={() => setHoveredItem(null)}
+                onTouchStart={() => setHoveredItem("reference-object")}
+              >
+                <span
+                  style={{ flex: 1, display: "flex", alignItems: "center" }}
+                >
+                  Show Reference Object
+                </span>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-end",
+                    gap: 6,
+                    marginLeft: "auto",
+                  }}
+                >
+                  <ChevronRightIcon isOpen={referenceObjectSubOpen} />
+                </div>
+              </DropdownMenu.SubTrigger>
+
+              <DropdownMenu.Portal>
+                <DropdownMenu.SubContent
+                  style={{ ...contentStyles, marginLeft: -2 }}
+                  collisionPadding={10}
+                  avoidCollisions={true}
+                >
+                  {REFERENCE_OBJECT_OPTIONS.map((option) => (
+                    <DropdownMenu.Item
+                      key={option.type}
+                      style={{
+                        ...itemStyles,
+                        backgroundColor:
+                          hoveredItem === option.type
+                            ? "#404040"
+                            : "transparent",
+                      }}
+                      onSelect={(event) => event.preventDefault()}
+                      onPointerDown={(event) => {
+                        event.preventDefault()
+                        onReferenceObjectSelect(option.type)
+                      }}
+                      onMouseEnter={() => setHoveredItem(option.type)}
+                      onMouseLeave={() => setHoveredItem(null)}
+                      onTouchStart={() => setHoveredItem(option.type)}
+                    >
+                      <span style={iconContainerStyles}>
+                        {referenceObject === option.type && <DotIcon />}
+                      </span>
+                      <span style={{ display: "flex", alignItems: "center" }}>
+                        {option.label}
+                      </span>
+                    </DropdownMenu.Item>
+                  ))}
+                </DropdownMenu.SubContent>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Sub>
 
             {/* Appearance Menu */}
             <AppearanceMenu />
