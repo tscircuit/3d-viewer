@@ -66,6 +66,11 @@ export const REFERENCE_OBJECT_SPECS: Record<
 
 export const REFERENCE_OBJECT_OPTIONS = Object.values(REFERENCE_OBJECT_SPECS)
 
+export const toggleReferenceObject = (
+  current: ReferenceObjectType | null,
+  selected: ReferenceObjectType,
+): ReferenceObjectType | null => (current === selected ? null : selected)
+
 const safeDimension = (dimension: number | undefined) =>
   Number.isFinite(dimension) ? Math.max(dimension ?? 0, 0) : 0
 

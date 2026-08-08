@@ -11,6 +11,7 @@ import {
   REFERENCE_OBJECT_CLEARANCE_MM,
   REFERENCE_OBJECT_OPTIONS,
   REFERENCE_OBJECT_SPECS,
+  toggleReferenceObject,
 } from "../src/reference-objects/reference-object"
 
 describe("reference object placement", () => {
@@ -23,6 +24,12 @@ describe("reference object placement", () => {
       "Show Credit Card",
       "Show 14in Macbook",
     ])
+  })
+
+  test("toggles the selected reference object", () => {
+    expect(toggleReferenceObject(null, "banana")).toBe("banana")
+    expect(toggleReferenceObject("banana", "banana")).toBeNull()
+    expect(toggleReferenceObject("banana", "credit-card")).toBe("credit-card")
   })
 
   for (const option of REFERENCE_OBJECT_OPTIONS) {
