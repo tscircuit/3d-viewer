@@ -35,7 +35,10 @@ import {
   registerHotkeyViewer,
   useRegisteredHotkey,
 } from "./hooks/useRegisteredHotkey"
-import type { ReferenceObjectType } from "./reference-objects/reference-object"
+import {
+  type ReferenceObjectType,
+  toggleReferenceObject,
+} from "./reference-objects/reference-object"
 
 const CadViewerInner = (props: any) => {
   const [engine, setEngine] = useState<"jscad" | "manifold">(() => {
@@ -294,7 +297,12 @@ const CadViewerInner = (props: any) => {
             closeMenu()
           }}
           onReferenceObjectSelect={(nextReferenceObject) => {
-            setReferenceObject(nextReferenceObject)
+            setReferenceObject((currentReferenceObject) =>
+              toggleReferenceObject(
+                currentReferenceObject,
+                nextReferenceObject,
+              ),
+            )
             setAutoRotate(false)
             setAutoRotateUserToggled(true)
             setCameraPreset("Custom")
