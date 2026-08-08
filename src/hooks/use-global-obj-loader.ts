@@ -5,8 +5,52 @@ import { loadVrml } from "src/utils/vrml"
 
 // Define the type for our cache
 interface CacheItem {
-  promise: Promise<any>
+  promise: Promise<Object3D | Error>
   result: Object3D | null
+}
+
+const cloneLoadedObject = (object: Object3D) => {
+  const clonedObject = object.clone(true)
+  const sourceChildren: Object3D[] = []
+  const clonedChildren: Object3D[] = []
+
+  object.traverse((child) => sourceChildren.push(child))
+  clonedObject.traverse((child) => clonedChildren.push(child))
+
+  clonedChildren.forEach((child, index) => {
+    const sourceChild = sourceChildren[index]
+
+    if (!sourceChild || !("geometry" in child) || !("material" in child)) return
+
+    const sourceMesh = sourceChild as {
+      geometry?: unknown
+      material?: unknown
+    }
+    const clonedMesh = child as {
+      geometry?: unknown
+      material?: unknown
+    }
+
+    clonedMesh.geometry = sourceMesh.geometry
+
+    if (Array.isArray(sourceMesh.material)) {
+      clonedMesh.material = sourceMesh.material.map((material) =>
+        material && typeof material === "object" && "clone" in material
+          ? (material.clone as () => unknown)()
+          : material,
+      )
+    } else if (
+      sourceMesh.material &&
+      typeof sourceMesh.material === "object" &&
+      "clone" in sourceMesh.material
+    ) {
+      clonedMesh.material = (sourceMesh.material.clone as () => unknown)()
+    } else {
+      clonedMesh.material = sourceMesh.material
+    }
+  })
+
+  return clonedObject
 }
 
 declare global {
@@ -33,7 +77,7 @@ export function useGlobalObjLoader(
     const cache = window.TSCIRCUIT_OBJ_LOADER_CACHE
     let hasUrlChanged = false
 
-    async function loadAndParseObj() {
+    async function loadAndParseObj(): Promise<Object3D | Error> {
       try {
         if (cleanUrl.endsWith(".wrl")) {
           return await loadVrml(cleanUrl)
@@ -82,13 +126,13 @@ export function useGlobalObjLoader(
       if (cache.has(cleanUrl)) {
         const cacheItem = cache.get(cleanUrl)!
         if (cacheItem.result) {
-          // If we have a result, clone it
-          return Promise.resolve(cacheItem.result.clone())
+          // If we have a result, clone it without duplicating immutable geometry buffers.
+          return Promise.resolve(cloneLoadedObject(cacheItem.result))
         }
         // If we're still loading, return the existing promise
         return cacheItem.promise.then((result) => {
           if (result instanceof Error) return result
-          return result.clone()
+          return cloneLoadedObject(result)
         })
       }
       // If it's not in the cache, create a new promise and cache it
