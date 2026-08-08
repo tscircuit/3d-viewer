@@ -10,6 +10,63 @@ import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 const DEFAULT_ENV_MAP_INTENSITY = 1.25
 
+interface GltfCacheItem {
+  promise: Promise<THREE.Group>
+  result: THREE.Group | null
+}
+
+const gltfModelCache = new Map<string, GltfCacheItem>()
+
+const normalizeGltfCacheUrl = (url: string) =>
+  url.replace(/&cachebust_origin=$/, "")
+
+const cloneModelWithUniqueMaterials = (model: THREE.Group) => {
+  const clone = model.clone(true)
+
+  clone.traverse((child) => {
+    if (!(child instanceof THREE.Mesh) || !child.material) return
+
+    if (Array.isArray(child.material)) {
+      child.material = child.material.map((material) => material.clone())
+    } else {
+      child.material = child.material.clone()
+    }
+  })
+
+  return clone
+}
+
+const loadCachedGltfScene = async (gltfUrl: string) => {
+  const cacheUrl = normalizeGltfCacheUrl(gltfUrl)
+  const cached = gltfModelCache.get(cacheUrl)
+
+  if (cached?.result) {
+    return cloneModelWithUniqueMaterials(cached.result)
+  }
+
+  if (cached) {
+    return cached.promise.then(cloneModelWithUniqueMaterials)
+  }
+
+  const loader = new GLTFLoader()
+  const promise = loader.loadAsync(cacheUrl).then(
+    (gltf) => {
+      const cacheItem = gltfModelCache.get(cacheUrl)
+      if (cacheItem) {
+        cacheItem.result = gltf.scene
+      }
+      return gltf.scene
+    },
+    (error) => {
+      gltfModelCache.delete(cacheUrl)
+      throw error
+    },
+  )
+
+  gltfModelCache.set(cacheUrl, { promise, result: null })
+  return promise.then(cloneModelWithUniqueMaterials)
+}
+
 export function GltfModel({
   gltfUrl,
   position,
@@ -56,13 +113,10 @@ export function GltfModel({
 
   useEffect(() => {
     if (!gltfUrl) return
-    const loader = new GLTFLoader()
     let isMounted = true
-    loader.load(
-      gltfUrl,
-      (gltf) => {
+    loadCachedGltfScene(gltfUrl)
+      .then((scene) => {
         if (!isMounted) return
-        const scene = gltf.scene
 
         scene.traverse((child) => {
           if (child instanceof THREE.Mesh && child.material) {
@@ -88,9 +142,8 @@ export function GltfModel({
         })
 
         setModel(scene)
-      },
-      undefined,
-      (error) => {
+      })
+      .catch((error) => {
         if (!isMounted) return
         console.error(`An error happened loading ${gltfUrl}`, error)
         const err =
@@ -98,8 +151,7 @@ export function GltfModel({
             ? error
             : new Error(`Failed to load glTF model from ${gltfUrl}`)
         setLoadError(err)
-      },
-    )
+      })
     return () => {
       isMounted = false
     }
