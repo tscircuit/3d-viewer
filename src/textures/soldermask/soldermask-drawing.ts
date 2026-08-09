@@ -85,6 +85,8 @@ export const drawSoldermaskLayer = ({
         inner4: palette.transparent,
         inner5: palette.transparent,
         inner6: palette.transparent,
+        inner7: palette.transparent,
+        inner8: palette.transparent,
       },
       drill: palette.transparent,
       boardOutline: palette.transparent,
@@ -138,6 +140,8 @@ export const drawSoldermaskLayer = ({
           inner4: palette.copper,
           inner5: palette.copper,
           inner6: palette.copper,
+          inner7: palette.copper,
+          inner8: palette.copper,
         },
       },
     })

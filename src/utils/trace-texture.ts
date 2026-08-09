@@ -70,6 +70,8 @@ export function createTraceTextureForLayer({
         inner4: traceColor,
         inner5: traceColor,
         inner6: traceColor,
+        inner7: traceColor,
+        inner8: traceColor,
       },
       copperPour: { top: transparent, bottom: transparent },
       drill: transparent,

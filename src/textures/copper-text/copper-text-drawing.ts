@@ -46,6 +46,8 @@ export const drawCopperTextLayer = ({
         inner4: copperColor,
         inner5: copperColor,
         inner6: copperColor,
+        inner7: copperColor,
+        inner8: copperColor,
       },
     },
   })
@@ -78,6 +80,8 @@ export const drawCopperTextLayer = ({
         inner4: "rgb(255,255,255)",
         inner5: "rgb(255,255,255)",
         inner6: "rgb(255,255,255)",
+        inner7: "rgb(255,255,255)",
+        inner8: "rgb(255,255,255)",
       },
     },
   })

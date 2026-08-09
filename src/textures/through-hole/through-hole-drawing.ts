@@ -43,6 +43,8 @@ export const drawThroughHoleLayer = ({
         inner4: copperColor,
         inner5: copperColor,
         inner6: copperColor,
+        inner7: copperColor,
+        inner8: copperColor,
       },
       drill: transparent,
       boardOutline: transparent,
