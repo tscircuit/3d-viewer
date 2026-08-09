@@ -1,13 +1,14 @@
+import * as jscadModeling from "@jscad/modeling"
 import {
   convertCSGToThreeGeom,
   getJscadModelForFootprint,
 } from "jscad-electronics/vanilla"
-import { useMemo, useEffect } from "react"
-import * as jscadModeling from "@jscad/modeling"
-import * as THREE from "three"
-import { useThree } from "src/react-three/ThreeContext"
+import { useEffect, useMemo } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
+import { useThree } from "src/react-three/ThreeContext"
 import { configureObjectShadows } from "src/utils/configure-object-shadows"
+import { getFootprinterGeometryColor } from "src/utils/get-footprinter-geometry-color"
+import * as THREE from "three"
 
 export const FootprinterModel = ({
   positionOffset,
@@ -18,6 +19,7 @@ export const FootprinterModel = ({
   isHovered,
   scale,
   isTranslucent = false,
+  sourceComponentFtype,
 }: {
   positionOffset: any
   footprint: string
@@ -27,6 +29,7 @@ export const FootprinterModel = ({
   isHovered: boolean
   scale?: number
   isTranslucent?: boolean
+  sourceComponentFtype?: string
 }) => {
   const { rootObject } = useThree()
   const group = useMemo(() => {
@@ -40,7 +43,11 @@ export const FootprinterModel = ({
       if (!geom || (!geom.polygons && !geom.sides)) {
         continue
       }
-      const color = new THREE.Color(geomInfo.color)
+      const geometryColor = getFootprinterGeometryColor(
+        geomInfo.color,
+        sourceComponentFtype,
+      )
+      const color = new THREE.Color(geometryColor)
       color.convertLinearToSRGB()
       const geomWithColor = { ...geom, color: [color.r, color.g, color.b] }
 
@@ -62,7 +69,7 @@ export const FootprinterModel = ({
     }
 
     return group
-  }, [footprint, isTranslucent])
+  }, [footprint, isTranslucent, sourceComponentFtype])
 
   useEffect(() => {
     if (!group || !rootObject) return

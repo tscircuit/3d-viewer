@@ -1,18 +1,18 @@
-import jscad from "@jscad/modeling"
-import type { AnyCircuitElement } from "circuit-json"
+import jscad, * as jscadModeling from "@jscad/modeling"
+import type { CadComponent } from "circuit-json"
 import {
   convertCSGToThreeGeom,
   getJscadModelForFootprint,
 } from "jscad-electronics/vanilla"
 import { executeJscadOperations } from "jscad-planner"
 import * as THREE from "three"
-import * as jscadModeling from "@jscad/modeling"
+import { getFootprinterGeometryColor } from "./get-footprinter-geometry-color"
 import { load3DModel } from "./load-model"
-import type { CadComponent } from "circuit-json"
 
 export async function renderComponent(
   component: CadComponent,
   scene: THREE.Scene,
+  sourceComponentFtype?: string,
 ) {
   // Handle STL/OBJ models first
   const url =
@@ -92,7 +92,11 @@ export async function renderComponent(
         continue
       }
 
-      const color = new THREE.Color(geomInfo.color)
+      const geometryColor = getFootprinterGeometryColor(
+        geomInfo.color,
+        sourceComponentFtype,
+      )
+      const color = new THREE.Color(geometryColor)
       color.convertLinearToSRGB()
       const geomWithColor = { ...geom, color: [color.r, color.g, color.b] }
 

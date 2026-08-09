@@ -13,6 +13,7 @@ import { GltfModel } from "./three-components/GltfModel"
 import { JscadModel } from "./three-components/JscadModel"
 import { MixedStlModel } from "./three-components/MixedStlModel"
 import { StepModel } from "./three-components/StepModel"
+import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import {
   getCadLoaderTransformConfig,
   getCadLoaderTransformMatrix,
@@ -25,7 +26,6 @@ import {
 } from "./utils/get-cad-model-type"
 import { resolveModelUrl } from "./utils/resolve-model-url"
 import { tuple } from "./utils/tuple"
-import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 
 const ModelLoadErrorReporter = ({
   error,
@@ -73,11 +73,12 @@ export const AnyCadComponent = ({
     setHoverPosition(null)
   }, [])
 
-  const componentName = useMemo(() => {
+  const sourceComponent = useMemo(() => {
     return su(circuitJson).source_component.getUsing({
       source_component_id: cad_component.source_component_id,
-    })?.name
+    })
   }, [circuitJson, cad_component.source_component_id])
+  const componentName = sourceComponent?.name
 
   const isThroughHole = useMemo(() => {
     const platedHoles = circuitJson.filter(
@@ -301,6 +302,7 @@ export const AnyCadComponent = ({
         onUnhover={handleUnhover}
         isHovered={isHovered}
         isTranslucent={cad_component.show_as_translucent_model}
+        sourceComponentFtype={sourceComponent?.ftype}
       />
     )
   }
