@@ -120,5 +120,6 @@ export const drawFabricationNoteLayer = ({
   setDrawerBounds(drawer, bounds)
   drawer.drawElements(normalizedElements, {
     layers: [renderLayer],
+    showPcbNotes: false,
   })
 }

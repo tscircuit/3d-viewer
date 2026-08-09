@@ -117,6 +117,7 @@ export const drawSoldermaskLayer = ({
     drawSoldermask: true,
     drawSoldermaskTop: layer === "top",
     drawSoldermaskBottom: layer === "bottom",
+    showPcbNotes: false,
   })
 
   const uncoveredPours = elementsWithoutKeepouts.filter(
@@ -146,7 +147,10 @@ export const drawSoldermaskLayer = ({
       },
     })
     setDrawerBounds(cutoutDrawer, bounds)
-    cutoutDrawer.drawElements(uncoveredPours, { layers: [copperRenderLayer] })
+    cutoutDrawer.drawElements(uncoveredPours, {
+      layers: [copperRenderLayer],
+      showPcbNotes: false,
+    })
     ctx.restore()
   }
 }

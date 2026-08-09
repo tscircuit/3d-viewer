@@ -54,6 +54,7 @@ export const drawCopperTextLayer = ({
   setDrawerBounds(drawer, bounds)
   drawer.drawElements(elements, {
     layers: [renderLayer],
+    showPcbNotes: false,
   })
 
   const knockoutTexts = elements.filter(
@@ -93,6 +94,7 @@ export const drawCopperTextLayer = ({
     })),
     {
       layers: [renderLayer],
+      showPcbNotes: false,
     },
   )
 
