@@ -110,6 +110,8 @@ export const drawPcbNoteLayer = ({
         inner4: TRANSPARENT,
         inner5: TRANSPARENT,
         inner6: TRANSPARENT,
+        inner7: TRANSPARENT,
+        inner8: TRANSPARENT,
       },
       copperPour: { top: TRANSPARENT, bottom: TRANSPARENT },
       drill: TRANSPARENT,

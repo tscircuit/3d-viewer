@@ -107,6 +107,8 @@ export function createCopperPourTextureForLayer({
           inner4: copperPourColor,
           inner5: copperPourColor,
           inner6: copperPourColor,
+          inner7: copperPourColor,
+          inner8: copperPourColor,
         },
         copperPour: {
           top: transparent,

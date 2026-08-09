@@ -65,6 +65,8 @@ export function createPadTextureForLayer({
         inner4: copperColor,
         inner5: copperColor,
         inner6: copperColor,
+        inner7: copperColor,
+        inner8: copperColor,
       },
       copperPour: { top: transparent, bottom: transparent },
       drill: transparent,
