@@ -1,5 +1,5 @@
-import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import type { AnyCircuitElement, PcbRenderLayer } from "circuit-json"
+import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import type { OutlineBounds } from "../../utils/outline-bounds"
 
 const FABRICATION_NOTE_COLOR = "rgb(255,243,204)"
@@ -22,12 +22,14 @@ export const drawSilkscreenLayer = ({
   layer,
   bounds,
   elements,
+  apertureElements,
   silkscreenColor,
 }: {
   ctx: CanvasRenderingContext2D
   layer: "top" | "bottom"
   bounds: OutlineBounds
   elements: AnyCircuitElement[]
+  apertureElements: AnyCircuitElement[]
   silkscreenColor: string
 }) => {
   const renderLayer: PcbRenderLayer =
@@ -83,4 +85,16 @@ export const drawSilkscreenLayer = ({
   drawer.drawElements(elements, {
     layers: [renderLayer],
   })
+
+  if (apertureElements.length === 0) return
+
+  const copperRenderLayer: PcbRenderLayer =
+    layer === "top" ? "top_copper" : "bottom_copper"
+  drawer.configure({ colorOverrides: { drill: "#000" } })
+  ctx.save()
+  ctx.globalCompositeOperation = "destination-out"
+  drawer.drawElements(apertureElements, {
+    layers: [copperRenderLayer],
+  })
+  ctx.restore()
 }
