@@ -287,6 +287,7 @@ export function createCombinedBoardTextures({
           boardData,
           silkscreenColor,
           traceTextureResolution,
+          soldermaskVisible: showMask,
         })
       : null
 

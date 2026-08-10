@@ -1,5 +1,5 @@
-import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import type { AnyCircuitElement, PcbRenderLayer } from "circuit-json"
+import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import type { OutlineBounds } from "../../utils/outline-bounds"
 
 const FABRICATION_NOTE_COLOR = "rgb(255,243,204)"
@@ -22,12 +22,14 @@ export const drawSilkscreenLayer = ({
   layer,
   bounds,
   elements,
+  apertureElements,
   silkscreenColor,
 }: {
   ctx: CanvasRenderingContext2D
   layer: "top" | "bottom"
   bounds: OutlineBounds
   elements: AnyCircuitElement[]
+  apertureElements: AnyCircuitElement[]
   silkscreenColor: string
 }) => {
   const renderLayer: PcbRenderLayer =
@@ -80,7 +82,8 @@ export const drawSilkscreenLayer = ({
     },
   })
   setDrawerBounds(drawer, bounds)
-  drawer.drawElements(elements, {
+  drawer.drawElements([...elements, ...apertureElements], {
     layers: [renderLayer],
+    clearDrillHoles: true,
   })
 }
