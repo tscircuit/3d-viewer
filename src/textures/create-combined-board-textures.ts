@@ -6,6 +6,7 @@ import { calculateOutlineBounds } from "../utils/outline-bounds"
 import { createPadTextureForLayer } from "../utils/pad-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
+import { clearPhysicalBoardApertures } from "./clear-physical-board-apertures"
 import { createCopperPourTextureForLayer } from "./create-copper-pour-texture-for-layer"
 import { createCopperTextTextureForLayer } from "./create-copper-text-texture-for-layer"
 import { createFabricationNoteTextureForLayer } from "./create-fabrication-note-texture-for-layer"
@@ -96,14 +97,18 @@ const applySoldermaskSurfaceFilter = (
 
 const createCombinedTexture = ({
   textures,
+  circuitJson,
   boardData,
   traceTextureResolution,
   layer,
+  soldermaskVisible,
 }: {
   textures: Array<THREE.CanvasTexture | null | undefined>
+  circuitJson: AnyCircuitElement[]
   boardData: PcbBoard
   traceTextureResolution: number
   layer: "top" | "bottom"
+  soldermaskVisible: boolean
 }): THREE.CanvasTexture | null => {
   const hasImage = textures.some((texture) => texture?.image)
   if (!hasImage) return null
@@ -128,6 +133,16 @@ const createCombinedTexture = ({
     const image = texture.image as HTMLCanvasElement
     ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight)
   }
+
+  clearPhysicalBoardApertures({
+    ctx,
+    circuitJson,
+    bounds: boardOutlineBounds,
+    layer,
+    soldermaskVisible,
+    width: canvasWidth,
+    height: canvasHeight,
+  })
 
   applySoldermaskSurfaceFilter(ctx, canvasWidth, canvasHeight, {
     includeReflection: layer === "top",
@@ -341,9 +356,11 @@ export function createCombinedBoardTextures({
         panelOutlineTexture,
         keepoutTexture,
       ],
+      circuitJson,
       boardData,
       traceTextureResolution,
       layer,
+      soldermaskVisible: showMask,
     })
     const maskedCopperTexture =
       showMask && showCopper
