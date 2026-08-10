@@ -82,19 +82,8 @@ export const drawSilkscreenLayer = ({
     },
   })
   setDrawerBounds(drawer, bounds)
-  drawer.drawElements(elements, {
+  drawer.drawElements([...elements, ...apertureElements], {
     layers: [renderLayer],
+    clearDrillHoles: true,
   })
-
-  if (apertureElements.length === 0) return
-
-  const copperRenderLayer: PcbRenderLayer =
-    layer === "top" ? "top_copper" : "bottom_copper"
-  drawer.configure({ colorOverrides: { drill: "#000" } })
-  ctx.save()
-  ctx.globalCompositeOperation = "destination-out"
-  drawer.drawElements(apertureElements, {
-    layers: [copperRenderLayer],
-  })
-  ctx.restore()
 }
