@@ -7,7 +7,7 @@ import { useAppearance } from "../contexts/appearance-context"
 import { useCameraController } from "../contexts/CameraControllerContext"
 import type { CameraPreset } from "../hooks/cameraAnimation"
 import {
-  REFERENCE_OBJECT_OPTIONS,
+  REFERENCE_OBJECT_MENU_OPTIONS,
   type ReferenceObjectType,
 } from "../reference-objects/reference-object"
 import { AppearanceMenu } from "./AppearanceMenu"
@@ -23,7 +23,9 @@ interface ContextMenuProps {
   onEngineSwitch: (engine: "jscad" | "manifold") => void
   onCameraPresetSelect: (preset: CameraPreset) => void
   onAutoRotateToggle: () => void
-  onReferenceObjectSelect?: (referenceObject: ReferenceObjectType) => void
+  onReferenceObjectSelect?: (
+    referenceObject: ReferenceObjectType | null,
+  ) => void
   onDownloadGltf: () => void
   onOpenKeyboardShortcuts: () => void
 }
@@ -308,33 +310,36 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                   collisionPadding={10}
                   avoidCollisions={true}
                 >
-                  {REFERENCE_OBJECT_OPTIONS.map((option) => (
-                    <DropdownMenu.Item
-                      key={option.type}
-                      style={{
-                        ...itemStyles,
-                        backgroundColor:
-                          hoveredItem === option.type
-                            ? "#404040"
-                            : "transparent",
-                      }}
-                      onSelect={(event) => event.preventDefault()}
-                      onPointerDown={(event) => {
-                        event.preventDefault()
-                        onReferenceObjectSelect(option.type)
-                      }}
-                      onMouseEnter={() => setHoveredItem(option.type)}
-                      onMouseLeave={() => setHoveredItem(null)}
-                      onTouchStart={() => setHoveredItem(option.type)}
-                    >
-                      <span style={iconContainerStyles}>
-                        {referenceObject === option.type && <DotIcon />}
-                      </span>
-                      <span style={{ display: "flex", alignItems: "center" }}>
-                        {option.label}
-                      </span>
-                    </DropdownMenu.Item>
-                  ))}
+                  {REFERENCE_OBJECT_MENU_OPTIONS.map((option) => {
+                    const optionKey = option.type ?? "none"
+                    return (
+                      <DropdownMenu.Item
+                        key={optionKey}
+                        style={{
+                          ...itemStyles,
+                          backgroundColor:
+                            hoveredItem === optionKey
+                              ? "#404040"
+                              : "transparent",
+                        }}
+                        onSelect={(event) => event.preventDefault()}
+                        onPointerDown={(event) => {
+                          event.preventDefault()
+                          onReferenceObjectSelect(option.type)
+                        }}
+                        onMouseEnter={() => setHoveredItem(optionKey)}
+                        onMouseLeave={() => setHoveredItem(null)}
+                        onTouchStart={() => setHoveredItem(optionKey)}
+                      >
+                        <span style={iconContainerStyles}>
+                          {referenceObject === option.type && <DotIcon />}
+                        </span>
+                        <span style={{ display: "flex", alignItems: "center" }}>
+                          {option.label}
+                        </span>
+                      </DropdownMenu.Item>
+                    )
+                  })}
                 </DropdownMenu.SubContent>
               </DropdownMenu.Portal>
             </DropdownMenu.Sub>

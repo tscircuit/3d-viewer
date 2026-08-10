@@ -9,6 +9,7 @@ import {
   getComparisonBounds,
   getReferenceObjectPosition,
   REFERENCE_OBJECT_CLEARANCE_MM,
+  REFERENCE_OBJECT_MENU_OPTIONS,
   REFERENCE_OBJECT_OPTIONS,
   REFERENCE_OBJECT_SPECS,
   toggleReferenceObject,
@@ -19,7 +20,8 @@ describe("reference object placement", () => {
   const boardCenter = { x: 12, y: -8 }
 
   test("exposes the requested context menu choices", () => {
-    expect(REFERENCE_OBJECT_OPTIONS.map(({ label }) => label)).toEqual([
+    expect(REFERENCE_OBJECT_MENU_OPTIONS.map(({ label }) => label)).toEqual([
+      "None",
       "Show Banana",
       "Show Credit Card",
       "Show 14in Macbook",
@@ -30,6 +32,7 @@ describe("reference object placement", () => {
     expect(toggleReferenceObject(null, "banana")).toBe("banana")
     expect(toggleReferenceObject("banana", "banana")).toBeNull()
     expect(toggleReferenceObject("banana", "credit-card")).toBe("credit-card")
+    expect(toggleReferenceObject("banana", null)).toBeNull()
   })
 
   for (const option of REFERENCE_OBJECT_OPTIONS) {
