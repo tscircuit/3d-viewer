@@ -66,9 +66,14 @@ export const REFERENCE_OBJECT_SPECS: Record<
 
 export const REFERENCE_OBJECT_OPTIONS = Object.values(REFERENCE_OBJECT_SPECS)
 
+export const REFERENCE_OBJECT_MENU_OPTIONS: Array<{
+  type: ReferenceObjectType | null
+  label: string
+}> = [{ type: null, label: "None" }, ...REFERENCE_OBJECT_OPTIONS]
+
 export const toggleReferenceObject = (
   current: ReferenceObjectType | null,
-  selected: ReferenceObjectType,
+  selected: ReferenceObjectType | null,
 ): ReferenceObjectType | null => (current === selected ? null : selected)
 
 const safeDimension = (dimension: number | undefined) =>
