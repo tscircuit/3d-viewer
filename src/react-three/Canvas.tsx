@@ -78,19 +78,91 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
     const rootObject = useRef(new THREE.Object3D())
     useImperativeHandle(ref, () => rootObject.current)
 
+    // The renderer is created once and reused across camera-type changes so we
+    // don't churn through WebGL contexts (the browser will force-lose leaked
+    // contexts, which crashes three.js on the next shader compile).
+    const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
+    // The active camera lives in a ref so the animation and resize loops always
+    // read the current camera even after a camera-type switch replaces it.
+    const cameraRef = useRef<THREE.Camera | null>(null)
+
+    // Renderer + render loop: set up once on mount, torn down on unmount.
     useEffect(() => {
       if (!mountRef.current) return
+      const mount = mountRef.current
 
-      removeExistingCanvases(mountRef.current)
+      removeExistingCanvases(mount)
 
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
       configureRenderer(renderer)
-      renderer.setSize(
-        mountRef.current.clientWidth,
-        mountRef.current.clientHeight,
-      )
+      renderer.setSize(mount.clientWidth, mount.clientHeight)
       renderer.setPixelRatio(window.devicePixelRatio)
-      mountRef.current.appendChild(renderer.domElement)
+      mount.appendChild(renderer.domElement)
+      rendererRef.current = renderer
+
+      scene.add(rootObject.current)
+      window.__TSCIRCUIT_THREE_OBJECT = rootObject.current
+
+      let animationFrameId: number
+      const clock = new THREE.Clock()
+
+      const animate = () => {
+        const time = clock.getElapsedTime()
+        const delta = clock.getDelta()
+        frameListeners.current.forEach((listener) => listener(time, delta))
+        if (cameraRef.current) {
+          renderer.render(scene, cameraRef.current)
+        }
+        animationFrameId = requestAnimationFrame(animate)
+      }
+      animate()
+
+      const handleResize = () => {
+        if (!mountRef.current) return
+        const newAspect =
+          mountRef.current.clientWidth / mountRef.current.clientHeight
+        const camera = cameraRef.current
+        if (camera instanceof THREE.PerspectiveCamera) {
+          camera.aspect = newAspect
+          camera.updateProjectionMatrix()
+        } else if (camera instanceof THREE.OrthographicCamera) {
+          camera.left = -10 * newAspect
+          camera.right = 10 * newAspect
+          camera.top = 10
+          camera.bottom = -10
+          camera.updateProjectionMatrix()
+        }
+        renderer.setSize(
+          mountRef.current.clientWidth,
+          mountRef.current.clientHeight,
+        )
+      }
+      window.addEventListener("resize", handleResize)
+
+      return () => {
+        window.removeEventListener("resize", handleResize)
+        cancelAnimationFrame(animationFrameId)
+        if (renderer.domElement.parentNode) {
+          renderer.domElement.parentNode.removeChild(renderer.domElement)
+        }
+        renderer.dispose()
+        // Free the underlying GPU context. Without this, disposed renderers leak
+        // their WebGL context until the browser force-loses one, at which point
+        // three.js calls shaderSource() on a dead context and throws.
+        renderer.forceContextLoss()
+        rendererRef.current = null
+        scene.remove(rootObject.current)
+        if (window.__TSCIRCUIT_THREE_OBJECT === rootObject.current) {
+          window.__TSCIRCUIT_THREE_OBJECT = undefined
+        }
+      }
+    }, [scene, addFrameListener, removeFrameListener])
+
+    // Camera: rebuilt when the camera type changes, without recreating the
+    // renderer (and therefore without spawning a new WebGL context).
+    useEffect(() => {
+      if (!mountRef.current || !rendererRef.current) return
+      const renderer = rendererRef.current
 
       const aspect =
         mountRef.current.clientWidth / mountRef.current.clientHeight
@@ -125,8 +197,7 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
         camera.lookAt(0, 0, 0)
       }
 
-      scene.add(rootObject.current)
-      window.__TSCIRCUIT_THREE_OBJECT = rootObject.current
+      cameraRef.current = camera
 
       setContextState({
         scene,
@@ -137,38 +208,6 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
         removeFrameListener,
       })
       onCreatedRef.current?.({ camera, renderer })
-      let animationFrameId: number
-      const clock = new THREE.Clock()
-
-      const animate = () => {
-        const time = clock.getElapsedTime()
-        const delta = clock.getDelta()
-        frameListeners.current.forEach((listener) => listener(time, delta))
-        renderer.render(scene, camera)
-        animationFrameId = requestAnimationFrame(animate)
-      }
-      animate()
-
-      const handleResize = () => {
-        if (mountRef.current) {
-          const newAspect =
-            mountRef.current.clientWidth / mountRef.current.clientHeight
-          if (camera instanceof THREE.PerspectiveCamera) {
-            camera.aspect = newAspect
-          } else if (camera instanceof THREE.OrthographicCamera) {
-            camera.left = -10 * newAspect
-            camera.right = 10 * newAspect
-            camera.top = 10
-            camera.bottom = -10
-          }
-          camera.updateProjectionMatrix()
-          renderer.setSize(
-            mountRef.current.clientWidth,
-            mountRef.current.clientHeight,
-          )
-        }
-      }
-      window.addEventListener("resize", handleResize)
 
       return () => {
         // Save camera state before cleanup so it can be restored when switching camera types
@@ -176,17 +215,6 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
           position: camera.position.clone(),
           quaternion: camera.quaternion.clone(),
           up: camera.up.clone(),
-        }
-
-        window.removeEventListener("resize", handleResize)
-        cancelAnimationFrame(animationFrameId)
-        if (mountRef.current && renderer.domElement) {
-          mountRef.current.removeChild(renderer.domElement)
-        }
-        renderer.dispose()
-        scene.remove(rootObject.current)
-        if (window.__TSCIRCUIT_THREE_OBJECT === rootObject.current) {
-          window.__TSCIRCUIT_THREE_OBJECT = undefined
         }
       }
     }, [scene, addFrameListener, removeFrameListener, cameraType])
