@@ -20,8 +20,10 @@ test("recognizes only the existing synthetic enclosure CAD representation", () =
     pcb_component_id: "pcb_case",
     source_component_id: "source_case",
     center: { x: 0, y: 0 },
-    width: 0,
-    height: 0,
+    // Core updates the initial zero-size placeholder to the resolved enclosure
+    // footprint before Circuit JSON reaches the viewer.
+    width: 44,
+    height: 28,
     layer: "top",
     rotation: 0,
     do_not_place: true,
@@ -32,7 +34,12 @@ test("recognizes only the existing synthetic enclosure CAD representation", () =
   expect(isLegacyFdmEnclosure(cad, [owner])).toBe(true)
   expect(
     isLegacyFdmEnclosure(cad, [
-      { ...owner, width: 10, do_not_place: false } as AnyCircuitElement,
+      { ...owner, width: 0, height: 0 } as AnyCircuitElement,
+    ]),
+  ).toBe(true)
+  expect(
+    isLegacyFdmEnclosure(cad, [
+      { ...owner, do_not_place: false } as AnyCircuitElement,
     ]),
   ).toBe(false)
   expect(
