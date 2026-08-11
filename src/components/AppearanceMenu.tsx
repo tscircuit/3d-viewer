@@ -3,8 +3,11 @@ import type React from "react"
 import { useState } from "react"
 import { zIndexMap } from "../../lib/utils/z-index-map"
 import { useAppearance } from "../contexts/appearance-context"
-import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
-import { CheckIcon, ChevronRightIcon } from "./Icons"
+import {
+  nextEnclosureVisibility,
+  useLayerVisibility,
+} from "../contexts/LayerVisibilityContext"
+import { CheckIcon, CheckMinusIcon, ChevronRightIcon } from "./Icons"
 
 const itemStyles: React.CSSProperties = {
   padding: "6px 8px",
@@ -418,6 +421,36 @@ export const AppearanceMenu = () => {
               </span>
               <span style={{ display: "flex", alignItems: "center" }}>
                 Through-Hole Components
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Separator style={separatorStyles} />
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "enclosure" ? "#404040" : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                setLayerVisibility(
+                  "enclosure",
+                  nextEnclosureVisibility(visibility.enclosure),
+                )
+              }}
+              onMouseEnter={() => setHoveredItem("enclosure")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("enclosure")}
+              title={`Enclosure: ${visibility.enclosure}`}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.enclosure === "opaque" && <CheckIcon />}
+                {visibility.enclosure === "translucent" && <CheckMinusIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Enclosure
               </span>
             </DropdownMenu.Item>
           </DropdownMenu.SubContent>
