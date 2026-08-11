@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
+import { loadVrml } from "src/utils/vrml"
 import type { Object3D } from "three"
 import { MTLLoader, OBJLoader } from "three-stdlib"
-import { loadVrml } from "src/utils/vrml"
 
 // Define the type for our cache
 interface CacheItem {
@@ -52,7 +52,9 @@ export function useGlobalObjLoader(
         const objLoader = new OBJLoader()
 
         if (mtlContentArr?.length) {
-          const mtlContent = mtlContentArr.join("\n").replace(/d 0\./g, "d 1.")
+          const mtlContent = mtlContentArr
+            .join("\n")
+            .replace(/^d\s+0\./gm, "d 1.")
           const objContent = text
             .replace(/newmtl[\s\S]*?endmtl/g, "")
             .replace(/^mtllib.*/gm, "")
@@ -61,13 +63,7 @@ export function useGlobalObjLoader(
           mtlLoader.setMaterialOptions({
             invertTrProperty: true,
           })
-          const materials = mtlLoader.parse(
-            mtlContent.replace(
-              /Kd\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/g,
-              "Kd $2 $2 $2",
-            ),
-            "embedded.mtl",
-          )
+          const materials = mtlLoader.parse(mtlContent, "embedded.mtl")
           objLoader.setMaterials(materials)
           return objLoader.parse(objContent)
         }
