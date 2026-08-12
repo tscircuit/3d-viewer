@@ -23,6 +23,7 @@ import {
   getCadModelType,
   getRenderedCadModelType,
 } from "./utils/get-cad-model-type"
+import { isLegacyFdmEnclosure } from "./utils/is-legacy-fdm-enclosure"
 import { resolveModelUrl } from "./utils/resolve-model-url"
 import { tuple } from "./utils/tuple"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
@@ -117,6 +118,13 @@ export const AnyCadComponent = ({
       elm.source_component_id === cad_component.source_component_id,
   ) as PcbComponent | undefined
   const layer = pcbComponent?.layer ?? "top"
+  const isEnclosure = useMemo(
+    () => isLegacyFdmEnclosure(cad_component, circuitJson),
+    [cad_component, circuitJson],
+  )
+  const isTranslucent = isEnclosure
+    ? visibility.enclosure === "translucent"
+    : Boolean(cad_component.show_as_translucent_model)
   const sourceModelType = getCadModelType(cad_component)
   const renderedModelType = getRenderedCadModelType(sourceModelType)
   const gltfModelType: CadModelType = cad_component.model_glb_url
@@ -162,7 +170,7 @@ export const AnyCadComponent = ({
           onHover={handleHover}
           onUnhover={handleUnhover}
           isHovered={isHovered}
-          isTranslucent={cad_component.show_as_translucent_model}
+          isTranslucent={isTranslucent}
         />,
       )
     }
@@ -185,7 +193,7 @@ export const AnyCadComponent = ({
           onHover={handleHover}
           onUnhover={handleUnhover}
           isHovered={isHovered}
-          isTranslucent={cad_component.show_as_translucent_model}
+          isTranslucent={isTranslucent}
         />,
       )
     }
@@ -212,7 +220,7 @@ export const AnyCadComponent = ({
           onHover={handleHover}
           onUnhover={handleUnhover}
           isHovered={isHovered}
-          isTranslucent={cad_component.show_as_translucent_model}
+          isTranslucent={isTranslucent}
         />,
       )
     }
@@ -223,7 +231,7 @@ export const AnyCadComponent = ({
     cad_component.cad_component_id,
     cad_component.footprinter_string,
     cad_component.model_jscad,
-    cad_component.show_as_translucent_model,
+    isTranslucent,
     gltfUrl,
     gltfModelType,
     handleHover,
@@ -287,7 +295,7 @@ export const AnyCadComponent = ({
         onHover={handleHover}
         onUnhover={handleUnhover}
         isHovered={isHovered}
-        isTranslucent={cad_component.show_as_translucent_model}
+        isTranslucent={isTranslucent}
       />
     )
   } else if (cad_component.footprinter_string) {
@@ -300,25 +308,20 @@ export const AnyCadComponent = ({
         onHover={handleHover}
         onUnhover={handleUnhover}
         isHovered={isHovered}
-        isTranslucent={cad_component.show_as_translucent_model}
+        isTranslucent={isTranslucent}
       />
     )
   }
 
-  // Check if models should be visible
-  // Translucent models are controlled only by translucent visibility
-  if (cad_component.show_as_translucent_model) {
-    if (!visibility.translucentModels) {
-      return null
-    }
+  // The generated enclosure gets its own three-state display control. Other CAD
+  // models retain the existing translucent/SMT/through-hole category toggles.
+  if (isEnclosure) {
+    if (visibility.enclosure === "hidden") return null
+  } else if (cad_component.show_as_translucent_model) {
+    if (!visibility.translucentModels) return null
   } else {
-    // Non-translucent models are controlled by SMT/through-hole visibility
-    if (isThroughHole && !visibility.throughHoleModels) {
-      return null
-    }
-    if (!isThroughHole && !visibility.smtModels) {
-      return null
-    }
+    if (isThroughHole && !visibility.throughHoleModels) return null
+    if (!isThroughHole && !visibility.smtModels) return null
   }
 
   // Render the model and the tooltip if hovered

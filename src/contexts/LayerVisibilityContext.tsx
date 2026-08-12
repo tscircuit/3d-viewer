@@ -28,13 +28,35 @@ export interface LayerVisibilityState {
   pcbNotes: boolean
   backgroundStart: boolean
   backgroundEnd: boolean
+  /**
+   * Three-state display for the single assembled enclosure CAD entity. This is
+   * viewer state, not Circuit JSON: hidden to work unobstructed, translucent to
+   * check openings against the board, opaque to inspect the print itself.
+   */
+  enclosure: EnclosureVisibility
 }
+
+export type EnclosureVisibility = "hidden" | "translucent" | "opaque"
+
+export const ENCLOSURE_VISIBILITY_CYCLE: EnclosureVisibility[] = [
+  "translucent",
+  "opaque",
+  "hidden",
+]
+
+export const nextEnclosureVisibility = (
+  current: EnclosureVisibility,
+): EnclosureVisibility =>
+  ENCLOSURE_VISIBILITY_CYCLE[
+    (ENCLOSURE_VISIBILITY_CYCLE.indexOf(current) + 1) %
+      ENCLOSURE_VISIBILITY_CYCLE.length
+  ]!
 
 interface LayerVisibilityContextType {
   visibility: LayerVisibilityState
-  setLayerVisibility: (
-    layer: keyof LayerVisibilityState,
-    visible: boolean,
+  setLayerVisibility: <K extends keyof LayerVisibilityState>(
+    layer: K,
+    visible: LayerVisibilityState[K],
   ) => void
   resetToDefaults: () => void
 }
@@ -60,6 +82,7 @@ const defaultVisibility: LayerVisibilityState = {
   pcbNotes: false,
   backgroundStart: true,
   backgroundEnd: true,
+  enclosure: "translucent",
 }
 
 const LayerVisibilityContext = createContext<
@@ -73,7 +96,10 @@ export const LayerVisibilityProvider: React.FC<{
     useState<LayerVisibilityState>(defaultVisibility)
 
   const setLayerVisibility = useCallback(
-    (layer: keyof LayerVisibilityState, visible: boolean) => {
+    <K extends keyof LayerVisibilityState>(
+      layer: K,
+      visible: LayerVisibilityState[K],
+    ) => {
       setVisibility((prev) => ({
         ...prev,
         [layer]: visible,
