@@ -5,7 +5,13 @@ import type {
 } from "circuit-json"
 
 /**
- * Recognize Core's pre-`cad_fdm_enclosure` compatibility representation.
+ * Discriminate Core's assembled enclosure from ordinary `cad_component` models.
+ *
+ * Before `cad_fdm_enclosure` exists, the enclosure uses the same
+ * `cad_component.model_jscad` record as any other generated CAD model. This
+ * predicate is what lets the viewer recognize that one record as an enclosure
+ * and give it the dedicated translucent / opaque / hidden Appearance control;
+ * without it, only the global translucent-model toggle is available.
  *
  * The generated enclosure is the only current CAD component whose PCB owner is
  * deliberately a do-not-place, off-board, non-obstructing placeholder and whose
