@@ -184,6 +184,7 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
           mountRef.current.removeChild(renderer.domElement)
         }
         renderer.dispose()
+        renderer.forceContextLoss()
         scene.remove(rootObject.current)
         if (window.__TSCIRCUIT_THREE_OBJECT === rootObject.current) {
           window.__TSCIRCUIT_THREE_OBJECT = undefined
