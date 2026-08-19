@@ -1,6 +1,10 @@
 {
   "name": "@tscircuit/3d-viewer",
   "version": "0.0.593",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tscircuit/3d-viewer"
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "type": "module",
