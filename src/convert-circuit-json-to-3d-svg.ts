@@ -8,6 +8,7 @@ import { createBoardMaterial } from "./utils/create-board-material"
 import { createGeometryFromPolygons } from "./utils/create-geometry-from-polygons"
 import { renderComponent } from "./utils/render-component"
 import { colors } from "./geoms/constants"
+import { resolveSolderMaskColor } from "./utils/resolve-solder-mask-color"
 
 interface CircuitToSvgOptions {
   width?: number
@@ -98,8 +99,10 @@ export async function convertCircuitJsonTo3dSvg(
   // Add board geometry after components
   const boardGeom = createSimplifiedBoardGeom(circuitJson)
   if (boardGeom) {
-    // Use green solder mask color for the board
-    const solderMaskColor = colors.fr4SolderMaskGreen
+    // Honor the board's solder_mask_color, falling back to the default green
+    const solderMaskColor =
+      resolveSolderMaskColor(boardData?.solder_mask_color) ??
+      colors.fr4SolderMaskGreen
     const baseColor = new THREE.Color(
       solderMaskColor[0],
       solderMaskColor[1],

@@ -9,6 +9,7 @@ import {
   colors as defaultColors,
   soldermaskColors,
 } from "../../geoms/constants"
+import { resolveSolderMaskPreset } from "../../utils/resolve-solder-mask-color"
 import type { OutlineBounds } from "../../utils/outline-bounds"
 
 const toRgb = (colorArr: number[]) => {
@@ -27,7 +28,18 @@ type SoldermaskPalette = {
 
 const getSoldermaskPalette = (
   material: PcbBoard["material"],
+  solderMaskColor?: PcbBoard["solder_mask_color"],
 ): SoldermaskPalette => {
+  const preset = resolveSolderMaskPreset(solderMaskColor)
+  if (preset) {
+    return {
+      soldermask: toRgb(preset.soldermask),
+      soldermaskOverCopper: toRgb(preset.soldermaskOverCopper),
+      copper: toRgb(defaultColors.copper),
+      transparent: "rgba(0,0,0,0)",
+    }
+  }
+
   const soldermask = toRgb(
     soldermaskColors[material] ?? defaultColors.fr4SolderMaskGreen,
   )
@@ -62,14 +74,16 @@ export const drawSoldermaskLayer = ({
   bounds,
   elements,
   boardMaterial,
+  solderMaskColor,
 }: {
   ctx: CanvasRenderingContext2D
   layer: "top" | "bottom"
   bounds: OutlineBounds
   elements: AnyCircuitElement[]
   boardMaterial: PcbBoard["material"]
+  solderMaskColor?: PcbBoard["solder_mask_color"]
 }) => {
-  const palette = getSoldermaskPalette(boardMaterial)
+  const palette = getSoldermaskPalette(boardMaterial, solderMaskColor)
   const copperRenderLayer: PcbRenderLayer =
     layer === "top" ? "top_copper" : "bottom_copper"
 
