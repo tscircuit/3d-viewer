@@ -3,6 +3,7 @@ import {
   PAD_COPPER_TEXTURE_MATERIAL,
   REALISTIC_BOARD_SURFACE_MATERIAL,
 } from "../board-surface-textures"
+import { isYellowSoldermaskColor } from "./soldermask-color"
 
 const PLAIN_SOLDERMASK_HEIGHT = 0.22
 const MASKED_COPPER_HEIGHT = 0.7
@@ -15,6 +16,24 @@ type BoardSurfaceProfile = {
   metalness: number
   isExposedCopper: boolean
   isMaskedCopper: boolean
+}
+
+const PLAIN_SOLDERMASK_PROFILE: BoardSurfaceProfile = {
+  height: PLAIN_SOLDERMASK_HEIGHT,
+  microSurfaceWeight: 1,
+  roughness: 0.7,
+  metalness: 0.015,
+  isExposedCopper: false,
+  isMaskedCopper: false,
+}
+
+const MASKED_COPPER_PROFILE: BoardSurfaceProfile = {
+  height: MASKED_COPPER_HEIGHT,
+  microSurfaceWeight: 0.9,
+  roughness: 0.54,
+  metalness: 0.025,
+  isExposedCopper: false,
+  isMaskedCopper: true,
 }
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value))
@@ -66,6 +85,14 @@ const getBoardSurfaceProfile = (
   b: number,
   hasMaskedCopper: boolean,
 ): BoardSurfaceProfile => {
+  // The dedicated geometry mask identifies buried copper independently of the
+  // visible soldermask color.
+  if (hasMaskedCopper) return MASKED_COPPER_PROFILE
+
+  if (isYellowSoldermaskColor({ red: r, green: g, blue: b })) {
+    return PLAIN_SOLDERMASK_PROFILE
+  }
+
   const isExposedCopper =
     r > 120 && g > 70 && b < 150 && r > g * 1.05 && g > b * 1.15
   if (isExposedCopper) {
@@ -104,25 +131,7 @@ const getBoardSurfaceProfile = (
     }
   }
 
-  // The color map may be graded for presentation, so it cannot identify
-  // buried copper reliably. Only the dedicated geometry mask may do that.
-  return hasMaskedCopper
-    ? {
-        height: MASKED_COPPER_HEIGHT,
-        microSurfaceWeight: 0.9,
-        roughness: 0.54,
-        metalness: 0.025,
-        isExposedCopper: false,
-        isMaskedCopper: true,
-      }
-    : {
-        height: PLAIN_SOLDERMASK_HEIGHT,
-        microSurfaceWeight: 1,
-        roughness: 0.7,
-        metalness: 0.015,
-        isExposedCopper: false,
-        isMaskedCopper: false,
-      }
+  return PLAIN_SOLDERMASK_PROFILE
 }
 
 const createDataTexture = (canvas: HTMLCanvasElement) => {
