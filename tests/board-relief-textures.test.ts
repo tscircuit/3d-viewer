@@ -158,7 +158,7 @@ test("trace mask applies masked-copper relief only on trace geometry", () => {
   })
 })
 
-test("masked-copper relief works for every non-green Flux mask", () => {
+test("masked-copper relief works for every non-green preset", () => {
   const masks: Array<[string, [number, number, number]]> = [
     ["blue", [0, 74, 171]],
     ["yellow", [174, 128, 0]],

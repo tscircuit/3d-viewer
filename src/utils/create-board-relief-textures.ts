@@ -93,7 +93,7 @@ const getBoardSurfaceProfile = (
   hasSoldermaskCoverage: boolean,
 ): BoardSurfaceProfile => {
   // The dedicated mask has already been intersected with soldermask coverage,
-  // so it is authoritative for every mask hue, including Flux yellow.
+  // so it is authoritative for every mask hue, including yellow.
   if (hasMaskedCopper) {
     return {
       height: MASKED_COPPER_HEIGHT,
@@ -105,7 +105,7 @@ const getBoardSurfaceProfile = (
     }
   }
 
-  // Flux's white soldermask is #dddddd, so reserve this profile for the
+  // The white soldermask preset is #dddddd, so reserve this profile for the
   // near-white silkscreen rather than treating the board itself as legend.
   const isBrightLegend = r > 235 && g > 235 && b > 225
   if (isBrightLegend) {

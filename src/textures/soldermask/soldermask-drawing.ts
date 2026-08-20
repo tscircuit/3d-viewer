@@ -45,8 +45,8 @@ export const getSoldermaskPalette = (
 
   return {
     soldermask,
-    // Flux uses one 87.5%-opaque material over both surfaces. This canvas
-    // pipeline pre-composites that material where copper sits underneath.
+    // Use one 87.5%-opaque material over both surfaces. This canvas pipeline
+    // pre-composites that material where copper sits underneath.
     soldermaskOverCopper,
     copper: toRgb(defaultColors.copper),
     transparent: "rgba(0,0,0,0)",

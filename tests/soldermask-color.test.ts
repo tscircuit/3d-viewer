@@ -5,34 +5,30 @@ import { applySoldermaskSurfaceFilter } from "../src/textures/soldermask/apply-s
 import { getSoldermaskPalette } from "../src/textures/soldermask/soldermask-drawing"
 import { createBoardMaterial } from "../src/utils/create-board-material"
 import {
-  FLUX_SOLDERMASK_COLOR_HEX,
   getBoardSoldermaskColor,
   resolveBoardSoldermaskColor,
   resolveSoldermaskColor,
+  SOLDERMASK_PRESET_HEX,
   soldermaskColorToCss,
 } from "../src/utils/soldermask-color"
 
 const toSrgbHex = (color: THREE.Color) =>
   `#${color.getHexString(THREE.SRGBColorSpace)}`
 
-test("uses Flux's exact 3D soldermask preset colors", () => {
-  for (const [preset, expectedHex] of Object.entries(
-    FLUX_SOLDERMASK_COLOR_HEX,
-  )) {
+test("uses the supported 3D soldermask preset colors", () => {
+  for (const [preset, expectedHex] of Object.entries(SOLDERMASK_PRESET_HEX)) {
     expect(toSrgbHex(resolveSoldermaskColor(preset))).toBe(expectedHex)
   }
 })
 
-test("defaults missing and not_specified soldermask colors to Flux green", () => {
-  expect(toSrgbHex(resolveSoldermaskColor())).toBe(
-    FLUX_SOLDERMASK_COLOR_HEX.green,
-  )
+test("defaults missing and not_specified soldermask colors to green", () => {
+  expect(toSrgbHex(resolveSoldermaskColor())).toBe(SOLDERMASK_PRESET_HEX.green)
   expect(toSrgbHex(resolveSoldermaskColor("not_specified"))).toBe(
-    FLUX_SOLDERMASK_COLOR_HEX.green,
+    SOLDERMASK_PRESET_HEX.green,
   )
 })
 
-test("passes custom CSS colors through THREE.Color like Flux", () => {
+test("passes custom CSS colors through THREE.Color", () => {
   expect(toSrgbHex(resolveSoldermaskColor("#123456"))).toBe("#123456")
   expect(toSrgbHex(resolveSoldermaskColor("rebeccapurple"))).toBe("#663399")
   expect(toSrgbHex(resolveSoldermaskColor(""))).toBe("#ffffff")
@@ -55,7 +51,7 @@ test("reads solder_mask_color from Circuit JSON", () => {
   expect(toSrgbHex(resolveBoardSoldermaskColor(board))).toBe("#650202")
 })
 
-test("draws Flux's translucent mask color over both substrate and copper", () => {
+test("draws the translucent mask color over both substrate and copper", () => {
   const board = {
     type: "pcb_board",
     pcb_board_id: "blue-board",

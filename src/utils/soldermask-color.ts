@@ -2,8 +2,8 @@ import type { RGB } from "@jscad/modeling/src/colors"
 import type { PcbBoard } from "circuit-json"
 import * as THREE from "three"
 
-/** The base colors used by Flux's 3D PCB soldermask materials. */
-export const FLUX_SOLDERMASK_COLOR_HEX = {
+/** Base colors for the supported 3D PCB soldermask presets. */
+export const SOLDERMASK_PRESET_HEX = {
   green: "#004832",
   blue: "#004aab",
   yellow: "#ae8000",
@@ -13,9 +13,9 @@ export const FLUX_SOLDERMASK_COLOR_HEX = {
   purple: "#15008a",
 } as const
 
-export const FLUX_SOLDERMASK_OPACITY = 0.875
+export const SOLDERMASK_OPACITY = 0.875
 
-export type FluxSoldermaskColorPreset = keyof typeof FLUX_SOLDERMASK_COLOR_HEX
+export type SoldermaskColorPreset = keyof typeof SOLDERMASK_PRESET_HEX
 
 export const getBoardSoldermaskColor = (
   board: PcbBoard | null | undefined,
@@ -28,12 +28,11 @@ export const resolveSoldermaskColor = (
   const presetName = normalizedColor?.toLowerCase()
   const colorValue =
     normalizedColor === undefined || presetName === "not_specified"
-      ? FLUX_SOLDERMASK_COLOR_HEX.green
-      : (FLUX_SOLDERMASK_COLOR_HEX[presetName as FluxSoldermaskColorPreset] ??
+      ? SOLDERMASK_PRESET_HEX.green
+      : (SOLDERMASK_PRESET_HEX[presetName as SoldermaskColorPreset] ??
         normalizedColor)
 
-  // Flux passes non-preset values to THREE.Color, which supports CSS color
-  // names, hex values, rgb(), and hsl(). Keep that behavior for custom colors.
+  // Preserve custom CSS color support for names, hex values, rgb(), and hsl().
   return new THREE.Color(colorValue)
 }
 
@@ -47,8 +46,8 @@ export const compositeSoldermaskOverCopper = (
 ): THREE.Color =>
   soldermaskColor
     .clone()
-    .multiplyScalar(FLUX_SOLDERMASK_OPACITY)
-    .add(copperColor.clone().multiplyScalar(1 - FLUX_SOLDERMASK_OPACITY))
+    .multiplyScalar(SOLDERMASK_OPACITY)
+    .add(copperColor.clone().multiplyScalar(1 - SOLDERMASK_OPACITY))
 
 export const soldermaskColorToCss = (color: THREE.Color): string => {
   const displayColor = color.clone().convertLinearToSRGB()
