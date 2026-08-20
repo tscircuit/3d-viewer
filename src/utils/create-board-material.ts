@@ -21,9 +21,7 @@ export const createBoardMaterial = ({
 }: CreateBoardMaterialOptions): THREE.MeshStandardMaterial => {
   if (material === "fr4") {
     return new THREE.MeshPhysicalMaterial({
-      // A dark edge lets the green solder mask read as a finished PCB rather
-      // than a tan substrate with a decal placed on top.
-      color: 0x103a26,
+      color,
       side,
       metalness: 0.0,
       roughness: 0.48,

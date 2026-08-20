@@ -1,8 +1,8 @@
-import type { AnyCircuitElement } from "circuit-json"
 import { expect, test } from "bun:test"
+import type { AnyCircuitElement } from "circuit-json"
+import { JSDOM } from "jsdom"
 import { convertCircuitJsonTo3dSvg } from "../src/convert-circuit-json-to-3d-svg.ts"
 import { applyJsdomShim } from "../src/utils/jsdom-shim.ts"
-import { JSDOM } from "jsdom"
 import { calculateOutlineBounds } from "../src/utils/outline-bounds"
 
 const atariOutline = [
@@ -107,7 +107,65 @@ test("convert 3d view to svg with Atari board outline", async () => {
 
   const svgString = await convertCircuitJsonTo3dSvg(circuitJson, options)
 
-  // Verify that the SVG contains green soldermask colors
-  expect(svgString).toContain("rgb(39,89,56)") // Dark green soldermask
-  expect(svgString).toContain("rgb(51,114,73)") // Light green traces
+  expect(svgString).toContain("rgb(0,72,50)")
+
+  const redSvgString = await convertCircuitJsonTo3dSvg(
+    [{ ...atariBoardData, solder_mask_color: "red" } as any, circuitJson[1]!],
+    options,
+  )
+  expect(redSvgString).toContain("rgb(101,2,2)")
+})
+
+test("panel SVG color comes from its first contained board", async () => {
+  const dom = new JSDOM()
+  applyJsdomShim(dom)
+
+  const circuitJson: AnyCircuitElement[] = [
+    {
+      type: "pcb_board",
+      pcb_board_id: "unrelated-board",
+      center: { x: 0, y: 0 },
+      width: 5,
+      height: 5,
+      thickness: 1.6,
+      material: "fr4",
+      num_layers: 2,
+      solder_mask_color: "red",
+    } as any,
+    {
+      type: "pcb_panel",
+      pcb_panel_id: "panel-1",
+      center: { x: 0, y: 0 },
+      width: 20,
+      height: 10,
+    } as any,
+    {
+      type: "pcb_board",
+      pcb_board_id: "panel-board",
+      pcb_panel_id: "panel-1",
+      center: { x: 0, y: 0 },
+      width: 8,
+      height: 6,
+      thickness: 1.6,
+      material: "fr4",
+      num_layers: 2,
+      solder_mask_color: "purple",
+    } as any,
+  ]
+
+  const svgString = await convertCircuitJsonTo3dSvg(circuitJson, {
+    width: 800,
+    height: 600,
+    backgroundColor: "#ffffff",
+    padding: 20,
+    zoom: 9,
+    viewAngle: "top",
+    camera: {
+      position: { x: 0, y: 0, z: 100 },
+      lookAt: { x: 0, y: 0, z: 0 },
+    },
+  })
+
+  expect(svgString).toContain("rgb(21,0,138)")
+  expect(svgString).not.toContain("rgb(101,2,2)")
 })

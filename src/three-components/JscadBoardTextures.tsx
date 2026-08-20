@@ -14,6 +14,7 @@ import { configureObjectShadows } from "../utils/configure-object-shadows"
 import { createBoardReliefTextures } from "../utils/create-board-relief-textures"
 import { getLayerTextureResolution } from "../utils/layer-texture-resolution"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
+import { getBoardSoldermaskColor } from "../utils/soldermask-color"
 
 interface JscadBoardTexturesProps {
   circuitJson: AnyCircuitElement[]
@@ -51,6 +52,7 @@ export function JscadBoardTextures({
         thickness: firstBoardInPanel?.thickness ?? 1.4,
         material: firstBoardInPanel?.material ?? "fr4",
         num_layers: firstBoardInPanel?.num_layers ?? 2,
+        solder_mask_color: getBoardSoldermaskColor(firstBoardInPanel),
       } as PcbBoard
     }
 
@@ -111,6 +113,7 @@ export function JscadBoardTextures({
     const createTexturePlane = ({
       texture,
       maskedCopperMask,
+      soldermaskCoverage,
       zOffset,
       isBottomLayer,
       name,
@@ -120,6 +123,7 @@ export function JscadBoardTextures({
     }: {
       texture: THREE.CanvasTexture | null | undefined
       maskedCopperMask: THREE.CanvasTexture | null | undefined
+      soldermaskCoverage: THREE.CanvasTexture | null | undefined
       zOffset: number
       isBottomLayer: boolean
       name: string
@@ -150,6 +154,7 @@ export function JscadBoardTextures({
       const reliefTextures = createBoardReliefTextures(
         texture,
         maskedCopperMask,
+        soldermaskCoverage,
       )
       const material = new THREE.MeshPhysicalMaterial({
         ...sharedMaterialOptions,
@@ -190,6 +195,7 @@ export function JscadBoardTextures({
     const topBoardMesh = createTexturePlane({
       texture: textures.topBoard,
       maskedCopperMask: textures.topMaskedCopper,
+      soldermaskCoverage: textures.topSoldermaskCoverage,
       zOffset: pcbThickness / 2 + SURFACE_OFFSET,
       isBottomLayer: false,
       name: "jscad-top-board-texture",
@@ -203,6 +209,7 @@ export function JscadBoardTextures({
     const bottomBoardMesh = createTexturePlane({
       texture: textures.bottomBoard,
       maskedCopperMask: textures.bottomMaskedCopper,
+      soldermaskCoverage: textures.bottomSoldermaskCoverage,
       zOffset: -pcbThickness / 2 - SURFACE_OFFSET,
       isBottomLayer: true,
       name: "jscad-bottom-board-texture",
@@ -230,6 +237,10 @@ export function JscadBoardTextures({
 
       textures.topBoard?.dispose()
       textures.bottomBoard?.dispose()
+      textures.topMaskedCopper?.dispose()
+      textures.bottomMaskedCopper?.dispose()
+      textures.topSoldermaskCoverage?.dispose()
+      textures.bottomSoldermaskCoverage?.dispose()
     }
   }, [rootObject, boardData, textures, pcbThickness])
 

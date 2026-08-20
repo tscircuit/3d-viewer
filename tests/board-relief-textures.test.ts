@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test"
 import * as THREE from "three"
+import { colors as defaultColors } from "../src/geoms/constants"
 import { createBoardReliefTextures } from "../src/utils/create-board-relief-textures"
 
 type PixelImage = {
@@ -110,11 +111,14 @@ const withCanvasDocument = (run: () => void) => {
   }
 }
 
-const fillSoldermask = (canvas: TestCanvas) => {
+const fillSoldermask = (
+  canvas: TestCanvas,
+  color: [number, number, number] = [20, 110, 55],
+) => {
   for (let y = 0; y < canvas.height; y += 1) {
     for (let x = 0; x < canvas.width; x += 1) {
       // This bright green used to trigger the g > 88 masked-copper heuristic.
-      canvas.setPixel(x, y, [20, 110, 55, 255])
+      canvas.setPixel(x, y, [...color, 255])
     }
   }
 }
@@ -151,5 +155,74 @@ test("trace mask applies masked-copper relief only on trace geometry", () => {
 
     const bump = relief!.bumpMap.image as unknown as TestCanvas
     expect(bump.channel(2, 2, 0)).toBeLessThan(bump.channel(1, 1, 0) - 80)
+  })
+})
+
+test("masked-copper relief works for every non-green Flux mask", () => {
+  const masks: Array<[string, [number, number, number]]> = [
+    ["blue", [0, 74, 171]],
+    ["yellow", [174, 128, 0]],
+    ["white", [221, 221, 221]],
+    ["red", [101, 2, 2]],
+    ["black", [0, 0, 0]],
+    ["purple", [21, 0, 138]],
+  ]
+
+  withCanvasDocument(() => {
+    for (const [name, color] of masks) {
+      const board = createCanvas(4, 4)
+      fillSoldermask(board, color)
+      const traceMask = createCanvas(4, 4)
+      traceMask.setPixel(2, 2, [255, 255, 255, 255])
+
+      const relief = createBoardReliefTextures(
+        asTexture(board),
+        asTexture(traceMask),
+      )
+      expect(relief, name).not.toBeNull()
+
+      const bump = relief!.bumpMap.image as unknown as TestCanvas
+      expect(bump.channel(2, 2, 0), name).toBeLessThan(
+        bump.channel(1, 1, 0) - 30,
+      )
+    }
+  })
+})
+
+test("soldermask coverage wins when its RGB exactly matches copper", () => {
+  withCanvasDocument(() => {
+    const copperRgb = defaultColors.copper.map((channel) =>
+      Math.round(channel * 255),
+    ) as [number, number, number]
+    const exposedCopper = createCanvas(4, 4)
+    fillSoldermask(exposedCopper, copperRgb)
+    const copperRelief = createBoardReliefTextures(asTexture(exposedCopper))
+
+    const copperColoredMask = createCanvas(4, 4)
+    fillSoldermask(copperColoredMask, copperRgb)
+    const soldermaskCoverage = createCanvas(4, 4)
+    fillSoldermask(soldermaskCoverage, [255, 255, 255])
+    const maskRelief = createBoardReliefTextures(
+      asTexture(copperColoredMask),
+      null,
+      asTexture(soldermaskCoverage),
+    )
+
+    expect(copperRelief).not.toBeNull()
+    expect(maskRelief).not.toBeNull()
+
+    const copperBump = copperRelief!.bumpMap.image as unknown as TestCanvas
+    const maskBump = maskRelief!.bumpMap.image as unknown as TestCanvas
+    const copperMetalness = copperRelief!.metalnessMap
+      .image as unknown as TestCanvas
+    const maskMetalness = maskRelief!.metalnessMap
+      .image as unknown as TestCanvas
+
+    expect(maskBump.channel(1, 1, 0)).toBeGreaterThan(
+      copperBump.channel(1, 1, 0) + 100,
+    )
+    expect(maskMetalness.channel(1, 1, 0)).toBeLessThan(
+      copperMetalness.channel(1, 1, 0) - 100,
+    )
   })
 })

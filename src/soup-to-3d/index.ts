@@ -1,10 +1,13 @@
-import type { Geom3 } from "@jscad/modeling/src/geometries/types"
-import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
-import { su } from "@tscircuit/circuit-json-util"
-import { cuboid } from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
-import { colors, boardMaterialColors } from "../geoms/constants"
+import type { Geom3 } from "@jscad/modeling/src/geometries/types"
+import { cuboid } from "@jscad/modeling/src/primitives"
+import { su } from "@tscircuit/circuit-json-util"
+import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
 import { createBoardGeomWithOutline } from "../geoms/create-board-with-outline"
+import {
+  resolveBoardSoldermaskColor,
+  soldermaskColorToJscadRgb,
+} from "../utils/soldermask-color"
 
 /**
  * Creates a simplified board geometry (just the board shape, no components/holes).
@@ -63,15 +66,16 @@ export const createSimplifiedBoardGeom = (
   }
 
   // Colorize and return the simplified board
-  const materialName =
-    "material" in boardOrPanel && boardOrPanel.material
-      ? boardOrPanel.material
-      : panels.length > 0
-        ? (boards.find(
-            (b) => b.pcb_panel_id === (boardOrPanel as PcbPanel).pcb_panel_id,
-          )?.material ?? "fr4")
-        : "fr4"
-  const material = boardMaterialColors[materialName] ?? colors.fr4Tan
+  const boardForColor =
+    panels.length > 0
+      ? boards.find(
+          (board) =>
+            board.pcb_panel_id === (boardOrPanel as PcbPanel).pcb_panel_id,
+        )
+      : (boardOrPanel as PcbBoard)
+  const material = soldermaskColorToJscadRgb(
+    resolveBoardSoldermaskColor(boardForColor),
+  )
 
   return [colorize(material, boardGeom)]
 }

@@ -26,7 +26,7 @@ import type {
   PcbVia,
 } from "circuit-json"
 import type { GeomContext } from "./GeomContext"
-import { boardMaterialColors, colors, M } from "./geoms/constants"
+import { colors, M } from "./geoms/constants"
 import {
   arePointsClockwise,
   createBoardGeomWithOutline,
@@ -38,6 +38,11 @@ import {
   clampRectBorderRadius,
   extractRectBorderRadius,
 } from "./utils/rect-border-radius"
+import {
+  getBoardSoldermaskColor,
+  resolveBoardSoldermaskColor,
+  soldermaskColorToJscadRgb,
+} from "./utils/soldermask-color"
 
 const PAD_ROUNDED_SEGMENTS = 64
 const BOARD_CLIP_Z_MARGIN = 1
@@ -109,6 +114,7 @@ export class BoardGeomBuilder {
         thickness: firstBoardInPanel?.thickness ?? 1.4,
         material: firstBoardInPanel?.material ?? "fr4",
         num_layers: firstBoardInPanel?.num_layers ?? 2,
+        solder_mask_color: getBoardSoldermaskColor(firstBoardInPanel),
       } as PcbBoard
     } else {
       // Skip boards that are inside a panel - only render the panel outline
@@ -698,9 +704,10 @@ export class BoardGeomBuilder {
   private finalize() {
     if (!this.boardGeom) return
     // Colorize the final board geometry
-    const boardMaterialColor =
-      boardMaterialColors[this.board.material] ?? colors.fr4Tan
-    this.boardGeom = colorize(boardMaterialColor, this.boardGeom)
+    const soldermaskColor = soldermaskColorToJscadRgb(
+      resolveBoardSoldermaskColor(this.board),
+    )
+    this.boardGeom = colorize(soldermaskColor, this.boardGeom)
 
     this.finalGeoms = [
       this.boardGeom,

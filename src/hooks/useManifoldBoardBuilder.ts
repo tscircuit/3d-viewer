@@ -9,7 +9,6 @@ import {
 } from "src/textures"
 import * as THREE from "three"
 import {
-  boardMaterialColors,
   colors as defaultColors,
   TRACE_TEXTURE_RESOLUTION,
 } from "../geoms/constants"
@@ -20,6 +19,10 @@ import { processNonPlatedHolesForManifold } from "../utils/manifold/process-non-
 import { processPlatedHolesForManifold } from "../utils/manifold/process-plated-holes"
 import { processViasForManifold } from "../utils/manifold/process-vias"
 import { manifoldMeshToThreeGeometry } from "../utils/manifold-mesh-to-three-geometry"
+import {
+  getBoardSoldermaskColor,
+  resolveBoardSoldermaskColor,
+} from "../utils/soldermask-color"
 
 export interface ManifoldGeoms {
   board?: {
@@ -86,6 +89,7 @@ export const useManifoldBoardBuilder = (
         thickness: firstBoardInPanel?.thickness ?? 1.4,
         material: firstBoardInPanel?.material ?? "fr4",
         num_layers: firstBoardInPanel?.num_layers ?? 2,
+        solder_mask_color: getBoardSoldermaskColor(firstBoardInPanel),
       } as PcbBoard
     }
 
@@ -306,15 +310,9 @@ export const useManifoldBoardBuilder = (
       if (boardManifold) {
         const boardThreeMesh = boardManifold.getMesh()
         const finalBoardGeom = manifoldMeshToThreeGeometry(boardThreeMesh)
-        const matColorArray =
-          boardMaterialColors[boardData.material] ?? defaultColors.fr4Tan
         currentGeoms.board = {
           geometry: finalBoardGeom,
-          color: new THREE.Color(
-            matColorArray[0],
-            matColorArray[1],
-            matColorArray[2],
-          ),
+          color: resolveBoardSoldermaskColor(boardData),
           material: boardData.material,
           isFaux: isFauxBoard,
         }

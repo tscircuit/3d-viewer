@@ -10,6 +10,7 @@ import type { CombinedBoardTextures } from "./index"
 interface TexturePlaneConfig {
   texture: THREE.CanvasTexture | null | undefined
   maskedCopperMask?: THREE.CanvasTexture | null
+  soldermaskCoverage?: THREE.CanvasTexture | null
   yOffset: number
   isBottomLayer: boolean
   usePolygonOffset?: boolean
@@ -24,6 +25,7 @@ function createTexturePlane(
   const {
     texture,
     maskedCopperMask,
+    soldermaskCoverage,
     yOffset,
     isBottomLayer,
     usePolygonOffset = false,
@@ -51,7 +53,11 @@ function createTexturePlane(
     polygonOffsetUnits: usePolygonOffset ? -4 : 0,
     opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
   } satisfies THREE.MeshBasicMaterialParameters
-  const reliefTextures = createBoardReliefTextures(texture, maskedCopperMask)
+  const reliefTextures = createBoardReliefTextures(
+    texture,
+    maskedCopperMask,
+    soldermaskCoverage,
+  )
   const material = new THREE.MeshPhysicalMaterial({
     ...sharedMaterialOptions,
     bumpMap: reliefTextures?.bumpMap ?? null,
@@ -100,6 +106,7 @@ export function createTextureMeshes(
     {
       texture: textures.topBoard,
       maskedCopperMask: textures.topMaskedCopper,
+      soldermaskCoverage: textures.topSoldermaskCoverage,
       yOffset: pcbThickness / 2 + SURFACE_OFFSET,
       isBottomLayer: false,
       usePolygonOffset: true,
@@ -114,6 +121,7 @@ export function createTextureMeshes(
     {
       texture: textures.bottomBoard,
       maskedCopperMask: textures.bottomMaskedCopper,
+      soldermaskCoverage: textures.bottomSoldermaskCoverage,
       yOffset: -pcbThickness / 2 - SURFACE_OFFSET,
       isBottomLayer: true,
       usePolygonOffset: true,
@@ -123,6 +131,13 @@ export function createTextureMeshes(
     boardData,
   )
   if (bottomBoardMesh) meshes.push(bottomBoardMesh)
+
+  // These masks are sampled synchronously on the CPU and are never attached to
+  // a material, so release their Three.js resources once both planes are built.
+  textures.topMaskedCopper?.dispose()
+  textures.bottomMaskedCopper?.dispose()
+  textures.topSoldermaskCoverage?.dispose()
+  textures.bottomSoldermaskCoverage?.dispose()
 
   return meshes
 }

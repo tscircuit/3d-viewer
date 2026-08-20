@@ -1,8 +1,9 @@
-import * as THREE from "three"
 import type { AnyCircuitElement, PcbBoard } from "circuit-json"
+import * as THREE from "three"
 import { TRACE_TEXTURE_RESOLUTION } from "../geoms/constants"
-import { drawSoldermaskLayer } from "./soldermask/soldermask-drawing"
+import { applySoldermaskSurfaceFilter } from "./soldermask/apply-soldermask-surface-filter"
 import { getSoldermaskRenderBounds } from "./soldermask/soldermask-bounds"
+import { drawSoldermaskLayer } from "./soldermask/soldermask-drawing"
 
 export function createSoldermaskTextureForLayer({
   layer,
@@ -41,7 +42,11 @@ export function createSoldermaskTextureForLayer({
     layer,
     bounds,
     elements,
-    boardMaterial: boardData.material,
+    boardData,
+  })
+
+  applySoldermaskSurfaceFilter(ctx, canvasWidth, canvasHeight, {
+    includeReflection: layer === "top",
   })
 
   const texture = new THREE.CanvasTexture(canvas)

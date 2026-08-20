@@ -21,6 +21,8 @@ export interface CombinedBoardTextures {
   /** Geometry-only alpha masks used for relief, never as color maps. */
   topMaskedCopper?: THREE.CanvasTexture | null
   bottomMaskedCopper?: THREE.CanvasTexture | null
+  topSoldermaskCoverage?: THREE.CanvasTexture | null
+  bottomSoldermaskCoverage?: THREE.CanvasTexture | null
 }
 
 const toRgb = (colorArr: number[]) => {
@@ -30,80 +32,14 @@ const toRgb = (colorArr: number[]) => {
   )})`
 }
 
-const clampChannel = (value: number) => Math.max(0, Math.min(255, value))
-
-const applySoldermaskSurfaceFilter = (
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  options: { includeReflection?: boolean } = {},
-) => {
-  const imageData = ctx.getImageData(0, 0, width, height)
-  const data = imageData.data
-  const maxX = Math.max(width - 1, 1)
-  const maxY = Math.max(height - 1, 1)
-
-  for (let i = 0; i < data.length; i += 4) {
-    const alpha = data[i + 3] ?? 0
-    if (alpha < 16) continue
-
-    const r = data[i] ?? 0
-    const g = data[i + 1] ?? 0
-    const b = data[i + 2] ?? 0
-    const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
-    const isDarkGreen =
-      g > r * 1.35 && g > b * 1.15 && luminance < 90 && r < 80 && b < 80
-
-    if (!isDarkGreen) continue
-
-    const pixelIndex = i / 4
-    const x = pixelIndex % width
-    const y = Math.floor(pixelIndex / width)
-    const u = x / maxX
-    const v = y / maxY
-    const diagonalLight = u * 0.62 + (1 - v) * 0.38
-    const broadVariation = Math.sin((u * 1.15 + v * 0.35) * Math.PI) * 0.04
-    const lightFactor = 0.74 + diagonalLight * 0.18 + broadVariation
-
-    const whiteReflection = options.includeReflection
-      ? (() => {
-          const reflectionX = 0.36
-          const reflectionY = 0.22
-          const dx = u - reflectionX
-          const dy = v - reflectionY
-          const radialFalloff = Math.max(0, 1 - Math.hypot(dx, dy) / 0.38)
-          return radialFalloff * radialFalloff * 0.07
-        })()
-      : 0
-
-    const filteredR = (r * 0.9 + 3) * lightFactor
-    const filteredG = (g * 1.08 + 15) * lightFactor
-    const filteredB = (b * 1.28 + 13) * lightFactor
-
-    data[i] = clampChannel(
-      filteredR * (1 - whiteReflection) + 255 * whiteReflection,
-    )
-    data[i + 1] = clampChannel(
-      filteredG * (1 - whiteReflection) + 255 * whiteReflection,
-    )
-    data[i + 2] = clampChannel(
-      filteredB * (1 - whiteReflection) + 255 * whiteReflection,
-    )
-  }
-
-  ctx.putImageData(imageData, 0, 0)
-}
-
 const createCombinedTexture = ({
   textures,
   boardData,
   traceTextureResolution,
-  layer,
 }: {
   textures: Array<THREE.CanvasTexture | null | undefined>
   boardData: PcbBoard
   traceTextureResolution: number
-  layer: "top" | "bottom"
 }): THREE.CanvasTexture | null => {
   const hasImage = textures.some((texture) => texture?.image)
   if (!hasImage) return null
@@ -129,10 +65,6 @@ const createCombinedTexture = ({
     ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight)
   }
 
-  applySoldermaskSurfaceFilter(ctx, canvasWidth, canvasHeight, {
-    includeReflection: layer === "top",
-  })
-
   const combinedTexture = new THREE.CanvasTexture(canvas)
   combinedTexture.generateMipmaps = false
   combinedTexture.minFilter = THREE.LinearFilter
@@ -145,10 +77,12 @@ const createCombinedTexture = ({
 
 const createMaskedCopperMask = ({
   textures,
+  soldermaskTexture,
   boardData,
   traceTextureResolution,
 }: {
   textures: Array<THREE.CanvasTexture | null | undefined>
+  soldermaskTexture: THREE.CanvasTexture | null | undefined
   boardData: PcbBoard
   traceTextureResolution: number
 }): THREE.CanvasTexture | null => {
@@ -169,6 +103,20 @@ const createMaskedCopperMask = ({
   for (const texture of textures) {
     if (!texture?.image) continue
     ctx.drawImage(texture.image as HTMLCanvasElement, 0, 0, width, height)
+  }
+
+  // A route can overlap an exposed pad. Restrict the relief mask to pixels
+  // that are actually covered by soldermask so pad openings remain metallic.
+  if (soldermaskTexture?.image) {
+    ctx.globalCompositeOperation = "destination-in"
+    ctx.drawImage(
+      soldermaskTexture.image as HTMLCanvasElement,
+      0,
+      0,
+      width,
+      height,
+    )
+    ctx.globalCompositeOperation = "source-over"
   }
 
   const maskTexture = new THREE.CanvasTexture(canvas)
@@ -344,18 +292,22 @@ export function createCombinedBoardTextures({
       ],
       boardData,
       traceTextureResolution,
-      layer,
     })
     const maskedCopperTexture =
       showMask && showCopper
         ? createMaskedCopperMask({
             textures: [traceTexture, maskedCopperPourTexture],
+            soldermaskTexture,
             boardData,
             traceTextureResolution,
           })
         : null
 
-    return { boardTexture, maskedCopperTexture }
+    return {
+      boardTexture,
+      maskedCopperTexture,
+      soldermaskCoverageTexture: soldermaskTexture,
+    }
   }
 
   const numLayers = boardData.num_layers ?? 2
@@ -368,5 +320,7 @@ export function createCombinedBoardTextures({
     bottomBoard: bottom?.boardTexture ?? null,
     topMaskedCopper: top.maskedCopperTexture,
     bottomMaskedCopper: bottom?.maskedCopperTexture ?? null,
+    topSoldermaskCoverage: top.soldermaskCoverageTexture,
+    bottomSoldermaskCoverage: bottom?.soldermaskCoverageTexture ?? null,
   }
 }

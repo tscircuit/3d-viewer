@@ -3,10 +3,14 @@ import {
   PAD_COPPER_TEXTURE_MATERIAL,
   REALISTIC_BOARD_SURFACE_MATERIAL,
 } from "../board-surface-textures"
+import { colors as defaultColors } from "../geoms/constants"
 
 const PLAIN_SOLDERMASK_HEIGHT = 0.22
 const MASKED_COPPER_HEIGHT = 0.7
 const EXPOSED_COPPER_HEIGHT = 0.86
+const EXPOSED_COPPER_RGB = defaultColors.copper.map((channel) =>
+  Math.round(channel * 255),
+)
 
 type BoardSurfaceProfile = {
   height: number
@@ -19,6 +23,27 @@ type BoardSurfaceProfile = {
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value))
 const invertSurfaceHeight = (height: number) => 1 - height
+
+const sampleMaskAlpha = (
+  imageData: ImageData | null,
+  maskWidth: number,
+  maskHeight: number,
+  x: number,
+  y: number,
+  sourceWidth: number,
+  sourceHeight: number,
+) => {
+  if (!imageData || maskWidth <= 0 || maskHeight <= 0) return 0
+  const maskX = Math.min(
+    maskWidth - 1,
+    Math.floor((x / sourceWidth) * maskWidth),
+  )
+  const maskY = Math.min(
+    maskHeight - 1,
+    Math.floor((y / sourceHeight) * maskHeight),
+  )
+  return imageData.data[(maskY * maskWidth + maskX) * 4 + 3] ?? 0
+}
 
 const hashNoise = (x: number, y: number, salt: number) => {
   let hash = Math.imul(x, 374761393) ^ Math.imul(y, 668265263) ^ salt
@@ -65,21 +90,24 @@ const getBoardSurfaceProfile = (
   g: number,
   b: number,
   hasMaskedCopper: boolean,
+  hasSoldermaskCoverage: boolean,
 ): BoardSurfaceProfile => {
-  const isExposedCopper =
-    r > 120 && g > 70 && b < 150 && r > g * 1.05 && g > b * 1.15
-  if (isExposedCopper) {
+  // The dedicated mask has already been intersected with soldermask coverage,
+  // so it is authoritative for every mask hue, including Flux yellow.
+  if (hasMaskedCopper) {
     return {
-      height: EXPOSED_COPPER_HEIGHT,
+      height: MASKED_COPPER_HEIGHT,
       microSurfaceWeight: 0.9,
-      roughness: PAD_COPPER_TEXTURE_MATERIAL.roughness,
-      metalness: PAD_COPPER_TEXTURE_MATERIAL.metalness,
-      isExposedCopper: true,
-      isMaskedCopper: false,
+      roughness: 0.54,
+      metalness: 0.025,
+      isExposedCopper: false,
+      isMaskedCopper: true,
     }
   }
 
-  const isBrightLegend = r > 170 && g > 170 && b > 160
+  // Flux's white soldermask is #dddddd, so reserve this profile for the
+  // near-white silkscreen rather than treating the board itself as legend.
+  const isBrightLegend = r > 235 && g > 235 && b > 225
   if (isBrightLegend) {
     return {
       height: PLAIN_SOLDERMASK_HEIGHT,
@@ -91,38 +119,44 @@ const getBoardSurfaceProfile = (
     }
   }
 
-  const isGreenSoldermask =
-    g > r * 1.25 && g > b * 1.05 && r < 110 && g < 180 && b < 130
-  if (!isGreenSoldermask) {
+  // Coverage is authoritative when a custom mask happens to have the same RGB
+  // as finished copper. Check it before the color-based copper fallback.
+  if (hasSoldermaskCoverage) {
     return {
       height: PLAIN_SOLDERMASK_HEIGHT,
-      microSurfaceWeight: 0.7,
-      roughness: 0.58,
+      microSurfaceWeight: 1,
+      roughness: 0.7,
       metalness: 0.015,
       isExposedCopper: false,
       isMaskedCopper: false,
     }
   }
 
-  // The color map may be graded for presentation, so it cannot identify
-  // buried copper reliably. Only the dedicated geometry mask may do that.
-  return hasMaskedCopper
-    ? {
-        height: MASKED_COPPER_HEIGHT,
-        microSurfaceWeight: 0.9,
-        roughness: 0.54,
-        metalness: 0.025,
-        isExposedCopper: false,
-        isMaskedCopper: true,
-      }
-    : {
-        height: PLAIN_SOLDERMASK_HEIGHT,
-        microSurfaceWeight: 1,
-        roughness: 0.7,
-        metalness: 0.015,
-        isExposedCopper: false,
-        isMaskedCopper: false,
-      }
+  const isExposedCopper =
+    Math.hypot(
+      r - (EXPOSED_COPPER_RGB[0] ?? 0),
+      g - (EXPOSED_COPPER_RGB[1] ?? 0),
+      b - (EXPOSED_COPPER_RGB[2] ?? 0),
+    ) < 55
+  if (isExposedCopper) {
+    return {
+      height: EXPOSED_COPPER_HEIGHT,
+      microSurfaceWeight: 0.9,
+      roughness: PAD_COPPER_TEXTURE_MATERIAL.roughness,
+      metalness: PAD_COPPER_TEXTURE_MATERIAL.metalness,
+      isExposedCopper: true,
+      isMaskedCopper: false,
+    }
+  }
+
+  return {
+    height: PLAIN_SOLDERMASK_HEIGHT,
+    microSurfaceWeight: 1,
+    roughness: 0.7,
+    metalness: 0.015,
+    isExposedCopper: false,
+    isMaskedCopper: false,
+  }
 }
 
 const createDataTexture = (canvas: HTMLCanvasElement) => {
@@ -140,6 +174,7 @@ const createDataTexture = (canvas: HTMLCanvasElement) => {
 export const createBoardReliefTextures = (
   texture: THREE.CanvasTexture,
   maskedCopperMask?: THREE.CanvasTexture | null,
+  soldermaskCoverage?: THREE.CanvasTexture | null,
 ): {
   bumpMap: THREE.CanvasTexture
   normalMap: THREE.CanvasTexture
@@ -159,6 +194,17 @@ export const createBoardReliefTextures = (
   const maskImageData =
     maskCtx && maskWidth && maskHeight
       ? maskCtx.getImageData(0, 0, maskWidth, maskHeight)
+      : null
+
+  const soldermaskCanvas = soldermaskCoverage?.image as
+    | HTMLCanvasElement
+    | undefined
+  const soldermaskCtx = soldermaskCanvas?.getContext("2d")
+  const soldermaskWidth = soldermaskCanvas?.width ?? 0
+  const soldermaskHeight = soldermaskCanvas?.height ?? 0
+  const soldermaskImageData =
+    soldermaskCtx && soldermaskWidth && soldermaskHeight
+      ? soldermaskCtx.getImageData(0, 0, soldermaskWidth, soldermaskHeight)
       : null
 
   const imageData = sourceCtx.getImageData(
@@ -197,26 +243,30 @@ export const createBoardReliefTextures = (
       continue
     }
 
-    const maskX = maskImageData
-      ? Math.min(
-          maskWidth - 1,
-          Math.floor((x / sourceCanvas.width) * maskWidth),
-        )
-      : 0
-    const maskY = maskImageData
-      ? Math.min(
-          maskHeight - 1,
-          Math.floor((y / sourceCanvas.height) * maskHeight),
-        )
-      : 0
-    const maskAlpha = maskImageData
-      ? (maskImageData.data[(maskY * maskWidth + maskX) * 4 + 3] ?? 0)
-      : 0
+    const maskAlpha = sampleMaskAlpha(
+      maskImageData,
+      maskWidth,
+      maskHeight,
+      x,
+      y,
+      sourceCanvas.width,
+      sourceCanvas.height,
+    )
+    const soldermaskAlpha = sampleMaskAlpha(
+      soldermaskImageData,
+      soldermaskWidth,
+      soldermaskHeight,
+      x,
+      y,
+      sourceCanvas.width,
+      sourceCanvas.height,
+    )
     const profile = getBoardSurfaceProfile(
       data[i] ?? 0,
       data[i + 1] ?? 0,
       data[i + 2] ?? 0,
       maskAlpha >= 16,
+      soldermaskAlpha >= 16,
     )
     const salt = sourceCanvas.width + sourceCanvas.height
     const fineGrain = profile.isExposedCopper

@@ -1,13 +1,12 @@
-import type { AnyCircuitElement } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
-import Debug from "debug"
+import type { AnyCircuitElement } from "circuit-json"
 import * as THREE from "three"
 import { SVGRenderer } from "three/examples/jsm/renderers/SVGRenderer.js"
 import { createSimplifiedBoardGeom } from "./soup-to-3d"
 import { createBoardMaterial } from "./utils/create-board-material"
 import { createGeometryFromPolygons } from "./utils/create-geometry-from-polygons"
 import { renderComponent } from "./utils/render-component"
-import { colors } from "./geoms/constants"
+import { resolveBoardSoldermaskColor } from "./utils/soldermask-color"
 
 interface CircuitToSvgOptions {
   width?: number
@@ -29,8 +28,6 @@ interface CircuitToSvgOptions {
     }
   }
 }
-
-const log = Debug("tscircuit:3d-viewer:convert-circuit-json-to-3d-svg")
 
 export async function convertCircuitJsonTo3dSvg(
   circuitJson: AnyCircuitElement[],
@@ -93,18 +90,16 @@ export async function convertCircuitJsonTo3dSvg(
     await renderComponent(component, scene)
   }
 
-  const boardData = su(circuitJson).pcb_board.list()[0]
+  const boards = su(circuitJson).pcb_board.list()
+  const firstPanel = circuitJson.find((element) => element.type === "pcb_panel")
+  const boardData = firstPanel
+    ? boards.find((board) => board.pcb_panel_id === firstPanel.pcb_panel_id)
+    : boards.find((board) => !board.pcb_panel_id)
 
   // Add board geometry after components
   const boardGeom = createSimplifiedBoardGeom(circuitJson)
   if (boardGeom) {
-    // Use green solder mask color for the board
-    const solderMaskColor = colors.fr4SolderMaskGreen
-    const baseColor = new THREE.Color(
-      solderMaskColor[0],
-      solderMaskColor[1],
-      solderMaskColor[2],
-    )
+    const baseColor = resolveBoardSoldermaskColor(boardData)
 
     for (const geom of boardGeom) {
       const g = geom as any

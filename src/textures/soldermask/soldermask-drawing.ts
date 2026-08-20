@@ -1,15 +1,18 @@
-import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import type {
   AnyCircuitElement,
   PcbBoard,
   PcbCopperPour,
   PcbRenderLayer,
 } from "circuit-json"
-import {
-  colors as defaultColors,
-  soldermaskColors,
-} from "../../geoms/constants"
+import { CircuitToCanvasDrawer } from "circuit-to-canvas"
+import * as THREE from "three"
+import { colors as defaultColors } from "../../geoms/constants"
 import type { OutlineBounds } from "../../utils/outline-bounds"
+import {
+  compositeSoldermaskOverCopper,
+  resolveBoardSoldermaskColor,
+  soldermaskColorToCss,
+} from "../../utils/soldermask-color"
 
 const toRgb = (colorArr: number[]) => {
   const [r = 0, g = 0, b = 0] = colorArr
@@ -25,19 +28,25 @@ type SoldermaskPalette = {
   transparent: string
 }
 
-const getSoldermaskPalette = (
-  material: PcbBoard["material"],
+export const getSoldermaskPalette = (
+  boardData: PcbBoard,
 ): SoldermaskPalette => {
-  const soldermask = toRgb(
-    soldermaskColors[material] ?? defaultColors.fr4SolderMaskGreen,
+  const soldermaskColor = resolveBoardSoldermaskColor(boardData)
+  const copperColor = new THREE.Color().setRGB(
+    defaultColors.copper[0],
+    defaultColors.copper[1],
+    defaultColors.copper[2],
+    THREE.SRGBColorSpace,
   )
-  const soldermaskOverCopper =
-    material === "fr1"
-      ? toRgb(defaultColors.fr1TracesWithMaskCopper)
-      : toRgb(defaultColors.fr4TracesWithMaskGreen)
+  const soldermask = soldermaskColorToCss(soldermaskColor)
+  const soldermaskOverCopper = soldermaskColorToCss(
+    compositeSoldermaskOverCopper(soldermaskColor, copperColor),
+  )
 
   return {
     soldermask,
+    // Flux uses one 87.5%-opaque material over both surfaces. This canvas
+    // pipeline pre-composites that material where copper sits underneath.
     soldermaskOverCopper,
     copper: toRgb(defaultColors.copper),
     transparent: "rgba(0,0,0,0)",
@@ -61,15 +70,15 @@ export const drawSoldermaskLayer = ({
   layer,
   bounds,
   elements,
-  boardMaterial,
+  boardData,
 }: {
   ctx: CanvasRenderingContext2D
   layer: "top" | "bottom"
   bounds: OutlineBounds
   elements: AnyCircuitElement[]
-  boardMaterial: PcbBoard["material"]
+  boardData: PcbBoard
 }) => {
-  const palette = getSoldermaskPalette(boardMaterial)
+  const palette = getSoldermaskPalette(boardData)
   const copperRenderLayer: PcbRenderLayer =
     layer === "top" ? "top_copper" : "bottom_copper"
 
