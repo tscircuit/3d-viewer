@@ -1,10 +1,10 @@
-import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import type {
   AnyCircuitElement,
   PcbBoard,
   PcbCopperPour,
   PcbRenderLayer,
 } from "circuit-json"
+import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import {
   colors as defaultColors,
   soldermaskColors,
@@ -25,16 +25,37 @@ type SoldermaskPalette = {
   transparent: string
 }
 
+// Named PCB colors are intentionally less saturated than CSS colors. Real
+// solder masks are translucent coatings over copper/FR4, not pure RGB ink.
+const NAMED_SOLDER_MASK_COLORS: Record<
+  string,
+  { mask: string; maskOverCopper: string }
+> = {
+  green: { mask: "#0b5d3b", maskOverCopper: "#2f7a4f" },
+  purple: { mask: "#56317d", maskOverCopper: "#77549a" },
+  red: { mask: "#8f1f2d", maskOverCopper: "#b04b54" },
+  yellow: { mask: "#b49a00", maskOverCopper: "#c9b633" },
+  blue: { mask: "#145da0", maskOverCopper: "#3d7fb8" },
+  white: { mask: "#d5d7db", maskOverCopper: "#e2b84a" },
+  black: { mask: "#161b22", maskOverCopper: "#62666b" },
+}
+
 const getSoldermaskPalette = (
   material: PcbBoard["material"],
+  solderMaskColor?: string,
 ): SoldermaskPalette => {
-  const soldermask = toRgb(
-    soldermaskColors[material] ?? defaultColors.fr4SolderMaskGreen,
-  )
+  const namedColor = solderMaskColor
+    ? NAMED_SOLDER_MASK_COLORS[solderMaskColor.trim().toLowerCase()]
+    : undefined
+  const soldermask =
+    namedColor?.mask ??
+    solderMaskColor ??
+    toRgb(soldermaskColors[material] ?? defaultColors.fr4SolderMaskGreen)
   const soldermaskOverCopper =
-    material === "fr1"
+    namedColor?.maskOverCopper ??
+    (material === "fr1"
       ? toRgb(defaultColors.fr1TracesWithMaskCopper)
-      : toRgb(defaultColors.fr4TracesWithMaskGreen)
+      : toRgb(defaultColors.fr4TracesWithMaskGreen))
 
   return {
     soldermask,
@@ -62,14 +83,16 @@ export const drawSoldermaskLayer = ({
   bounds,
   elements,
   boardMaterial,
+  solderMaskColor,
 }: {
   ctx: CanvasRenderingContext2D
   layer: "top" | "bottom"
   bounds: OutlineBounds
   elements: AnyCircuitElement[]
   boardMaterial: PcbBoard["material"]
+  solderMaskColor?: string
 }) => {
-  const palette = getSoldermaskPalette(boardMaterial)
+  const palette = getSoldermaskPalette(boardMaterial, solderMaskColor)
   const copperRenderLayer: PcbRenderLayer =
     layer === "top" ? "top_copper" : "bottom_copper"
 
