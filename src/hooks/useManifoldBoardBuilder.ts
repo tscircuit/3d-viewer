@@ -170,7 +170,7 @@ export const useManifoldBoardBuilder = (
       const clipThickness = currentPcbThickness + 2 * BOARD_CLIP_Z_MARGIN
       let boardClipVolume: any | null = null
 
-      const BOARD_CLIP_XY_OUTSET = 0.01
+      const BOARD_CLIP_XY_OUTSET = 0
 
       if (outlineCrossSection) {
         let clipCrossSection = outlineCrossSection

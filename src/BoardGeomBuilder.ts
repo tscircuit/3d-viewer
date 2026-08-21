@@ -41,7 +41,7 @@ import {
 
 const PAD_ROUNDED_SEGMENTS = 64
 const BOARD_CLIP_Z_MARGIN = 1
-const BOARD_CLIP_XY_OUTSET = 0.05
+const BOARD_CLIP_XY_OUTSET = 0
 
 type BuilderState =
   | "initializing"
