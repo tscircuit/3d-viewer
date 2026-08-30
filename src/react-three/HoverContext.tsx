@@ -41,6 +41,10 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
   hoverablesRef.current = hoverables
 
   const hoveredObjectRef = useRef<HoverableObject | null>(null)
+  const lastHoverPositionRef = useRef<[number, number, number] | null>(null)
+  const lastMouseMoveTimeRef = useRef<number>(0)
+  const THROTTLE_MS = 16 // ~60fps
+  const POSITION_THRESHOLD = 0.1 // Minimum position change to trigger onHover
 
   const addHoverable = useCallback((hoverable: HoverableObject) => {
     setHoverables((prev) => [...prev, hoverable])
@@ -82,6 +86,13 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
 
   const onMouseMove = useCallback(
     (event: MouseEvent) => {
+      // Throttle mouse move events
+      const now = performance.now()
+      if (now - lastMouseMoveTimeRef.current < THROTTLE_MS) {
+        return
+      }
+      lastMouseMoveTimeRef.current = now
+
       if (!renderer.domElement) return
       const rect = renderer.domElement.getBoundingClientRect()
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
@@ -94,6 +105,7 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
         if (hoveredObjectRef.current) {
           hoveredObjectRef.current.onUnhover()
           hoveredObjectRef.current = null
+          lastHoverPositionRef.current = null
         }
         return
       }
@@ -105,30 +117,52 @@ export const HoverProvider = ({ children }: { children: React.ReactNode }) => {
         const newHovered = findHoverable(firstIntersect.object)
 
         if (newHovered) {
-          const eventPayload = {
-            mousePosition: [
-              firstIntersect.point.x,
-              firstIntersect.point.y,
-              firstIntersect.point.z,
-            ] as [number, number, number],
-          }
+          const newPosition: [number, number, number] = [
+            firstIntersect.point.x,
+            firstIntersect.point.y,
+            firstIntersect.point.z,
+          ]
+          const eventPayload = { mousePosition: newPosition }
+
           if (hoveredObjectRef.current !== newHovered) {
+            // Different object - trigger hover change
             hoveredObjectRef.current?.onUnhover()
             newHovered.onHover(eventPayload)
             hoveredObjectRef.current = newHovered
+            lastHoverPositionRef.current = newPosition
           } else {
-            newHovered.onHover(eventPayload)
+            // Same object - only call onHover if position changed significantly
+            const lastPos = lastHoverPositionRef.current
+            if (lastPos) {
+              const dx = Math.abs(newPosition[0] - lastPos[0])
+              const dy = Math.abs(newPosition[1] - lastPos[1])
+              const dz = Math.abs(newPosition[2] - lastPos[2])
+              if (
+                dx > POSITION_THRESHOLD ||
+                dy > POSITION_THRESHOLD ||
+                dz > POSITION_THRESHOLD
+              ) {
+                newHovered.onHover(eventPayload)
+                lastHoverPositionRef.current = newPosition
+              }
+              // Skip onHover if position hasn't changed much
+            } else {
+              newHovered.onHover(eventPayload)
+              lastHoverPositionRef.current = newPosition
+            }
           }
         } else {
           if (hoveredObjectRef.current) {
             hoveredObjectRef.current.onUnhover()
             hoveredObjectRef.current = null
+            lastHoverPositionRef.current = null
           }
         }
       } else {
         if (hoveredObjectRef.current) {
           hoveredObjectRef.current.onUnhover()
           hoveredObjectRef.current = null
+          lastHoverPositionRef.current = null
         }
       }
     },
