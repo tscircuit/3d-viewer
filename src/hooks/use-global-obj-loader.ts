@@ -20,6 +20,19 @@ if (typeof window !== "undefined" && !window.TSCIRCUIT_OBJ_LOADER_CACHE) {
   window.TSCIRCUIT_OBJ_LOADER_CACHE = new Map<string, CacheItem>()
 }
 
+const getObjLoaderCacheKey = (url: string) => {
+  try {
+    const parsedUrl = new URL(url, window.location.href)
+    parsedUrl.searchParams.delete("cachebust_origin")
+    parsedUrl.hash = ""
+    return parsedUrl.toString()
+  } catch {
+    return url
+      .replace(/([?&])cachebust_origin=[^&#]*&?/, "$1")
+      .replace(/[?&]$/, "")
+  }
+}
+
 export function useGlobalObjLoader(
   url: string | null,
 ): Object3D | null | Error {
@@ -28,7 +41,7 @@ export function useGlobalObjLoader(
   useEffect(() => {
     if (!url) return
 
-    const cleanUrl = url.replace(/&cachebust_origin=$/, "")
+    const cleanUrl = getObjLoaderCacheKey(url)
 
     const cache = window.TSCIRCUIT_OBJ_LOADER_CACHE
     let hasUrlChanged = false
@@ -90,7 +103,7 @@ export function useGlobalObjLoader(
       // If it's not in the cache, create a new promise and cache it
       const promise = loadAndParseObj().then((result) => {
         if (result instanceof Error) {
-          // If the result is an Error, return it
+          cache.delete(cleanUrl)
           return result
         }
         cache.set(cleanUrl, { ...cache.get(cleanUrl)!, result })
