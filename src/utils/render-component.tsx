@@ -22,7 +22,16 @@ export async function renderComponent(
     component.model_glb_url ??
     component.model_gltf_url
   if (url) {
-    const model = await load3DModel(url)
+    const modelFormat = component.model_obj_url
+      ? "obj"
+      : component.model_wrl_url
+        ? "wrl"
+        : component.model_stl_url
+          ? "stl"
+          : component.model_glb_url
+            ? "glb"
+            : "gltf"
+    const model = await load3DModel(url, modelFormat)
     if (model) {
       if (component.position) {
         model.position.set(
