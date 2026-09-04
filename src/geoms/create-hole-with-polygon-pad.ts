@@ -4,6 +4,7 @@ import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { translate, rotateZ } from "@jscad/modeling/src/operations/transforms"
 import { union } from "@jscad/modeling/src/operations/booleans"
 import { M } from "./constants"
+import { rotatePolygonPadPoint } from "./polygon-pad-placement"
 
 const ELLIPSE_SEGMENTS = 64
 
@@ -79,11 +80,14 @@ export const createHoleWithPolygonPadHoleGeom = (
 ): Geom3 | null => {
   const holeShape = hole.hole_shape || "circle"
   const sizeDelta = options.sizeDelta ?? 0
-  const offsetX = hole.hole_offset_x || 0
-  const offsetY = hole.hole_offset_y || 0
+  // the hole offset is relative to the pad and rotates with ccw_rotation
+  const rotatedOffset = rotatePolygonPadPoint(
+    { x: hole.hole_offset_x || 0, y: hole.hole_offset_y || 0 },
+    hole.ccw_rotation,
+  )
   const center: [number, number, number] = [
-    hole.x + offsetX,
-    hole.y + offsetY,
+    hole.x + rotatedOffset.x,
+    hole.y + rotatedOffset.y,
     0,
   ]
 

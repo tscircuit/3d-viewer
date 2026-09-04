@@ -19,6 +19,7 @@ import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { rotate, translate } from "@jscad/modeling/src/operations/transforms"
 import { extractRectBorderRadius } from "../utils/rect-border-radius"
 import { createHoleWithPolygonPadHoleGeom } from "./create-hole-with-polygon-pad"
+import { getRotatedPolygonPadOutline } from "./polygon-pad-placement"
 
 const PLATED_HOLE_DRILL_OVERREACH = 0.05
 const RECT_PAD_SEGMENTS = 64
@@ -628,10 +629,10 @@ export const platedHole = (
       )
     }
 
-    const polygonPoints = padOutline.map((point: { x: number; y: number }) => [
-      point.x,
-      point.y,
-    ])
+    const polygonPoints = getRotatedPolygonPadOutline(
+      padOutline,
+      plated_hole.ccw_rotation,
+    ).map((point) => [point.x, point.y])
     const polygon2d = jscadPolygon({ points: polygonPoints as any })
     const centerZ = 0
 
