@@ -13,6 +13,7 @@ import {
   TRACE_TEXTURE_RESOLUTION,
 } from "../geoms/constants"
 import { getBoardEdgeColor } from "../utils/get-board-edge-color"
+import { getPcbThicknessFromCircuitJson } from "../utils/get-pcb-thickness"
 import { getLayerTextureResolution } from "../utils/layer-texture-resolution"
 import { createManifoldBoard } from "../utils/manifold/create-manifold-board"
 import { processCutoutsForManifold } from "../utils/manifold/process-cutouts"
@@ -83,7 +84,7 @@ export const useManifoldBoardBuilder = (
         center: panel.center,
         width: panel.width,
         height: panel.height,
-        thickness: firstBoardInPanel?.thickness ?? 1.4,
+        thickness: getPcbThicknessFromCircuitJson(circuitJson),
         material: firstBoardInPanel?.material ?? "fr4",
         num_layers: firstBoardInPanel?.num_layers ?? 2,
         solder_mask_color: firstBoardInPanel?.solder_mask_color,

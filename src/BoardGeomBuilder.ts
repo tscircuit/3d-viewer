@@ -35,6 +35,7 @@ import { createHoleWithPolygonPadHoleGeom } from "./geoms/create-hole-with-polyg
 import { platedHole } from "./geoms/plated-hole"
 import { createViaBoardDrill, createViaCopper } from "./geoms/via-geoms"
 import { getBoardEdgeColor } from "./utils/get-board-edge-color"
+import { getPcbThicknessFromCircuitJson } from "./utils/get-pcb-thickness"
 import {
   clampRectBorderRadius,
   extractRectBorderRadius,
@@ -107,7 +108,7 @@ export class BoardGeomBuilder {
         center: panel.center,
         width: panel.width,
         height: panel.height,
-        thickness: firstBoardInPanel?.thickness ?? 1.4,
+        thickness: getPcbThicknessFromCircuitJson(circuitJson),
         material: firstBoardInPanel?.material ?? "fr4",
         num_layers: firstBoardInPanel?.num_layers ?? 2,
         solder_mask_color: firstBoardInPanel?.solder_mask_color,
