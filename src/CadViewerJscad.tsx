@@ -15,6 +15,7 @@ import { Error3d } from "./three-components/Error3d"
 import { JscadBoardTextures } from "./three-components/JscadBoardTextures"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
+import { getCircuitBoardLikeForViewer } from "./utils/get-circuit-board-like"
 import { calculateOutlineBounds } from "./utils/outline-bounds"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 
@@ -60,12 +61,15 @@ export const CadViewerJscad = forwardRef<
     // Use the new hook to manage board geometry building
     const boardGeom = useBoardGeomBuilder(internalCircuitJson)
 
+    const viewerBoard = useMemo(
+      () => getCircuitBoardLikeForViewer(internalCircuitJson),
+      [internalCircuitJson],
+    )
+
     const initialCameraPosition = useMemo(() => {
-      if (!internalCircuitJson) return [5, -5, 5] as const
+      if (!viewerBoard) return [5, -5, 5] as const
       try {
-        const board = su(internalCircuitJson as any).pcb_board.list()[0]
-        if (!board) return [5, -5, 5] as const
-        const { width, height } = board
+        const { width, height } = viewerBoard
 
         if (!width && !height) {
           return [5, -5, 5] as const
@@ -85,43 +89,33 @@ export const CadViewerJscad = forwardRef<
         console.error(e)
         return [5, -5, 5] as const
       }
-    }, [internalCircuitJson])
+    }, [viewerBoard])
 
     const isFauxBoard = useMemo(() => {
-      if (!internalCircuitJson) return false
-      try {
-        const board = su(internalCircuitJson as any).pcb_board.list()[0]
-        return !!board && board.pcb_board_id === "faux-board"
-      } catch (e) {
-        return false
-      }
-    }, [internalCircuitJson])
+      return viewerBoard?.pcb_board_id === "faux-board"
+    }, [viewerBoard])
 
     const boardDimensions = useMemo(() => {
-      if (!internalCircuitJson) return undefined
+      if (!viewerBoard) return undefined
       try {
-        const board = su(internalCircuitJson as any).pcb_board.list()[0]
-        if (!board) return undefined
-        const bounds = calculateOutlineBounds(board)
+        const bounds = calculateOutlineBounds(viewerBoard)
         return { width: bounds.width, height: bounds.height }
       } catch (e) {
         console.error(e)
         return undefined
       }
-    }, [internalCircuitJson])
+    }, [viewerBoard])
 
     const boardCenter = useMemo(() => {
-      if (!internalCircuitJson) return undefined
+      if (!viewerBoard) return undefined
       try {
-        const board = su(internalCircuitJson as any).pcb_board.list()[0]
-        if (!board) return undefined
-        const bounds = calculateOutlineBounds(board)
+        const bounds = calculateOutlineBounds(viewerBoard)
         return { x: bounds.centerX, y: bounds.centerY }
       } catch (e) {
         console.error(e)
         return undefined
       }
-    }, [internalCircuitJson])
+    }, [viewerBoard])
 
     const pcbThickness = usePcbThickness(internalCircuitJson)
 
