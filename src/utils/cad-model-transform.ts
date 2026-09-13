@@ -59,6 +59,8 @@ function getOrientationRotationForBoardNormal(
   }
 }
 
+const BOARD_MIDPLANE_Z_EPSILON = 1e-6
+
 function getAdjustedCadPosition(
   cadComponent: CadComponent,
   layer: Layer,
@@ -68,10 +70,19 @@ function getAdjustedCadPosition(
     return undefined
   }
 
-  let boardRelativeZ = cadComponent.position.z
+  let boardRelativeZ = cadComponent.position.z ?? 0
+  const isAtBoardMidplane = Math.abs(boardRelativeZ) < BOARD_MIDPLANE_Z_EPSILON
 
-  if (layer === "bottom" && cadComponent.position.z >= 0) {
-    boardRelativeZ = -(cadComponent.position.z + pcbThickness)
+  if (layer === "bottom") {
+    if (isAtBoardMidplane) {
+      boardRelativeZ = -pcbThickness / 2
+    } else if (boardRelativeZ >= 0) {
+      boardRelativeZ = -(boardRelativeZ + pcbThickness)
+    }
+  } else if (isAtBoardMidplane) {
+    // circuit-json (and older core panel output) sometimes emits z=0, which is
+    // the mesh midplane. Place those models on the top surface instead.
+    boardRelativeZ = pcbThickness / 2
   }
 
   return [cadComponent.position.x, cadComponent.position.y, boardRelativeZ]

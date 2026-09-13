@@ -232,3 +232,48 @@ test("prefers jscad over step when both model definitions are present", () => {
 
   expect(getCadModelType(cadComponent)).toBe("jscad")
 })
+
+test("places top-layer CAD on the board surface when circuit-json z is 0", () => {
+  const cadComponent = createCadComponent({
+    position: { x: 1, y: 2, z: 0 },
+  })
+
+  const transform = getCadModelTransform(cadComponent, {
+    layer: "top",
+    pcbThickness: 1.4,
+    modelType: "glb",
+  })
+
+  expect(transform.position?.[0]).toBeCloseTo(1)
+  expect(transform.position?.[1]).toBeCloseTo(2)
+  expect(transform.position?.[2]).toBeCloseTo(0.7)
+})
+
+test("places bottom-layer CAD on the board surface when circuit-json z is 0", () => {
+  const cadComponent = createCadComponent({
+    position: { x: 1, y: 2, z: 0 },
+    rotation: { x: 180, y: 0, z: 180 },
+  })
+
+  const transform = getCadModelTransform(cadComponent, {
+    layer: "bottom",
+    pcbThickness: 1.4,
+    modelType: "glb",
+  })
+
+  expect(transform.position?.[2]).toBeCloseTo(-0.7)
+})
+
+test("does not shift top-layer CAD that already sits on the board surface", () => {
+  const cadComponent = createCadComponent({
+    position: { x: 0, y: 0, z: 0.7 },
+  })
+
+  const transform = getCadModelTransform(cadComponent, {
+    layer: "top",
+    pcbThickness: 1.4,
+    modelType: "glb",
+  })
+
+  expect(transform.position?.[2]).toBeCloseTo(0.7)
+})
