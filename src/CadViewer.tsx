@@ -263,22 +263,6 @@ const CadViewerInner = (props: any) => {
           referenceObject={referenceObject}
         />
       )}
-      <div
-        style={{
-          position: "absolute",
-          right: 8,
-          top: 8,
-          background: "#222",
-          color: "#fff",
-          padding: "2px 8px",
-          borderRadius: 4,
-          fontSize: 12,
-          opacity: 0.7,
-          userSelect: "none",
-        }}
-      >
-        Engine: <b>{engine === "jscad" ? "JSCAD" : "Manifold"}</b>
-      </div>
       {menuVisible && (
         <ContextMenu
           menuRef={menuRef}
