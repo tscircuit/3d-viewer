@@ -145,14 +145,17 @@ const createCombinedTexture = ({
 
 const createMaskedCopperMask = ({
   textures,
+  soldermaskTexture,
   boardData,
   traceTextureResolution,
 }: {
   textures: Array<THREE.CanvasTexture | null | undefined>
+  soldermaskTexture: THREE.CanvasTexture | null
   boardData: PcbBoard
   traceTextureResolution: number
 }): THREE.CanvasTexture | null => {
-  if (!textures.some((texture) => texture?.image)) return null
+  if (!soldermaskTexture?.image || !textures.some((texture) => texture?.image))
+    return null
 
   const bounds = calculateOutlineBounds(boardData)
   const width = Math.floor(bounds.width * traceTextureResolution)
@@ -170,6 +173,18 @@ const createMaskedCopperMask = ({
     if (!texture?.image) continue
     ctx.drawImage(texture.image as HTMLCanvasElement, 0, 0, width, height)
   }
+
+  // Traces and pours can cross exposed pads and other mask openings. Only
+  // copper beneath actual soldermask should receive the covered-copper material.
+  ctx.globalCompositeOperation = "destination-in"
+  ctx.drawImage(
+    soldermaskTexture.image as HTMLCanvasElement,
+    0,
+    0,
+    width,
+    height,
+  )
+  ctx.globalCompositeOperation = "source-over"
 
   const maskTexture = new THREE.CanvasTexture(canvas)
   maskTexture.colorSpace = THREE.NoColorSpace
@@ -350,6 +365,7 @@ export function createCombinedBoardTextures({
       showMask && showCopper
         ? createMaskedCopperMask({
             textures: [traceTexture, maskedCopperPourTexture],
+            soldermaskTexture,
             boardData,
             traceTextureResolution,
           })
