@@ -1,8 +1,18 @@
-import type { AnyCircuitElement, PcbBoard } from "circuit-json"
+import type { AnyCircuitElement, PcbBoard, PcbViaInput } from "circuit-json"
 import * as THREE from "three"
 import { TRACE_TEXTURE_RESOLUTION } from "../geoms/constants"
 import { drawSilkscreenLayer } from "./silkscreen/silkscreen-drawing"
 import { getSoldermaskRenderBounds } from "./soldermask/soldermask-bounds"
+
+type PcbBoardWithViaTenting = PcbBoard & {
+  default_via_tented_on_top?: boolean
+  default_via_tented_on_bottom?: boolean
+}
+
+type PcbViaTenting = PcbViaInput & {
+  tented_on_top?: boolean
+  tented_on_bottom?: boolean
+}
 
 const isSilkscreenElement = (
   element: AnyCircuitElement,
@@ -14,13 +24,25 @@ const isSilkscreenElement = (
   return elementType.startsWith("pcb_silkscreen_")
 }
 
-const isOpenSurfaceAperture = (
+export const isOpenSurfaceAperture = (
   element: AnyCircuitElement,
+  layer: "top" | "bottom",
+  boardData: PcbBoardWithViaTenting,
   soldermaskVisible: boolean,
 ) => {
   if (element.type === "pcb_cutout") return true
   if (element.type === "pcb_via") {
-    return !soldermaskVisible || element.is_tented !== true
+    const tenting: PcbViaTenting = element
+    const viaTenting =
+      layer === "top" ? tenting.tented_on_top : tenting.tented_on_bottom
+    const boardTenting =
+      layer === "top"
+        ? boardData.default_via_tented_on_top
+        : boardData.default_via_tented_on_bottom
+    return (
+      !soldermaskVisible ||
+      (viaTenting ?? tenting.is_tented ?? boardTenting) !== true
+    )
   }
   if (element.type === "pcb_hole" || element.type === "pcb_plated_hole") {
     return !soldermaskVisible || element.is_covered_with_solder_mask !== true
@@ -48,7 +70,7 @@ export function createSilkscreenTextureForLayer({
   )
   if (elements.length === 0) return null
   const apertureElements = circuitJson.filter((element) =>
-    isOpenSurfaceAperture(element, soldermaskVisible),
+    isOpenSurfaceAperture(element, layer, boardData, soldermaskVisible),
   )
 
   const bounds = getSoldermaskRenderBounds(circuitJson, boardData)
