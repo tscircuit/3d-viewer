@@ -12,6 +12,7 @@ import {
 import { useThree } from "../react-three/ThreeContext"
 import { configureObjectShadows } from "../utils/configure-object-shadows"
 import { createBoardReliefTextures } from "../utils/create-board-relief-textures"
+import { getPcbThicknessFromCircuitJson } from "../utils/get-pcb-thickness"
 import { getLayerTextureResolution } from "../utils/layer-texture-resolution"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
 
@@ -48,7 +49,7 @@ export function JscadBoardTextures({
         center: panel.center,
         width: panel.width,
         height: panel.height,
-        thickness: firstBoardInPanel?.thickness ?? 1.4,
+        thickness: getPcbThicknessFromCircuitJson(circuitJson),
         material: firstBoardInPanel?.material ?? "fr4",
         num_layers: firstBoardInPanel?.num_layers ?? 2,
         solder_mask_color: firstBoardInPanel?.solder_mask_color,
