@@ -18,6 +18,12 @@ const addProxyLogging = (proxy: any) => {
 
 const config: StorybookConfig = {
   stories: ["../stories/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
+  staticDirs: [
+    {
+      from: "../stories/renderer-comparison/public",
+      to: "/renderer-comparison",
+    },
+  ],
   framework: {
     name: "@storybook/react-vite",
     options: {},
