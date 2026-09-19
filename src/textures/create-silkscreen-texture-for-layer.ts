@@ -14,6 +14,28 @@ const isSilkscreenElement = (
   return elementType.startsWith("pcb_silkscreen_")
 }
 
+const isViaTentedOnLayer = (
+  via: PcbViaInput,
+  board: PcbBoard,
+  layer: "top" | "bottom",
+) => {
+  if (layer === "top") {
+    return (
+      via.tented_on_top ??
+      via.is_tented ??
+      board.default_via_tented_on_top ??
+      false
+    )
+  }
+
+  return (
+    via.tented_on_bottom ??
+    via.is_tented ??
+    board.default_via_tented_on_bottom ??
+    false
+  )
+}
+
 export const isOpenSurfaceAperture = (
   element: AnyCircuitElement,
   layer: "top" | "bottom",
@@ -22,17 +44,7 @@ export const isOpenSurfaceAperture = (
 ) => {
   if (element.type === "pcb_cutout") return true
   if (element.type === "pcb_via") {
-    const tenting: PcbViaInput = element
-    const viaTenting =
-      layer === "top" ? tenting.tented_on_top : tenting.tented_on_bottom
-    const boardTenting =
-      layer === "top"
-        ? boardData.default_via_tented_on_top
-        : boardData.default_via_tented_on_bottom
-    return (
-      !soldermaskVisible ||
-      (viaTenting ?? tenting.is_tented ?? boardTenting) !== true
-    )
+    return !soldermaskVisible || !isViaTentedOnLayer(element, boardData, layer)
   }
   if (element.type === "pcb_hole" || element.type === "pcb_plated_hole") {
     return !soldermaskVisible || element.is_covered_with_solder_mask !== true
