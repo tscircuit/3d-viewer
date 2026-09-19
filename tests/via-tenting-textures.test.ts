@@ -1,17 +1,17 @@
 import { expect, test } from "bun:test"
-import type { PcbBoard, PcbVia } from "circuit-json"
+import type { PcbVia } from "circuit-json"
 import { isOpenSurfaceAperture } from "../src/textures/create-silkscreen-texture-for-layer"
 
 test("via texture apertures respect board defaults and explicit overrides", () => {
-  const board: PcbBoard = {
-    type: "pcb_board",
+  const board = {
+    type: "pcb_board" as const,
     pcb_board_id: "board",
     center: { x: 0, y: 0 },
     width: 10,
     height: 10,
     thickness: 1.4,
     num_layers: 2,
-    material: "fr4",
+    material: "fr4" as const,
     default_via_tented_on_top: true,
     default_via_tented_on_bottom: false,
   }
