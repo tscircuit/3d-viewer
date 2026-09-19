@@ -4,16 +4,6 @@ import { TRACE_TEXTURE_RESOLUTION } from "../geoms/constants"
 import { drawSilkscreenLayer } from "./silkscreen/silkscreen-drawing"
 import { getSoldermaskRenderBounds } from "./soldermask/soldermask-bounds"
 
-type PcbBoardWithViaTenting = PcbBoard & {
-  default_via_tented_on_top?: boolean
-  default_via_tented_on_bottom?: boolean
-}
-
-type PcbViaTenting = PcbViaInput & {
-  tented_on_top?: boolean
-  tented_on_bottom?: boolean
-}
-
 const isSilkscreenElement = (
   element: AnyCircuitElement,
   layer: "top" | "bottom",
@@ -27,12 +17,12 @@ const isSilkscreenElement = (
 export const isOpenSurfaceAperture = (
   element: AnyCircuitElement,
   layer: "top" | "bottom",
-  boardData: PcbBoardWithViaTenting,
+  boardData: PcbBoard,
   soldermaskVisible: boolean,
 ) => {
   if (element.type === "pcb_cutout") return true
   if (element.type === "pcb_via") {
-    const tenting: PcbViaTenting = element
+    const tenting: PcbViaInput = element
     const viaTenting =
       layer === "top" ? tenting.tented_on_top : tenting.tented_on_bottom
     const boardTenting =
