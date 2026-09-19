@@ -34,3 +34,10 @@ package-lock.json
 storybook-static
 repomix-output.txt
 .codex
+
+# Generated renderer diagnostics, never screenshot baselines.
+stories/renderer-comparison/public/assets/
+stories/renderer-comparison/public/generated/
+playwright-report/
+test-results/
+.renderer-comparison-cache/
