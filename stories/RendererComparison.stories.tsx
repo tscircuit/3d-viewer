@@ -37,3 +37,33 @@ export const BinaryGlbViaGltf: Story = { args: { caseId: "clip-glb-via-gltf" } }
 export const UsbMounted: Story = { args: { caseId: "usb-mounted" } }
 export const UsbMissingOrigin: Story = { args: { caseId: "usb-zero" } }
 export const Calibration: Story = { args: { caseId: "calibration" } }
+export const StepMissingOrigin: Story = {
+  name: "TO-92 STEP: original missing origin",
+  args: { caseId: "to92-native-origin" },
+}
+export const StepExplicitOrigin: Story = {
+  name: "TO-92 STEP: explicit contact midpoint",
+  args: { caseId: "to92-explicit-midpoint" },
+}
+export const FlashlightMissingOrigins: Story = {
+  name: "USB-C flashlight: original missing origins",
+  args: { caseId: "flashlight-native-origins" },
+}
+export const GltfOmittedPosition: Story = {
+  args: { caseId: "soic-gltf-omitted-position" },
+}
+export const GltfExplicitPosition: Story = {
+  args: { caseId: "soic-gltf-explicit-position" },
+}
+export const FootprinterOmittedPosition: Story = {
+  args: { caseId: "soic-footprinter-omitted-position" },
+}
+export const FootprinterExplicitPosition: Story = {
+  args: { caseId: "soic-footprinter-explicit-position" },
+}
+export const UnitScaleOriginalStl: Story = {
+  args: { caseId: "scale-fit-original-stl" },
+}
+export const UnitScaleObjControl: Story = {
+  args: { caseId: "scale-fit-obj-control" },
+}

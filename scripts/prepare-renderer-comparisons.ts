@@ -5,6 +5,7 @@ import type { AnyCircuitElement } from "circuit-json"
 import { convertCircuitJsonToGltf } from "circuit-json-to-gltf"
 import { comparisonCases } from "../tests/fixtures/renderer-parity/cases"
 import { applyComparisonCase } from "../tests/fixtures/renderer-parity/apply-case"
+import { policyModelAssets } from "../tests/fixtures/renderer-parity/policy-inputs"
 import type {
   ComparisonManifest,
   PreparedComparison,
@@ -23,8 +24,11 @@ for (const [source, destination] of [
   ["stories/assets/myGltf.gltf", "myGltf.gltf"],
   ["stories/assets/myGlb.glb", "contact.glb"],
   ["tests/fixtures/renderer-parity/assets/micro-xnj-zb.obj", "usb.obj"],
+  ...policyModelAssets.map(({ source, destination }) => [source, destination]),
 ]) {
-  await copyFile(join(root, source!), join(assets, destination!))
+  const target = join(assets, destination!)
+  await mkdir(dirname(target), { recursive: true })
+  await copyFile(join(root, source!), target)
 }
 const gltf = await Bun.file(join(assets, "myGltf.gltf")).json()
 for (const dependency of [...(gltf.buffers ?? []), ...(gltf.images ?? [])]) {
@@ -48,9 +52,17 @@ const manifest: ComparisonManifest = {
   cases: [],
 }
 for (const definition of comparisonCases) {
-  const isUsb = definition.format === "usb"
+  const isPolicy = "seed" in definition
+  const isUsb = "format" in definition && definition.format === "usb"
   const seed: AnyCircuitElement[] = await Bun.file(
-    join(fixtureRoot, isUsb ? "usb.circuit.json" : "clip.circuit.json"),
+    join(
+      fixtureRoot,
+      isPolicy
+        ? definition.seed
+        : isUsb
+          ? "usb.circuit.json"
+          : "clip.circuit.json",
+    ),
   ).json()
   const { circuit, target } = applyComparisonCase(seed, definition)
 
@@ -60,13 +72,22 @@ for (const definition of comparisonCases) {
     description: definition.description,
     category: definition.category,
     targetCadId: target.cad_component_id,
+    exportTargetNodeIndex:
+      "exportTargetNodeIndex" in definition
+        ? definition.exportTargetNodeIndex
+        : undefined,
     circuitJson: circuit,
     exportMessages: [],
-    camera: {
-      target: [target.position.x, target.position.y, target.position.z],
-      span: isUsb ? 13 : 4.5,
-      fromBelow: "layer" in definition && definition.layer === "bottom",
-    },
+    camera: isPolicy
+      ? {
+          target: [...definition.camera.target],
+          span: definition.camera.span,
+        }
+      : {
+          target: [target.position.x, target.position.y, target.position.z],
+          span: isUsb ? 13 : 4.5,
+          fromBelow: "layer" in definition && definition.layer === "bottom",
+        },
   }
   if (definition.id === "calibration") {
     manifest.cases.push(entry)

@@ -11,8 +11,16 @@ export interface PreparedComparison {
   id: string
   title: string
   description: string
-  category: "control" | "rotation" | "origin" | "format" | "real"
+  category:
+    | "control"
+    | "rotation"
+    | "origin"
+    | "format"
+    | "real"
+    | "position"
+    | "scale"
   targetCadId: string
+  exportTargetNodeIndex?: number
   circuitJson: AnyCircuitElement[]
   glbUrl?: string
   exportError?: string

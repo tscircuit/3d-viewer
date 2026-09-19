@@ -1,3 +1,5 @@
+import { policyCases } from "./policy-cases"
+
 export const comparisonCases = [
   {
     id: "clip-zero-explicit-origin",
@@ -132,4 +134,5 @@ export const comparisonCases = [
     explicitOrigin: true,
     format: "obj",
   },
+  ...policyCases,
 ] as const

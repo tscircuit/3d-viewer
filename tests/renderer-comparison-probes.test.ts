@@ -4,6 +4,8 @@ import { comparisonCases } from "./fixtures/renderer-parity/cases"
 test("explicit nonzero rotation probes are oblique rather than quarter turns", () => {
   let obliqueAxes = 0
   for (const fixture of comparisonCases) {
+    // Policy fixtures preserve original authored inputs rather than angle probes.
+    if ("seed" in fixture) continue
     // Physical mounting fixtures are constrained by their tabs and holes;
     // their cardinal angles are covered by a separate geometric fit test.
     if ("physicalMount" in fixture && fixture.physicalMount) continue

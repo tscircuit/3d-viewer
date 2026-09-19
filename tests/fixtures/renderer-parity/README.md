@@ -50,3 +50,38 @@ Generated GLBs and the manifest live in the ignored story `public/generated`
 directory. An exporter exception is recorded as a renderer failure, not
 silently converted into a substitute model. Neither renderer is patched by
 this suite.
+
+## Origin, position, and fit policy stories
+
+`policy-cases.ts` adds the exporter fixtures whose expectations changed during
+the canonical-coordinate migration. These stories use the original inputs,
+not silently corrected versions:
+
+| Case | Original input | Separately labelled control |
+| --- | --- | --- |
+| TO-92 STEP | No explicit model origin | Only `model_origin_position=(1.27,0,0)` is added |
+| USB-C flashlight | Original positions and missing origins for all components | None; whole-board normal views and a USB-only geometry comparison |
+| SOIC8 glTF | CAD position/source association and board thickness omitted | Only CAD position `(0,0,1.8)` is added |
+| SOIC8 footprinter | The same sparse input, using the real generated-model branch | Only CAD position `(0,0,1.8)` is added |
+| Unit scale plus fit | Original boardless STL, unit scale 2, size `(1,1,1)` | Equivalent OBJ triangles with an explicit shared board and Z=0.8, leaving unit scale and target size unchanged |
+
+The raised-position controls reproduce the previous exporter's generated
+fallback; they do not claim that 1.8 mm is the correct physical mounting height.
+Likewise, an edge match does not prove pins align with pads. The TO-92 original
+and explicit-midpoint stories deliberately make that distinction inspectable.
+
+Sparse CAD records stay sparse. For records without source IDs, the harness
+selects the exported glTF node by a declared node index rather than injecting
+labels or source associations. Viewer target discovery follows the production
+preprocessing and placement helpers solely to locate the loaded subtree; it
+does not adjust either renderer's geometry. Footprinter's direct mesh group is
+handled separately from the common model transform graph.
+
+The original STL case retains the production viewer's actual loading outcome.
+An empty/failed load is an error with the exporter view still visible, not a
+placeholder accepted as matching geometry. The OBJ control isolates fitting
+from that decoder issue and from automatic faux-board placement.
+
+See [`policy/README.md`](policy/README.md) for captured input and asset provenance.
+Generated assets are prepared for both Storybook and the existing non-blocking
+browser diagnostics, so every new case receives oblique and side comparisons.

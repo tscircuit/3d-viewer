@@ -12,8 +12,8 @@ for (const fixture of comparisonCases.filter(
         description:
           "Renderer mismatch is intentionally non-blocking in CI; neither renderer is modified.",
       })
-      await openComparison(page, fixture.id)
       try {
+        await openComparison(page, fixture.id)
         const result = await compareCapture(page, testInfo, view)
         expect(
           result.exportMessages,

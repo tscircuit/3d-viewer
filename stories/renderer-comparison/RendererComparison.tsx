@@ -43,6 +43,7 @@ import {
   GeometryComparisonPanel,
   type VisibleGeometryComparison,
 } from "./GeometryComparisonPanel"
+import { findViewerTarget } from "./viewer-target"
 
 const assetBase = "/renderer-comparison/"
 const exportToProject = new THREE.Matrix4().set(
@@ -181,11 +182,13 @@ function disposeExport(object: THREE.Object3D) {
 function ExportedModel({
   url,
   sourceName,
+  nodeIndex,
   loaded,
   failed,
 }: {
   url: string
-  sourceName: string
+  sourceName?: string
+  nodeIndex?: number
   loaded: (object: THREE.Object3D) => void
   failed: (message: string) => void
 }) {
@@ -230,7 +233,11 @@ function ExportedModel({
         root.updateWorldMatrix(true, true)
         const candidates: THREE.Object3D[] = []
         root.traverse((object) => {
-          if (object.name === sourceName) candidates.push(object)
+          const matches =
+            nodeIndex === undefined
+              ? object.name === sourceName
+              : gltf.parser.associations.get(object)?.nodes === nodeIndex
+          if (matches) candidates.push(object)
         })
         if (
           candidates.length !== 1 ||
@@ -238,7 +245,7 @@ function ExportedModel({
           !vertexCount(candidates[0])
         ) {
           throw new Error(
-            `Expected one nonempty exported node named "${sourceName}", found ${candidates.length}`,
+            `Expected one nonempty exported target ${nodeIndex === undefined ? `"${sourceName}"` : `node ${nodeIndex}`}, found ${candidates.length}`,
           )
         }
         frames.current = 0
@@ -255,44 +262,8 @@ function ExportedModel({
         disposeExport(root)
       }
     }
-  }, [url, sourceName, rootObject, failed])
+  }, [url, sourceName, nodeIndex, rootObject, failed])
   return null
-}
-
-function findViewerTarget(root: THREE.Object3D, target: CadComponent) {
-  const anchor = new THREE.Vector3(
-    target.position.x,
-    target.position.y,
-    target.position.z,
-  )
-  const candidates = root.children.filter(
-    (object) =>
-      object instanceof THREE.Group &&
-      object.position.distanceTo(anchor) < 0.00001,
-  )
-  if (candidates.length > 1) {
-    throw new Error(
-      `Ambiguous viewer CAD anchor: ${candidates.length} groups for ${target.cad_component_id}`,
-    )
-  }
-  const candidate = candidates[0]
-  if (!candidate) return null
-  // Error3d mounts a direct error box/text instead of the production transform graph.
-  if (
-    candidate.children.some(
-      (child) => child instanceof THREE.Mesh && child.renderOrder === 999999,
-    )
-  ) {
-    const text = candidate.children.find((child) => "text" in child)
-    throw new Error(
-      `Viewer model load failed: ${text && "text" in text ? String(text.text) : target.cad_component_id}`,
-    )
-  }
-  // useCadModelTransformGraph: board -> fit -> model -> loader -> loaded asset.
-  // MixedStlModel initially inserts a fallback Mesh, not the loader's real Group.
-  const asset = candidate.children[0]?.children[0]?.children[0]?.children[0]
-  if (!(asset instanceof THREE.Group) || !vertexCount(asset)) return null
-  return candidate
 }
 
 function LoadedComparison({
@@ -325,7 +296,9 @@ function LoadedComparison({
       element.type === "source_component" &&
       element.source_component_id === target.source_component_id,
   )
-  if (!source || source.type !== "source_component" || !source.name) {
+  const sourceName =
+    source?.type === "source_component" ? source.name : undefined
+  if (!sourceName && fixture.exportTargetNodeIndex === undefined) {
     throw new Error(`Missing source component name for ${fixture.targetCadId}`)
   }
   if (!isCalibration && !fixture.glbUrl && !fixture.exportError) {
@@ -366,7 +339,12 @@ function LoadedComparison({
           )
         }
         const object =
-          viewerRoot.current && findViewerTarget(viewerRoot.current, target)
+          viewerRoot.current &&
+          findViewerTarget(
+            viewerRoot.current,
+            fixture.circuitJson,
+            fixture.targetCadId,
+          )
         if (object) {
           object.updateWorldMatrix(true, true)
           const parts: string[] = []
@@ -394,7 +372,7 @@ function LoadedComparison({
     }
     frame = requestAnimationFrame(inspect)
     return () => cancelAnimationFrame(frame)
-  }, [fixture.targetCadId, target, failed, publish])
+  }, [fixture.targetCadId, fixture.circuitJson, target, failed, publish])
   return (
     <>
       <h1>{fixture.title}</h1>
@@ -404,14 +382,24 @@ function LoadedComparison({
         {fixture.camera.fromBelow ? "below" : "above"} the PCB.
       </p>
       <p>
-        CAD {fixture.targetCadId}; source {source.name}; authored XYZ angles
-        (degrees):{" "}
+        CAD {fixture.targetCadId}; source{" "}
+        {sourceName ?? "association omitted in original input"}; authored XYZ
+        angles (degrees):{" "}
         {target.rotation
           ? JSON.stringify(target.rotation)
           : "absent (implicit layer fallback)"}
         .
       </p>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+      <p>
+        A geometry match means the renderers agree, not that the model is
+        physically aligned with its footprint. Inspect the pins and pads in the
+        normal views and compare the original-input story with its labelled
+        control.
+      </p>
+      <div
+        data-testid="renderer-normal-panels"
+        style={{ display: "flex", flexWrap: "wrap", gap: 16 }}
+      >
         <section>
           <h2>Production 3d-viewer</h2>
           <div style={{ width: CAPTURE_SIZE, height: CAPTURE_SIZE }}>
@@ -424,6 +412,38 @@ function LoadedComparison({
               />
             </Providers>
           </div>
+          <details open>
+            <summary>Authored CAD placement (omissions are preserved)</summary>
+            <pre style={{ whiteSpace: "pre-wrap" }}>
+              {JSON.stringify(
+                {
+                  source_component_id:
+                    target.source_component_id ?? "(omitted)",
+                  position: target.position ?? "(omitted)",
+                  rotation: target.rotation ?? "(omitted)",
+                  model_origin_position:
+                    target.model_origin_position ?? "(omitted)",
+                  model_origin_alignment:
+                    target.model_origin_alignment ?? "(omitted)",
+                  anchor_alignment: target.anchor_alignment ?? "(omitted)",
+                  model_unit_to_mm_scale_factor:
+                    target.model_unit_to_mm_scale_factor ?? "(omitted)",
+                  size: target.size ?? "(omitted)",
+                  model_object_fit: target.model_object_fit ?? "(omitted)",
+                  board: board
+                    ? {
+                        center: board.center,
+                        width: board.width ?? "(omitted)",
+                        height: board.height ?? "(omitted)",
+                        thickness: board.thickness ?? "(omitted)",
+                      }
+                    : "(omitted; viewer may add a faux board and adjust CAD Z)",
+                },
+                null,
+                2,
+              )}
+            </pre>
+          </details>
         </section>
         <section>
           <h2>
@@ -463,7 +483,8 @@ function LoadedComparison({
                   >
                     <ExportedModel
                       url={fixture.glbUrl}
-                      sourceName={source.name}
+                      sourceName={sourceName}
+                      nodeIndex={fixture.exportTargetNodeIndex}
                       loaded={loaded}
                       failed={failed}
                     />
@@ -585,6 +606,11 @@ function ComparisonSession({ caseId }: { caseId: string }) {
       api.error = message
       setError(message)
       setStatus("error")
+      setPendingViews({})
+      setComparisonErrors({
+        oblique: `Geometry comparison unavailable: ${message}`,
+        side: `Geometry comparison unavailable: ${message}`,
+      })
     },
     [api],
   )

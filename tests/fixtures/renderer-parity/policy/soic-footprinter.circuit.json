@@ -1,0 +1,28 @@
+[
+  {
+    "type": "source_component",
+    "source_component_id": "sc1",
+    "name": "SOIC-8"
+  },
+  {
+    "type": "pcb_component",
+    "pcb_component_id": "pc1",
+    "source_component_id": "sc1",
+    "center": { "x": 0, "y": 0 },
+    "width": 5,
+    "height": 4
+  },
+  {
+    "type": "cad_component",
+    "cad_component_id": "cad1",
+    "pcb_component_id": "pc1",
+    "footprinter_string": "soic8"
+  },
+  {
+    "type": "pcb_board",
+    "pcb_board_id": "pb1",
+    "center": { "x": 0, "y": 0 },
+    "width": 8,
+    "height": 8
+  }
+]
