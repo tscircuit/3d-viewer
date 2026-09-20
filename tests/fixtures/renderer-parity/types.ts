@@ -7,6 +7,25 @@ export type CalibrationMutation =
   | "reverse-x"
   | "wrong-order"
 
+export interface ComparisonCase {
+  id: string
+  title: string
+  description: string
+  category: "rotation" | "origin" | "control"
+  sourceFile: string
+  targetName: string
+  physicalExpectation?: {
+    correctRenderer: "viewer" | "exporter"
+    correct: string
+    incorrect: string
+  }
+  camera: {
+    target: [number, number, number]
+    span: number
+    fromBelow?: boolean
+  }
+}
+
 export interface PreparedComparison {
   id: string
   title: string
@@ -20,7 +39,9 @@ export interface PreparedComparison {
     | "position"
     | "scale"
   targetCadId: string
-  exportTargetNodeIndex?: number
+  sourceFile?: string
+  sourceCode?: string
+  physicalExpectation?: ComparisonCase["physicalExpectation"]
   circuitJson: AnyCircuitElement[]
   glbUrl?: string
   exportError?: string

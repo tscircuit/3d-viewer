@@ -1,18 +1,16 @@
 import { copyFile, mkdir } from "node:fs/promises"
 import { dirname, join } from "node:path"
 import { fileURLToPath, pathToFileURL } from "node:url"
-import type { AnyCircuitElement } from "circuit-json"
 import { convertCircuitJsonToGltf } from "circuit-json-to-gltf"
 import { comparisonCases } from "../tests/fixtures/renderer-parity/cases"
-import { applyComparisonCase } from "../tests/fixtures/renderer-parity/apply-case"
-import { policyModelAssets } from "../tests/fixtures/renderer-parity/policy-inputs"
+import { compileRendererCircuit } from "../tests/fixtures/renderer-parity/compile-circuit"
+import { prepareRealPartAssets } from "./prepare-real-part-assets"
 import type {
   ComparisonManifest,
   PreparedComparison,
 } from "../tests/fixtures/renderer-parity/types"
 
 const root = fileURLToPath(new URL("..", import.meta.url))
-const fixtureRoot = join(root, "tests/fixtures/renderer-parity")
 const publicRoot = join(root, "stories/renderer-comparison/public")
 const generated = join(publicRoot, "generated")
 const assets = join(publicRoot, "assets")
@@ -20,27 +18,20 @@ await mkdir(generated, { recursive: true })
 await mkdir(assets, { recursive: true })
 
 for (const [source, destination] of [
-  ["stories/assets/myObj.obj", "contact.obj"],
-  ["stories/assets/myGltf.gltf", "myGltf.gltf"],
-  ["stories/assets/myGlb.glb", "contact.glb"],
-  ["tests/fixtures/renderer-parity/assets/micro-xnj-zb.obj", "usb.obj"],
-  ...policyModelAssets.map(({ source, destination }) => [source, destination]),
+  [
+    "tests/fixtures/renderer-parity/policy/TO-92_Inline.step",
+    "real/TO-92_Inline.step",
+  ],
+  [
+    "tests/fixtures/renderer-parity/policy/flashlight-usb.obj",
+    "real/flashlight-usb.obj",
+  ],
 ]) {
   const target = join(assets, destination!)
   await mkdir(dirname(target), { recursive: true })
   await copyFile(join(root, source!), target)
 }
-const gltf = await Bun.file(join(assets, "myGltf.gltf")).json()
-for (const dependency of [...(gltf.buffers ?? []), ...(gltf.images ?? [])]) {
-  if (!dependency.uri || dependency.uri.startsWith("data:")) continue
-  if (/^[a-z]+:/i.test(dependency.uri) || dependency.uri.includes(".."))
-    throw new Error(
-      `Fixture contains a nonlocal glTF dependency: ${dependency.uri}`,
-    )
-  const target = join(assets, dependency.uri)
-  await mkdir(dirname(target), { recursive: true })
-  await copyFile(join(root, "stories/assets", dependency.uri), target)
-}
+await prepareRealPartAssets(assets)
 
 const exporterPackage = await Bun.file(
   fileURLToPath(
@@ -52,19 +43,10 @@ const manifest: ComparisonManifest = {
   cases: [],
 }
 for (const definition of comparisonCases) {
-  const isPolicy = "seed" in definition
-  const isUsb = "format" in definition && definition.format === "usb"
-  const seed: AnyCircuitElement[] = await Bun.file(
-    join(
-      fixtureRoot,
-      isPolicy
-        ? definition.seed
-        : isUsb
-          ? "usb.circuit.json"
-          : "clip.circuit.json",
-    ),
-  ).json()
-  const { circuit, target } = applyComparisonCase(seed, definition)
+  const { circuitJson, target, sourceCode } = await compileRendererCircuit(
+    definition,
+    root,
+  )
 
   const entry: PreparedComparison = {
     id: definition.id,
@@ -72,22 +54,12 @@ for (const definition of comparisonCases) {
     description: definition.description,
     category: definition.category,
     targetCadId: target.cad_component_id,
-    exportTargetNodeIndex:
-      "exportTargetNodeIndex" in definition
-        ? definition.exportTargetNodeIndex
-        : undefined,
-    circuitJson: circuit,
+    sourceFile: definition.sourceFile,
+    sourceCode,
+    physicalExpectation: definition.physicalExpectation,
+    circuitJson,
     exportMessages: [],
-    camera: isPolicy
-      ? {
-          target: [...definition.camera.target],
-          span: definition.camera.span,
-        }
-      : {
-          target: [target.position.x, target.position.y, target.position.z],
-          span: isUsb ? 13 : 4.5,
-          fromBelow: "layer" in definition && definition.layer === "bottom",
-        },
+    camera: { ...definition.camera, target: [...definition.camera.target] },
   }
   if (definition.id === "calibration") {
     manifest.cases.push(entry)
@@ -110,7 +82,7 @@ for (const definition of comparisonCases) {
   try {
     console.error = record
     console.warn = record
-    const glb = await convertCircuitJsonToGltf(circuit, {
+    const glb = await convertCircuitJsonToGltf(structuredClone(circuitJson), {
       format: "glb",
       projectBaseUrl: pathToFileURL(`${publicRoot}/`).href,
       boardTextureResolution: 256,

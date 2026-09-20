@@ -1,138 +1,89 @@
-import { policyCases } from "./policy-cases"
+import type { ComparisonCase } from "./types"
 
-export const comparisonCases = [
+const circuitDir = "tests/fixtures/renderer-parity/circuits"
+const uprightTo92 = {
+  correctRenderer: "viewer",
+  correct:
+    "The transistor body is above the PCB and all three leads pass through their plated holes.",
+  incorrect:
+    "The transistor is inverted or sideways: its body intersects or hangs below the PCB instead of sitting above the holes.",
+} as const
+
+export const comparisonCases: readonly ComparisonCase[] = [
   {
-    id: "clip-zero-explicit-origin",
-    title: "Contact: zero rotation, explicit asset origin",
+    id: "to92-x-mounting",
+    title: "TO-92: mounting a source model turned about X",
     description:
-      "Positive control: original contact geometry, with origin (0,0,0) explicitly selected.",
-    category: "control",
-    rotation: { x: 0, y: 0, z: 0 },
-    explicitOrigin: true,
-    format: "obj",
-  },
-  {
-    id: "clip-x37-explicit-origin",
-    title: "Contact: +37 degrees about X",
-    description:
-      "Isolates the X rotation sign from inferred-origin differences.",
+      "The real TO-92 source geometry is rigidly rotated -90 degrees about X. The TSX's +90-degree rotationOffset must restore the upright mounting pose.",
     category: "rotation",
-    rotation: { x: 37, y: 0, z: 0 },
-    explicitOrigin: true,
-    format: "obj",
+    sourceFile: `${circuitDir}/to92-x.circuit.tsx`,
+    targetName: "Q1",
+    physicalExpectation: uprightTo92,
+    camera: { target: [1.27, 0, 0.7], span: 18 },
   },
   {
-    id: "clip-y30-explicit-origin",
-    title: "Contact: +30 degrees about Y",
+    id: "to92-y-mounting",
+    title: "TO-92: mounting a source model turned about Y",
     description:
-      "An oblique Y rotation, with the original asset origin held fixed.",
+      "The same real part is exported with its source geometry rotated -90 degrees about Y. The authored +90-degree correction must put its leads through the actual footprint.",
     category: "rotation",
-    rotation: { x: 0, y: 30, z: 0 },
-    explicitOrigin: true,
-    format: "obj",
+    sourceFile: `${circuitDir}/to92-y.circuit.tsx`,
+    targetName: "Q1",
+    physicalExpectation: uprightTo92,
+    camera: { target: [1.27, 0, 0.7], span: 18 },
   },
   {
-    id: "clip-z47-explicit-origin",
-    title: "Contact: +47 degrees about Z",
-    description: "Positive control for the shared Z-only behavior.",
-    category: "control",
-    rotation: { x: 0, y: 0, z: 47 },
-    explicitOrigin: true,
-    format: "obj",
-  },
-  {
-    id: "clip-mixed-explicit-origin",
-    title: "Contact: mixed X/Y/Z angles",
+    id: "to92-xy-mounting",
+    title: "TO-92: composing X and Y mounting corrections",
     description:
-      "Non-cardinal angles expose composition-order and sign differences.",
+      "The source export uses Ry(-90) * Rx(-90). The TSX correction Rx(90) * Ry(90) restores the real package; reversing the composition leaves it on its side.",
     category: "rotation",
-    rotation: { x: 23, y: 31, z: 47 },
-    explicitOrigin: true,
-    format: "obj",
+    sourceFile: `${circuitDir}/to92-xy.circuit.tsx`,
+    targetName: "Q1",
+    physicalExpectation: uprightTo92,
+    camera: { target: [1.27, 0, 0.7], span: 18 },
   },
   {
-    id: "clip-zero-inferred-origin",
-    title: "Contact: missing explicit origin",
+    id: "to92-native-origin",
+    title: "TO-92 STEP: original missing origin",
     description:
-      "Original alignment tags and no origin point: isolates the approximately 0.225 mm P+Y origin-policy difference.",
+      "A normal TSX part with the original KiCad STEP asset and no authored model origin. Check all three metal leads against the three plated holes.",
     category: "origin",
-    rotation: { x: 0, y: 0, z: 0 },
-    explicitOrigin: false,
-    format: "obj",
+    sourceFile: `${circuitDir}/to92-origin.circuit.tsx`,
+    targetName: "Q1",
+    physicalExpectation: {
+      correctRenderer: "exporter",
+      correct: "All three leads are centered in their plated holes.",
+      incorrect:
+        "The leads are shifted by one 1.27 mm pin pitch; one hole is left empty.",
+    },
+    camera: { target: [1.27, 0, 3], span: 14 },
   },
   {
-    id: "clip-gltf-x37",
-    title: "glTF contact: +37 degrees about X",
+    id: "flashlight-native-origins",
+    title: "USB-C flashlight: original missing origins",
     description:
-      "The existing glTF version of the model, exercising a different source loader.",
-    category: "rotation",
-    rotation: { x: 37, y: 0, z: 0 },
-    explicitOrigin: true,
-    format: "gltf",
-  },
-  {
-    id: "clip-gltf-nonzero-origin",
-    title: "glTF contact: explicit nonzero model origin",
-    description:
-      "An explicit local Y datum isolates how each consumer transforms model-origin coordinates into its rendering frame.",
+      "A TSX-authored flashlight board using the real C165948 USB-C model and its actual pads and mounting holes, without an added origin override.",
     category: "origin",
-    rotation: { x: 0, y: 0, z: 0 },
-    explicitOrigin: true,
-    origin: { x: 0, y: -0.5, z: 0 },
-    format: "gltf",
-  },
-  {
-    id: "clip-gltf-implicit-bottom",
-    title: "glTF contact: implicit bottom-layer orientation",
-    description:
-      "Bottom-side CAD with no rotation field: compares the renderers' existing fallback orientations.",
-    category: "rotation",
-    rotation: undefined,
-    explicitOrigin: true,
-    layer: "bottom",
-    format: "gltf",
-  },
-  {
-    id: "clip-glb-via-gltf",
-    title: "Binary GLB through gltfUrl",
-    description:
-      "Preserves the existing GLB story's model_gltf_url selection. Any exporter JSON/binary dispatch failure is reported, never replaced with geometry.",
-    category: "format",
-    rotation: { x: 37, y: 0, z: 0 },
-    explicitOrigin: false,
-    format: "glb-via-gltf",
-  },
-  {
-    id: "usb-mounted",
-    title: "MICRO_XNJ_ZB: seated mounting fixture",
-    description:
-      "Native Z-up USB model turned -90 degrees about Z, with an explicit measured datum. The two fixture slots are turned 90 degrees to accept the metal tabs. Renderer behavior is unchanged.",
-    category: "real",
-    rotation: { x: 0, y: 0, z: 270 },
-    position: { x: 1.3824742, y: 0, z: 1.975 },
-    physicalMount: true,
-    explicitOrigin: true,
-    format: "usb",
-  },
-  {
-    id: "usb-zero",
-    title: "MICRO_XNJ_ZB: original missing-origin probe",
-    description:
-      "Historical zero-angle input retaining its original datum and slots. This is a separate origin-policy diagnostic, not the seated fixture.",
-    category: "origin",
-    rotation: { x: 0, y: 0, z: 0 },
-    explicitOrigin: false,
-    format: "usb",
+    sourceFile: `${circuitDir}/flashlight-origin.circuit.tsx`,
+    targetName: "J1",
+    physicalExpectation: {
+      correctRenderer: "viewer",
+      correct:
+        "The USB connector's mounting tabs meet the holes and its contacts sit on the pad row.",
+      incorrect:
+        "The inferred origin shifts the connector away from its mounting holes and pads.",
+    },
+    camera: { target: [0, 0, 0], span: 42 },
   },
   {
     id: "calibration",
-    title: "Matcher calibration: one viewer, deliberate mutations",
+    title: "Comparator calibration (not a renderer correctness example)",
     description:
-      "The browser calibration compares identical viewer geometry and deliberately shifted, sign-reversed, and wrong-order copies. It does not change either renderer.",
+      "Identical copies of the physically mounted compound-rotation TO-92, then deliberate test-only mutations. This is kept separate from the reviewer-facing repros.",
     category: "control",
-    rotation: { x: 23, y: 31, z: 47 },
-    explicitOrigin: true,
-    format: "obj",
+    sourceFile: `${circuitDir}/to92-xy.circuit.tsx`,
+    targetName: "Q1",
+    camera: { target: [1.27, 0, 3], span: 14 },
   },
-  ...policyCases,
-] as const
+]

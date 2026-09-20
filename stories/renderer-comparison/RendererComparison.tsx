@@ -182,13 +182,11 @@ function disposeExport(object: THREE.Object3D) {
 function ExportedModel({
   url,
   sourceName,
-  nodeIndex,
   loaded,
   failed,
 }: {
   url: string
-  sourceName?: string
-  nodeIndex?: number
+  sourceName: string
   loaded: (object: THREE.Object3D) => void
   failed: (message: string) => void
 }) {
@@ -233,11 +231,7 @@ function ExportedModel({
         root.updateWorldMatrix(true, true)
         const candidates: THREE.Object3D[] = []
         root.traverse((object) => {
-          const matches =
-            nodeIndex === undefined
-              ? object.name === sourceName
-              : gltf.parser.associations.get(object)?.nodes === nodeIndex
-          if (matches) candidates.push(object)
+          if (object.name === sourceName) candidates.push(object)
         })
         if (
           candidates.length !== 1 ||
@@ -245,7 +239,7 @@ function ExportedModel({
           !vertexCount(candidates[0])
         ) {
           throw new Error(
-            `Expected one nonempty exported target ${nodeIndex === undefined ? `"${sourceName}"` : `node ${nodeIndex}`}, found ${candidates.length}`,
+            `Expected one nonempty exported target "${sourceName}", found ${candidates.length}`,
           )
         }
         frames.current = 0
@@ -262,7 +256,7 @@ function ExportedModel({
         disposeExport(root)
       }
     }
-  }, [url, sourceName, nodeIndex, rootObject, failed])
+  }, [url, sourceName, rootObject, failed])
   return null
 }
 
@@ -298,7 +292,7 @@ function LoadedComparison({
   )
   const sourceName =
     source?.type === "source_component" ? source.name : undefined
-  if (!sourceName && fixture.exportTargetNodeIndex === undefined) {
+  if (!sourceName) {
     throw new Error(`Missing source component name for ${fixture.targetCadId}`)
   }
   if (!isCalibration && !fixture.glbUrl && !fixture.exportError) {
@@ -309,6 +303,11 @@ function LoadedComparison({
   const board = fixture.circuitJson.find(
     (element) => element.type === "pcb_board",
   )
+  const modelUrl =
+    target.model_obj_url ??
+    target.model_glb_url ??
+    target.model_gltf_url ??
+    target.model_step_url
   const publish = useCallback(() => {
     if (
       !published.current &&
@@ -377,25 +376,46 @@ function LoadedComparison({
     <>
       <h1>{fixture.title}</h1>
       <p>{fixture.description}</p>
+      {fixture.physicalExpectation && (
+        <section data-testid="physical-expectation">
+          <p>
+            <strong>Correct mounting:</strong>{" "}
+            {fixture.physicalExpectation.correct}
+          </p>
+          <p>
+            <strong>Failure to look for:</strong>{" "}
+            {fixture.physicalExpectation.incorrect}
+          </p>
+        </section>
+      )}
+      <p>
+        {isCalibration
+          ? "Calibration renders the TSX once in the viewer and compares detached copies. Source: "
+          : "Both renderers receive the unchanged Circuit JSON compiled from "}
+        <a href="#circuit-source">
+          {fixture.sourceFile ?? "the source circuit"}
+        </a>
+        .
+      </p>
       <p>
         Camera: {view}, viewed from{" "}
         {fixture.camera.fromBelow ? "below" : "above"} the PCB.
       </p>
       <p>
-        CAD {fixture.targetCadId}; source{" "}
-        {sourceName ?? "association omitted in original input"}; authored XYZ
-        angles (degrees):{" "}
+        CAD {fixture.targetCadId}; source {sourceName}; authored XYZ angles
+        (degrees):{" "}
         {target.rotation
           ? JSON.stringify(target.rotation)
           : "absent (implicit layer fallback)"}
         .
       </p>
-      <p>
-        A geometry match means the renderers agree, not that the model is
-        physically aligned with its footprint. Inspect the pins and pads in the
-        normal views and compare the original-input story with its labelled
-        control.
-      </p>
+      {!isCalibration && (
+        <p>
+          A geometry match means the renderers agree, not that the part is
+          mounted correctly. The real footprint's holes and pads are the
+          physical reference.
+        </p>
+      )}
       <div
         data-testid="renderer-normal-panels"
         style={{ display: "flex", flexWrap: "wrap", gap: 16 }}
@@ -412,38 +432,6 @@ function LoadedComparison({
               />
             </Providers>
           </div>
-          <details open>
-            <summary>Authored CAD placement (omissions are preserved)</summary>
-            <pre style={{ whiteSpace: "pre-wrap" }}>
-              {JSON.stringify(
-                {
-                  source_component_id:
-                    target.source_component_id ?? "(omitted)",
-                  position: target.position ?? "(omitted)",
-                  rotation: target.rotation ?? "(omitted)",
-                  model_origin_position:
-                    target.model_origin_position ?? "(omitted)",
-                  model_origin_alignment:
-                    target.model_origin_alignment ?? "(omitted)",
-                  anchor_alignment: target.anchor_alignment ?? "(omitted)",
-                  model_unit_to_mm_scale_factor:
-                    target.model_unit_to_mm_scale_factor ?? "(omitted)",
-                  size: target.size ?? "(omitted)",
-                  model_object_fit: target.model_object_fit ?? "(omitted)",
-                  board: board
-                    ? {
-                        center: board.center,
-                        width: board.width ?? "(omitted)",
-                        height: board.height ?? "(omitted)",
-                        thickness: board.thickness ?? "(omitted)",
-                      }
-                    : "(omitted; viewer may add a faux board and adjust CAD Z)",
-                },
-                null,
-                2,
-              )}
-            </pre>
-          </details>
         </section>
         <section>
           <h2>
@@ -484,7 +472,6 @@ function LoadedComparison({
                     <ExportedModel
                       url={fixture.glbUrl}
                       sourceName={sourceName}
-                      nodeIndex={fixture.exportTargetNodeIndex}
                       loaded={loaded}
                       failed={failed}
                     />
@@ -495,6 +482,58 @@ function LoadedComparison({
           </div>
         </section>
       </div>
+      {fixture.sourceCode && (
+        <section id="circuit-source" data-testid="renderer-circuit-source">
+          <h2>Source circuit</h2>
+          <p>
+            <code>{fixture.sourceFile}</code>
+          </p>
+          {modelUrl && (
+            <p>
+              <a href={resolveStaticAsset(modelUrl)} download>
+                Download the actual source model
+              </a>{" "}
+              used by both renderers.
+            </p>
+          )}
+          <pre
+            style={{ overflowX: "auto", padding: 16, background: "#eef2f6" }}
+          >
+            <code>{fixture.sourceCode}</code>
+          </pre>
+        </section>
+      )}
+      <details>
+        <summary>Emitted Circuit JSON placement</summary>
+        <pre style={{ whiteSpace: "pre-wrap" }}>
+          {JSON.stringify(
+            {
+              source_component_id: target.source_component_id,
+              position: target.position,
+              rotation: target.rotation,
+              model_origin_position:
+                target.model_origin_position ?? "(omitted)",
+              model_origin_alignment:
+                target.model_origin_alignment ?? "(omitted)",
+              anchor_alignment: target.anchor_alignment ?? "(omitted)",
+              model_unit_to_mm_scale_factor:
+                target.model_unit_to_mm_scale_factor ?? "(omitted)",
+              size: target.size ?? "(omitted)",
+              model_object_fit: target.model_object_fit ?? "(omitted)",
+              board: board
+                ? {
+                    center: board.center,
+                    width: board.width,
+                    height: board.height,
+                    thickness: board.thickness,
+                  }
+                : "(omitted)",
+            },
+            null,
+            2,
+          )}
+        </pre>
+      </details>
       <p>
         Only the final exporter basis is normalized: P=(-G.x,G.z,G.y),
         determinant +1. CAD placement, origin, fit and loader transforms are
@@ -708,7 +747,7 @@ function ComparisonSession({ caseId }: { caseId: string }) {
 }
 
 export function RendererComparison({
-  caseId = "clip-x37-explicit-origin",
+  caseId = "to92-x-mounting",
 }: {
   caseId?: string
 }) {
