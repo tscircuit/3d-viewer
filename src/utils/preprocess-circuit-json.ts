@@ -30,7 +30,7 @@ export function addFauxBoardIfNeeded(
   const componentZ = boardThickness / 2
 
   const processedCircuitJson = circuitJson.map((element) => {
-    if (element.type === "cad_component") {
+    if (element.type === "cad_component" && element.pcb_component_id) {
       const cadComponent = element as CadComponent
       if (cadComponent.position) {
         const positionZOffset = cadComponent.position.z ?? 0

@@ -7,7 +7,9 @@ import { su, getBoundsOfPcbElements } from "@tscircuit/circuit-json-util"
 export function createFauxBoard(
   circuitJson: AnyCircuitElement[],
 ): PcbBoard | null {
-  const cadComponents = su(circuitJson).cad_component.list()
+  const cadComponents = su(circuitJson)
+    .cad_component.list()
+    .filter((cad) => cad.pcb_component_id)
   const pads = su(circuitJson).pcb_smtpad.list()
   const holes = su(circuitJson).pcb_hole.list()
   const platedHoles = su(circuitJson).pcb_plated_hole.list()
