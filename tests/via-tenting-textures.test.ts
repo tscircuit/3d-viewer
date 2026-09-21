@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test"
 import type { PcbBoard, PcbVia } from "circuit-json"
-import { isOpenSurfaceAperture } from "../src/textures/create-silkscreen-texture-for-layer"
+import { isOpenSurfaceAperture } from "../src/textures/silkscreen/silkscreen-drawing"
 
 test("via texture apertures respect board defaults and explicit overrides", () => {
   const board: PcbBoard = {
@@ -37,4 +37,19 @@ test("via texture apertures respect board defaults and explicit overrides", () =
   expect(isOpenSurfaceAperture(overriddenVia, "bottom", board, true)).toBe(
     false,
   )
+  expect(isOpenSurfaceAperture(overriddenVia, "bottom", board, false)).toBe(
+    true,
+  )
+  expect(isOpenSurfaceAperture(via, "top", undefined, true)).toBe(true)
+
+  const legacyVia = { ...via, is_tented: false }
+  expect(isOpenSurfaceAperture(legacyVia, "top", board, true)).toBe(true)
+  expect(
+    isOpenSurfaceAperture(
+      { ...legacyVia, tented_on_top: true },
+      "top",
+      board,
+      true,
+    ),
+  ).toBe(false)
 })

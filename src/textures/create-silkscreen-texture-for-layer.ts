@@ -1,4 +1,4 @@
-import type { AnyCircuitElement, PcbBoard, PcbViaInput } from "circuit-json"
+import type { AnyCircuitElement, PcbBoard } from "circuit-json"
 import * as THREE from "three"
 import { TRACE_TEXTURE_RESOLUTION } from "../geoms/constants"
 import { drawSilkscreenLayer } from "./silkscreen/silkscreen-drawing"
@@ -12,44 +12,6 @@ const isSilkscreenElement = (
   const elementType = element.type as string
 
   return elementType.startsWith("pcb_silkscreen_")
-}
-
-const isViaTentedOnLayer = (
-  via: PcbViaInput,
-  board: PcbBoard,
-  layer: "top" | "bottom",
-) => {
-  if (layer === "top") {
-    return (
-      via.tented_on_top ??
-      via.is_tented ??
-      board.default_via_tented_on_top ??
-      false
-    )
-  }
-
-  return (
-    via.tented_on_bottom ??
-    via.is_tented ??
-    board.default_via_tented_on_bottom ??
-    false
-  )
-}
-
-export const isOpenSurfaceAperture = (
-  element: AnyCircuitElement,
-  layer: "top" | "bottom",
-  boardData: PcbBoard,
-  soldermaskVisible: boolean,
-) => {
-  if (element.type === "pcb_cutout") return true
-  if (element.type === "pcb_via") {
-    return !soldermaskVisible || !isViaTentedOnLayer(element, boardData, layer)
-  }
-  if (element.type === "pcb_hole" || element.type === "pcb_plated_hole") {
-    return !soldermaskVisible || element.is_covered_with_solder_mask !== true
-  }
-  return false
 }
 
 export function createSilkscreenTextureForLayer({
@@ -71,10 +33,6 @@ export function createSilkscreenTextureForLayer({
     isSilkscreenElement(element, layer),
   )
   if (elements.length === 0) return null
-  const apertureElements = circuitJson.filter((element) =>
-    isOpenSurfaceAperture(element, layer, boardData, soldermaskVisible),
-  )
-
   const bounds = getSoldermaskRenderBounds(circuitJson, boardData)
   const canvasWidth = Math.floor(bounds.width * traceTextureResolution)
   const canvasHeight = Math.floor(bounds.height * traceTextureResolution)
@@ -96,8 +54,9 @@ export function createSilkscreenTextureForLayer({
     layer,
     bounds,
     elements,
-    apertureElements,
+    circuitJson,
     silkscreenColor,
+    soldermaskVisible,
   })
 
   const texture = new THREE.CanvasTexture(canvas)
