@@ -88,5 +88,8 @@
     "@tscircuit/core": "^0.0.1955",
     "@tscircuit/props": "^0.0.664",
     "@tscircuit/circuit-json-util": "^0.0.114"
+  },
+  "patchedDependencies": {
+    "@tscircuit/fanout-solver@0.0.78": "patches/@tscircuit%2Ffanout-solver@0.0.78.patch"
   }
 }
