@@ -8,6 +8,8 @@ on:
 
 jobs:
   renderer-comparisons:
+    # Disabled: keep the diagnostic steps available without allocating a runner.
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
