@@ -70,7 +70,11 @@ function getAdjustedCadPosition(
 
   let boardRelativeZ = cadComponent.position.z
 
-  if (layer === "bottom" && cadComponent.position.z >= 0) {
+  if (
+    cadComponent.pcb_component_id &&
+    layer === "bottom" &&
+    cadComponent.position.z >= 0
+  ) {
     boardRelativeZ = -(cadComponent.position.z + pcbThickness)
   }
 

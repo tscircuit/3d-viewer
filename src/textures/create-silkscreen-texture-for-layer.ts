@@ -17,10 +17,16 @@ const isSilkscreenElement = (
 const isOpenSurfaceAperture = (
   element: AnyCircuitElement,
   soldermaskVisible: boolean,
+  layer: "top" | "bottom",
 ) => {
   if (element.type === "pcb_cutout") return true
   if (element.type === "pcb_via") {
-    return !soldermaskVisible || element.is_tented !== true
+    const legacyTented = (element as typeof element & { is_tented?: boolean })
+      .is_tented
+    const tented =
+      (layer === "top" ? element.tented_on_top : element.tented_on_bottom) ??
+      legacyTented
+    return !soldermaskVisible || tented !== true
   }
   if (element.type === "pcb_hole" || element.type === "pcb_plated_hole") {
     return !soldermaskVisible || element.is_covered_with_solder_mask !== true
@@ -48,7 +54,7 @@ export function createSilkscreenTextureForLayer({
   )
   if (elements.length === 0) return null
   const apertureElements = circuitJson.filter((element) =>
-    isOpenSurfaceAperture(element, soldermaskVisible),
+    isOpenSurfaceAperture(element, soldermaskVisible, layer),
   )
 
   const bounds = getSoldermaskRenderBounds(circuitJson, boardData)
