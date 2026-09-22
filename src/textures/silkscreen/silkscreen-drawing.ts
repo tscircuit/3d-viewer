@@ -2,6 +2,7 @@ import type {
   AnyCircuitElement,
   PcbBoard,
   PcbRenderLayer,
+  PcbTraceRoutePointVia,
   PcbViaInput,
 } from "circuit-json"
 import { type CanvasContext, CircuitToCanvasDrawer } from "circuit-to-canvas"
@@ -11,16 +12,17 @@ const FABRICATION_NOTE_COLOR = "rgb(255,243,204)"
 const TRANSPARENT = "rgba(0,0,0,0)"
 
 const isViaTented = (
-  via: Pick<PcbViaInput, "tented_on_top" | "tented_on_bottom" | "is_tented">,
+  via: PcbViaInput | PcbTraceRoutePointVia,
   layer: "top" | "bottom",
   board: PcbBoard | undefined,
 ) => {
   const viaTenting = layer === "top" ? via.tented_on_top : via.tented_on_bottom
+  const legacyTenting = "is_tented" in via ? via.is_tented : undefined
   const boardDefault =
     layer === "top"
       ? board?.default_via_tented_on_top
       : board?.default_via_tented_on_bottom
-  return viaTenting ?? via.is_tented ?? boardDefault ?? false
+  return viaTenting ?? legacyTenting ?? boardDefault ?? false
 }
 
 export const isOpenSurfaceAperture = (

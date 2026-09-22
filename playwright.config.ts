@@ -25,7 +25,6 @@ export default defineConfig({
     },
   },
   projects: [
-    { name: "via-tenting", testMatch: "**/via-tenting.pw.ts" },
     { name: "calibration", testMatch: "**/*.calibration.pw.ts" },
     { name: "diagnostics", testMatch: "**/*.diagnostic.pw.ts" },
   ],

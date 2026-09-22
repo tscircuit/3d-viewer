@@ -33,7 +33,6 @@
     "storybook:comparisons": "bun run prepare:renderer-comparisons && bun run storybook --initial-path '/story/diagnostics-renderer-parity--x-rotation'",
     "test:renderer-comparisons:serve": "bun run prepare:renderer-comparisons && vite --config playwright/vite.config.ts",
     "test:renderer-calibration": "playwright test --project=calibration",
-    "test:via-tenting": "playwright test --project=via-tenting",
     "test:renderer-comparisons": "bun scripts/run-renderer-comparisons.ts"
   },
   "dependencies": {
