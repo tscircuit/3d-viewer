@@ -2,7 +2,7 @@ import { expect, test } from "bun:test"
 import type { PcbBoard, PcbVia } from "circuit-json"
 import { isOpenSurfaceAperture } from "../src/textures/silkscreen/silkscreen-drawing"
 
-test("via texture apertures respect board defaults and explicit overrides", () => {
+test("standalone via aperture selection respects tenting precedence", () => {
   const board: PcbBoard = {
     type: "pcb_board",
     pcb_board_id: "board",

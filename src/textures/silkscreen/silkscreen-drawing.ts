@@ -10,6 +10,19 @@ import type { OutlineBounds } from "../../utils/outline-bounds"
 const FABRICATION_NOTE_COLOR = "rgb(255,243,204)"
 const TRANSPARENT = "rgba(0,0,0,0)"
 
+const isViaTented = (
+  via: Pick<PcbViaInput, "tented_on_top" | "tented_on_bottom" | "is_tented">,
+  layer: "top" | "bottom",
+  board: PcbBoard | undefined,
+) => {
+  const viaTenting = layer === "top" ? via.tented_on_top : via.tented_on_bottom
+  const boardDefault =
+    layer === "top"
+      ? board?.default_via_tented_on_top
+      : board?.default_via_tented_on_bottom
+  return viaTenting ?? via.is_tented ?? boardDefault ?? false
+}
+
 export const isOpenSurfaceAperture = (
   element: AnyCircuitElement,
   layer: "top" | "bottom",
@@ -18,18 +31,7 @@ export const isOpenSurfaceAperture = (
 ) => {
   if (element.type === "pcb_cutout") return true
   if (element.type === "pcb_via") {
-    if (!soldermaskVisible) return true
-
-    const via: PcbViaInput = element
-    const viaTenting =
-      layer === "top" ? via.tented_on_top : via.tented_on_bottom
-    const boardDefault =
-      layer === "top"
-        ? board?.default_via_tented_on_top
-        : board?.default_via_tented_on_bottom
-    const isTented = viaTenting ?? via.is_tented ?? boardDefault ?? false
-
-    return !isTented
+    return !soldermaskVisible || !isViaTented(element, layer, board)
   }
   if (element.type === "pcb_hole" || element.type === "pcb_plated_hole") {
     return !soldermaskVisible || element.is_covered_with_solder_mask !== true
@@ -121,15 +123,30 @@ export const drawSilkscreenLayer = ({
     clipContextElements: circuitJson,
   })
 
-  const apertureElements = circuitJson.filter((element) => {
-    const board =
-      element.type === "pcb_via"
-        ? ctx.boardOwnerMap?.get(element.pcb_via_id)
-        : undefined
-    return isOpenSurfaceAperture(element, layer, board, soldermaskVisible)
-  })
+  const apertureElements = circuitJson.flatMap(
+    (element): AnyCircuitElement[] => {
+      if (element.type === "pcb_trace") {
+        const board = ctx.boardOwnerMap?.get(element.pcb_trace_id)
+        const route = element.route.filter(
+          (point) =>
+            point.route_type === "via" &&
+            (!soldermaskVisible || !isViaTented(point, layer, board)),
+        )
+        return route.length ? [{ ...element, route }] : []
+      }
+
+      const board =
+        element.type === "pcb_via"
+          ? ctx.boardOwnerMap?.get(element.pcb_via_id)
+          : undefined
+      return isOpenSurfaceAperture(element, layer, board, soldermaskVisible)
+        ? [element]
+        : []
+    },
+  )
   drawer.drawElements(apertureElements, {
     layers: [renderLayer],
+    clipContextElements: circuitJson,
     clearDrillHoles: true,
   })
 }
