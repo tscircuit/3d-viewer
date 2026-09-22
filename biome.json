@@ -12,7 +12,12 @@
       "!**/node_modules/**",
       "**",
       "!**/stores/assets/**",
-      "!**/*.json"
+      "!**/*.json",
+      "!playwright-report/**",
+      "!test-results/**",
+      "!.renderer-comparison-cache/**",
+      "!stories/renderer-comparison/public/assets/**",
+      "!stories/renderer-comparison/public/generated/**"
     ]
   },
   "javascript": {

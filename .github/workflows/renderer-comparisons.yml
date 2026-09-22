@@ -1,0 +1,42 @@
+name: Renderer comparison diagnostics
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  renderer-comparisons:
+    # Disabled: keep the diagnostic steps available without allocating a runner.
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+      - name: Install dependencies
+        run: bun install
+      - name: Test edge matcher
+        run: bun test ./tests/geometry-edge-*.test.ts ./tests/renderer-diagnostic-result.test.ts ./tests/renderer-comparison-*.test.ts ./tests/renderer-usb-mounting.test.ts
+      - name: Install Chromium
+        run: bunx playwright install --with-deps chromium
+      - name: Calibrate geometry comparison
+        run: bun run test:renderer-calibration
+      - name: Compare renderers (diagnostic, non-blocking)
+        continue-on-error: true
+        run: bun run test:renderer-comparisons
+      - name: Upload images, metrics, and browser report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: renderer-comparison-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14

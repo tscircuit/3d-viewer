@@ -26,6 +26,7 @@ export const isLegacyFdmEnclosure = (
   circuitJson: AnyCircuitElement[],
 ): boolean => {
   if (
+    !cadComponent.pcb_component_id ||
     !cadComponent.model_jscad ||
     cadComponent.model_origin_alignment !== "bottom_center_of_component"
   ) {

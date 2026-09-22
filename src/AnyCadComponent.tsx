@@ -1,9 +1,6 @@
+import { getCadPcbContext } from "./utils/get-cad-pcb-context"
 import { su } from "@tscircuit/circuit-json-util"
-import type {
-  AnyCircuitElement,
-  CadComponent,
-  PcbComponent,
-} from "circuit-json"
+import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
 import { usePcbThickness } from "./hooks/usePcbThickness"
@@ -80,14 +77,10 @@ export const AnyCadComponent = ({
     })?.name
   }, [circuitJson, cad_component.source_component_id])
 
-  const isThroughHole = useMemo(() => {
-    const platedHoles = circuitJson.filter(
-      (elm) =>
-        elm.type === "pcb_plated_hole" &&
-        elm.pcb_component_id === cad_component.pcb_component_id,
-    )
-    return platedHoles.length > 0
-  }, [circuitJson, cad_component.pcb_component_id])
+  const { pcbComponent, layer, isThroughHole } = useMemo(
+    () => getCadPcbContext(cad_component, circuitJson),
+    [cad_component, circuitJson],
+  )
 
   const resolveModelUrlWithStaticResolver = useCallback(
     (modelUrl?: string) => resolveModelUrl(modelUrl, resolveStaticAsset),
@@ -112,12 +105,6 @@ export const AnyCadComponent = ({
     setFallbackModelIndex(0)
     setLastModelError(null)
   }, [cad_component.cad_component_id, url, gltfUrl, stepUrl])
-  const pcbComponent = circuitJson.find(
-    (elm) =>
-      elm.type === "pcb_component" &&
-      elm.source_component_id === cad_component.source_component_id,
-  ) as PcbComponent | undefined
-  const layer = pcbComponent?.layer ?? "top"
   const isEnclosure = useMemo(
     () => isLegacyFdmEnclosure(cad_component, circuitJson),
     [cad_component, circuitJson],
@@ -319,7 +306,7 @@ export const AnyCadComponent = ({
     if (visibility.enclosure === "hidden") return null
   } else if (cad_component.show_as_translucent_model) {
     if (!visibility.translucentModels) return null
-  } else {
+  } else if (pcbComponent) {
     if (isThroughHole && !visibility.throughHoleModels) return null
     if (!isThroughHole && !visibility.smtModels) return null
   }
