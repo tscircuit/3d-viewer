@@ -50,7 +50,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "@tscircuit/core": "*",
-    "@tscircuit/circuit-json-util": "*"
+    "@tscircuit/circuit-json-util": ">=0.0.116"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.1.4",
@@ -87,7 +87,7 @@
     "vite-tsconfig-paths": "^4.3.2",
     "@tscircuit/core": "^0.0.1955",
     "@tscircuit/props": "^0.0.664",
-    "@tscircuit/circuit-json-util": "^0.0.114"
+    "@tscircuit/circuit-json-util": "^0.0.116"
   },
   "patchedDependencies": {
     "@tscircuit/fanout-solver@0.0.78": "patches/@tscircuit%2Ffanout-solver@0.0.78.patch"
