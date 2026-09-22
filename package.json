@@ -38,13 +38,13 @@
   "dependencies": {
     "@jscad/regl-renderer": "^2.6.12",
     "@jscad/stl-serializer": "^2.1.20",
-    "circuit-json": "^0.0.499",
+    "circuit-json": "^0.0.500",
     "circuit-to-canvas": "^0.0.131",
     "react-hot-toast": "^2.6.0",
     "three": "^0.165.0",
     "three-stdlib": "^2.36.0",
     "troika-three-text": "^0.52.4",
-    "@tscircuit/flex-utils": "^0.0.1"
+    "@tscircuit/flex-utils": "^0.0.2"
   },
   "peerDependencies": {
     "zod": "3",
