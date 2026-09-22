@@ -18,6 +18,9 @@ interface ContextMenuProps {
   menuPos: { x: number; y: number }
   engine: "jscad" | "manifold"
   cameraPreset: CameraPreset
+  foldPcbs?: boolean
+  onFoldPcbsToggle?: () => void
+  flexScene?: boolean
   autoRotate: boolean
   referenceObject?: ReferenceObjectType | null
   onEngineSwitch: (engine: "jscad" | "manifold") => void
@@ -114,6 +117,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   engine,
   cameraPreset,
   autoRotate,
+  foldPcbs = false,
+  onFoldPcbsToggle,
+  flexScene = false,
   referenceObject = null,
   onEngineSwitch,
   onCameraPresetSelect,
@@ -344,6 +350,25 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               </DropdownMenu.Portal>
             </DropdownMenu.Sub>
 
+            {onFoldPcbsToggle && (
+              <DropdownMenu.CheckboxItem
+                checked={foldPcbs}
+                onCheckedChange={onFoldPcbsToggle}
+                style={{
+                  ...itemStyles,
+                  backgroundColor:
+                    hoveredItem === "fold" ? "#404040" : "transparent",
+                }}
+                onMouseEnter={() => setHoveredItem("fold")}
+                onMouseLeave={() => setHoveredItem(null)}
+              >
+                <span style={iconContainerStyles}>
+                  {foldPcbs && <CheckIcon />}
+                </span>
+                <span>Fold PCBs</span>
+              </DropdownMenu.CheckboxItem>
+            )}
+
             {/* Grid Toggle */}
             <DropdownMenu.Item
               style={{
@@ -369,7 +394,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             </DropdownMenu.Item>
 
             {/* Appearance Menu */}
-            <AppearanceMenu />
+            <AppearanceMenu flexScene={flexScene} />
 
             <DropdownMenu.Separator style={separatorStyles} />
 
@@ -394,35 +419,39 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             <DropdownMenu.Separator style={separatorStyles} />
 
             {/* Engine Switch */}
-            <DropdownMenu.Item
-              style={{
-                ...itemStyles,
-                ...itemPaddingStyles,
-                backgroundColor:
-                  hoveredItem === "engine" ? "#404040" : "transparent",
-              }}
-              onSelect={(e) => e.preventDefault()}
-              onPointerDown={(e) => {
-                e.preventDefault()
-                onEngineSwitch(engine === "jscad" ? "manifold" : "jscad")
-              }}
-              onMouseEnter={() => setHoveredItem("engine")}
-              onMouseLeave={() => setHoveredItem(null)}
-              onTouchStart={() => setHoveredItem("engine")}
-            >
-              <span style={{ flex: 1, display: "flex", alignItems: "center" }}>
-                Switch to {engine === "jscad" ? "Manifold" : "JSCAD"} Engine
-              </span>
-              <div
+            {!flexScene && (
+              <DropdownMenu.Item
                 style={{
-                  ...badgeStyles,
-                  display: "flex",
-                  alignItems: "center",
+                  ...itemStyles,
+                  ...itemPaddingStyles,
+                  backgroundColor:
+                    hoveredItem === "engine" ? "#404040" : "transparent",
                 }}
+                onSelect={(e) => e.preventDefault()}
+                onPointerDown={(e) => {
+                  e.preventDefault()
+                  onEngineSwitch(engine === "jscad" ? "manifold" : "jscad")
+                }}
+                onMouseEnter={() => setHoveredItem("engine")}
+                onMouseLeave={() => setHoveredItem(null)}
+                onTouchStart={() => setHoveredItem("engine")}
               >
-                {engine === "jscad" ? "experimental" : "default"}
-              </div>
-            </DropdownMenu.Item>
+                <span
+                  style={{ flex: 1, display: "flex", alignItems: "center" }}
+                >
+                  Switch to {engine === "jscad" ? "Manifold" : "JSCAD"} Engine
+                </span>
+                <div
+                  style={{
+                    ...badgeStyles,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  {engine === "jscad" ? "experimental" : "default"}
+                </div>
+              </DropdownMenu.Item>
+            )}
 
             <DropdownMenu.Separator style={separatorStyles} />
 

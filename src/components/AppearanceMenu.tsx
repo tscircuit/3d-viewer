@@ -63,7 +63,11 @@ const iconContainerStyles: React.CSSProperties = {
   flexShrink: 0,
 }
 
-export const AppearanceMenu = () => {
+export const AppearanceMenu = ({
+  flexScene = false,
+}: {
+  flexScene?: boolean
+}) => {
   const { visibility, setLayerVisibility } = useLayerVisibility()
   const {
     darkBackgroundEnabled,
@@ -184,195 +188,206 @@ export const AppearanceMenu = () => {
               </span>
             </DropdownMenu.Item>
 
-            <DropdownMenu.Item
-              style={{
-                ...itemStyles,
-                backgroundColor:
-                  hoveredItem === "topCopper" ? "#404040" : "transparent",
-              }}
-              onSelect={(e) => e.preventDefault()}
-              onPointerDown={(e) => {
-                e.preventDefault()
-                setLayerVisibility("topCopper", !visibility.topCopper)
-              }}
-              onMouseEnter={() => setHoveredItem("topCopper")}
-              onMouseLeave={() => setHoveredItem(null)}
-              onTouchStart={() => setHoveredItem("topCopper")}
-            >
-              <span style={iconContainerStyles}>
-                {visibility.topCopper && <CheckIcon />}
-              </span>
-              <span style={{ display: "flex", alignItems: "center" }}>
-                Top Copper
-              </span>
-            </DropdownMenu.Item>
+            {/* The glTF renderer bakes PCB layers into board textures. */}
+            {!flexScene && (
+              <>
+                <DropdownMenu.Item
+                  style={{
+                    ...itemStyles,
+                    backgroundColor:
+                      hoveredItem === "topCopper" ? "#404040" : "transparent",
+                  }}
+                  onSelect={(e) => e.preventDefault()}
+                  onPointerDown={(e) => {
+                    e.preventDefault()
+                    setLayerVisibility("topCopper", !visibility.topCopper)
+                  }}
+                  onMouseEnter={() => setHoveredItem("topCopper")}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  onTouchStart={() => setHoveredItem("topCopper")}
+                >
+                  <span style={iconContainerStyles}>
+                    {visibility.topCopper && <CheckIcon />}
+                  </span>
+                  <span style={{ display: "flex", alignItems: "center" }}>
+                    Top Copper
+                  </span>
+                </DropdownMenu.Item>
 
-            <DropdownMenu.Item
-              style={{
-                ...itemStyles,
-                backgroundColor:
-                  hoveredItem === "bottomCopper" ? "#404040" : "transparent",
-              }}
-              onSelect={(e) => e.preventDefault()}
-              onPointerDown={(e) => {
-                e.preventDefault()
-                setLayerVisibility("bottomCopper", !visibility.bottomCopper)
-              }}
-              onMouseEnter={() => setHoveredItem("bottomCopper")}
-              onMouseLeave={() => setHoveredItem(null)}
-              onTouchStart={() => setHoveredItem("bottomCopper")}
-            >
-              <span style={iconContainerStyles}>
-                {visibility.bottomCopper && <CheckIcon />}
-              </span>
-              <span style={{ display: "flex", alignItems: "center" }}>
-                Bottom Copper
-              </span>
-            </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  style={{
+                    ...itemStyles,
+                    backgroundColor:
+                      hoveredItem === "bottomCopper"
+                        ? "#404040"
+                        : "transparent",
+                  }}
+                  onSelect={(e) => e.preventDefault()}
+                  onPointerDown={(e) => {
+                    e.preventDefault()
+                    setLayerVisibility("bottomCopper", !visibility.bottomCopper)
+                  }}
+                  onMouseEnter={() => setHoveredItem("bottomCopper")}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  onTouchStart={() => setHoveredItem("bottomCopper")}
+                >
+                  <span style={iconContainerStyles}>
+                    {visibility.bottomCopper && <CheckIcon />}
+                  </span>
+                  <span style={{ display: "flex", alignItems: "center" }}>
+                    Bottom Copper
+                  </span>
+                </DropdownMenu.Item>
 
-            <DropdownMenu.Item
-              style={{
-                ...itemStyles,
-                backgroundColor:
-                  hoveredItem === "keepout" ? "#404040" : "transparent",
-              }}
-              onSelect={(e) => e.preventDefault()}
-              onPointerDown={(e) => {
-                e.preventDefault()
-                setLayerVisibility("keepout", !visibility.keepout)
-              }}
-              onMouseEnter={() => setHoveredItem("keepout")}
-              onMouseLeave={() => setHoveredItem(null)}
-              onTouchStart={() => setHoveredItem("keepout")}
-            >
-              <span style={iconContainerStyles}>
-                {visibility.keepout && <CheckIcon />}
-              </span>
-              <span style={{ display: "flex", alignItems: "center" }}>
-                Keepout
-              </span>
-            </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  style={{
+                    ...itemStyles,
+                    backgroundColor:
+                      hoveredItem === "keepout" ? "#404040" : "transparent",
+                  }}
+                  onSelect={(e) => e.preventDefault()}
+                  onPointerDown={(e) => {
+                    e.preventDefault()
+                    setLayerVisibility("keepout", !visibility.keepout)
+                  }}
+                  onMouseEnter={() => setHoveredItem("keepout")}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  onTouchStart={() => setHoveredItem("keepout")}
+                >
+                  <span style={iconContainerStyles}>
+                    {visibility.keepout && <CheckIcon />}
+                  </span>
+                  <span style={{ display: "flex", alignItems: "center" }}>
+                    Keepout
+                  </span>
+                </DropdownMenu.Item>
 
-            <DropdownMenu.Item
-              style={{
-                ...itemStyles,
-                backgroundColor:
-                  hoveredItem === "topSilkscreen" ? "#404040" : "transparent",
-              }}
-              onSelect={(e) => e.preventDefault()}
-              onPointerDown={(e) => {
-                e.preventDefault()
-                setLayerVisibility("topSilkscreen", !visibility.topSilkscreen)
-              }}
-              onMouseEnter={() => setHoveredItem("topSilkscreen")}
-              onMouseLeave={() => setHoveredItem(null)}
-              onTouchStart={() => setHoveredItem("topSilkscreen")}
-            >
-              <span style={iconContainerStyles}>
-                {visibility.topSilkscreen && <CheckIcon />}
-              </span>
-              <span style={{ display: "flex", alignItems: "center" }}>
-                Top Silkscreen
-              </span>
-            </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  style={{
+                    ...itemStyles,
+                    backgroundColor:
+                      hoveredItem === "topSilkscreen"
+                        ? "#404040"
+                        : "transparent",
+                  }}
+                  onSelect={(e) => e.preventDefault()}
+                  onPointerDown={(e) => {
+                    e.preventDefault()
+                    setLayerVisibility(
+                      "topSilkscreen",
+                      !visibility.topSilkscreen,
+                    )
+                  }}
+                  onMouseEnter={() => setHoveredItem("topSilkscreen")}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  onTouchStart={() => setHoveredItem("topSilkscreen")}
+                >
+                  <span style={iconContainerStyles}>
+                    {visibility.topSilkscreen && <CheckIcon />}
+                  </span>
+                  <span style={{ display: "flex", alignItems: "center" }}>
+                    Top Silkscreen
+                  </span>
+                </DropdownMenu.Item>
 
-            <DropdownMenu.Item
-              style={{
-                ...itemStyles,
-                backgroundColor:
-                  hoveredItem === "bottomSilkscreen"
-                    ? "#404040"
-                    : "transparent",
-              }}
-              onSelect={(e) => e.preventDefault()}
-              onPointerDown={(e) => {
-                e.preventDefault()
-                setLayerVisibility(
-                  "bottomSilkscreen",
-                  !visibility.bottomSilkscreen,
-                )
-              }}
-              onMouseEnter={() => setHoveredItem("bottomSilkscreen")}
-              onMouseLeave={() => setHoveredItem(null)}
-              onTouchStart={() => setHoveredItem("bottomSilkscreen")}
-            >
-              <span style={iconContainerStyles}>
-                {visibility.bottomSilkscreen && <CheckIcon />}
-              </span>
-              <span style={{ display: "flex", alignItems: "center" }}>
-                Bottom Silkscreen
-              </span>
-            </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  style={{
+                    ...itemStyles,
+                    backgroundColor:
+                      hoveredItem === "bottomSilkscreen"
+                        ? "#404040"
+                        : "transparent",
+                  }}
+                  onSelect={(e) => e.preventDefault()}
+                  onPointerDown={(e) => {
+                    e.preventDefault()
+                    setLayerVisibility(
+                      "bottomSilkscreen",
+                      !visibility.bottomSilkscreen,
+                    )
+                  }}
+                  onMouseEnter={() => setHoveredItem("bottomSilkscreen")}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  onTouchStart={() => setHoveredItem("bottomSilkscreen")}
+                >
+                  <span style={iconContainerStyles}>
+                    {visibility.bottomSilkscreen && <CheckIcon />}
+                  </span>
+                  <span style={{ display: "flex", alignItems: "center" }}>
+                    Bottom Silkscreen
+                  </span>
+                </DropdownMenu.Item>
 
-            <DropdownMenu.Item
-              style={{
-                ...itemStyles,
-                backgroundColor:
-                  hoveredItem === "topMask" ? "#404040" : "transparent",
-              }}
-              onSelect={(e) => e.preventDefault()}
-              onPointerDown={(e) => {
-                e.preventDefault()
-                setLayerVisibility("topMask", !visibility.topMask)
-              }}
-              onMouseEnter={() => setHoveredItem("topMask")}
-              onMouseLeave={() => setHoveredItem(null)}
-              onTouchStart={() => setHoveredItem("topMask")}
-            >
-              <span style={iconContainerStyles}>
-                {visibility.topMask && <CheckIcon />}
-              </span>
-              <span style={{ display: "flex", alignItems: "center" }}>
-                Top Soldermask
-              </span>
-            </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  style={{
+                    ...itemStyles,
+                    backgroundColor:
+                      hoveredItem === "topMask" ? "#404040" : "transparent",
+                  }}
+                  onSelect={(e) => e.preventDefault()}
+                  onPointerDown={(e) => {
+                    e.preventDefault()
+                    setLayerVisibility("topMask", !visibility.topMask)
+                  }}
+                  onMouseEnter={() => setHoveredItem("topMask")}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  onTouchStart={() => setHoveredItem("topMask")}
+                >
+                  <span style={iconContainerStyles}>
+                    {visibility.topMask && <CheckIcon />}
+                  </span>
+                  <span style={{ display: "flex", alignItems: "center" }}>
+                    Top Soldermask
+                  </span>
+                </DropdownMenu.Item>
 
-            <DropdownMenu.Item
-              style={{
-                ...itemStyles,
-                backgroundColor:
-                  hoveredItem === "bottomMask" ? "#404040" : "transparent",
-              }}
-              onSelect={(e) => e.preventDefault()}
-              onPointerDown={(e) => {
-                e.preventDefault()
-                setLayerVisibility("bottomMask", !visibility.bottomMask)
-              }}
-              onMouseEnter={() => setHoveredItem("bottomMask")}
-              onMouseLeave={() => setHoveredItem(null)}
-              onTouchStart={() => setHoveredItem("bottomMask")}
-            >
-              <span style={iconContainerStyles}>
-                {visibility.bottomMask && <CheckIcon />}
-              </span>
-              <span style={{ display: "flex", alignItems: "center" }}>
-                Bottom Soldermask
-              </span>
-            </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  style={{
+                    ...itemStyles,
+                    backgroundColor:
+                      hoveredItem === "bottomMask" ? "#404040" : "transparent",
+                  }}
+                  onSelect={(e) => e.preventDefault()}
+                  onPointerDown={(e) => {
+                    e.preventDefault()
+                    setLayerVisibility("bottomMask", !visibility.bottomMask)
+                  }}
+                  onMouseEnter={() => setHoveredItem("bottomMask")}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  onTouchStart={() => setHoveredItem("bottomMask")}
+                >
+                  <span style={iconContainerStyles}>
+                    {visibility.bottomMask && <CheckIcon />}
+                  </span>
+                  <span style={{ display: "flex", alignItems: "center" }}>
+                    Bottom Soldermask
+                  </span>
+                </DropdownMenu.Item>
 
-            <DropdownMenu.Item
-              style={{
-                ...itemStyles,
-                backgroundColor:
-                  hoveredItem === "pcbNotes" ? "#404040" : "transparent",
-              }}
-              onSelect={(e) => e.preventDefault()}
-              onPointerDown={(e) => {
-                e.preventDefault()
-                setLayerVisibility("pcbNotes", !visibility.pcbNotes)
-              }}
-              onMouseEnter={() => setHoveredItem("pcbNotes")}
-              onMouseLeave={() => setHoveredItem(null)}
-              onTouchStart={() => setHoveredItem("pcbNotes")}
-            >
-              <span style={iconContainerStyles}>
-                {visibility.pcbNotes && <CheckIcon />}
-              </span>
-              <span style={{ display: "flex", alignItems: "center" }}>
-                PCB Notes
-              </span>
-            </DropdownMenu.Item>
-
+                <DropdownMenu.Item
+                  style={{
+                    ...itemStyles,
+                    backgroundColor:
+                      hoveredItem === "pcbNotes" ? "#404040" : "transparent",
+                  }}
+                  onSelect={(e) => e.preventDefault()}
+                  onPointerDown={(e) => {
+                    e.preventDefault()
+                    setLayerVisibility("pcbNotes", !visibility.pcbNotes)
+                  }}
+                  onMouseEnter={() => setHoveredItem("pcbNotes")}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  onTouchStart={() => setHoveredItem("pcbNotes")}
+                >
+                  <span style={iconContainerStyles}>
+                    {visibility.pcbNotes && <CheckIcon />}
+                  </span>
+                  <span style={{ display: "flex", alignItems: "center" }}>
+                    PCB Notes
+                  </span>
+                </DropdownMenu.Item>
+              </>
+            )}
             <DropdownMenu.Item
               style={{
                 ...itemStyles,
@@ -426,33 +441,35 @@ export const AppearanceMenu = () => {
 
             <DropdownMenu.Separator style={separatorStyles} />
 
-            <DropdownMenu.Item
-              style={{
-                ...itemStyles,
-                backgroundColor:
-                  hoveredItem === "enclosure" ? "#404040" : "transparent",
-              }}
-              onSelect={(e) => e.preventDefault()}
-              onPointerDown={(e) => {
-                e.preventDefault()
-                setLayerVisibility(
-                  "enclosure",
-                  nextEnclosureVisibility(visibility.enclosure),
-                )
-              }}
-              onMouseEnter={() => setHoveredItem("enclosure")}
-              onMouseLeave={() => setHoveredItem(null)}
-              onTouchStart={() => setHoveredItem("enclosure")}
-              title={`Enclosure: ${visibility.enclosure}`}
-            >
-              <span style={iconContainerStyles}>
-                {visibility.enclosure === "opaque" && <CheckIcon />}
-                {visibility.enclosure === "translucent" && <CheckMinusIcon />}
-              </span>
-              <span style={{ display: "flex", alignItems: "center" }}>
-                Enclosure
-              </span>
-            </DropdownMenu.Item>
+            {!flexScene && (
+              <DropdownMenu.Item
+                style={{
+                  ...itemStyles,
+                  backgroundColor:
+                    hoveredItem === "enclosure" ? "#404040" : "transparent",
+                }}
+                onSelect={(e) => e.preventDefault()}
+                onPointerDown={(e) => {
+                  e.preventDefault()
+                  setLayerVisibility(
+                    "enclosure",
+                    nextEnclosureVisibility(visibility.enclosure),
+                  )
+                }}
+                onMouseEnter={() => setHoveredItem("enclosure")}
+                onMouseLeave={() => setHoveredItem(null)}
+                onTouchStart={() => setHoveredItem("enclosure")}
+                title={`Enclosure: ${visibility.enclosure}`}
+              >
+                <span style={iconContainerStyles}>
+                  {visibility.enclosure === "opaque" && <CheckIcon />}
+                  {visibility.enclosure === "translucent" && <CheckMinusIcon />}
+                </span>
+                <span style={{ display: "flex", alignItems: "center" }}>
+                  Enclosure
+                </span>
+              </DropdownMenu.Item>
+            )}
           </DropdownMenu.SubContent>
         </DropdownMenu.Portal>
       </DropdownMenu.Sub>

@@ -13,6 +13,10 @@ const readStoredCameraType = (): "perspective" | "orthographic" | undefined => {
     : undefined
 }
 
+import { CadViewerFlex } from "./CadViewerFlex"
+import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
+import type { AnyCircuitElement } from "circuit-json"
+
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
 import { ContextMenu } from "./components/ContextMenu"
@@ -41,6 +45,16 @@ import {
 } from "./reference-objects/reference-object"
 
 const CadViewerInner = (props: any) => {
+  const childrenCircuitJson = useConvertChildrenToCircuitJson(
+    props.circuitJson ? undefined : props.children,
+  )
+  const circuitJson: AnyCircuitElement[] =
+    props.circuitJson ?? childrenCircuitJson
+  const hasBends = circuitJson.some((element) => element.type === "pcb_bend")
+  const hasFlexGeometry =
+    hasBends || circuitJson.some((element) => element.type === "pcb_stiffener")
+  const [foldPcbs, setFoldPcbs] = useState(false)
+  const resolvedProps = { ...props, circuitJson, children: undefined }
   const [engine, setEngine] = useState<"jscad" | "manifold">(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
     return stored === "jscad" || stored === "manifold" ? stored : "manifold"
@@ -244,9 +258,18 @@ const CadViewerInner = (props: any) => {
       }}
       {...contextMenuEventHandlers}
     >
-      {engine === "jscad" ? (
+      {hasFlexGeometry ? (
+        <CadViewerFlex
+          {...resolvedProps}
+          foldPcbs={hasBends && foldPcbs}
+          autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+          onUserInteraction={handleUserInteraction}
+          onCameraControllerReady={handleCameraControllerReady}
+          referenceObject={referenceObject}
+        />
+      ) : engine === "jscad" ? (
         <CadViewerJscad
-          {...props}
+          {...resolvedProps}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           cameraType={cameraType}
           onUserInteraction={handleUserInteraction}
@@ -255,7 +278,7 @@ const CadViewerInner = (props: any) => {
         />
       ) : (
         <CadViewerManifold
-          {...props}
+          {...resolvedProps}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           cameraType={cameraType}
           onUserInteraction={handleUserInteraction}
@@ -268,6 +291,17 @@ const CadViewerInner = (props: any) => {
           menuRef={menuRef}
           menuPos={menuPos}
           engine={engine}
+          flexScene={hasFlexGeometry}
+          foldPcbs={foldPcbs}
+          onFoldPcbsToggle={
+            hasBends
+              ? () => {
+                  setFoldPcbs((folded) => !folded)
+                  setCameraPreset("Custom")
+                  closeMenu()
+                }
+              : undefined
+          }
           cameraPreset={cameraPreset}
           autoRotate={autoRotate}
           referenceObject={referenceObject}
