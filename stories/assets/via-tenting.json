@@ -31,7 +31,7 @@
     "pcb_silkscreen_text_id": "board_A_board_defaults_top",
     "pcb_component_id": "board_A_labels",
     "subcircuit_id": "board_A",
-    "text": "TOP VIEW - BOARD A\nDefaults: top: true, bottom: false",
+    "text": "TOP VIEW - BOARD A\ndefault_via_tented_on_top: true\ndefault_via_tented_on_bottom: false",
     "layer": "top",
     "font": "tscircuit2024",
     "font_size": 1,
@@ -46,7 +46,7 @@
     "pcb_silkscreen_text_id": "board_A_board_defaults_bottom",
     "pcb_component_id": "board_A_labels",
     "subcircuit_id": "board_A",
-    "text": "BOTTOM VIEW - BOARD A\nDefaults: top: true, bottom: false",
+    "text": "BOTTOM VIEW - BOARD A\ndefault_via_tented_on_top: true\ndefault_via_tented_on_bottom: false",
     "layer": "bottom",
     "font": "tscircuit2024",
     "font_size": 1,
@@ -121,10 +121,10 @@
     "pcb_silkscreen_text_id": "board_A_standalone_inherited_top",
     "pcb_component_id": "board_A_labels",
     "subcircuit_id": "board_A",
-    "text": "top: unset\nbottom: unset\nExpect: TENTED",
+    "text": "tented_on_top: unset\ntented_on_bottom: unset\nExpect: TENTED",
     "layer": "top",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": -34,
       "y": 7.5
@@ -136,10 +136,10 @@
     "pcb_silkscreen_text_id": "board_A_standalone_inherited_bottom",
     "pcb_component_id": "board_A_labels",
     "subcircuit_id": "board_A",
-    "text": "top: unset\nbottom: unset\nExpect: EXPOSED",
+    "text": "tented_on_top: unset\ntented_on_bottom: unset\nExpect: EXPOSED",
     "layer": "bottom",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": -34,
       "y": 7.5
@@ -151,10 +151,10 @@
     "pcb_silkscreen_text_id": "board_A_route_inherited_top",
     "pcb_component_id": "board_A_labels",
     "subcircuit_id": "board_A",
-    "text": "top: unset\nbottom: unset\nExpect: TENTED",
+    "text": "tented_on_top: unset\ntented_on_bottom: unset\nExpect: TENTED",
     "layer": "top",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": -34,
       "y": -6
@@ -166,10 +166,10 @@
     "pcb_silkscreen_text_id": "board_A_route_inherited_bottom",
     "pcb_component_id": "board_A_labels",
     "subcircuit_id": "board_A",
-    "text": "top: unset\nbottom: unset\nExpect: EXPOSED",
+    "text": "tented_on_top: unset\ntented_on_bottom: unset\nExpect: EXPOSED",
     "layer": "bottom",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": -34,
       "y": -6
@@ -181,10 +181,10 @@
     "pcb_silkscreen_text_id": "board_A_standalone_exposed_top",
     "pcb_component_id": "board_A_labels",
     "subcircuit_id": "board_A",
-    "text": "top: false\nbottom: false\nExpect: EXPOSED",
+    "text": "tented_on_top: false\ntented_on_bottom: false\nExpect: EXPOSED",
     "layer": "top",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": -25,
       "y": 7.5
@@ -196,10 +196,10 @@
     "pcb_silkscreen_text_id": "board_A_standalone_exposed_bottom",
     "pcb_component_id": "board_A_labels",
     "subcircuit_id": "board_A",
-    "text": "top: false\nbottom: false\nExpect: EXPOSED",
+    "text": "tented_on_top: false\ntented_on_bottom: false\nExpect: EXPOSED",
     "layer": "bottom",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": -25,
       "y": 7.5
@@ -211,10 +211,10 @@
     "pcb_silkscreen_text_id": "board_A_route_exposed_top",
     "pcb_component_id": "board_A_labels",
     "subcircuit_id": "board_A",
-    "text": "top: false\nbottom: false\nExpect: EXPOSED",
+    "text": "tented_on_top: false\ntented_on_bottom: false\nExpect: EXPOSED",
     "layer": "top",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": -25,
       "y": -6
@@ -226,10 +226,10 @@
     "pcb_silkscreen_text_id": "board_A_route_exposed_bottom",
     "pcb_component_id": "board_A_labels",
     "subcircuit_id": "board_A",
-    "text": "top: false\nbottom: false\nExpect: EXPOSED",
+    "text": "tented_on_top: false\ntented_on_bottom: false\nExpect: EXPOSED",
     "layer": "bottom",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": -25,
       "y": -6
@@ -241,10 +241,10 @@
     "pcb_silkscreen_text_id": "board_A_standalone_tented_top",
     "pcb_component_id": "board_A_labels",
     "subcircuit_id": "board_A",
-    "text": "top: true\nbottom: true\nExpect: TENTED",
+    "text": "tented_on_top: true\ntented_on_bottom: true\nExpect: TENTED",
     "layer": "top",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": -15,
       "y": 7.5
@@ -256,10 +256,10 @@
     "pcb_silkscreen_text_id": "board_A_standalone_tented_bottom",
     "pcb_component_id": "board_A_labels",
     "subcircuit_id": "board_A",
-    "text": "top: true\nbottom: true\nExpect: TENTED",
+    "text": "tented_on_top: true\ntented_on_bottom: true\nExpect: TENTED",
     "layer": "bottom",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": -15,
       "y": 7.5
@@ -271,10 +271,10 @@
     "pcb_silkscreen_text_id": "board_A_route_tented_top",
     "pcb_component_id": "board_A_labels",
     "subcircuit_id": "board_A",
-    "text": "top: true\nbottom: true\nExpect: TENTED",
+    "text": "tented_on_top: true\ntented_on_bottom: true\nExpect: TENTED",
     "layer": "top",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": -15,
       "y": -6
@@ -286,10 +286,10 @@
     "pcb_silkscreen_text_id": "board_A_route_tented_bottom",
     "pcb_component_id": "board_A_labels",
     "subcircuit_id": "board_A",
-    "text": "top: true\nbottom: true\nExpect: TENTED",
+    "text": "tented_on_top: true\ntented_on_bottom: true\nExpect: TENTED",
     "layer": "bottom",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": -15,
       "y": -6
@@ -301,10 +301,10 @@
     "pcb_silkscreen_text_id": "board_A_standalone_top_override_top",
     "pcb_component_id": "board_A_labels",
     "subcircuit_id": "board_A",
-    "text": "top: false\nbottom: unset\nExpect: EXPOSED",
+    "text": "tented_on_top: false\ntented_on_bottom: unset\nExpect: EXPOSED",
     "layer": "top",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": -6,
       "y": 7.5
@@ -316,10 +316,10 @@
     "pcb_silkscreen_text_id": "board_A_standalone_top_override_bottom",
     "pcb_component_id": "board_A_labels",
     "subcircuit_id": "board_A",
-    "text": "top: false\nbottom: unset\nExpect: EXPOSED",
+    "text": "tented_on_top: false\ntented_on_bottom: unset\nExpect: EXPOSED",
     "layer": "bottom",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": -6,
       "y": 7.5
@@ -331,10 +331,10 @@
     "pcb_silkscreen_text_id": "board_A_route_top_override_top",
     "pcb_component_id": "board_A_labels",
     "subcircuit_id": "board_A",
-    "text": "top: false\nbottom: unset\nExpect: EXPOSED",
+    "text": "tented_on_top: false\ntented_on_bottom: unset\nExpect: EXPOSED",
     "layer": "top",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": -6,
       "y": -6
@@ -346,10 +346,10 @@
     "pcb_silkscreen_text_id": "board_A_route_top_override_bottom",
     "pcb_component_id": "board_A_labels",
     "subcircuit_id": "board_A",
-    "text": "top: false\nbottom: unset\nExpect: EXPOSED",
+    "text": "tented_on_top: false\ntented_on_bottom: unset\nExpect: EXPOSED",
     "layer": "bottom",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": -6,
       "y": -6
@@ -616,7 +616,7 @@
     "pcb_silkscreen_text_id": "board_B_board_defaults_top",
     "pcb_component_id": "board_B_labels",
     "subcircuit_id": "board_B",
-    "text": "TOP VIEW - BOARD B\nDefaults: top: false, bottom: true",
+    "text": "TOP VIEW - BOARD B\ndefault_via_tented_on_top: false\ndefault_via_tented_on_bottom: true",
     "layer": "top",
     "font": "tscircuit2024",
     "font_size": 1,
@@ -631,7 +631,7 @@
     "pcb_silkscreen_text_id": "board_B_board_defaults_bottom",
     "pcb_component_id": "board_B_labels",
     "subcircuit_id": "board_B",
-    "text": "BOTTOM VIEW - BOARD B\nDefaults: top: false, bottom: true",
+    "text": "BOTTOM VIEW - BOARD B\ndefault_via_tented_on_top: false\ndefault_via_tented_on_bottom: true",
     "layer": "bottom",
     "font": "tscircuit2024",
     "font_size": 1,
@@ -706,10 +706,10 @@
     "pcb_silkscreen_text_id": "board_B_standalone_inherited_top",
     "pcb_component_id": "board_B_labels",
     "subcircuit_id": "board_B",
-    "text": "top: unset\nbottom: unset\nExpect: EXPOSED",
+    "text": "tented_on_top: unset\ntented_on_bottom: unset\nExpect: EXPOSED",
     "layer": "top",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": 6,
       "y": 7.5
@@ -721,10 +721,10 @@
     "pcb_silkscreen_text_id": "board_B_standalone_inherited_bottom",
     "pcb_component_id": "board_B_labels",
     "subcircuit_id": "board_B",
-    "text": "top: unset\nbottom: unset\nExpect: TENTED",
+    "text": "tented_on_top: unset\ntented_on_bottom: unset\nExpect: TENTED",
     "layer": "bottom",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": 6,
       "y": 7.5
@@ -736,10 +736,10 @@
     "pcb_silkscreen_text_id": "board_B_route_inherited_top",
     "pcb_component_id": "board_B_labels",
     "subcircuit_id": "board_B",
-    "text": "top: unset\nbottom: unset\nExpect: EXPOSED",
+    "text": "tented_on_top: unset\ntented_on_bottom: unset\nExpect: EXPOSED",
     "layer": "top",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": 6,
       "y": -6
@@ -751,10 +751,10 @@
     "pcb_silkscreen_text_id": "board_B_route_inherited_bottom",
     "pcb_component_id": "board_B_labels",
     "subcircuit_id": "board_B",
-    "text": "top: unset\nbottom: unset\nExpect: TENTED",
+    "text": "tented_on_top: unset\ntented_on_bottom: unset\nExpect: TENTED",
     "layer": "bottom",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": 6,
       "y": -6
@@ -766,10 +766,10 @@
     "pcb_silkscreen_text_id": "board_B_standalone_exposed_top",
     "pcb_component_id": "board_B_labels",
     "subcircuit_id": "board_B",
-    "text": "top: false\nbottom: false\nExpect: EXPOSED",
+    "text": "tented_on_top: false\ntented_on_bottom: false\nExpect: EXPOSED",
     "layer": "top",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": 15,
       "y": 7.5
@@ -781,10 +781,10 @@
     "pcb_silkscreen_text_id": "board_B_standalone_exposed_bottom",
     "pcb_component_id": "board_B_labels",
     "subcircuit_id": "board_B",
-    "text": "top: false\nbottom: false\nExpect: EXPOSED",
+    "text": "tented_on_top: false\ntented_on_bottom: false\nExpect: EXPOSED",
     "layer": "bottom",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": 15,
       "y": 7.5
@@ -796,10 +796,10 @@
     "pcb_silkscreen_text_id": "board_B_route_exposed_top",
     "pcb_component_id": "board_B_labels",
     "subcircuit_id": "board_B",
-    "text": "top: false\nbottom: false\nExpect: EXPOSED",
+    "text": "tented_on_top: false\ntented_on_bottom: false\nExpect: EXPOSED",
     "layer": "top",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": 15,
       "y": -6
@@ -811,10 +811,10 @@
     "pcb_silkscreen_text_id": "board_B_route_exposed_bottom",
     "pcb_component_id": "board_B_labels",
     "subcircuit_id": "board_B",
-    "text": "top: false\nbottom: false\nExpect: EXPOSED",
+    "text": "tented_on_top: false\ntented_on_bottom: false\nExpect: EXPOSED",
     "layer": "bottom",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": 15,
       "y": -6
@@ -826,10 +826,10 @@
     "pcb_silkscreen_text_id": "board_B_standalone_tented_top",
     "pcb_component_id": "board_B_labels",
     "subcircuit_id": "board_B",
-    "text": "top: true\nbottom: true\nExpect: TENTED",
+    "text": "tented_on_top: true\ntented_on_bottom: true\nExpect: TENTED",
     "layer": "top",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": 25,
       "y": 7.5
@@ -841,10 +841,10 @@
     "pcb_silkscreen_text_id": "board_B_standalone_tented_bottom",
     "pcb_component_id": "board_B_labels",
     "subcircuit_id": "board_B",
-    "text": "top: true\nbottom: true\nExpect: TENTED",
+    "text": "tented_on_top: true\ntented_on_bottom: true\nExpect: TENTED",
     "layer": "bottom",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": 25,
       "y": 7.5
@@ -856,10 +856,10 @@
     "pcb_silkscreen_text_id": "board_B_route_tented_top",
     "pcb_component_id": "board_B_labels",
     "subcircuit_id": "board_B",
-    "text": "top: true\nbottom: true\nExpect: TENTED",
+    "text": "tented_on_top: true\ntented_on_bottom: true\nExpect: TENTED",
     "layer": "top",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": 25,
       "y": -6
@@ -871,10 +871,10 @@
     "pcb_silkscreen_text_id": "board_B_route_tented_bottom",
     "pcb_component_id": "board_B_labels",
     "subcircuit_id": "board_B",
-    "text": "top: true\nbottom: true\nExpect: TENTED",
+    "text": "tented_on_top: true\ntented_on_bottom: true\nExpect: TENTED",
     "layer": "bottom",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": 25,
       "y": -6
@@ -886,10 +886,10 @@
     "pcb_silkscreen_text_id": "board_B_standalone_top_override_top",
     "pcb_component_id": "board_B_labels",
     "subcircuit_id": "board_B",
-    "text": "top: false\nbottom: unset\nExpect: EXPOSED",
+    "text": "tented_on_top: false\ntented_on_bottom: unset\nExpect: EXPOSED",
     "layer": "top",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": 34,
       "y": 7.5
@@ -901,10 +901,10 @@
     "pcb_silkscreen_text_id": "board_B_standalone_top_override_bottom",
     "pcb_component_id": "board_B_labels",
     "subcircuit_id": "board_B",
-    "text": "top: false\nbottom: unset\nExpect: TENTED",
+    "text": "tented_on_top: false\ntented_on_bottom: unset\nExpect: TENTED",
     "layer": "bottom",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": 34,
       "y": 7.5
@@ -916,10 +916,10 @@
     "pcb_silkscreen_text_id": "board_B_route_top_override_top",
     "pcb_component_id": "board_B_labels",
     "subcircuit_id": "board_B",
-    "text": "top: false\nbottom: unset\nExpect: EXPOSED",
+    "text": "tented_on_top: false\ntented_on_bottom: unset\nExpect: EXPOSED",
     "layer": "top",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": 34,
       "y": -6
@@ -931,10 +931,10 @@
     "pcb_silkscreen_text_id": "board_B_route_top_override_bottom",
     "pcb_component_id": "board_B_labels",
     "subcircuit_id": "board_B",
-    "text": "top: false\nbottom: unset\nExpect: TENTED",
+    "text": "tented_on_top: false\ntented_on_bottom: unset\nExpect: TENTED",
     "layer": "bottom",
     "font": "tscircuit2024",
-    "font_size": 0.7,
+    "font_size": 0.5,
     "anchor_position": {
       "x": 34,
       "y": -6

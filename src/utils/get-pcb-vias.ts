@@ -1,19 +1,29 @@
 import { createBoardOwnerMap, su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, PcbVia } from "circuit-json"
 
+type ViaPositionKey = string
+
 export function getPcbVias(circuitJson: AnyCircuitElement[]): PcbVia[] {
   const boardOwnerMap = createBoardOwnerMap(circuitJson)
   const vias = [...su(circuitJson).pcb_via.list()]
+  const viasByPosition = new Map<ViaPositionKey, PcbVia[]>()
+
+  for (const via of vias) {
+    const board = boardOwnerMap.get(via.pcb_via_id)
+    const positionKey = `${board?.pcb_board_id ?? ""}:${via.x}:${via.y}`
+    const viasAtPosition = viasByPosition.get(positionKey) ?? []
+    viasAtPosition.push(via)
+    viasByPosition.set(positionKey, viasAtPosition)
+  }
 
   for (const trace of su(circuitJson).pcb_trace.list()) {
     const board = boardOwnerMap.get(trace.pcb_trace_id)
     for (const [index, point] of trace.route.entries()) {
       if (point.route_type !== "via") continue
-      const hasMatchingVia = vias.some(
+      const positionKey = `${board?.pcb_board_id ?? ""}:${point.x}:${point.y}`
+      const viasAtPosition = viasByPosition.get(positionKey) ?? []
+      const hasMatchingVia = viasAtPosition.some(
         (via) =>
-          boardOwnerMap.get(via.pcb_via_id) === board &&
-          via.x === point.x &&
-          via.y === point.y &&
           via.layers.includes(point.from_layer) &&
           via.layers.includes(point.to_layer),
       )
@@ -36,7 +46,8 @@ export function getPcbVias(circuitJson: AnyCircuitElement[]): PcbVia[] {
         tented_on_bottom: point.tented_on_bottom,
       }
       vias.push(via)
-      boardOwnerMap.set(via.pcb_via_id, board)
+      viasAtPosition.push(via)
+      viasByPosition.set(positionKey, viasAtPosition)
     }
   }
   return vias

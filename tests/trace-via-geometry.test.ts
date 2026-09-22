@@ -48,6 +48,13 @@ test("route vias create the same drill and copper geometry as standalone vias", 
           from_layer: "top",
           to_layer: "bottom",
         },
+        {
+          route_type: "via",
+          x: 2,
+          y: 0,
+          from_layer: "bottom",
+          to_layer: "top",
+        },
       ],
     },
   ]
