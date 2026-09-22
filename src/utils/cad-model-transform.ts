@@ -8,6 +8,7 @@ import type { RenderedCadModelType } from "./get-cad-model-type"
 
 type Layer = "top" | "bottom" | string
 type CadComponentWithPlacementFields = CadComponent & {
+  is_on_folded_board?: boolean
   model_board_normal_direction?: CadModelAxisDirection
   model_origin_position?: {
     x: number
@@ -60,7 +61,7 @@ function getOrientationRotationForBoardNormal(
 }
 
 function getAdjustedCadPosition(
-  cadComponent: CadComponent,
+  cadComponent: CadComponentWithPlacementFields,
   layer: Layer,
   pcbThickness: number,
 ): [number, number, number] | undefined {
@@ -71,6 +72,7 @@ function getAdjustedCadPosition(
   let boardRelativeZ = cadComponent.position.z
 
   if (
+    !cadComponent.is_on_folded_board &&
     cadComponent.pcb_component_id &&
     layer === "bottom" &&
     cadComponent.position.z >= 0

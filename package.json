@@ -38,14 +38,13 @@
   "dependencies": {
     "@jscad/regl-renderer": "^2.6.12",
     "@jscad/stl-serializer": "^2.1.20",
-    "@resvg/resvg-wasm": "^2.6.2",
     "circuit-json": "^0.0.499",
-    "circuit-json-to-gltf": "^0.0.133",
     "circuit-to-canvas": "^0.0.131",
     "react-hot-toast": "^2.6.0",
     "three": "^0.165.0",
     "three-stdlib": "^2.36.0",
-    "troika-three-text": "^0.52.4"
+    "troika-three-text": "^0.52.4",
+    "@tscircuit/flex-utils": "^0.0.1"
   },
   "peerDependencies": {
     "zod": "3",
@@ -88,7 +87,8 @@
     "tsup": "^8.3.6",
     "typescript": "^5.7.3",
     "vite": "^7.1.5",
-    "vite-tsconfig-paths": "^4.3.2"
+    "vite-tsconfig-paths": "^4.3.2",
+    "circuit-json-to-gltf": "0.0.129"
   },
   "patchedDependencies": {
     "@tscircuit/fanout-solver@0.0.78": "patches/@tscircuit%2Ffanout-solver@0.0.78.patch"

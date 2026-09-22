@@ -394,7 +394,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             </DropdownMenu.Item>
 
             {/* Appearance Menu */}
-            <AppearanceMenu flexScene={flexScene} />
+            <AppearanceMenu />
 
             <DropdownMenu.Separator style={separatorStyles} />
 

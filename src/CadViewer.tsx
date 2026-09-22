@@ -13,7 +13,6 @@ const readStoredCameraType = (): "perspective" | "orthographic" | undefined => {
     : undefined
 }
 
-import { CadViewerFlex } from "./CadViewerFlex"
 import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
 import type { AnyCircuitElement } from "circuit-json"
 
@@ -259,7 +258,7 @@ const CadViewerInner = (props: any) => {
       {...contextMenuEventHandlers}
     >
       {hasFlexGeometry ? (
-        <CadViewerFlex
+        <CadViewerManifold
           {...resolvedProps}
           foldPcbs={hasBends && foldPcbs}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}

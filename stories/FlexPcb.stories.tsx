@@ -1,3 +1,4 @@
+import { transformCircuitJsonCadComponents } from "@tscircuit/flex-utils"
 import { Circuit } from "@tscircuit/core"
 import type { AnyCircuitElement } from "circuit-json"
 import { useEffect, useState } from "react"
@@ -143,7 +144,7 @@ async function createCircuit() {
 }
 
 /** Right-click and choose Fold PCBs to stack the three circular areas. */
-export const ThreeDiscCapsule = () => {
+const Capsule = ({ inputFolded = false }: { inputFolded?: boolean }) => {
   const [circuitJson, setCircuitJson] = useState<AnyCircuitElement[]>()
   const [error, setError] = useState<string>()
 
@@ -151,7 +152,12 @@ export const ThreeDiscCapsule = () => {
     let active = true
     createCircuit().then(
       (json) => {
-        if (active) setCircuitJson(json)
+        if (active)
+          setCircuitJson(
+            inputFolded
+              ? transformCircuitJsonCadComponents(json, { foldPcbs: true })
+              : json,
+          )
       },
       (error: unknown) => {
         if (active)
@@ -161,7 +167,7 @@ export const ThreeDiscCapsule = () => {
     return () => {
       active = false
     }
-  }, [])
+  }, [inputFolded])
 
   if (error) return <div role="alert">Unable to generate flex PCB: {error}</div>
   if (!circuitJson) return <div role="status">Routing flex PCB…</div>
@@ -171,3 +177,8 @@ export const ThreeDiscCapsule = () => {
     </div>
   )
 }
+
+export const ThreeDiscCapsule = () => <Capsule />
+
+/** The viewer starts flat even when the input CAD poses are already folded. */
+export const PreFoldedCad = () => <Capsule inputFolded />

@@ -1,3 +1,6 @@
+import { transformCircuitJsonCadComponents } from "@tscircuit/flex-utils"
+import { createFlexMeshes } from "./utils/flex-meshes"
+import { FitCameraToComparison } from "./three-components/reference-object"
 import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import type { ManifoldToplevel } from "manifold-3d"
@@ -80,7 +83,7 @@ export const BoardMeshes = ({
 
     for (const mesh of geometryMeshes) {
       let shouldShow = true
-      if (mesh.name === "board-geom") {
+      if (mesh.name === "board-geom" || mesh.name === "board-stiffener") {
         shouldShow = visibility.boardBody
       } else if (
         mesh.name.includes("plated_hole") ||
@@ -125,6 +128,7 @@ export const BoardMeshes = ({
 }
 
 type CadViewerManifoldProps = {
+  foldPcbs?: boolean
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
   cameraType?: "orthographic" | "perspective"
@@ -141,6 +145,7 @@ const MANIFOLD_CDN_BASE_URL = "https://cdn.jsdelivr.net/npm/manifold-3d@3.2.1"
 
 const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   circuitJson: circuitJsonProp,
+  foldPcbs = false,
   autoRotateDisabled,
   clickToInteractEnabled,
   onUserInteraction,
@@ -248,15 +253,39 @@ try {
     isFauxBoard,
   } = useManifoldBoardBuilder(manifoldJSModule, circuitJson, visibility)
 
-  const geometryMeshes = useMemo(() => createGeometryMeshes(geoms), [geoms])
-  const textureMeshes = useMemo(
-    () => createTextureMeshes(textures, boardData, pcbThickness, isFauxBoard),
-    [textures, boardData, pcbThickness, isFauxBoard],
-  )
-
+  const flex = useMemo(() => {
+    try {
+      const posedJson = transformCircuitJsonCadComponents(circuitJson, {
+        foldPcbs,
+      })
+      const meshes = createFlexMeshes(
+        createGeometryMeshes(geoms),
+        createTextureMeshes(textures, boardData, pcbThickness, isFauxBoard),
+        circuitJson,
+        foldPcbs,
+      )
+      return { ...meshes, posedJson, error: undefined }
+    } catch (error) {
+      return {
+        error: error instanceof Error ? error.message : String(error),
+        geometryMeshes: [],
+        textureMeshes: [],
+        posedJson: circuitJson,
+        bounds: undefined,
+      }
+    }
+  }, [
+    geoms,
+    textures,
+    boardData,
+    pcbThickness,
+    isFauxBoard,
+    circuitJson,
+    foldPcbs,
+  ])
   const cadComponents = useMemo(
-    () => su(circuitJson).cad_component.list(),
-    [circuitJson],
+    () => su(flex.posedJson).cad_component.list(),
+    [flex.posedJson],
   )
 
   const boardDimensions = useMemo(() => {
@@ -301,9 +330,10 @@ try {
   if (!manifoldJSModule) {
     return <div style={{ padding: "1em" }}>Loading Manifold module...</div>
   }
-  if (builderError) {
+  if (builderError || flex.error) {
     return (
       <div
+        role="alert"
         style={{
           color: "red",
           padding: "1em",
@@ -311,7 +341,7 @@ try {
           margin: "1em",
         }}
       >
-        Error: {builderError}
+        Error: {builderError ?? flex.error}
       </div>
     )
   }
@@ -331,9 +361,10 @@ try {
       onCameraControllerReady={onCameraControllerReady}
     >
       <BoardMeshes
-        geometryMeshes={geometryMeshes}
-        textureMeshes={textureMeshes}
+        geometryMeshes={flex.geometryMeshes}
+        textureMeshes={flex.textureMeshes}
       />
+      {flex.bounds && <FitCameraToComparison bounds={flex.bounds} />}
       {cadComponents.map((cad_component: CadComponent) => (
         <ThreeErrorBoundary
           key={cad_component.cad_component_id}
@@ -343,7 +374,7 @@ try {
         >
           <AnyCadComponent
             cad_component={cad_component}
-            circuitJson={circuitJson}
+            circuitJson={flex.posedJson}
             resolveStaticAsset={resolveStaticAsset}
           />
         </ThreeErrorBoundary>
