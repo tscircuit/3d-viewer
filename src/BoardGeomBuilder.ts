@@ -35,6 +35,7 @@ import { createHoleWithPolygonPadHoleGeom } from "./geoms/create-hole-with-polyg
 import { platedHole } from "./geoms/plated-hole"
 import { createViaBoardDrill, createViaCopper } from "./geoms/via-geoms"
 import { getBoardEdgeColor } from "./utils/get-board-edge-color"
+import { getPcbVias } from "./utils/get-pcb-vias"
 import {
   clampRectBorderRadius,
   extractRectBorderRadius,
@@ -120,7 +121,7 @@ export class BoardGeomBuilder {
 
     this.plated_holes = su(circuitJson).pcb_plated_hole.list()
     this.holes = su(circuitJson).pcb_hole.list()
-    this.pcb_vias = su(circuitJson).pcb_via.list()
+    this.pcb_vias = getPcbVias(circuitJson)
     this.pcb_cutouts = su(circuitJson).pcb_cutout.list()
 
     this.ctx = { pcbThickness: this.board.thickness ?? 1.2 }

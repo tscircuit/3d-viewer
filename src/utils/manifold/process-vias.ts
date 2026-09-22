@@ -1,9 +1,9 @@
 import type { ManifoldToplevel } from "manifold-3d"
 import type { AnyCircuitElement, PcbVia } from "circuit-json"
-import { su } from "@tscircuit/circuit-json-util"
 import * as THREE from "three"
 import { createPlatedHoleDrill } from "../hole-geoms"
 import { createViaCopper } from "../via-geoms"
+import { getPcbVias } from "../get-pcb-vias"
 import { manifoldMeshToThreeGeometry } from "../manifold-mesh-to-three-geometry"
 import {
   colors as defaultColors,
@@ -30,7 +30,7 @@ export function processViasForManifold(
   boardClipVolume?: any,
 ): ProcessViasResult {
   const viaBoardDrills: any[] = []
-  const pcbVias = su(circuitJson).pcb_via.list() as PcbVia[]
+  const pcbVias = getPcbVias(circuitJson)
   const viaCopperGeoms: Array<{
     key: string
     geometry: THREE.BufferGeometry

@@ -1,0 +1,1182 @@
+[
+  {
+    "type": "pcb_panel",
+    "pcb_panel_id": "panel_via_tenting",
+    "center": {
+      "x": 0,
+      "y": 0
+    },
+    "width": 80,
+    "height": 36
+  },
+  {
+    "type": "pcb_board",
+    "pcb_board_id": "board_A",
+    "subcircuit_id": "board_A",
+    "center": {
+      "x": -20,
+      "y": 0
+    },
+    "width": 38,
+    "height": 34,
+    "thickness": 1.6,
+    "num_layers": 2,
+    "material": "fr4",
+    "default_via_tented_on_top": true,
+    "default_via_tented_on_bottom": false,
+    "pcb_panel_id": "panel_via_tenting"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_board_defaults_top",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "TOP VIEW - BOARD A\ndefault_via_tented_on_top: true\ndefault_via_tented_on_bottom: false",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 1,
+    "anchor_position": {
+      "x": -20,
+      "y": 14
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_board_defaults_bottom",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "BOTTOM VIEW - BOARD A\ndefault_via_tented_on_top: true\ndefault_via_tented_on_bottom: false",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 1,
+    "anchor_position": {
+      "x": -20,
+      "y": 14
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_standalone_heading_top",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "Standalone pcb_via",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.8,
+    "anchor_position": {
+      "x": -20,
+      "y": 10.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_standalone_heading_bottom",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "Standalone pcb_via",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.8,
+    "anchor_position": {
+      "x": -20,
+      "y": 10.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_route_heading_top",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "pcb_trace.route vias",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.8,
+    "anchor_position": {
+      "x": -20,
+      "y": -3
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_route_heading_bottom",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "pcb_trace.route vias",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.8,
+    "anchor_position": {
+      "x": -20,
+      "y": -3
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_standalone_inherited_top",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "tented_on_top: unset\ntented_on_bottom: unset\nExpect: TENTED",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": -34,
+      "y": 7.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_standalone_inherited_bottom",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "tented_on_top: unset\ntented_on_bottom: unset\nExpect: EXPOSED",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": -34,
+      "y": 7.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_route_inherited_top",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "tented_on_top: unset\ntented_on_bottom: unset\nExpect: TENTED",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": -34,
+      "y": -6
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_route_inherited_bottom",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "tented_on_top: unset\ntented_on_bottom: unset\nExpect: EXPOSED",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": -34,
+      "y": -6
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_standalone_exposed_top",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "tented_on_top: false\ntented_on_bottom: false\nExpect: EXPOSED",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": -25,
+      "y": 7.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_standalone_exposed_bottom",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "tented_on_top: false\ntented_on_bottom: false\nExpect: EXPOSED",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": -25,
+      "y": 7.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_route_exposed_top",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "tented_on_top: false\ntented_on_bottom: false\nExpect: EXPOSED",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": -25,
+      "y": -6
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_route_exposed_bottom",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "tented_on_top: false\ntented_on_bottom: false\nExpect: EXPOSED",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": -25,
+      "y": -6
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_standalone_tented_top",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "tented_on_top: true\ntented_on_bottom: true\nExpect: TENTED",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": -15,
+      "y": 7.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_standalone_tented_bottom",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "tented_on_top: true\ntented_on_bottom: true\nExpect: TENTED",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": -15,
+      "y": 7.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_route_tented_top",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "tented_on_top: true\ntented_on_bottom: true\nExpect: TENTED",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": -15,
+      "y": -6
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_route_tented_bottom",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "tented_on_top: true\ntented_on_bottom: true\nExpect: TENTED",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": -15,
+      "y": -6
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_standalone_top_override_top",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "tented_on_top: false\ntented_on_bottom: unset\nExpect: EXPOSED",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": -6,
+      "y": 7.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_standalone_top_override_bottom",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "tented_on_top: false\ntented_on_bottom: unset\nExpect: EXPOSED",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": -6,
+      "y": 7.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_route_top_override_top",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "tented_on_top: false\ntented_on_bottom: unset\nExpect: EXPOSED",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": -6,
+      "y": -6
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_A_route_top_override_bottom",
+    "pcb_component_id": "board_A_labels",
+    "subcircuit_id": "board_A",
+    "text": "tented_on_top: false\ntented_on_bottom: unset\nExpect: EXPOSED",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": -6,
+      "y": -6
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_via",
+    "pcb_via_id": "board_A_standalone_inherited",
+    "subcircuit_id": "board_A",
+    "x": -34,
+    "y": 2.5,
+    "outer_diameter": 2.4,
+    "hole_diameter": 1,
+    "layers": [
+      "top",
+      "bottom"
+    ]
+  },
+  {
+    "type": "pcb_via",
+    "pcb_via_id": "board_A_standalone_exposed",
+    "subcircuit_id": "board_A",
+    "x": -25,
+    "y": 2.5,
+    "outer_diameter": 2.4,
+    "hole_diameter": 1,
+    "layers": [
+      "top",
+      "bottom"
+    ],
+    "tented_on_top": false,
+    "tented_on_bottom": false
+  },
+  {
+    "type": "pcb_via",
+    "pcb_via_id": "board_A_standalone_tented",
+    "subcircuit_id": "board_A",
+    "x": -15,
+    "y": 2.5,
+    "outer_diameter": 2.4,
+    "hole_diameter": 1,
+    "layers": [
+      "top",
+      "bottom"
+    ],
+    "tented_on_top": true,
+    "tented_on_bottom": true
+  },
+  {
+    "type": "pcb_via",
+    "pcb_via_id": "board_A_standalone_top_override",
+    "subcircuit_id": "board_A",
+    "x": -6,
+    "y": 2.5,
+    "outer_diameter": 2.4,
+    "hole_diameter": 1,
+    "layers": [
+      "top",
+      "bottom"
+    ],
+    "tented_on_top": false
+  },
+  {
+    "type": "pcb_trace",
+    "pcb_trace_id": "board_A_trace_inherited",
+    "subcircuit_id": "board_A",
+    "route": [
+      {
+        "route_type": "wire",
+        "x": -36.5,
+        "y": -11,
+        "width": 0.5,
+        "layer": "top"
+      },
+      {
+        "route_type": "wire",
+        "x": -34,
+        "y": -11,
+        "width": 0.5,
+        "layer": "top"
+      },
+      {
+        "route_type": "via",
+        "x": -34,
+        "y": -11,
+        "from_layer": "top",
+        "to_layer": "bottom",
+        "outer_diameter": 2.4,
+        "hole_diameter": 1
+      },
+      {
+        "route_type": "wire",
+        "x": -34,
+        "y": -11,
+        "width": 0.5,
+        "layer": "bottom"
+      },
+      {
+        "route_type": "wire",
+        "x": -31.5,
+        "y": -11,
+        "width": 0.5,
+        "layer": "bottom"
+      }
+    ]
+  },
+  {
+    "type": "pcb_trace",
+    "pcb_trace_id": "board_A_trace_exposed",
+    "subcircuit_id": "board_A",
+    "route": [
+      {
+        "route_type": "wire",
+        "x": -27.5,
+        "y": -11,
+        "width": 0.5,
+        "layer": "top"
+      },
+      {
+        "route_type": "wire",
+        "x": -25,
+        "y": -11,
+        "width": 0.5,
+        "layer": "top"
+      },
+      {
+        "route_type": "via",
+        "x": -25,
+        "y": -11,
+        "from_layer": "top",
+        "to_layer": "bottom",
+        "outer_diameter": 2.4,
+        "hole_diameter": 1,
+        "tented_on_top": false,
+        "tented_on_bottom": false
+      },
+      {
+        "route_type": "wire",
+        "x": -25,
+        "y": -11,
+        "width": 0.5,
+        "layer": "bottom"
+      },
+      {
+        "route_type": "wire",
+        "x": -22.5,
+        "y": -11,
+        "width": 0.5,
+        "layer": "bottom"
+      }
+    ]
+  },
+  {
+    "type": "pcb_trace",
+    "pcb_trace_id": "board_A_trace_tented",
+    "subcircuit_id": "board_A",
+    "route": [
+      {
+        "route_type": "wire",
+        "x": -17.5,
+        "y": -11,
+        "width": 0.5,
+        "layer": "top"
+      },
+      {
+        "route_type": "wire",
+        "x": -15,
+        "y": -11,
+        "width": 0.5,
+        "layer": "top"
+      },
+      {
+        "route_type": "via",
+        "x": -15,
+        "y": -11,
+        "from_layer": "top",
+        "to_layer": "bottom",
+        "outer_diameter": 2.4,
+        "hole_diameter": 1,
+        "tented_on_top": true,
+        "tented_on_bottom": true
+      },
+      {
+        "route_type": "wire",
+        "x": -15,
+        "y": -11,
+        "width": 0.5,
+        "layer": "bottom"
+      },
+      {
+        "route_type": "wire",
+        "x": -12.5,
+        "y": -11,
+        "width": 0.5,
+        "layer": "bottom"
+      }
+    ]
+  },
+  {
+    "type": "pcb_trace",
+    "pcb_trace_id": "board_A_trace_top_override",
+    "subcircuit_id": "board_A",
+    "route": [
+      {
+        "route_type": "wire",
+        "x": -8.5,
+        "y": -11,
+        "width": 0.5,
+        "layer": "top"
+      },
+      {
+        "route_type": "wire",
+        "x": -6,
+        "y": -11,
+        "width": 0.5,
+        "layer": "top"
+      },
+      {
+        "route_type": "via",
+        "x": -6,
+        "y": -11,
+        "from_layer": "top",
+        "to_layer": "bottom",
+        "outer_diameter": 2.4,
+        "hole_diameter": 1,
+        "tented_on_top": false
+      },
+      {
+        "route_type": "wire",
+        "x": -6,
+        "y": -11,
+        "width": 0.5,
+        "layer": "bottom"
+      },
+      {
+        "route_type": "wire",
+        "x": -3.5,
+        "y": -11,
+        "width": 0.5,
+        "layer": "bottom"
+      }
+    ]
+  },
+  {
+    "type": "pcb_board",
+    "pcb_board_id": "board_B",
+    "subcircuit_id": "board_B",
+    "center": {
+      "x": 20,
+      "y": 0
+    },
+    "width": 38,
+    "height": 34,
+    "thickness": 1.6,
+    "num_layers": 2,
+    "material": "fr4",
+    "default_via_tented_on_top": false,
+    "default_via_tented_on_bottom": true,
+    "pcb_panel_id": "panel_via_tenting"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_board_defaults_top",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "TOP VIEW - BOARD B\ndefault_via_tented_on_top: false\ndefault_via_tented_on_bottom: true",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 1,
+    "anchor_position": {
+      "x": 20,
+      "y": 14
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_board_defaults_bottom",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "BOTTOM VIEW - BOARD B\ndefault_via_tented_on_top: false\ndefault_via_tented_on_bottom: true",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 1,
+    "anchor_position": {
+      "x": 20,
+      "y": 14
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_standalone_heading_top",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "Standalone pcb_via",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.8,
+    "anchor_position": {
+      "x": 20,
+      "y": 10.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_standalone_heading_bottom",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "Standalone pcb_via",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.8,
+    "anchor_position": {
+      "x": 20,
+      "y": 10.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_route_heading_top",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "pcb_trace.route vias",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.8,
+    "anchor_position": {
+      "x": 20,
+      "y": -3
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_route_heading_bottom",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "pcb_trace.route vias",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.8,
+    "anchor_position": {
+      "x": 20,
+      "y": -3
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_standalone_inherited_top",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "tented_on_top: unset\ntented_on_bottom: unset\nExpect: EXPOSED",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": 6,
+      "y": 7.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_standalone_inherited_bottom",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "tented_on_top: unset\ntented_on_bottom: unset\nExpect: TENTED",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": 6,
+      "y": 7.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_route_inherited_top",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "tented_on_top: unset\ntented_on_bottom: unset\nExpect: EXPOSED",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": 6,
+      "y": -6
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_route_inherited_bottom",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "tented_on_top: unset\ntented_on_bottom: unset\nExpect: TENTED",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": 6,
+      "y": -6
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_standalone_exposed_top",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "tented_on_top: false\ntented_on_bottom: false\nExpect: EXPOSED",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": 15,
+      "y": 7.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_standalone_exposed_bottom",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "tented_on_top: false\ntented_on_bottom: false\nExpect: EXPOSED",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": 15,
+      "y": 7.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_route_exposed_top",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "tented_on_top: false\ntented_on_bottom: false\nExpect: EXPOSED",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": 15,
+      "y": -6
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_route_exposed_bottom",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "tented_on_top: false\ntented_on_bottom: false\nExpect: EXPOSED",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": 15,
+      "y": -6
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_standalone_tented_top",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "tented_on_top: true\ntented_on_bottom: true\nExpect: TENTED",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": 25,
+      "y": 7.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_standalone_tented_bottom",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "tented_on_top: true\ntented_on_bottom: true\nExpect: TENTED",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": 25,
+      "y": 7.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_route_tented_top",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "tented_on_top: true\ntented_on_bottom: true\nExpect: TENTED",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": 25,
+      "y": -6
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_route_tented_bottom",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "tented_on_top: true\ntented_on_bottom: true\nExpect: TENTED",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": 25,
+      "y": -6
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_standalone_top_override_top",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "tented_on_top: false\ntented_on_bottom: unset\nExpect: EXPOSED",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": 34,
+      "y": 7.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_standalone_top_override_bottom",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "tented_on_top: false\ntented_on_bottom: unset\nExpect: TENTED",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": 34,
+      "y": 7.5
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_route_top_override_top",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "tented_on_top: false\ntented_on_bottom: unset\nExpect: EXPOSED",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": 34,
+      "y": -6
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "board_B_route_top_override_bottom",
+    "pcb_component_id": "board_B_labels",
+    "subcircuit_id": "board_B",
+    "text": "tented_on_top: false\ntented_on_bottom: unset\nExpect: TENTED",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.5,
+    "anchor_position": {
+      "x": 34,
+      "y": -6
+    },
+    "anchor_alignment": "center"
+  },
+  {
+    "type": "pcb_via",
+    "pcb_via_id": "board_B_standalone_inherited",
+    "subcircuit_id": "board_B",
+    "x": 6,
+    "y": 2.5,
+    "outer_diameter": 2.4,
+    "hole_diameter": 1,
+    "layers": [
+      "top",
+      "bottom"
+    ]
+  },
+  {
+    "type": "pcb_via",
+    "pcb_via_id": "board_B_standalone_exposed",
+    "subcircuit_id": "board_B",
+    "x": 15,
+    "y": 2.5,
+    "outer_diameter": 2.4,
+    "hole_diameter": 1,
+    "layers": [
+      "top",
+      "bottom"
+    ],
+    "tented_on_top": false,
+    "tented_on_bottom": false
+  },
+  {
+    "type": "pcb_via",
+    "pcb_via_id": "board_B_standalone_tented",
+    "subcircuit_id": "board_B",
+    "x": 25,
+    "y": 2.5,
+    "outer_diameter": 2.4,
+    "hole_diameter": 1,
+    "layers": [
+      "top",
+      "bottom"
+    ],
+    "tented_on_top": true,
+    "tented_on_bottom": true
+  },
+  {
+    "type": "pcb_via",
+    "pcb_via_id": "board_B_standalone_top_override",
+    "subcircuit_id": "board_B",
+    "x": 34,
+    "y": 2.5,
+    "outer_diameter": 2.4,
+    "hole_diameter": 1,
+    "layers": [
+      "top",
+      "bottom"
+    ],
+    "tented_on_top": false
+  },
+  {
+    "type": "pcb_trace",
+    "pcb_trace_id": "board_B_trace_inherited",
+    "subcircuit_id": "board_B",
+    "route": [
+      {
+        "route_type": "wire",
+        "x": 3.5,
+        "y": -11,
+        "width": 0.5,
+        "layer": "top"
+      },
+      {
+        "route_type": "wire",
+        "x": 6,
+        "y": -11,
+        "width": 0.5,
+        "layer": "top"
+      },
+      {
+        "route_type": "via",
+        "x": 6,
+        "y": -11,
+        "from_layer": "top",
+        "to_layer": "bottom",
+        "outer_diameter": 2.4,
+        "hole_diameter": 1
+      },
+      {
+        "route_type": "wire",
+        "x": 6,
+        "y": -11,
+        "width": 0.5,
+        "layer": "bottom"
+      },
+      {
+        "route_type": "wire",
+        "x": 8.5,
+        "y": -11,
+        "width": 0.5,
+        "layer": "bottom"
+      }
+    ]
+  },
+  {
+    "type": "pcb_trace",
+    "pcb_trace_id": "board_B_trace_exposed",
+    "subcircuit_id": "board_B",
+    "route": [
+      {
+        "route_type": "wire",
+        "x": 12.5,
+        "y": -11,
+        "width": 0.5,
+        "layer": "top"
+      },
+      {
+        "route_type": "wire",
+        "x": 15,
+        "y": -11,
+        "width": 0.5,
+        "layer": "top"
+      },
+      {
+        "route_type": "via",
+        "x": 15,
+        "y": -11,
+        "from_layer": "top",
+        "to_layer": "bottom",
+        "outer_diameter": 2.4,
+        "hole_diameter": 1,
+        "tented_on_top": false,
+        "tented_on_bottom": false
+      },
+      {
+        "route_type": "wire",
+        "x": 15,
+        "y": -11,
+        "width": 0.5,
+        "layer": "bottom"
+      },
+      {
+        "route_type": "wire",
+        "x": 17.5,
+        "y": -11,
+        "width": 0.5,
+        "layer": "bottom"
+      }
+    ]
+  },
+  {
+    "type": "pcb_trace",
+    "pcb_trace_id": "board_B_trace_tented",
+    "subcircuit_id": "board_B",
+    "route": [
+      {
+        "route_type": "wire",
+        "x": 22.5,
+        "y": -11,
+        "width": 0.5,
+        "layer": "top"
+      },
+      {
+        "route_type": "wire",
+        "x": 25,
+        "y": -11,
+        "width": 0.5,
+        "layer": "top"
+      },
+      {
+        "route_type": "via",
+        "x": 25,
+        "y": -11,
+        "from_layer": "top",
+        "to_layer": "bottom",
+        "outer_diameter": 2.4,
+        "hole_diameter": 1,
+        "tented_on_top": true,
+        "tented_on_bottom": true
+      },
+      {
+        "route_type": "wire",
+        "x": 25,
+        "y": -11,
+        "width": 0.5,
+        "layer": "bottom"
+      },
+      {
+        "route_type": "wire",
+        "x": 27.5,
+        "y": -11,
+        "width": 0.5,
+        "layer": "bottom"
+      }
+    ]
+  },
+  {
+    "type": "pcb_trace",
+    "pcb_trace_id": "board_B_trace_top_override",
+    "subcircuit_id": "board_B",
+    "route": [
+      {
+        "route_type": "wire",
+        "x": 31.5,
+        "y": -11,
+        "width": 0.5,
+        "layer": "top"
+      },
+      {
+        "route_type": "wire",
+        "x": 34,
+        "y": -11,
+        "width": 0.5,
+        "layer": "top"
+      },
+      {
+        "route_type": "via",
+        "x": 34,
+        "y": -11,
+        "from_layer": "top",
+        "to_layer": "bottom",
+        "outer_diameter": 2.4,
+        "hole_diameter": 1,
+        "tented_on_top": false
+      },
+      {
+        "route_type": "wire",
+        "x": 34,
+        "y": -11,
+        "width": 0.5,
+        "layer": "bottom"
+      },
+      {
+        "route_type": "wire",
+        "x": 36.5,
+        "y": -11,
+        "width": 0.5,
+        "layer": "bottom"
+      }
+    ]
+  }
+]

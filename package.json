@@ -39,7 +39,7 @@
     "@jscad/regl-renderer": "^2.6.12",
     "@jscad/stl-serializer": "^2.1.20",
     "circuit-json": "^0.0.497",
-    "circuit-to-canvas": "^0.0.123",
+    "circuit-to-canvas": "^0.0.131",
     "react-hot-toast": "^2.6.0",
     "three": "^0.165.0",
     "three-stdlib": "^2.36.0",
@@ -87,7 +87,7 @@
     "vite-tsconfig-paths": "^4.3.2",
     "@tscircuit/core": "^0.0.1955",
     "@tscircuit/props": "^0.0.664",
-    "@tscircuit/circuit-json-util": "^0.0.114"
+    "@tscircuit/circuit-json-util": "^0.0.116"
   },
   "patchedDependencies": {
     "@tscircuit/fanout-solver@0.0.78": "patches/@tscircuit%2Ffanout-solver@0.0.78.patch"

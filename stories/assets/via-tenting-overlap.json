@@ -1,0 +1,395 @@
+[
+  {
+    "type": "pcb_board",
+    "pcb_board_id": "via_overlap_board",
+    "center": {
+      "x": 0,
+      "y": 0
+    },
+    "width": 34,
+    "height": 32,
+    "thickness": 1.6,
+    "num_layers": 2,
+    "material": "fr4"
+  },
+  {
+    "type": "pcb_via",
+    "pcb_via_id": "silkscreen_tented",
+    "x": -8,
+    "y": 3,
+    "outer_diameter": 2.8,
+    "hole_diameter": 1.2,
+    "layers": [
+      "top",
+      "bottom"
+    ],
+    "tented_on_top": true,
+    "tented_on_bottom": true
+  },
+  {
+    "type": "pcb_via",
+    "pcb_via_id": "silkscreen_exposed",
+    "x": 8,
+    "y": 3,
+    "outer_diameter": 2.8,
+    "hole_diameter": 1.2,
+    "layers": [
+      "top",
+      "bottom"
+    ],
+    "tented_on_top": false,
+    "tented_on_bottom": false
+  },
+  {
+    "type": "pcb_via",
+    "pcb_via_id": "pad_tented",
+    "x": -8,
+    "y": -9,
+    "outer_diameter": 2.8,
+    "hole_diameter": 1.2,
+    "layers": [
+      "top",
+      "bottom"
+    ],
+    "tented_on_top": true,
+    "tented_on_bottom": true
+  },
+  {
+    "type": "pcb_via",
+    "pcb_via_id": "pad_exposed",
+    "x": 8,
+    "y": -9,
+    "outer_diameter": 2.8,
+    "hole_diameter": 1.2,
+    "layers": [
+      "top",
+      "bottom"
+    ],
+    "tented_on_top": false,
+    "tented_on_bottom": false
+  },
+  {
+    "type": "pcb_smtpad",
+    "pcb_smtpad_id": "pad_tented_top",
+    "pcb_component_id": "pads",
+    "shape": "rect",
+    "x": -10.1,
+    "y": -9,
+    "width": 2.8,
+    "height": 2.6,
+    "layer": "top"
+  },
+  {
+    "type": "pcb_smtpad",
+    "pcb_smtpad_id": "pad_exposed_top",
+    "pcb_component_id": "pads",
+    "shape": "rect",
+    "x": 5.9,
+    "y": -9,
+    "width": 2.8,
+    "height": 2.6,
+    "layer": "top"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "top_heading",
+    "text": "TOP - VIA OVERLAP",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 1,
+    "anchor_position": {
+      "x": 0,
+      "y": 14
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "top_tented_properties",
+    "text": "tented_on_top: true\ntented_on_bottom: true",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.85,
+    "anchor_position": {
+      "x": -8,
+      "y": 11
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "top_exposed_properties",
+    "text": "tented_on_top: false\ntented_on_bottom: false",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.85,
+    "anchor_position": {
+      "x": 8,
+      "y": 11
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "top_silkscreen_heading",
+    "text": "Silkscreen text over pcb_via",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.9,
+    "anchor_position": {
+      "x": 0,
+      "y": 7
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "top_tented_text",
+    "text": "PB1",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 2.4,
+    "anchor_position": {
+      "x": -8,
+      "y": 3
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "top_exposed_text",
+    "text": "PB1",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 2.4,
+    "anchor_position": {
+      "x": 8,
+      "y": 3
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "top_tented_text_expected",
+    "text": "Expect: PB1 intact",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.75,
+    "anchor_position": {
+      "x": -8,
+      "y": -0.5
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "top_exposed_text_expected",
+    "text": "Expect: cut at drill",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.75,
+    "anchor_position": {
+      "x": 8,
+      "y": -0.5
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "top_pad_heading",
+    "text": "Pad openings overlap pcb_via",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.9,
+    "anchor_position": {
+      "x": 0,
+      "y": -4
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "top_pad_expected",
+    "text": "Expect: both pad openings stay exposed",
+    "layer": "top",
+    "font": "tscircuit2024",
+    "font_size": 0.85,
+    "anchor_position": {
+      "x": 0,
+      "y": -13
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  },
+  {
+    "type": "pcb_smtpad",
+    "pcb_smtpad_id": "pad_tented_bottom",
+    "pcb_component_id": "pads",
+    "shape": "rect",
+    "x": -10.1,
+    "y": -9,
+    "width": 2.8,
+    "height": 2.6,
+    "layer": "bottom"
+  },
+  {
+    "type": "pcb_smtpad",
+    "pcb_smtpad_id": "pad_exposed_bottom",
+    "pcb_component_id": "pads",
+    "shape": "rect",
+    "x": 5.9,
+    "y": -9,
+    "width": 2.8,
+    "height": 2.6,
+    "layer": "bottom"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "bottom_heading",
+    "text": "BOTTOM - VIA OVERLAP",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 1,
+    "anchor_position": {
+      "x": 0,
+      "y": 14
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "bottom_tented_properties",
+    "text": "tented_on_top: true\ntented_on_bottom: true",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.85,
+    "anchor_position": {
+      "x": -8,
+      "y": 11
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "bottom_exposed_properties",
+    "text": "tented_on_top: false\ntented_on_bottom: false",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.85,
+    "anchor_position": {
+      "x": 8,
+      "y": 11
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "bottom_silkscreen_heading",
+    "text": "Silkscreen text over pcb_via",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.9,
+    "anchor_position": {
+      "x": 0,
+      "y": 7
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "bottom_tented_text",
+    "text": "PB1",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 2.4,
+    "anchor_position": {
+      "x": -8,
+      "y": 3
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "bottom_exposed_text",
+    "text": "PB1",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 2.4,
+    "anchor_position": {
+      "x": 8,
+      "y": 3
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "bottom_tented_text_expected",
+    "text": "Expect: PB1 intact",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.75,
+    "anchor_position": {
+      "x": -8,
+      "y": -0.5
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "bottom_exposed_text_expected",
+    "text": "Expect: cut at drill",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.75,
+    "anchor_position": {
+      "x": 8,
+      "y": -0.5
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "bottom_pad_heading",
+    "text": "Pad openings overlap pcb_via",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.9,
+    "anchor_position": {
+      "x": 0,
+      "y": -4
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  },
+  {
+    "type": "pcb_silkscreen_text",
+    "pcb_silkscreen_text_id": "bottom_pad_expected",
+    "text": "Expect: both pad openings stay exposed",
+    "layer": "bottom",
+    "font": "tscircuit2024",
+    "font_size": 0.85,
+    "anchor_position": {
+      "x": 0,
+      "y": -13
+    },
+    "anchor_alignment": "center",
+    "pcb_component_id": "labels"
+  }
+]

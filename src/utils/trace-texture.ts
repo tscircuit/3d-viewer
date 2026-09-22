@@ -9,7 +9,6 @@ import type {
 } from "circuit-json"
 import { getElementRenderLayers, su } from "@tscircuit/circuit-json-util"
 import { calculateOutlineBounds } from "./outline-bounds"
-import { splitTraceIntoLayerSegments } from "./trace-layer-segments"
 
 export function createTraceTextureForLayer({
   layer,
@@ -30,9 +29,9 @@ export function createTraceTextureForLayer({
   const pcbRenderLayer: PcbRenderLayer =
     layer === "top" ? "top_copper" : "bottom_copper"
 
-  const tracesOnLayer = pcbTraces
-    .filter((trace) => getElementRenderLayers(trace).includes(pcbRenderLayer))
-    .flatMap((trace) => splitTraceIntoLayerSegments(trace, layer))
+  const tracesOnLayer = pcbTraces.filter((trace) =>
+    getElementRenderLayers(trace).includes(pcbRenderLayer),
+  )
   if (tracesOnLayer.length === 0) return null
   const platedHolesOnLayer = pcbPlatedHoles.filter((hole: PcbPlatedHole) =>
     hole.layers.includes(layer),
