@@ -1,6 +1,7 @@
 import { Circuit, assembly } from "@tscircuit/core"
 import {
   createSheetMetalMesh,
+  mp,
   createHexSocketBoltMesh,
   type SheetMetalMesh,
 } from "modelprinter"
@@ -26,16 +27,17 @@ export const sheetMetalAssemblyDimensions = {
   thickness: 1,
   insideBendRadius: 2,
 }
-export const enclosureMesh = createSheetMetalMesh({
-  profile: "channel",
-  ...sheetMetalAssemblyDimensions,
-  holes: [
-    { panel: "base", shape: "round", diameter: 3.2, u: -8, v: -9 },
-    { panel: "base", shape: "round", diameter: 3.2, u: 8, v: 9 },
-    { panel: "left", shape: "slot", length: 18, width: 4, u: 2, v: 0 },
-    { panel: "right", shape: "slot", length: 18, width: 4, u: 2, v: 0 },
-  ],
-})
+export const enclosureModelString =
+  "sheetmetal_channel_w28mm_l24mm_h14mm_t1mm_r2mm" +
+  "_hole1(d3.2mm_bottomface_leftofcenter8mm_belowcenter9mm)" +
+  "_hole2(d3.2mm_bottomface_rightofcenter8mm_abovecenter9mm)" +
+  "_slot1(l18mm_w4mm_leftface_abovecenter2mm)" +
+  "_slot2(l18mm_w4mm_rightface_abovecenter2mm)"
+const enclosureDefinition = mp.string(enclosureModelString).json()
+if (enclosureDefinition.fn !== "sheetmetal")
+  throw new Error("Expected sheet metal")
+const { fn, ...enclosureProps } = enclosureDefinition
+export const enclosureMesh = createSheetMetalMesh(enclosureProps)
 const enclosureUrl = meshToObjUrl(enclosureMesh)
 const boltUrl = meshToObjUrl(
   createHexSocketBoltMesh({ metricSize: "M3", length: 6 }),
