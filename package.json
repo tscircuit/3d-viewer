@@ -89,7 +89,7 @@
     "vite": "^7.1.5",
     "vite-tsconfig-paths": "^4.3.2",
     "circuit-json-to-gltf": "0.0.134",
-    "modelprinter": "^0.0.3"
+    "modelprinter": "https://jscdn.tscircuit.com/@tscircuit/modelprinter/0.0.3.tgz"
   },
   "patchedDependencies": {
     "@tscircuit/fanout-solver@0.0.78": "patches/@tscircuit%2Ffanout-solver@0.0.78.patch"
