@@ -4,7 +4,7 @@ import { fileURLToPath, pathToFileURL } from "node:url"
 import { convertCircuitJsonToGltf } from "circuit-json-to-gltf"
 import { comparisonCases } from "../tests/fixtures/renderer-parity/cases"
 import { compileRendererCircuit } from "../tests/fixtures/renderer-parity/compile-circuit"
-import { prepareRealPartAssets } from "./prepare-real-part-assets"
+import { prepareM2Daughtercard } from "./prepare-m2-daughtercard"
 import type {
   ComparisonManifest,
   PreparedComparison,
@@ -31,7 +31,6 @@ for (const [source, destination] of [
   await mkdir(dirname(target), { recursive: true })
   await copyFile(join(root, source!), target)
 }
-await prepareRealPartAssets(assets)
 
 const exporterPackage = await Bun.file(
   fileURLToPath(
@@ -107,3 +106,4 @@ await Bun.write(
   join(generated, "manifest.json"),
   `${JSON.stringify(manifest, null, 2)}\n`,
 )
+await prepareM2Daughtercard(root)

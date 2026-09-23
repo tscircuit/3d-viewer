@@ -30,9 +30,10 @@
     "format:check": "biome format .",
     "test:node-bundle": "node ./scripts/load-bundle-in-node.js",
     "prepare:renderer-comparisons": "bun scripts/prepare-renderer-comparisons.ts",
-    "storybook:comparisons": "bun run prepare:renderer-comparisons && bun run storybook --initial-path '/story/diagnostics-renderer-parity--x-rotation'",
+    "storybook:comparisons": "bun run prepare:renderer-comparisons && bun run storybook --initial-path '/story/renderer-parity-to-92--step-missing-origin'",
     "test:renderer-comparisons:serve": "bun run prepare:renderer-comparisons && vite --config playwright/vite.config.ts",
     "test:renderer-calibration": "playwright test --project=calibration",
+    "test:renderer-fixtures": "bun test ./tests/geometry-edge-*.test.ts ./tests/renderer-diagnostic-result.test.ts ./tests/renderer-comparison-*.test.ts ./tests/renderer-usb-mounting.test.ts ./tests/m2-*.test.*",
     "test:renderer-comparisons": "bun scripts/run-renderer-comparisons.ts"
   },
   "dependencies": {

@@ -6,7 +6,7 @@ test("every physical repro starts from readable TSX and keeps its emitted placem
   const repros = comparisonCases.filter(
     (definition) => definition.id !== "calibration",
   )
-  expect(repros).toHaveLength(5)
+  expect(repros).toHaveLength(2)
   for (const definition of repros) {
     expect(definition.sourceFile).toEndWith(".circuit.tsx")
     expect(definition.physicalExpectation).toBeDefined()

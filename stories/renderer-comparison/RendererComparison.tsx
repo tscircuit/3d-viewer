@@ -501,6 +501,22 @@ function LoadedComparison({
           >
             <code>{fixture.sourceCode}</code>
           </pre>
+          {fixture.sourceReferences?.map((reference) => (
+            <details key={reference.path}>
+              <summary>
+                Referenced source: <code>{reference.path}</code>
+              </summary>
+              <pre
+                style={{
+                  overflowX: "auto",
+                  padding: 16,
+                  background: "#eef2f6",
+                }}
+              >
+                <code>{reference.sourceCode}</code>
+              </pre>
+            </details>
+          ))}
         </section>
       )}
       <details>
@@ -569,12 +585,18 @@ function LoadedComparison({
   )
 }
 
-function ComparisonSession({ caseId }: { caseId: string }) {
+function ComparisonSession({
+  caseId,
+  manifestUrl,
+}: {
+  caseId: string
+  manifestUrl: string
+}) {
   const [manifest, setManifest] = useState<ComparisonManifest | null>(null)
   const [status, setStatus] =
     useState<RendererComparisonApi["status"]>("loading")
   const [error, setError] = useState<string>()
-  const [activeView, setActiveView] = useState<ComparisonView>("oblique")
+  const [activeView, setActiveView] = useState<ComparisonView>()
   const [comparisons, setComparisons] = useState<
     Partial<Record<ComparisonView, VisibleGeometryComparison>>
   >({})
@@ -654,6 +676,7 @@ function ComparisonSession({ caseId }: { caseId: string }) {
     [api],
   )
   const fixture = manifest?.cases.find((entry) => entry.id === caseId)
+  const displayedView = activeView ?? "oblique"
   const ready = useCallback(
     (viewer: THREE.Object3D, exporter: THREE.Object3D | null) => {
       if (!fixture || api.status === "error") return
@@ -680,7 +703,7 @@ function ComparisonSession({ caseId }: { caseId: string }) {
     delete api.error
     window.rendererComparison = api
     const controller = new AbortController()
-    fetch(`${assetBase}generated/manifest.json`, { signal: controller.signal })
+    fetch(manifestUrl, { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok)
           throw new Error(`Comparison manifest: HTTP ${response.status}`)
@@ -700,7 +723,7 @@ function ComparisonSession({ caseId }: { caseId: string }) {
       targets.current = null
       if (window.rendererComparison === api) delete window.rendererComparison
     }
-  }, [api, caseId, failed])
+  }, [api, caseId, failed, manifestUrl])
   return (
     <main
       data-testid="renderer-comparison"
@@ -721,10 +744,30 @@ function ComparisonSession({ caseId }: { caseId: string }) {
       )}
       {fixture && manifest && (
         <section data-testid="renderer-comparison-context">
+          <div
+            role="group"
+            aria-label="Camera view"
+            style={{ display: "flex", gap: 8 }}
+          >
+            <button
+              type="button"
+              aria-pressed={displayedView === "oblique"}
+              onClick={() => setActiveView("oblique")}
+            >
+              Oblique view
+            </button>
+            <button
+              type="button"
+              aria-pressed={displayedView === "side"}
+              onClick={() => setActiveView("side")}
+            >
+              Side view
+            </button>
+          </div>
           <ComparisonBoundary failed={failed}>
             <LoadedComparison
               fixture={fixture}
-              view={activeView}
+              view={displayedView}
               exporterVersion={manifest.exporterVersion}
               failed={failed}
               onReady={ready}
@@ -747,9 +790,17 @@ function ComparisonSession({ caseId }: { caseId: string }) {
 }
 
 export function RendererComparison({
-  caseId = "to92-x-mounting",
+  caseId = "to92-native-origin",
+  manifestUrl = `${assetBase}generated/manifest.json`,
 }: {
   caseId?: string
+  manifestUrl?: string
 }) {
-  return <ComparisonSession key={caseId} caseId={caseId} />
+  return (
+    <ComparisonSession
+      key={`${manifestUrl}:${caseId}`}
+      caseId={caseId}
+      manifestUrl={manifestUrl}
+    />
+  )
 }

@@ -1,48 +1,7 @@
 import type { ComparisonCase } from "./types"
 
 const circuitDir = "tests/fixtures/renderer-parity/circuits"
-const uprightTo92 = {
-  correctRenderer: "viewer",
-  correct:
-    "The transistor body is above the PCB and all three leads pass through their plated holes.",
-  incorrect:
-    "The transistor is inverted or sideways: its body intersects or hangs below the PCB instead of sitting above the holes.",
-} as const
-
 export const comparisonCases: readonly ComparisonCase[] = [
-  {
-    id: "to92-x-mounting",
-    title: "TO-92: mounting a source model turned about X",
-    description:
-      "The real TO-92 source geometry is rigidly rotated -90 degrees about X. The TSX's +90-degree rotationOffset must restore the upright mounting pose.",
-    category: "rotation",
-    sourceFile: `${circuitDir}/to92-x.circuit.tsx`,
-    targetName: "Q1",
-    physicalExpectation: uprightTo92,
-    camera: { target: [1.27, 0, 0.7], span: 18 },
-  },
-  {
-    id: "to92-y-mounting",
-    title: "TO-92: mounting a source model turned about Y",
-    description:
-      "The same real part is exported with its source geometry rotated -90 degrees about Y. The authored +90-degree correction must put its leads through the actual footprint.",
-    category: "rotation",
-    sourceFile: `${circuitDir}/to92-y.circuit.tsx`,
-    targetName: "Q1",
-    physicalExpectation: uprightTo92,
-    camera: { target: [1.27, 0, 0.7], span: 18 },
-  },
-  {
-    id: "to92-xy-mounting",
-    title: "TO-92: composing X and Y mounting corrections",
-    description:
-      "The source export uses Ry(-90) * Rx(-90). The TSX correction Rx(90) * Ry(90) restores the real package; reversing the composition leaves it on its side.",
-    category: "rotation",
-    sourceFile: `${circuitDir}/to92-xy.circuit.tsx`,
-    targetName: "Q1",
-    physicalExpectation: uprightTo92,
-    camera: { target: [1.27, 0, 0.7], span: 18 },
-  },
   {
     id: "to92-native-origin",
     title: "TO-92 STEP: original missing origin",
@@ -80,9 +39,9 @@ export const comparisonCases: readonly ComparisonCase[] = [
     id: "calibration",
     title: "Comparator calibration (not a renderer correctness example)",
     description:
-      "Identical copies of the physically mounted compound-rotation TO-92, then deliberate test-only mutations. This is kept separate from the reviewer-facing repros.",
+      "An unmodified STEP in a deliberately arbitrary pose, copied twice before test-only mutations. This checks comparator sensitivity, not physical mounting correctness.",
     category: "control",
-    sourceFile: `${circuitDir}/to92-xy.circuit.tsx`,
+    sourceFile: `${circuitDir}/comparator-calibration.circuit.tsx`,
     targetName: "Q1",
     camera: { target: [1.27, 0, 3], span: 14 },
   },

@@ -148,7 +148,7 @@ Each component has specific props for defining its characteristics and position 
 
 ### Non-blocking renderer comparison diagnostics
 
-The `Diagnostics/Renderer Parity` stories compare the actual viewer with
+The `Renderer Parity` stories compare the actual viewer with
 `circuit-json-to-gltf` using the same Circuit JSON compiled from simple TSX.
 Each repro mounts a real part on real pads or holes:
 
@@ -156,14 +156,15 @@ Each repro mounts a real part on real pads or holes:
 bun run storybook:comparisons
 ```
 
-This opens the TO-92 X-axis mounting-correction story directly instead of
+This opens the TO-92 missing-origin story directly instead of
 restoring an unrelated story. The ordinary `bun run storybook` entry point is
 unchanged.
 
 Each comparison story automatically displays **both oblique and side geometry**
 once its model geometry loads. Both panels remain visible, with the exact
 unlit/no-texture PNGs, edge maps, red/cyan overlays, and metrics used by the
-browser tests. There are no comparison buttons. Click an image to download its
+browser tests. Camera buttons switch between oblique and side views without
+changing either renderer's placement. Click an image to download its
 full-resolution PNG. The source TSX and a physical mounting criterion are shown
 with each pair of renders.
 
@@ -181,7 +182,7 @@ The browser suite has two separate roles:
 
 ```bash
 # Blocking tests of the matcher itself and deliberate browser mutations
-bun test ./tests/geometry-edge-*.test.ts ./tests/renderer-diagnostic-result.test.ts ./tests/renderer-comparison-*.test.ts ./tests/renderer-usb-mounting.test.ts
+bun run test:renderer-fixtures
 bun run test:renderer-calibration
 
 # Diagnostic comparisons: failures are reported but do not gate a completed run
@@ -234,15 +235,16 @@ browser-side exporter failures remain in the non-blocking diagnostic stage.
 Diff overlays show unmatched viewer edges in red, unmatched exporter edges in
 cyan, and covered edges in gray.
 
-The real TO-92 model is exported in three alternative source orientations.
-Authored 90-degree X, Y, or combined X/Y corrections must restore an upright
-transistor with leads through all three holes. Separate TO-92 and USB-C
-flashlight TSX repros retain the missing-origin behavior. Generated output
+The original TO-92 STEP and USB-C flashlight TSX repros retain their
+missing-origin behavior in separate categories. The manufactured TO-92
+source orientations have been removed. The actual M.2 upright assembly
+demonstrates placement rotation using a TSX-authored daughtercard.
+Each physical example has one explicit browser test per file. Generated output
 lives in ignored directories, never committed PNG baselines. See
 [`tests/fixtures/renderer-parity/README.md`](tests/fixtures/renderer-parity/README.md)
 for source provenance and mechanical interpretation.
 
-Comparator calibration is a separate `Diagnostics/Renderer Comparator Calibration`
+Comparator calibration is a separate `Renderer Parity/Comparator Calibration`
 story. Its deliberately mutated viewer copies test the matcher; they are not
 presented as realistic renderer bugs. The existing numeric USB mounting unit
 test remains independent of the reviewer-facing stories.

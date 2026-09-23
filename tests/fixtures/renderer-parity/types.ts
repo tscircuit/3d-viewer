@@ -41,16 +41,13 @@ export interface PreparedComparison {
   targetCadId: string
   sourceFile?: string
   sourceCode?: string
+  sourceReferences?: { path: string; sourceCode: string }[]
   physicalExpectation?: ComparisonCase["physicalExpectation"]
   circuitJson: AnyCircuitElement[]
   glbUrl?: string
   exportError?: string
   exportMessages: string[]
-  camera: {
-    target: [number, number, number]
-    span: number
-    fromBelow?: boolean
-  }
+  camera: ComparisonCase["camera"]
 }
 
 export interface ComparisonManifest {
