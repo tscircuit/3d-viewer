@@ -169,7 +169,11 @@ export function createFlexMeshes(
   for (const stiffener of stiffeners) {
     const mesh = new THREE.Mesh(
       surfaceToGeometry(
-        createStiffenerMesh(stiffener, board.thickness ?? 1.6, fold),
+        createStiffenerMesh({
+          stiffener: stiffener,
+          boardThickness: board.thickness ?? 1.6,
+          fold: fold,
+        }),
         board.center,
       ),
       new THREE.MeshStandardMaterial({
