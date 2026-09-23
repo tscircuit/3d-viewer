@@ -11,6 +11,7 @@ export const colors = {
   fr4SolderMaskGreen: [0.06, 0.31, 0.19],
   fr4TracesWithMaskGreen: [0.09, 0.38, 0.23],
   fr4TracesWithoutMaskTan: [0.6, 0.43, 0.28],
+  flexAmber: [0.8, 0.61, 0.2],
   fr1Tan: [0.8, 0.4, 0.2],
   fr1TracesWithMaskCopper: [0.9, 0.6, 0.2],
   fr1SolderMaskGreen: [0.02, 0.1, 0.04],
@@ -25,10 +26,12 @@ export const FAUX_BOARD_OPACITY = 0.6 // Opacity for faux boards (60% transparen
 export const boardMaterialColors: Record<PcbBoard["material"], RGB> = {
   fr1: colors.fr1Tan,
   fr4: colors.fr4Tan,
+  flex: colors.flexAmber,
 }
 
 // Color for the soldermask layer itself (dark green coating)
 export const soldermaskColors: Record<PcbBoard["material"], RGB> = {
   fr1: colors.fr1SolderMaskGreen,
   fr4: colors.fr4SolderMaskGreen,
+  flex: colors.flexAmber,
 }
