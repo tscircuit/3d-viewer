@@ -43,8 +43,7 @@
     "react-hot-toast": "^2.6.0",
     "three": "^0.165.0",
     "three-stdlib": "^2.36.0",
-    "troika-three-text": "^0.52.4",
-    "@tscircuit/flex-utils": "^0.0.2"
+    "troika-three-text": "^0.52.4"
   },
   "peerDependencies": {
     "zod": "3",
@@ -54,6 +53,7 @@
     "@tscircuit/circuit-json-util": "*"
   },
   "devDependencies": {
+    "@tscircuit/flex-utils": "https://jscdn.tscircuit.com/@tscircuit/flex-utils/0.0.5.tgz",
     "@biomejs/biome": "^2.1.4",
     "@chromatic-com/storybook": "^1.9.0",
     "@jscad/modeling": "^2.12.5",
