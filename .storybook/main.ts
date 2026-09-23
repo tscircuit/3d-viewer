@@ -32,6 +32,7 @@ const config: StorybookConfig = {
     const { mergeConfig } = await import("vite")
     const customViteConfig = {
       resolve: {
+        dedupe: ["zod"],
         alias: {
           src: path.resolve(__dirname, "../src"),
         },
@@ -61,7 +62,7 @@ const config: StorybookConfig = {
         logLevel: "info",
       },
       optimizeDeps: {
-        exclude: ["manifold-3d"],
+        exclude: ["manifold-3d", "@resvg/resvg-js"],
       },
     }
     return mergeConfig(config, customViteConfig)
