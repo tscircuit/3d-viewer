@@ -1,3 +1,4 @@
+import { resolveFoldPcbs } from "./utils/resolve-fold-pcbs"
 import { useCallback, useEffect, useRef, useState } from "react"
 import * as THREE from "three"
 
@@ -52,7 +53,11 @@ const CadViewerInner = (props: any) => {
   const hasBends = circuitJson.some((element) => element.type === "pcb_bend")
   const hasFlexGeometry =
     hasBends || circuitJson.some((element) => element.type === "pcb_stiffener")
-  const [foldPcbs, setFoldPcbs] = useState(false)
+  const [foldPcbsOverride, setFoldPcbs] = useState<boolean | undefined>(
+    undefined,
+  )
+  const foldPcbs = foldPcbsOverride ?? props.foldPcbs
+  const resolvedFoldPcbs = resolveFoldPcbs(circuitJson, foldPcbs)
   const resolvedProps = { ...props, circuitJson, children: undefined }
   const [engine, setEngine] = useState<"jscad" | "manifold">(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
@@ -260,7 +265,7 @@ const CadViewerInner = (props: any) => {
       {hasFlexGeometry ? (
         <CadViewerManifold
           {...resolvedProps}
-          foldPcbs={hasBends && foldPcbs}
+          foldPcbs={foldPcbs}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           onUserInteraction={handleUserInteraction}
           onCameraControllerReady={handleCameraControllerReady}
@@ -291,11 +296,11 @@ const CadViewerInner = (props: any) => {
           menuPos={menuPos}
           engine={engine}
           flexScene={hasFlexGeometry}
-          foldPcbs={foldPcbs}
+          foldPcbs={resolvedFoldPcbs}
           onFoldPcbsToggle={
             hasBends
               ? () => {
-                  setFoldPcbs((folded) => !folded)
+                  setFoldPcbs(!resolvedFoldPcbs)
                   setCameraPreset("Custom")
                   closeMenu()
                 }

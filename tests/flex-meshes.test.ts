@@ -1,3 +1,4 @@
+import { resolveFoldPcbs } from "../src/utils/resolve-fold-pcbs"
 import { expect, test } from "bun:test"
 import * as THREE from "three"
 import { createFlexMeshes } from "../src/utils/flex-meshes"
@@ -75,4 +76,44 @@ test("assembled bottom CAD height is used verbatim, without the flat bottom-laye
   expect(transform.rotation).toEqual(
     [25, 70, 40].map((a) => (a * Math.PI) / 180) as [number, number, number],
   )
+})
+
+test("default board geometry follows Circuit JSON while explicit folding overrides it", () => {
+  for (const storedFoldState of [undefined, false, true]) {
+    const circuitJson: AnyCircuitElement[] = [
+      ...json,
+      {
+        type: "cad_component",
+        cad_component_id: "cad",
+        source_component_id: "source",
+        pcb_component_id: "pcb",
+        position: { x: 16, y: 3, z: 0.075 },
+        rotation: { x: 0, y: 0, z: 0 },
+        anchor_alignment: "center",
+        model_object_fit: "contain_within_bounds",
+        is_on_folded_board: storedFoldState,
+      },
+    ]
+    for (const override of [undefined, false, true]) {
+      const board = new THREE.Mesh(
+        new THREE.BoxGeometry(12, 2, 0.15),
+        new THREE.MeshStandardMaterial(),
+      )
+      board.position.set(10, 3, 0)
+      const output = createFlexMeshes(
+        [board],
+        [],
+        circuitJson,
+        resolveFoldPcbs(circuitJson, override),
+      )
+      if (
+        override === true ||
+        (override === undefined && storedFoldState === true)
+      ) {
+        expect(output.bounds?.maxZ).toBeCloseTo(2 + 6 - Math.PI / 2, 5)
+      } else {
+        expect(output.geometryMeshes[0]).toBe(board)
+      }
+    }
+  }
 })

@@ -1,3 +1,4 @@
+import { resolveFoldPcbs } from "./utils/resolve-fold-pcbs"
 import { transformCircuitJsonCadComponents } from "@tscircuit/flex-utils"
 import { createFlexMeshes } from "./utils/flex-meshes"
 import { FitCameraToComparison } from "./three-components/reference-object"
@@ -145,7 +146,7 @@ const MANIFOLD_CDN_BASE_URL = "https://cdn.jsdelivr.net/npm/manifold-3d@3.2.1"
 
 const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   circuitJson: circuitJsonProp,
-  foldPcbs = false,
+  foldPcbs,
   autoRotateDisabled,
   clickToInteractEnabled,
   onUserInteraction,
@@ -255,14 +256,15 @@ try {
 
   const flex = useMemo(() => {
     try {
+      const resolvedFoldPcbs = resolveFoldPcbs(circuitJson, foldPcbs)
       const posedJson = transformCircuitJsonCadComponents(circuitJson, {
-        foldPcbs,
+        foldPcbs: resolvedFoldPcbs,
       })
       const meshes = createFlexMeshes(
         createGeometryMeshes(geoms),
         createTextureMeshes(textures, boardData, pcbThickness, isFauxBoard),
         circuitJson,
-        foldPcbs,
+        resolvedFoldPcbs,
       )
       return { ...meshes, posedJson, error: undefined }
     } catch (error) {
