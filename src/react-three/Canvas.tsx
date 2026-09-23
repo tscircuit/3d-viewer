@@ -140,17 +140,25 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
       let animationFrameId: number
       const clock = new THREE.Clock()
 
+      let isVisible = true
+      const visibilityObserver = new IntersectionObserver(([entry]) => {
+        isVisible = entry?.isIntersecting ?? false
+        if (isVisible) handleResize()
+      })
+      visibilityObserver.observe(mountRef.current)
+
       const animate = () => {
+        animationFrameId = requestAnimationFrame(animate)
+        if (!isVisible) return
         const time = clock.getElapsedTime()
         const delta = clock.getDelta()
         frameListeners.current.forEach((listener) => listener(time, delta))
         renderer.render(scene, camera)
-        animationFrameId = requestAnimationFrame(animate)
       }
       animate()
 
       const handleResize = () => {
-        if (mountRef.current) {
+        if (mountRef.current?.clientWidth && mountRef.current.clientHeight) {
           const newAspect =
             mountRef.current.clientWidth / mountRef.current.clientHeight
           if (camera instanceof THREE.PerspectiveCamera) {
@@ -180,6 +188,7 @@ export const Canvas = forwardRef<THREE.Object3D, CanvasProps>(
 
         window.removeEventListener("resize", handleResize)
         cancelAnimationFrame(animationFrameId)
+        visibilityObserver.disconnect()
         if (mountRef.current && renderer.domElement) {
           mountRef.current.removeChild(renderer.domElement)
         }

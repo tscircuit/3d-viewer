@@ -158,6 +158,8 @@ export const createBoardReliefTextures = (
   const sourceCanvas = texture.image as HTMLCanvasElement | undefined
   if (!sourceCanvas?.width || !sourceCanvas.height) return null
 
+  const { width: canvasWidth, height: canvasHeight } = sourceCanvas
+
   const sourceCtx = sourceCanvas.getContext("2d")
   if (!sourceCtx) return null
 
@@ -170,36 +172,31 @@ export const createBoardReliefTextures = (
       ? maskCtx.getImageData(0, 0, maskWidth, maskHeight)
       : null
 
-  const imageData = sourceCtx.getImageData(
-    0,
-    0,
-    sourceCanvas.width,
-    sourceCanvas.height,
-  )
+  const imageData = sourceCtx.getImageData(0, 0, canvasWidth, canvasHeight)
   const data = imageData.data
-  const heights = new Float32Array(sourceCanvas.width * sourceCanvas.height)
+  const heights = new Float32Array(canvasWidth * canvasHeight)
   const roughnessCanvas = document.createElement("canvas")
   const metalnessCanvas = document.createElement("canvas")
-  roughnessCanvas.width = metalnessCanvas.width = sourceCanvas.width
-  roughnessCanvas.height = metalnessCanvas.height = sourceCanvas.height
+  roughnessCanvas.width = metalnessCanvas.width = canvasWidth
+  roughnessCanvas.height = metalnessCanvas.height = canvasHeight
   const roughnessCtx = roughnessCanvas.getContext("2d")
   const metalnessCtx = metalnessCanvas.getContext("2d")
   if (!roughnessCtx || !metalnessCtx) return null
   const roughnessImageData = roughnessCtx.createImageData(
-    sourceCanvas.width,
-    sourceCanvas.height,
+    canvasWidth,
+    canvasHeight,
   )
   const metalnessImageData = metalnessCtx.createImageData(
-    sourceCanvas.width,
-    sourceCanvas.height,
+    canvasWidth,
+    canvasHeight,
   )
   const roughnessData = roughnessImageData.data
   const metalnessData = metalnessImageData.data
 
   for (let i = 0; i < data.length; i += 4) {
     const pixelIndex = i / 4
-    const x = pixelIndex % sourceCanvas.width
-    const y = Math.floor(pixelIndex / sourceCanvas.width)
+    const x = pixelIndex % canvasWidth
+    const y = Math.floor(pixelIndex / canvasWidth)
     const alpha = data[i + 3] ?? 0
     if (alpha < 16) {
       heights[pixelIndex] = invertSurfaceHeight(PLAIN_SOLDERMASK_HEIGHT)
@@ -207,16 +204,10 @@ export const createBoardReliefTextures = (
     }
 
     const maskX = maskImageData
-      ? Math.min(
-          maskWidth - 1,
-          Math.floor((x / sourceCanvas.width) * maskWidth),
-        )
+      ? Math.min(maskWidth - 1, Math.floor((x / canvasWidth) * maskWidth))
       : 0
     const maskY = maskImageData
-      ? Math.min(
-          maskHeight - 1,
-          Math.floor((y / sourceCanvas.height) * maskHeight),
-        )
+      ? Math.min(maskHeight - 1, Math.floor((y / canvasHeight) * maskHeight))
       : 0
     const maskAlpha = maskImageData
       ? (maskImageData.data[(maskY * maskWidth + maskX) * 4 + 3] ?? 0)
@@ -227,19 +218,19 @@ export const createBoardReliefTextures = (
       data[i + 2] ?? 0,
       maskAlpha >= 16,
     )
-    const salt = sourceCanvas.width + sourceCanvas.height
+    const salt = canvasWidth + canvasHeight
     const fineGrain = profile.isExposedCopper
       ? createCopperDetail(x, y, salt)
       : profile.isMaskedCopper
         ? createMaskedTraceDetail(x, y, salt)
         : 0
-    const height = clamp01(
+    const surfaceHeight = clamp01(
       invertSurfaceHeight(profile.height) +
         fineGrain * profile.microSurfaceWeight,
     )
-    heights[pixelIndex] = height
+    heights[pixelIndex] = surfaceHeight
 
-    const heightChannel = height * 255
+    const heightChannel = surfaceHeight * 255
     data[i] = data[i + 1] = data[i + 2] = heightChannel
     data[i + 3] = 255
 
@@ -275,37 +266,34 @@ export const createBoardReliefTextures = (
   metalnessCtx.putImageData(metalnessImageData, 0, 0)
 
   const bumpCanvas = document.createElement("canvas")
-  bumpCanvas.width = sourceCanvas.width
-  bumpCanvas.height = sourceCanvas.height
+  bumpCanvas.width = canvasWidth
+  bumpCanvas.height = canvasHeight
   const bumpCtx = bumpCanvas.getContext("2d")
   if (!bumpCtx) return null
   bumpCtx.putImageData(imageData, 0, 0)
 
   const normalCanvas = document.createElement("canvas")
-  normalCanvas.width = sourceCanvas.width
-  normalCanvas.height = sourceCanvas.height
+  normalCanvas.width = canvasWidth
+  normalCanvas.height = canvasHeight
   const normalCtx = normalCanvas.getContext("2d")
   if (!normalCtx) return null
-  const normalImageData = normalCtx.createImageData(
-    sourceCanvas.width,
-    sourceCanvas.height,
-  )
+  const normalImageData = normalCtx.createImageData(canvasWidth, canvasHeight)
   const normalData = normalImageData.data
   const getHeight = (x: number, y: number) =>
     heights[
-      Math.max(0, Math.min(sourceCanvas.height - 1, y)) * sourceCanvas.width +
-        Math.max(0, Math.min(sourceCanvas.width - 1, x))
+      Math.max(0, Math.min(canvasHeight - 1, y)) * canvasWidth +
+        Math.max(0, Math.min(canvasWidth - 1, x))
     ] ?? 0
 
-  for (let y = 0; y < sourceCanvas.height; y++) {
-    for (let x = 0; x < sourceCanvas.width; x++) {
+  for (let y = 0; y < canvasHeight; y++) {
+    for (let x = 0; x < canvasWidth; x++) {
       const dx = (getHeight(x + 1, y) - getHeight(x - 1, y)) * 4
       const dy = (getHeight(x, y + 1) - getHeight(x, y - 1)) * 4
-      const normal = new THREE.Vector3(-dx, -dy, 1).normalize()
-      const i = (y * sourceCanvas.width + x) * 4
-      normalData[i] = (normal.x * 0.5 + 0.5) * 255
-      normalData[i + 1] = (normal.y * 0.5 + 0.5) * 255
-      normalData[i + 2] = (normal.z * 0.5 + 0.5) * 255
+      const inverseLength = 1 / Math.sqrt(dx * dx + dy * dy + 1)
+      const i = (y * canvasWidth + x) * 4
+      normalData[i] = (-dx * inverseLength * 0.5 + 0.5) * 255
+      normalData[i + 1] = (-dy * inverseLength * 0.5 + 0.5) * 255
+      normalData[i + 2] = (inverseLength * 0.5 + 0.5) * 255
       normalData[i + 3] = 255
     }
   }
