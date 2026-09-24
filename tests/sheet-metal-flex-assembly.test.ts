@@ -1,4 +1,6 @@
 import { expect, test } from "bun:test"
+import { modelDefinitionSchema } from "modelprinter"
+import { z } from "zod"
 import type { CadComponent } from "circuit-json"
 import {
   createPcbFold,
@@ -44,4 +46,8 @@ test("routed four-bend flex clears the metal wall and preserves standalone CAD",
     (e) => Math.abs(e.position.x - 18.575) < 0.01,
   )!
   expect(externalLed.position.z).toBeCloseTo(8.5, 4)
+})
+
+test("modelprinter uses the viewer consumer Zod instance", () => {
+  expect(modelDefinitionSchema).toBeInstanceOf(z.ZodType)
 })
