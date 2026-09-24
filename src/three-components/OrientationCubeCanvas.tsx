@@ -139,7 +139,14 @@ export const OrientationCubeCanvas = () => {
 
     // Animation loop
     let animationFrameId: number | null = null
+    let isVisible = true
+    const visibilityObserver = new IntersectionObserver(([entry]) => {
+      isVisible = entry?.isIntersecting ?? false
+    })
+    visibilityObserver.observe(canvas)
     const animate = () => {
+      animationFrameId = requestAnimationFrame(animate)
+      if (!isVisible) return
       if (mainCameraRef.current) {
         const cameraPosition = computePointInFront(
           mainCameraRef.current.rotation ?? new THREE.Euler(0, 0, 0),
@@ -153,7 +160,6 @@ export const OrientationCubeCanvas = () => {
       }
 
       renderer.render(scene, camera)
-      animationFrameId = requestAnimationFrame(animate)
     }
 
     animate()
@@ -162,6 +168,7 @@ export const OrientationCubeCanvas = () => {
     return () => {
       // StrictMode clears DOM refs before replaying passive effects, so clean up
       // the canvas owned by this effect instead of reading containerRef.current.
+      visibilityObserver.disconnect()
       canvas.remove()
 
       if (animationFrameId !== null) {

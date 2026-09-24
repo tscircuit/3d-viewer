@@ -1,0 +1,10 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`relief maps preserve mixed surfaces, transparency, and normal-map edges 1`] = `
+{
+  "bumpMap": "b9da8071695d7a7a16347eee5dc33f35c43c4ccfb619ef90c9658d516f017dc5",
+  "metalnessMap": "a7e6e2a6e5eb6b987212ce141d97f2e1af013d2aa6e373a742ddf2de8e573bb0",
+  "normalMap": "eb34e71fe48046f26524c1d89d746c05c5c1e4faba79fe935941c81c517fed6e",
+  "roughnessMap": "ef4300bab2f8f34691f21c72a87fe999761505c9e3d9b1ea38eba309c1cbe05a",
+}
+`;

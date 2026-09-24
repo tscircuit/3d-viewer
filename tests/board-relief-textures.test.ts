@@ -197,3 +197,34 @@ test("soldermask colors preserve masked-copper relief", () => {
     expect(yellowOverCopperBump.channel(0, 0, 0)).toBeGreaterThan(170)
   })
 })
+
+test("relief maps preserve mixed surfaces, transparency, and normal-map edges", () => {
+  withCanvasDocument(() => {
+    const board = createCanvas(8, 6)
+    const mask = createCanvas(4, 3)
+    const colors: [number, number, number, number][] = [
+      [20, 110, 55, 255],
+      [210, 160, 60, 255],
+      [240, 240, 230, 255],
+      [220, 200, 74, 255],
+      [20, 20, 20, 255],
+      [0, 0, 0, 0],
+    ]
+    for (let y = 0; y < 6; y++) {
+      for (let x = 0; x < 8; x++)
+        board.setPixel(x, y, colors[(x + y) % colors.length]!)
+    }
+    mask.setPixel(1, 1, [255, 255, 255, 255])
+    mask.setPixel(3, 2, [255, 255, 255, 255])
+    const relief = createBoardReliefTextures(asTexture(board), asTexture(mask))!
+    const hashes = Object.fromEntries(
+      Object.entries(relief).map(([name, texture]) => [
+        name,
+        new Bun.CryptoHasher("sha256")
+          .update((texture.image as TestCanvas).snapshot())
+          .digest("hex"),
+      ]),
+    )
+    expect(hashes).toMatchSnapshot()
+  })
+})
