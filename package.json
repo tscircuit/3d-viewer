@@ -46,7 +46,7 @@
     "troika-three-text": "^0.52.4"
   },
   "peerDependencies": {
-    "zod": "3",
+    "zod": "*",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "@tscircuit/core": "*",
@@ -89,7 +89,8 @@
     "vite": "^7.1.5",
     "vite-tsconfig-paths": "^4.3.2",
     "circuit-json-to-gltf": "0.0.134",
-    "modelprinter": "https://jscdn.tscircuit.com/@tscircuit/modelprinter/0.0.3.tgz"
+    "modelprinter": "https://jscdn.tscircuit.com/@tscircuit/modelprinter/0.0.3.tgz",
+    "zod": "^3.25.67"
   },
   "patchedDependencies": {
     "@tscircuit/fanout-solver@0.0.78": "patches/@tscircuit%2Ffanout-solver@0.0.78.patch"

@@ -32,7 +32,6 @@ const config: StorybookConfig = {
     const { mergeConfig } = await import("vite")
     const customViteConfig = {
       resolve: {
-        dedupe: ["zod"],
         alias: {
           src: path.resolve(__dirname, "../src"),
         },
