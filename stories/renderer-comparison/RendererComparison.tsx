@@ -43,6 +43,7 @@ import {
   GeometryComparisonPanel,
   type VisibleGeometryComparison,
 } from "./GeometryComparisonPanel"
+import { findViewerTarget } from "./viewer-target"
 
 const assetBase = "/renderer-comparison/"
 const exportToProject = new THREE.Matrix4().set(
@@ -238,7 +239,7 @@ function ExportedModel({
           !vertexCount(candidates[0])
         ) {
           throw new Error(
-            `Expected one nonempty exported node named "${sourceName}", found ${candidates.length}`,
+            `Expected one nonempty exported target "${sourceName}", found ${candidates.length}`,
           )
         }
         frames.current = 0
@@ -257,42 +258,6 @@ function ExportedModel({
     }
   }, [url, sourceName, rootObject, failed])
   return null
-}
-
-function findViewerTarget(root: THREE.Object3D, target: CadComponent) {
-  const anchor = new THREE.Vector3(
-    target.position.x,
-    target.position.y,
-    target.position.z,
-  )
-  const candidates = root.children.filter(
-    (object) =>
-      object instanceof THREE.Group &&
-      object.position.distanceTo(anchor) < 0.00001,
-  )
-  if (candidates.length > 1) {
-    throw new Error(
-      `Ambiguous viewer CAD anchor: ${candidates.length} groups for ${target.cad_component_id}`,
-    )
-  }
-  const candidate = candidates[0]
-  if (!candidate) return null
-  // Error3d mounts a direct error box/text instead of the production transform graph.
-  if (
-    candidate.children.some(
-      (child) => child instanceof THREE.Mesh && child.renderOrder === 999999,
-    )
-  ) {
-    const text = candidate.children.find((child) => "text" in child)
-    throw new Error(
-      `Viewer model load failed: ${text && "text" in text ? String(text.text) : target.cad_component_id}`,
-    )
-  }
-  // useCadModelTransformGraph: board -> fit -> model -> loader -> loaded asset.
-  // MixedStlModel initially inserts a fallback Mesh, not the loader's real Group.
-  const asset = candidate.children[0]?.children[0]?.children[0]?.children[0]
-  if (!(asset instanceof THREE.Group) || !vertexCount(asset)) return null
-  return candidate
 }
 
 function LoadedComparison({
@@ -325,7 +290,9 @@ function LoadedComparison({
       element.type === "source_component" &&
       element.source_component_id === target.source_component_id,
   )
-  if (!source || source.type !== "source_component" || !source.name) {
+  const sourceName =
+    source?.type === "source_component" ? source.name : undefined
+  if (!sourceName) {
     throw new Error(`Missing source component name for ${fixture.targetCadId}`)
   }
   if (!isCalibration && !fixture.glbUrl && !fixture.exportError) {
@@ -336,6 +303,11 @@ function LoadedComparison({
   const board = fixture.circuitJson.find(
     (element) => element.type === "pcb_board",
   )
+  const modelUrl =
+    target.model_obj_url ??
+    target.model_glb_url ??
+    target.model_gltf_url ??
+    target.model_step_url
   const publish = useCallback(() => {
     if (
       !published.current &&
@@ -366,7 +338,12 @@ function LoadedComparison({
           )
         }
         const object =
-          viewerRoot.current && findViewerTarget(viewerRoot.current, target)
+          viewerRoot.current &&
+          findViewerTarget(
+            viewerRoot.current,
+            fixture.circuitJson,
+            fixture.targetCadId,
+          )
         if (object) {
           object.updateWorldMatrix(true, true)
           const parts: string[] = []
@@ -394,24 +371,55 @@ function LoadedComparison({
     }
     frame = requestAnimationFrame(inspect)
     return () => cancelAnimationFrame(frame)
-  }, [fixture.targetCadId, target, failed, publish])
+  }, [fixture.targetCadId, fixture.circuitJson, target, failed, publish])
   return (
     <>
       <h1>{fixture.title}</h1>
       <p>{fixture.description}</p>
+      {fixture.physicalExpectation && (
+        <section data-testid="physical-expectation">
+          <p>
+            <strong>Correct mounting:</strong>{" "}
+            {fixture.physicalExpectation.correct}
+          </p>
+          <p>
+            <strong>Failure to look for:</strong>{" "}
+            {fixture.physicalExpectation.incorrect}
+          </p>
+        </section>
+      )}
+      <p>
+        {isCalibration
+          ? "Calibration renders the TSX once in the viewer and compares detached copies. Source: "
+          : "Both renderers receive the unchanged Circuit JSON compiled from "}
+        <a href="#circuit-source">
+          {fixture.sourceFile ?? "the source circuit"}
+        </a>
+        .
+      </p>
       <p>
         Camera: {view}, viewed from{" "}
         {fixture.camera.fromBelow ? "below" : "above"} the PCB.
       </p>
       <p>
-        CAD {fixture.targetCadId}; source {source.name}; authored XYZ angles
+        CAD {fixture.targetCadId}; source {sourceName}; authored XYZ angles
         (degrees):{" "}
         {target.rotation
           ? JSON.stringify(target.rotation)
           : "absent (implicit layer fallback)"}
         .
       </p>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+      {!isCalibration && (
+        <p>
+          A geometry match means the renderers agree, not that the part is
+          mounted correctly. The real footprint's holes and pads are the
+          physical reference.
+        </p>
+      )}
+      <div
+        data-testid="renderer-normal-panels"
+        style={{ display: "flex", flexWrap: "wrap", gap: 16 }}
+      >
         <section>
           <h2>Production 3d-viewer</h2>
           <div style={{ width: CAPTURE_SIZE, height: CAPTURE_SIZE }}>
@@ -463,7 +471,7 @@ function LoadedComparison({
                   >
                     <ExportedModel
                       url={fixture.glbUrl}
-                      sourceName={source.name}
+                      sourceName={sourceName}
                       loaded={loaded}
                       failed={failed}
                     />
@@ -474,6 +482,74 @@ function LoadedComparison({
           </div>
         </section>
       </div>
+      {fixture.sourceCode && (
+        <section id="circuit-source" data-testid="renderer-circuit-source">
+          <h2>Source circuit</h2>
+          <p>
+            <code>{fixture.sourceFile}</code>
+          </p>
+          {modelUrl && (
+            <p>
+              <a href={resolveStaticAsset(modelUrl)} download>
+                Download the actual source model
+              </a>{" "}
+              used by both renderers.
+            </p>
+          )}
+          <pre
+            style={{ overflowX: "auto", padding: 16, background: "#eef2f6" }}
+          >
+            <code>{fixture.sourceCode}</code>
+          </pre>
+          {fixture.sourceReferences?.map((reference) => (
+            <details key={reference.path}>
+              <summary>
+                Referenced source: <code>{reference.path}</code>
+              </summary>
+              <pre
+                style={{
+                  overflowX: "auto",
+                  padding: 16,
+                  background: "#eef2f6",
+                }}
+              >
+                <code>{reference.sourceCode}</code>
+              </pre>
+            </details>
+          ))}
+        </section>
+      )}
+      <details>
+        <summary>Emitted Circuit JSON placement</summary>
+        <pre style={{ whiteSpace: "pre-wrap" }}>
+          {JSON.stringify(
+            {
+              source_component_id: target.source_component_id,
+              position: target.position,
+              rotation: target.rotation,
+              model_origin_position:
+                target.model_origin_position ?? "(omitted)",
+              model_origin_alignment:
+                target.model_origin_alignment ?? "(omitted)",
+              anchor_alignment: target.anchor_alignment ?? "(omitted)",
+              model_unit_to_mm_scale_factor:
+                target.model_unit_to_mm_scale_factor ?? "(omitted)",
+              size: target.size ?? "(omitted)",
+              model_object_fit: target.model_object_fit ?? "(omitted)",
+              board: board
+                ? {
+                    center: board.center,
+                    width: board.width,
+                    height: board.height,
+                    thickness: board.thickness,
+                  }
+                : "(omitted)",
+            },
+            null,
+            2,
+          )}
+        </pre>
+      </details>
       <p>
         Only the final exporter basis is normalized: P=(-G.x,G.z,G.y),
         determinant +1. CAD placement, origin, fit and loader transforms are
@@ -509,12 +585,18 @@ function LoadedComparison({
   )
 }
 
-function ComparisonSession({ caseId }: { caseId: string }) {
+function ComparisonSession({
+  caseId,
+  manifestUrl,
+}: {
+  caseId: string
+  manifestUrl: string
+}) {
   const [manifest, setManifest] = useState<ComparisonManifest | null>(null)
   const [status, setStatus] =
     useState<RendererComparisonApi["status"]>("loading")
   const [error, setError] = useState<string>()
-  const [activeView, setActiveView] = useState<ComparisonView>("oblique")
+  const [activeView, setActiveView] = useState<ComparisonView>()
   const [comparisons, setComparisons] = useState<
     Partial<Record<ComparisonView, VisibleGeometryComparison>>
   >({})
@@ -585,10 +667,16 @@ function ComparisonSession({ caseId }: { caseId: string }) {
       api.error = message
       setError(message)
       setStatus("error")
+      setPendingViews({})
+      setComparisonErrors({
+        oblique: `Geometry comparison unavailable: ${message}`,
+        side: `Geometry comparison unavailable: ${message}`,
+      })
     },
     [api],
   )
   const fixture = manifest?.cases.find((entry) => entry.id === caseId)
+  const displayedView = activeView ?? "oblique"
   const ready = useCallback(
     (viewer: THREE.Object3D, exporter: THREE.Object3D | null) => {
       if (!fixture || api.status === "error") return
@@ -615,7 +703,7 @@ function ComparisonSession({ caseId }: { caseId: string }) {
     delete api.error
     window.rendererComparison = api
     const controller = new AbortController()
-    fetch(`${assetBase}generated/manifest.json`, { signal: controller.signal })
+    fetch(manifestUrl, { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok)
           throw new Error(`Comparison manifest: HTTP ${response.status}`)
@@ -635,7 +723,7 @@ function ComparisonSession({ caseId }: { caseId: string }) {
       targets.current = null
       if (window.rendererComparison === api) delete window.rendererComparison
     }
-  }, [api, caseId, failed])
+  }, [api, caseId, failed, manifestUrl])
   return (
     <main
       data-testid="renderer-comparison"
@@ -656,10 +744,30 @@ function ComparisonSession({ caseId }: { caseId: string }) {
       )}
       {fixture && manifest && (
         <section data-testid="renderer-comparison-context">
+          <div
+            role="group"
+            aria-label="Camera view"
+            style={{ display: "flex", gap: 8 }}
+          >
+            <button
+              type="button"
+              aria-pressed={displayedView === "oblique"}
+              onClick={() => setActiveView("oblique")}
+            >
+              Oblique view
+            </button>
+            <button
+              type="button"
+              aria-pressed={displayedView === "side"}
+              onClick={() => setActiveView("side")}
+            >
+              Side view
+            </button>
+          </div>
           <ComparisonBoundary failed={failed}>
             <LoadedComparison
               fixture={fixture}
-              view={activeView}
+              view={displayedView}
               exporterVersion={manifest.exporterVersion}
               failed={failed}
               onReady={ready}
@@ -682,9 +790,17 @@ function ComparisonSession({ caseId }: { caseId: string }) {
 }
 
 export function RendererComparison({
-  caseId = "clip-x37-explicit-origin",
+  caseId = "to92-native-origin",
+  manifestUrl = `${assetBase}generated/manifest.json`,
 }: {
   caseId?: string
+  manifestUrl?: string
 }) {
-  return <ComparisonSession key={caseId} caseId={caseId} />
+  return (
+    <ComparisonSession
+      key={`${manifestUrl}:${caseId}`}
+      caseId={caseId}
+      manifestUrl={manifestUrl}
+    />
+  )
 }

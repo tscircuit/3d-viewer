@@ -148,27 +148,31 @@ Each component has specific props for defining its characteristics and position 
 
 ### Non-blocking renderer comparison diagnostics
 
-The `Diagnostics/Renderer Parity` stories compare the actual viewer with
-`circuit-json-to-gltf` using the same Circuit JSON and local model assets:
+The `Renderer Parity` stories compare the actual viewer with
+`circuit-json-to-gltf` using the same Circuit JSON compiled from simple TSX.
+Each repro mounts a real part on real pads or holes:
 
 ```bash
 bun run storybook:comparisons
 ```
 
-This opens `Diagnostics/Renderer Parity / X Rotation` directly instead of
+This opens the TO-92 missing-origin story directly instead of
 restoring an unrelated story. The ordinary `bun run storybook` entry point is
 unchanged.
 
 Each comparison story automatically displays **both oblique and side geometry**
 once its model geometry loads. Both panels remain visible, with the exact
 unlit/no-texture PNGs, edge maps, red/cyan overlays, and metrics used by the
-browser tests. There are no comparison buttons. Click an image to download its
-full-resolution PNG. Bottom-layer fixtures use cameras below the PCB.
+browser tests. Camera buttons switch between oblique and side views without
+changing either renderer's placement. Click an image to download its
+full-resolution PNG. The source TSX and a physical mounting criterion are shown
+with each pair of renders.
 
 circuit-json-to-gltf is a development-only dependency. A Bun preparation step generates
 GLBs and records circuit-json-to-gltf failures; it is not imported into the viewer's
 production bundle or the browser story. Model files are local, not fetched from
-ModelCDN during the tests.
+ModelCDN during the tests. The native STEP story uses the viewer's existing
+OCCT CDN runtime.
 
 `build-storybook` also prepares the fixture data, so the existing `vercel-build`
 entry point publishes working comparison stories. Vercel hosts those static
@@ -178,7 +182,7 @@ The browser suite has two separate roles:
 
 ```bash
 # Blocking tests of the matcher itself and deliberate browser mutations
-bun test ./tests/geometry-edge-*.test.ts ./tests/renderer-diagnostic-result.test.ts ./tests/renderer-comparison-*.test.ts ./tests/renderer-usb-mounting.test.ts
+bun run test:renderer-fixtures
 bun run test:renderer-calibration
 
 # Diagnostic comparisons: failures are reported but do not gate a completed run
@@ -231,20 +235,19 @@ browser-side exporter failures remain in the non-blocking diagnostic stage.
 Diff overlays show unmatched viewer edges in red, unmatched exporter edges in
 cyan, and covered edges in gray.
 
-Cases keep rotation, origin inference, format dispatch, and the physical USB
-mounting example separate. Explicit-origin zero/Z cases are controls; missing-origin
-cases retain their original alignment tags. Generated output lives in ignored
-directories, never committed PNG baselines. See
+The original TO-92 STEP and USB-C flashlight TSX repros retain their
+missing-origin behavior in separate categories. The manufactured TO-92
+source orientations have been removed. The actual M.2 upright assembly
+demonstrates placement rotation using a TSX-authored daughtercard.
+Each physical example has one explicit browser test per file. Generated output
+lives in ignored directories, never committed PNG baselines. See
 [`tests/fixtures/renderer-parity/README.md`](tests/fixtures/renderer-parity/README.md)
-for source provenance and the common-board adaptation.
+for source provenance and mechanical interpretation.
 
-Nonzero angle probes use oblique values (for example X=37, Y=30, Z=47, and
-mixed 23/31/47), not quarter turns that can conceal symmetry and axis mistakes.
-Zero angles and the renderer's implicit bottom-layer fallback remain deliberate
-controls. The physical USB mounting fixture is a documented exception: its
-native Z-up mesh requires Z=270 degrees to fit the footprint. Actual tab/hole
-and contact/pad geometry is checked separately. The original USB missing-origin
-input remains a distinct diagnostic, not the mounted pose's zero-angle control.
+Comparator calibration is a separate `Renderer Parity/Comparator Calibration`
+story. Its deliberately mutated viewer copies test the matcher; they are not
+presented as realistic renderer bugs. The existing numeric USB mounting unit
+test remains independent of the reviewer-facing stories.
 
 ### Custom Component Models
 

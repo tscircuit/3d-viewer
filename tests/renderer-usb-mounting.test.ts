@@ -2,8 +2,7 @@ import { expect, test } from "bun:test"
 import type { AnyCircuitElement, PcbPlatedHole } from "circuit-json"
 import { Euler, Line3, MathUtils, Mesh, Plane, Vector3 } from "three"
 import { OBJLoader } from "three-stdlib"
-import { applyComparisonCase } from "./fixtures/renderer-parity/apply-case"
-import { comparisonCases } from "./fixtures/renderer-parity/cases"
+import { applyUsbMountingFixture } from "./fixtures/renderer-parity/legacy-usb-mounting"
 
 function holeClearance(point: Vector3, hole: PcbPlatedHole) {
   const local = new Vector3(point.x - hole.x, point.y - hole.y, 0)
@@ -32,13 +31,11 @@ function holeClearance(point: Vector3, hole: PcbPlatedHole) {
 }
 
 test("the USB mounting fixture seats all four shell tabs and five contacts without changing the captured seed", async () => {
-  const fixture = comparisonCases.find((entry) => entry.id === "usb-mounted")
-  if (!fixture) throw new Error("Missing USB mounting fixture")
   const seed: AnyCircuitElement[] = await Bun.file(
     `${import.meta.dir}/fixtures/renderer-parity/usb.circuit.json`,
   ).json()
   const original = structuredClone(seed)
-  const { circuit, target } = applyComparisonCase(seed, fixture)
+  const { circuit, target } = applyUsbMountingFixture(seed)
   expect(seed).toEqual(original)
   expect(target.model_origin_position).toEqual({ x: 0, y: 0, z: 0 })
   if (!target.rotation) throw new Error("Missing mounting rotation")
