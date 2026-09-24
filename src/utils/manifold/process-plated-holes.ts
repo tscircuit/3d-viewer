@@ -12,6 +12,10 @@ import { createCircleHoleDrill, createPlatedHoleDrill } from "../hole-geoms"
 import { manifoldMeshToThreeGeometry } from "../manifold-mesh-to-three-geometry"
 import { createRoundedRectPrism } from "../pad-geoms"
 import { extractRectBorderRadius } from "../rect-border-radius"
+import {
+  getRotatedPolygonPadOutline,
+  rotatePolygonPadPoint,
+} from "../../geoms/polygon-pad-placement"
 
 const arePointsClockwise = (points: Array<[number, number]>): boolean => {
   let area = 0
@@ -127,8 +131,13 @@ export function processPlatedHolesForManifold(
       return null
     }
     const holeShape = ph.hole_shape || "circle"
-    const holeOffsetX = ph.hole_offset_x || 0
-    const holeOffsetY = ph.hole_offset_y || 0
+    // the hole offset is relative to the pad and rotates with ccw_rotation
+    const rotatedHoleOffset = rotatePolygonPadPoint(
+      { x: ph.hole_offset_x || 0, y: ph.hole_offset_y || 0 },
+      ph.ccw_rotation,
+    )
+    const holeOffsetX = rotatedHoleOffset.x
+    const holeOffsetY = rotatedHoleOffset.y
     let holeOp: any = null
 
     if (holeShape === "circle") {
@@ -575,7 +584,7 @@ export function processPlatedHolesForManifold(
       )
 
       const mainFill = createPolygonPadOp({
-        padOutline,
+        padOutline: getRotatedPolygonPadOutline(padOutline, ph.ccw_rotation),
         thickness: fillThickness,
       })
       if (!mainFill) return
