@@ -5,6 +5,9 @@ export default () => (
   <board width={36} height={30} thickness={1.4} routingDisabled>
     <chip
       name="SOCKET1"
+      pcbX={0}
+      pcbY={0}
+      pcbRotation={0}
       manufacturerPartNumber="MDT350M01401VT"
       footprint={<M2SocketFootprint />}
       cadModel={{
@@ -16,6 +19,9 @@ export default () => (
     />
     <chip
       name="CARD1"
+      pcbX={0}
+      pcbY={0}
+      pcbRotation={0}
       cadModel={{
         glbUrl: "generated/m2-daughtercard.glb",
         // The Y-up export maps the insertion edge P=(-12,0,0) to G=(12,0,0).

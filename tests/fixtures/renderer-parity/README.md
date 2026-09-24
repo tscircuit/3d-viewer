@@ -66,6 +66,11 @@ that independent unit test only; they are not reviewer-facing repros.
 
 ## Upright M.2 M-key socket
 
+The socket and daughtercard have explicit `pcbX`, `pcbY` and `pcbRotation`.
+Their relative pose is a mechanical assembly constraint, not an automatic PCB
+packing suggestion. This keeps newer core packing defaults from moving or
+rotating the socket independently of its mating card.
+
 `bun run test:renderer-fixtures` runs the matcher and source/mounting tests.
 The M.2 mesh test downloads its hash-checked source automatically on a fresh
 checkout. For M.2-only preview preparation, run
