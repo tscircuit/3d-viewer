@@ -46,7 +46,7 @@
     "troika-three-text": "^0.52.4"
   },
   "peerDependencies": {
-    "zod": "3",
+    "zod": "*",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "@tscircuit/core": "*",
@@ -65,7 +65,7 @@
     "@tscircuit/alphabet": "^0.0.25",
     "@tscircuit/circuit-json-util": "^0.0.116",
     "@tscircuit/copper-pour-solver": "^0.0.29",
-    "@tscircuit/core": "^0.0.1964",
+    "@tscircuit/core": "^0.0.1972",
     "@tscircuit/props": "^0.0.666",
     "@tscircuit/solver-utils": "^0.0.4",
     "@types/jsdom": "^21.1.7",
@@ -88,7 +88,9 @@
     "typescript": "^5.7.3",
     "vite": "^7.1.5",
     "vite-tsconfig-paths": "^4.3.2",
-    "circuit-json-to-gltf": "0.0.129"
+    "circuit-json-to-gltf": "0.0.129",
+    "modelprinter": "https://jscdn.tscircuit.com/@tscircuit/modelprinter/0.0.4.tgz",
+    "zod": "^3.25.67"
   },
   "patchedDependencies": {
     "@tscircuit/fanout-solver@0.0.78": "patches/@tscircuit%2Ffanout-solver@0.0.78.patch"

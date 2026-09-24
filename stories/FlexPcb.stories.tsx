@@ -154,9 +154,7 @@ const Capsule = ({ inputFolded = false }: { inputFolded?: boolean }) => {
       (json) => {
         if (active)
           setCircuitJson(
-            inputFolded
-              ? transformCircuitJsonCadComponents(json, { foldPcbs: true })
-              : json,
+            transformCircuitJsonCadComponents(json, { foldPcbs: inputFolded }),
           )
       },
       (error: unknown) => {
@@ -180,5 +178,5 @@ const Capsule = ({ inputFolded = false }: { inputFolded?: boolean }) => {
 
 export const ThreeDiscCapsule = () => <Capsule />
 
-/** The viewer starts flat even when the input CAD poses are already folded. */
+/** The viewer infers the initial folded state from the input CAD components. */
 export const PreFoldedCad = () => <Capsule inputFolded />
