@@ -20,14 +20,7 @@ function meshToObjUrl(mesh: SheetMetalMesh): string {
   return `data:text/plain;charset=utf-8,${encodeURIComponent(lines.join("\n"))}`
 }
 
-export const sheetMetalAssemblyDimensions = {
-  baseLength: 24,
-  width: 28,
-  flangeHeight: 14,
-  thickness: 1,
-  insideBendRadius: 2,
-}
-export const enclosureModelString =
+const enclosureModelString =
   "sheetmetal_channel_w28mm_l24mm_h14mm_t1mm_r2mm" +
   "_hole1(d3.2mm_bottomface_leftofcenter8mm_belowcenter9mm)" +
   "_hole2(d3.2mm_bottomface_rightofcenter8mm_abovecenter9mm)" +
@@ -37,7 +30,7 @@ const enclosureDefinition = mp.string(enclosureModelString).json()
 if (enclosureDefinition.fn !== "sheetmetal")
   throw new Error("Expected sheet metal")
 const { fn, ...enclosureProps } = enclosureDefinition
-export const enclosureMesh = createSheetMetalMesh(enclosureProps)
+const enclosureMesh = createSheetMetalMesh(enclosureProps)
 const enclosureUrl = meshToObjUrl(enclosureMesh)
 const boltUrl = meshToObjUrl(
   createHexSocketBoltMesh({ metricSize: "M3", length: 6 }),
@@ -55,7 +48,6 @@ const bends = [
 ]
 const endX = bends[3]! + quarterArc / 2 + 12
 const centerX = (endX - 8) / 2
-export const sheetMetalFlexBends = bends
 
 export async function createSheetMetalFlexAssembly() {
   const circuit = new Circuit()
