@@ -1,3 +1,5 @@
+import { ViewportSubContent } from "./ViewportSubContent"
+import { menuViewportStyles } from "./menu-viewport-styles"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import type React from "react"
 import { useState } from "react"
@@ -46,6 +48,7 @@ const cameraOptions: CameraPreset[] = [
 ]
 
 const contentStyles: React.CSSProperties = {
+  ...menuViewportStyles,
   backgroundColor: "#262626",
   color: "#fafafa",
   borderRadius: 6,
@@ -53,7 +56,6 @@ const contentStyles: React.CSSProperties = {
     "0px 12px 48px -12px rgba(0, 0, 0, 0.5), 0px 8px 24px -8px rgba(0, 0, 0, 0.3)",
   border: "1px solid #333333",
   padding: "4px",
-  minWidth: 160,
   zIndex: zIndexMap.contextMenu,
   fontSize: 14,
   fontWeight: 400,
@@ -178,7 +180,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 <DropdownMenu.Separator style={separatorStyles} />
               </>
             )}
-            {/* Camera Position Submenu */}
+            {/* Camera controls */}
             <DropdownMenu.Sub onOpenChange={setCameraSubOpen}>
               <DropdownMenu.SubTrigger
                 style={{
@@ -196,7 +198,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 <span
                   style={{ flex: 1, display: "flex", alignItems: "center" }}
                 >
-                  Camera Position
+                  Camera
                 </span>
                 <div
                   style={{
@@ -214,7 +216,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               </DropdownMenu.SubTrigger>
 
               <DropdownMenu.Portal>
-                <DropdownMenu.SubContent
+                <ViewportSubContent
                   style={{ ...contentStyles, marginLeft: -2 }}
                   collisionPadding={10}
                   avoidCollisions={true}
@@ -227,11 +229,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                         backgroundColor:
                           hoveredItem === option ? "#404040" : "transparent",
                       }}
-                      onSelect={(e) => e.preventDefault()}
-                      onPointerDown={(e) => {
-                        e.preventDefault()
-                        onCameraPresetSelect(option)
-                      }}
+                      onSelect={() => onCameraPresetSelect(option)}
                       onMouseEnter={() => setHoveredItem(option)}
                       onMouseLeave={() => setHoveredItem(null)}
                       onTouchStart={() => setHoveredItem(option)}
@@ -244,59 +242,61 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                       </span>
                     </DropdownMenu.Item>
                   ))}
-                </DropdownMenu.SubContent>
+                  <DropdownMenu.Separator style={separatorStyles} />
+
+                  {/* Auto Rotate */}
+                  <DropdownMenu.Item
+                    style={{
+                      ...itemStyles,
+                      backgroundColor:
+                        hoveredItem === "autorotate"
+                          ? "#404040"
+                          : "transparent",
+                    }}
+                    onSelect={onAutoRotateToggle}
+                    onMouseEnter={() => setHoveredItem("autorotate")}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    onTouchStart={() => setHoveredItem("autorotate")}
+                  >
+                    <span style={iconContainerStyles}>
+                      {autoRotate && <CheckIcon />}
+                    </span>
+                    <span style={{ display: "flex", alignItems: "center" }}>
+                      Auto rotate
+                    </span>
+                  </DropdownMenu.Item>
+
+                  {/* Orthographic Camera Toggle */}
+                  <DropdownMenu.Item
+                    style={{
+                      ...itemStyles,
+                      backgroundColor:
+                        hoveredItem === "cameratype"
+                          ? "#404040"
+                          : "transparent",
+                    }}
+                    onSelect={(e) => {
+                      e.preventDefault()
+                      setCameraType(
+                        cameraType === "perspective"
+                          ? "orthographic"
+                          : "perspective",
+                      )
+                    }}
+                    onMouseEnter={() => setHoveredItem("cameratype")}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    onTouchStart={() => setHoveredItem("cameratype")}
+                  >
+                    <span style={iconContainerStyles}>
+                      {cameraType === "orthographic" && <CheckIcon />}
+                    </span>
+                    <span style={{ display: "flex", alignItems: "center" }}>
+                      Orthographic Camera
+                    </span>
+                  </DropdownMenu.Item>
+                </ViewportSubContent>
               </DropdownMenu.Portal>
             </DropdownMenu.Sub>
-
-            {/* Auto Rotate */}
-            <DropdownMenu.Item
-              style={{
-                ...itemStyles,
-                backgroundColor:
-                  hoveredItem === "autorotate" ? "#404040" : "transparent",
-              }}
-              onSelect={(e) => e.preventDefault()}
-              onPointerDown={(e) => {
-                e.preventDefault()
-                onAutoRotateToggle()
-              }}
-              onMouseEnter={() => setHoveredItem("autorotate")}
-              onMouseLeave={() => setHoveredItem(null)}
-              onTouchStart={() => setHoveredItem("autorotate")}
-            >
-              <span style={iconContainerStyles}>
-                {autoRotate && <CheckIcon />}
-              </span>
-              <span style={{ display: "flex", alignItems: "center" }}>
-                Auto rotate
-              </span>
-            </DropdownMenu.Item>
-
-            {/* Orthographic Camera Toggle */}
-            <DropdownMenu.Item
-              style={{
-                ...itemStyles,
-                backgroundColor:
-                  hoveredItem === "cameratype" ? "#404040" : "transparent",
-              }}
-              onSelect={(e) => e.preventDefault()}
-              onPointerDown={(e) => {
-                e.preventDefault()
-                setCameraType(
-                  cameraType === "perspective" ? "orthographic" : "perspective",
-                )
-              }}
-              onMouseEnter={() => setHoveredItem("cameratype")}
-              onMouseLeave={() => setHoveredItem(null)}
-              onTouchStart={() => setHoveredItem("cameratype")}
-            >
-              <span style={iconContainerStyles}>
-                {cameraType === "orthographic" && <CheckIcon />}
-              </span>
-              <span style={{ display: "flex", alignItems: "center" }}>
-                Orthographic Camera
-              </span>
-            </DropdownMenu.Item>
 
             {/* Reference Object Submenu */}
             <DropdownMenu.Sub onOpenChange={setReferenceObjectSubOpen}>
@@ -331,7 +331,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               </DropdownMenu.SubTrigger>
 
               <DropdownMenu.Portal>
-                <DropdownMenu.SubContent
+                <ViewportSubContent
                   style={{ ...contentStyles, marginLeft: -2 }}
                   collisionPadding={10}
                   avoidCollisions={true}
@@ -366,7 +366,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                       </DropdownMenu.Item>
                     )
                   })}
-                </DropdownMenu.SubContent>
+                </ViewportSubContent>
               </DropdownMenu.Portal>
             </DropdownMenu.Sub>
 
