@@ -1,5 +1,11 @@
+import { SchematicNavigationContext } from "./contexts/SchematicNavigationContext"
+import type { ThreeContextState } from "./react-three/ThreeContext"
+import {
+  pickSchematicComponent,
+  type ViewSchematicComponentEvent,
+} from "./utils/pick-schematic-component"
 import { resolveFoldPcbs } from "./utils/resolve-fold-pcbs"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useContext, useEffect, useRef, useState } from "react"
 import * as THREE from "three"
 
 // Constants for camera initialization - defined once, reused across renders
@@ -44,7 +50,18 @@ import {
   toggleReferenceObject,
 } from "./reference-objects/reference-object"
 
-const CadViewerInner = (props: any) => {
+export type CadViewerProps = Omit<
+  React.ComponentProps<typeof CadViewerJscad>,
+  "circuitJson"
+> & {
+  // Preserve support for raw JSON imports whose `type` fields widen to string.
+  circuitJson?: any[]
+  foldPcbs?: boolean
+  /** Enable right-click navigation using the same identity as the PCB viewer. */
+  onViewSchematicComponent?: (event: ViewSchematicComponentEvent) => void
+}
+
+const CadViewerInner = (props: CadViewerProps) => {
   const childrenCircuitJson = useConvertChildrenToCircuitJson(
     props.circuitJson ? undefined : props.children,
   )
@@ -86,13 +103,27 @@ const CadViewerInner = (props: any) => {
     | ((controller: CameraController | null) => void)
     | undefined
 
+  const sceneRef = useContext(SchematicNavigationContext)!
+  const [selectedComponent, setSelectedComponent] =
+    useState<ViewSchematicComponentEvent>()
+  const handleMenuOpen = useCallback(
+    (position: { x: number; y: number }) => {
+      setSelectedComponent(
+        props.onViewSchematicComponent
+          ? pickSchematicComponent(sceneRef.current, position, circuitJson)
+          : undefined,
+      )
+    },
+    [sceneRef, circuitJson, props.onViewSchematicComponent],
+  )
+
   const {
     menuVisible,
     menuPos,
     menuRef,
     contextMenuEventHandlers,
     setMenuVisible,
-  } = useContextMenu({ containerRef })
+  } = useContextMenu({ containerRef, onOpen: handleMenuOpen })
 
   const autoRotateUserToggledRef = useRef(autoRotateUserToggled)
   autoRotateUserToggledRef.current = autoRotateUserToggled
@@ -292,6 +323,14 @@ const CadViewerInner = (props: any) => {
       )}
       {menuVisible && (
         <ContextMenu
+          onViewSchematicComponent={
+            selectedComponent && props.onViewSchematicComponent
+              ? () => {
+                  props.onViewSchematicComponent?.(selectedComponent)
+                  closeMenu()
+                }
+              : undefined
+          }
           menuRef={menuRef}
           menuPos={menuPos}
           engine={engine}
@@ -348,20 +387,23 @@ const CadViewerInner = (props: any) => {
   )
 }
 
-export const CadViewer = (props: any) => {
+export const CadViewer = (props: CadViewerProps) => {
+  const sceneRef = useRef<ThreeContextState | null>(null)
   return (
-    <CameraControllerProvider
-      defaultTarget={DEFAULT_TARGET}
-      initialCameraPosition={INITIAL_CAMERA_POSITION}
-      initialCameraType={readStoredCameraType()}
-    >
-      <LayerVisibilityProvider>
-        <AppearanceProvider>
-          <ToastProvider>
-            <CadViewerInner {...props} />
-          </ToastProvider>
-        </AppearanceProvider>
-      </LayerVisibilityProvider>
-    </CameraControllerProvider>
+    <SchematicNavigationContext.Provider value={sceneRef}>
+      <CameraControllerProvider
+        defaultTarget={DEFAULT_TARGET}
+        initialCameraPosition={INITIAL_CAMERA_POSITION}
+        initialCameraType={readStoredCameraType()}
+      >
+        <LayerVisibilityProvider>
+          <AppearanceProvider>
+            <ToastProvider>
+              <CadViewerInner {...props} />
+            </ToastProvider>
+          </AppearanceProvider>
+        </LayerVisibilityProvider>
+      </CameraControllerProvider>
+    </SchematicNavigationContext.Provider>
   )
 }
