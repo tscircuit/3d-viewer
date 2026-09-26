@@ -1,3 +1,4 @@
+import { CadComponentGroup } from "./contexts/SchematicNavigationContext"
 import { getCadPcbContext } from "./utils/get-cad-pcb-context"
 import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, CadComponent } from "circuit-json"
@@ -314,7 +315,9 @@ export const AnyCadComponent = ({
   // Render the model and the tooltip if hovered
   return (
     <>
-      {modelComponent}
+      <CadComponentGroup cadComponent={cad_component}>
+        {modelComponent}
+      </CadComponentGroup>
       {isHovered && hoverPosition ? (
         <Html
           position={hoverPosition}

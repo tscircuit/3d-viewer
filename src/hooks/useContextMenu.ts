@@ -2,9 +2,10 @@ import { useState, useCallback, useRef, useEffect } from "react"
 
 interface ContextMenuProps {
   containerRef: React.RefObject<HTMLDivElement | null>
+  onOpen?: (position: { x: number; y: number }) => void
 }
 
-export const useContextMenu = ({ containerRef }: ContextMenuProps) => {
+export const useContextMenu = ({ containerRef, onOpen }: ContextMenuProps) => {
   const [menuVisible, setMenuVisible] = useState(false)
   const [menuPos, setMenuPos] = useState<{ x: number; y: number }>({
     x: 0,
@@ -48,12 +49,13 @@ export const useContextMenu = ({ containerRef }: ContextMenuProps) => {
         return
       }
 
+      onOpen?.({ x: eventX, y: eventY })
       setMenuPos({ x: eventX, y: eventY })
       setMenuVisible(true)
       // Reset after menu is shown or if swipe check passed but didn't swipe
       interactionOriginPosRef.current = null
     },
-    [setMenuPos, setMenuVisible],
+    [setMenuPos, setMenuVisible, onOpen],
   )
 
   const handleTouchStart = useCallback(
@@ -69,6 +71,7 @@ export const useContextMenu = ({ containerRef }: ContextMenuProps) => {
           longPressTimeoutRef.current = window.setTimeout(() => {
             if (!interactionOriginPosRef.current) return
             if (containerRef.current) {
+              onOpen?.(interactionOriginPosRef.current)
               const rect = containerRef.current.getBoundingClientRect()
               setMenuPos({
                 x: rect.left + rect.width / 2,
@@ -88,7 +91,7 @@ export const useContextMenu = ({ containerRef }: ContextMenuProps) => {
         clearLongPressTimeout()
       }
     },
-    [containerRef],
+    [containerRef, onOpen],
   )
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {

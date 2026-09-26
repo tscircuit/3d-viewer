@@ -73,6 +73,24 @@ const MyPCBViewer = () => {
 export default MyPCBViewer
 ```
 
+### Navigate to a schematic component
+
+Pass `onViewSchematicComponent` to enable **Show on schematic** when a user
+right-clicks a component model (or long-presses it on touch devices). The callback
+receives `{ source_component_id, pcb_component_id, refdes }`, matching the PCB
+viewer. The host can switch tabs and focus the schematic using the source ID.
+Omit the callback when schematic navigation is unavailable.
+
+```tsx
+<CadViewer
+  circuitJson={circuitJson}
+  onViewSchematicComponent={({ source_component_id }) => {
+    // Find the schematic component with this source ID and focus it.
+    showSchematicComponent(source_component_id)
+  }}
+/>
+```
+
 ### Converting to SVG (Node.js)
 
 When using the SVG converter in Node.js environments, you'll need to provide JSDOM:

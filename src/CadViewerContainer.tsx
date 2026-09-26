@@ -1,3 +1,4 @@
+import { SchematicNavigationScene } from "./contexts/SchematicNavigationContext"
 import type * as React from "react"
 import { forwardRef, useEffect, useMemo, useState } from "react"
 import * as THREE from "three"
@@ -125,6 +126,7 @@ export const CadViewerContainer = forwardRef<
             handleCameraCreated(camera)
           }}
         >
+          <SchematicNavigationScene />
           <CameraAnimatorWithContext />
           <RotationTracker />
           {isInteractionEnabled && (

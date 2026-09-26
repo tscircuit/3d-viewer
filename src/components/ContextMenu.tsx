@@ -29,6 +29,7 @@ interface ContextMenuProps {
   onReferenceObjectSelect?: (
     referenceObject: ReferenceObjectType | null,
   ) => void
+  onViewSchematicComponent?: () => void
   onDownloadGltf: () => void
   onOpenKeyboardShortcuts: () => void
 }
@@ -125,6 +126,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onCameraPresetSelect,
   onAutoRotateToggle,
   onReferenceObjectSelect = () => {},
+  onViewSchematicComponent,
   onDownloadGltf,
   onOpenKeyboardShortcuts,
 }) => {
@@ -158,6 +160,24 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             sideOffset={0}
             align="start"
           >
+            {onViewSchematicComponent && (
+              <>
+                <DropdownMenu.Item
+                  style={{
+                    ...itemStyles,
+                    ...itemPaddingStyles,
+                    backgroundColor:
+                      hoveredItem === "schematic" ? "#404040" : "transparent",
+                  }}
+                  onSelect={onViewSchematicComponent}
+                  onMouseEnter={() => setHoveredItem("schematic")}
+                  onMouseLeave={() => setHoveredItem(null)}
+                >
+                  Show on schematic
+                </DropdownMenu.Item>
+                <DropdownMenu.Separator style={separatorStyles} />
+              </>
+            )}
             {/* Camera Position Submenu */}
             <DropdownMenu.Sub onOpenChange={setCameraSubOpen}>
               <DropdownMenu.SubTrigger
