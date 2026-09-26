@@ -50,7 +50,12 @@ import {
   toggleReferenceObject,
 } from "./reference-objects/reference-object"
 
-export type CadViewerProps = React.ComponentProps<typeof CadViewerJscad> & {
+export type CadViewerProps = Omit<
+  React.ComponentProps<typeof CadViewerJscad>,
+  "circuitJson"
+> & {
+  // Preserve support for raw JSON imports whose `type` fields widen to string.
+  circuitJson?: any[]
   foldPcbs?: boolean
   /** Enable right-click navigation using the same identity as the PCB viewer. */
   onViewSchematicComponent?: (event: ViewSchematicComponentEvent) => void
