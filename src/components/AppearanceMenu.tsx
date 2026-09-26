@@ -1,3 +1,5 @@
+import { ViewportSubContent } from "./ViewportSubContent"
+import { menuViewportStyles } from "./menu-viewport-styles"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import type React from "react"
 import { useState } from "react"
@@ -40,6 +42,7 @@ const separatorStyles: React.CSSProperties = {
 }
 
 const contentStyles: React.CSSProperties = {
+  ...menuViewportStyles,
   backgroundColor: "#262626",
   color: "#fafafa",
   borderRadius: 8,
@@ -47,7 +50,6 @@ const contentStyles: React.CSSProperties = {
     "0px 12px 48px -12px rgba(0, 0, 0, 0.5), 0px 8px 24px -8px rgba(0, 0, 0, 0.3)",
   border: "1px solid #333333",
   padding: "4px",
-  minWidth: 160,
   zIndex: zIndexMap.appearanceMenu,
   fontSize: 14,
   fontFamily:
@@ -108,7 +110,7 @@ export const AppearanceMenu = () => {
         </DropdownMenu.SubTrigger>
 
         <DropdownMenu.Portal>
-          <DropdownMenu.SubContent
+          <ViewportSubContent
             style={{ ...contentStyles, marginLeft: -2 }}
             collisionPadding={10}
             avoidCollisions={true}
@@ -453,7 +455,7 @@ export const AppearanceMenu = () => {
                 Enclosure
               </span>
             </DropdownMenu.Item>
-          </DropdownMenu.SubContent>
+          </ViewportSubContent>
         </DropdownMenu.Portal>
       </DropdownMenu.Sub>
     </>
