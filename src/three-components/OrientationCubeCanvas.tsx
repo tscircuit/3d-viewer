@@ -1,8 +1,14 @@
 import { useEffect, useRef } from "react"
 import * as THREE from "three"
 import { Text as TroikaText } from "troika-three-text"
-import { useCameraController } from "../contexts/CameraControllerContext"
 import { zIndexMap } from "../../lib/utils/z-index-map"
+import { useCameraController } from "../contexts/CameraControllerContext"
+import {
+  attachOrientationAxisArrows,
+  disposeOrientationAxisArrows,
+  getOrientationAxisLabelPose,
+  type OrientationAxis,
+} from "./create-orientation-axis-arrows"
 
 function computePointInFront(
   rotationVector: THREE.Euler,
@@ -137,6 +143,25 @@ export const OrientationCubeCanvas = () => {
     group.add(topText)
     group.add(bottomText)
 
+    // World-axis triad (RGB = XYZ). Attach to the scene, not the π/2-rotated
+    // cube group, so the arrows stay aligned with circuit-json X/Y/Z.
+    const axisArrows = attachOrientationAxisArrows(scene)
+    const axisLabels = (["x", "y", "z"] as OrientationAxis[]).map((axis) => {
+      const pose = getOrientationAxisLabelPose(axis)
+      const label = new TroikaText()
+      label.text = pose.text
+      label.position.fromArray(pose.position)
+      label.color = `#${pose.color.toString(16).padStart(6, "0")}`
+      label.fontSize = 0.2
+      label.anchorX = "center"
+      label.anchorY = "middle"
+      label.depthOffset = -1
+      label.font = null
+      label.sync()
+      scene.add(label)
+      return label
+    })
+
     // Animation loop
     let animationFrameId: number | null = null
     let isVisible = true
@@ -156,6 +181,10 @@ export const OrientationCubeCanvas = () => {
         if (!cameraPosition.equals(camera.position)) {
           camera.position.copy(cameraPosition)
           camera.lookAt(0, 0, 0)
+        }
+
+        for (const label of axisLabels) {
+          label.quaternion.copy(camera.quaternion)
         }
       }
 
@@ -181,6 +210,10 @@ export const OrientationCubeCanvas = () => {
       leftText.dispose()
       topText.dispose()
       bottomText.dispose()
+      for (const label of axisLabels) {
+        label.dispose()
+      }
+      disposeOrientationAxisArrows(axisArrows)
 
       box.geometry.dispose()
       ;(box.material as THREE.Material).dispose()
