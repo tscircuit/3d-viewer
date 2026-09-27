@@ -196,6 +196,37 @@ const createMaskedCopperMask = ({
   return maskTexture
 }
 
+/**
+ * Later entries paint on top. Through-hole / plated-hole copper must sit
+ * above soldermask so mask openings and nearby mask floods do not cover
+ * the yellow annular rings (tscircuit/circuit-json-to-gltf#72).
+ */
+export const BOARD_COLOR_TEXTURE_PAINT_ORDER = [
+  "copperPour",
+  "trace",
+  "pad",
+  "soldermask",
+  "throughHole",
+  "copperText",
+  "silkscreen",
+  "fabricationNote",
+  "pcbNote",
+  "panelOutline",
+  "keepout",
+] as const
+
+export type BoardColorTexturePaintLayer =
+  (typeof BOARD_COLOR_TEXTURE_PAINT_ORDER)[number]
+
+export function orderBoardColorTextures(
+  layers: Record<
+    BoardColorTexturePaintLayer,
+    THREE.CanvasTexture | null | undefined
+  >,
+): Array<THREE.CanvasTexture | null | undefined> {
+  return BOARD_COLOR_TEXTURE_PAINT_ORDER.map((key) => layers[key])
+}
+
 export function createCombinedBoardTextures({
   circuitJson,
   boardData,
@@ -344,19 +375,19 @@ export function createCombinedBoardTextures({
       : null
 
     const boardTexture = createCombinedTexture({
-      textures: [
-        copperPourTexture,
-        traceTexture,
-        padTexture,
-        throughHoleTexture,
-        soldermaskTexture,
-        copperTextTexture,
-        silkscreenTexture,
-        fabricationNoteTexture,
-        pcbNoteTexture,
-        panelOutlineTexture,
-        keepoutTexture,
-      ],
+      textures: orderBoardColorTextures({
+        copperPour: copperPourTexture,
+        trace: traceTexture,
+        pad: padTexture,
+        soldermask: soldermaskTexture,
+        throughHole: throughHoleTexture,
+        copperText: copperTextTexture,
+        silkscreen: silkscreenTexture,
+        fabricationNote: fabricationNoteTexture,
+        pcbNote: pcbNoteTexture,
+        panelOutline: panelOutlineTexture,
+        keepout: keepoutTexture,
+      }),
       boardData,
       traceTextureResolution,
       layer,
