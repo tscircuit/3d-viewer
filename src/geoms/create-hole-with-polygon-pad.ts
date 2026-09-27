@@ -81,9 +81,17 @@ export const createHoleWithPolygonPadHoleGeom = (
   const sizeDelta = options.sizeDelta ?? 0
   const offsetX = hole.hole_offset_x || 0
   const offsetY = hole.hole_offset_y || 0
+  // The drill offset lives in the pad's local frame; ccw_rotation rotates
+  // that frame (and non-circular drill shapes) about the hole center
+  const rotation = hole.ccw_rotation || 0
+  const rotationRad = (rotation * Math.PI) / 180
+  const rotatedOffsetX =
+    offsetX * Math.cos(rotationRad) - offsetY * Math.sin(rotationRad)
+  const rotatedOffsetY =
+    offsetX * Math.sin(rotationRad) + offsetY * Math.cos(rotationRad)
   const center: [number, number, number] = [
-    hole.x + offsetX,
-    hole.y + offsetY,
+    hole.x + rotatedOffsetX,
+    hole.y + rotatedOffsetY,
     0,
   ]
 
@@ -102,16 +110,18 @@ export const createHoleWithPolygonPadHoleGeom = (
   const heightVal = Math.max(baseHeight + sizeDelta, M)
 
   if (holeShape === "oval") {
-    const ellipsePrism = createEllipsePrism(width, heightVal, height)
+    let ellipsePrism = createEllipsePrism(width, heightVal, height)
+    if (rotation) {
+      ellipsePrism = rotateZ(rotationRad, ellipsePrism)
+    }
     return translate([center[0], center[1], 0], ellipsePrism)
   }
 
   if (holeShape === "pill" || holeShape === "rotated_pill") {
     let pill = createPillPrism(width, heightVal, height)
     if (!pill) return null
-    const rotation = hole.ccw_rotation || 0
     if (rotation) {
-      pill = rotateZ((rotation * Math.PI) / 180, pill)
+      pill = rotateZ(rotationRad, pill)
     }
     return translate(center, pill)
   }

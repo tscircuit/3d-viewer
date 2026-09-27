@@ -172,6 +172,15 @@ export function processPlatedHolesForManifold(
 
     if (!holeOp) return null
 
+    // The drill offset lives in the pad's local frame; ccw_rotation rotates
+    // the drill shape and its offset about the hole center (origin here,
+    // before the caller translates to the hole position)
+    if (ph.ccw_rotation) {
+      const rotated = holeOp.rotate([0, 0, ph.ccw_rotation])
+      manifoldInstancesForCleanup.push(rotated)
+      holeOp = rotated
+    }
+
     if (holeOffsetX || holeOffsetY) {
       const translated = holeOp.translate([holeOffsetX, holeOffsetY, 0])
       manifoldInstancesForCleanup.push(translated)
@@ -553,6 +562,15 @@ export function processPlatedHolesForManifold(
       if (!Array.isArray(padOutline) || padOutline.length < 3) {
         return
       }
+      // pad_outline is relative to the hole position in the pad's local
+      // frame; ccw_rotation rotates that frame about the hole center
+      const rotationRad = ((ph.ccw_rotation ?? 0) * Math.PI) / 180
+      const cosR = Math.cos(rotationRad)
+      const sinR = Math.sin(rotationRad)
+      const rotatedPadOutline = padOutline.map((point) => ({
+        x: point.x * cosR - point.y * sinR,
+        y: point.x * sinR + point.y * cosR,
+      }))
 
       const boardHoleOp = createHoleOpForPolygonPad({
         ph,
@@ -575,7 +593,7 @@ export function processPlatedHolesForManifold(
       )
 
       const mainFill = createPolygonPadOp({
-        padOutline,
+        padOutline: rotatedPadOutline,
         thickness: fillThickness,
       })
       if (!mainFill) return

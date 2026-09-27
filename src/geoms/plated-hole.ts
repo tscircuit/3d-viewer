@@ -628,9 +628,14 @@ export const platedHole = (
       )
     }
 
+    const rotationRad = ((plated_hole.ccw_rotation ?? 0) * Math.PI) / 180
+    const cosR = Math.cos(rotationRad)
+    const sinR = Math.sin(rotationRad)
+    // pad_outline is relative to the hole position in the pad's local frame;
+    // ccw_rotation rotates that frame about the hole center
     const polygonPoints = padOutline.map((point: { x: number; y: number }) => [
-      point.x,
-      point.y,
+      point.x * cosR - point.y * sinR,
+      point.x * sinR + point.y * cosR,
     ])
     const polygon2d = jscadPolygon({ points: polygonPoints as any })
     const centerZ = 0
