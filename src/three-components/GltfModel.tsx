@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react"
 import * as THREE from "three"
-import { GLTFLoader } from "three-stdlib"
 import { useThree } from "src/react-three/ThreeContext"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { getDefaultEnvironmentMap } from "src/react-three/getDefaultEnvironmentMap"
 import { configureObjectShadows } from "src/utils/configure-object-shadows"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import { loadCachedGltfScene } from "src/utils/gltf-model-cache"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 const DEFAULT_ENV_MAP_INTENSITY = 1.25
@@ -56,13 +56,10 @@ export function GltfModel({
 
   useEffect(() => {
     if (!gltfUrl) return
-    const loader = new GLTFLoader()
     let isMounted = true
-    loader.load(
-      gltfUrl,
-      (gltf) => {
+    loadCachedGltfScene(gltfUrl)
+      .then((scene) => {
         if (!isMounted) return
-        const scene = gltf.scene
 
         scene.traverse((child) => {
           if (child instanceof THREE.Mesh && child.material) {
@@ -88,9 +85,8 @@ export function GltfModel({
         })
 
         setModel(scene)
-      },
-      undefined,
-      (error) => {
+      })
+      .catch((error) => {
         if (!isMounted) return
         console.error(`An error happened loading ${gltfUrl}`, error)
         const err =
@@ -98,8 +94,7 @@ export function GltfModel({
             ? error
             : new Error(`Failed to load glTF model from ${gltfUrl}`)
         setLoadError(err)
-      },
-    )
+      })
     return () => {
       isMounted = false
     }
