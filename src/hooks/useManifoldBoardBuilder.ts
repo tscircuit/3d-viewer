@@ -1,3 +1,4 @@
+import { useBoardTextureVisibility } from "./useBoardTextureVisibility"
 import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
 import type { ManifoldToplevel } from "manifold-3d"
@@ -57,6 +58,7 @@ export const useManifoldBoardBuilder = (
   circuitJson: AnyCircuitElement[],
   visibility: LayerVisibilityState,
 ): UseManifoldBoardBuilderResult => {
+  const textureVisibility = useBoardTextureVisibility(visibility)
   const [geoms, setGeoms] = useState<ManifoldGeoms | null>(null)
   const [pcbThickness, setPcbThickness] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -346,9 +348,9 @@ export const useManifoldBoardBuilder = (
       circuitJson,
       boardData,
       traceTextureResolution,
-      visibility,
+      visibility: textureVisibility,
     })
-  }, [circuitJson, boardData, traceTextureResolution, visibility])
+  }, [circuitJson, boardData, traceTextureResolution, textureVisibility])
 
   return {
     geoms,
