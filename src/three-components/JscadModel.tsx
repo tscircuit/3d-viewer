@@ -3,7 +3,7 @@ import { executeJscadOperations } from "jscad-planner"
 import jscad from "@jscad/modeling"
 import { convertCSGToThreeGeom } from "jscad-electronics/vanilla"
 import * as THREE from "three"
-import { useMemo, useEffect } from "react"
+import { useState, useEffect } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
 import { configureObjectShadows } from "src/utils/configure-object-shadows"
@@ -38,35 +38,49 @@ export const JscadModel = ({
   scale?: number
   isTranslucent?: boolean
 }) => {
-  const { threeGeom, material } = useMemo(() => {
-    const jscadObject = executeJscadOperations(jscad as any, jscadPlan)
+  const [mesh, setMesh] = useState<THREE.Mesh<
+    THREE.BufferGeometry,
+    THREE.MeshStandardMaterial
+  > | null>(null)
 
+  // Geometry belongs to the plan, not the display mode. Own these resources in
+  // an effect so replacements, unmounts and StrictMode replay all release them.
+  useEffect(() => {
+    const jscadObject = executeJscadOperations(jscad as any, jscadPlan)
     if (!jscadObject || (!jscadObject.polygons && !jscadObject.sides)) {
-      return { threeGeom: null, material: null }
+      setMesh(null)
+      return
     }
 
-    const threeGeom = convertCSGToThreeGeom(jscadObject)
-
+    const geometry = convertCSGToThreeGeom(jscadObject)
     const material = new THREE.MeshStandardMaterial({
       vertexColors: true,
       side: THREE.DoubleSide,
-      transparent: isTranslucent,
-      opacity: isTranslucent ? 0.5 : 1,
-      depthWrite: !isTranslucent,
     })
-    return { threeGeom, material }
-  }, [jscadPlan, isTranslucent])
+    const model = new THREE.Mesh(geometry, material)
+    setMesh(model)
 
-  const mesh = useMemo(() => {
-    if (!threeGeom) return null
-    const createdMesh = new THREE.Mesh(threeGeom, material)
-    createdMesh.renderOrder = isTranslucent ? 2 : 1
-    configureObjectShadows(createdMesh, {
+    return () => {
+      geometry.dispose()
+      material.dispose()
+    }
+  }, [jscadPlan])
+
+  useEffect(() => {
+    if (!mesh) return
+    const material = mesh.material
+    material.transparent = isTranslucent
+    material.opacity = isTranslucent ? 0.5 : 1
+    material.depthWrite = !isTranslucent
+    material.needsUpdate = true
+    mesh.renderOrder = isTranslucent ? 2 : 1
+    configureObjectShadows(mesh, {
       castShadow: !isTranslucent,
       receiveShadow: true,
     })
-    return createdMesh
-  }, [threeGeom, material, isTranslucent])
+  }, [mesh, isTranslucent])
+
+  const material = mesh?.material
   const { boardTransformGroup } = useCadModelTransformGraph({
     model: mesh,
     position: positionOffset,
@@ -91,7 +105,7 @@ export const JscadModel = ({
     }
   }, [isHovered, material])
 
-  if (!threeGeom) return null
+  if (!mesh) return null
 
   return (
     <ContainerWithTooltip

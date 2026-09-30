@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react"
 import { createCombinedBoardTextures } from "src/textures"
 import * as THREE from "three"
 import { REALISTIC_BOARD_SURFACE_MATERIAL } from "../board-surface-textures"
+import { useBoardTextureVisibility } from "../hooks/useBoardTextureVisibility"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import {
   FAUX_BOARD_OPACITY,
@@ -28,6 +29,7 @@ export function JscadBoardTextures({
 }: JscadBoardTexturesProps) {
   const { rootObject } = useThree()
   const { visibility } = useLayerVisibility()
+  const textureVisibility = useBoardTextureVisibility(visibility)
 
   const boardData = useMemo(() => {
     // Check for panel first
@@ -73,9 +75,9 @@ export function JscadBoardTextures({
       circuitJson,
       boardData,
       traceTextureResolution,
-      visibility,
+      visibility: textureVisibility,
     })
-  }, [circuitJson, boardData, traceTextureResolution, visibility])
+  }, [circuitJson, boardData, traceTextureResolution, textureVisibility])
 
   useEffect(() => {
     if (!rootObject || !boardData || !textures) return
