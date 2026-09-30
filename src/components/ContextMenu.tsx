@@ -32,6 +32,9 @@ interface ContextMenuProps {
     referenceObject: ReferenceObjectType | null,
   ) => void
   onViewSchematicComponent?: () => void
+  componentName?: string
+  onHideComponent?: () => void
+  onUnhideAllComponents?: () => void
   onDownloadGltf: () => void
   onOpenKeyboardShortcuts: () => void
 }
@@ -129,6 +132,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onAutoRotateToggle,
   onReferenceObjectSelect = () => {},
   onViewSchematicComponent,
+  componentName,
+  onHideComponent,
+  onUnhideAllComponents,
   onDownloadGltf,
   onOpenKeyboardShortcuts,
 }) => {
@@ -177,8 +183,42 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 >
                   Show on schematic
                 </DropdownMenu.Item>
-                <DropdownMenu.Separator style={separatorStyles} />
               </>
+            )}
+            {onHideComponent && (
+              <DropdownMenu.Item
+                style={{
+                  ...itemStyles,
+                  ...itemPaddingStyles,
+                  backgroundColor:
+                    hoveredItem === "hide" ? "#404040" : "transparent",
+                }}
+                onSelect={onHideComponent}
+                onMouseEnter={() => setHoveredItem("hide")}
+                onMouseLeave={() => setHoveredItem(null)}
+              >
+                {`Hide "${componentName}"`}
+              </DropdownMenu.Item>
+            )}
+            {onUnhideAllComponents && (
+              <DropdownMenu.Item
+                style={{
+                  ...itemStyles,
+                  ...itemPaddingStyles,
+                  backgroundColor:
+                    hoveredItem === "unhide" ? "#404040" : "transparent",
+                }}
+                onSelect={onUnhideAllComponents}
+                onMouseEnter={() => setHoveredItem("unhide")}
+                onMouseLeave={() => setHoveredItem(null)}
+              >
+                Unhide All Components
+              </DropdownMenu.Item>
+            )}
+            {(onViewSchematicComponent ||
+              onHideComponent ||
+              onUnhideAllComponents) && (
+              <DropdownMenu.Separator style={separatorStyles} />
             )}
             {/* Camera controls */}
             <DropdownMenu.Sub onOpenChange={setCameraSubOpen}>

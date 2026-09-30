@@ -5,6 +5,11 @@ import {
   type ViewSchematicComponentEvent,
 } from "./utils/pick-schematic-component"
 import { resolveFoldPcbs } from "./utils/resolve-fold-pcbs"
+import {
+  pickCadComponent,
+  type PickedCadComponent,
+} from "./utils/pick-cad-component"
+import { useHiddenCadComponents } from "./hooks/useHiddenCadComponents"
 import { useCallback, useContext, useEffect, useRef, useState } from "react"
 import * as THREE from "three"
 
@@ -52,7 +57,7 @@ import {
 
 export type CadViewerProps = Omit<
   React.ComponentProps<typeof CadViewerJscad>,
-  "circuitJson"
+  "circuitJson" | "hiddenCadComponentIds"
 > & {
   // Preserve support for raw JSON imports whose `type` fields widen to string.
   circuitJson?: any[]
@@ -75,7 +80,15 @@ const CadViewerInner = (props: CadViewerProps) => {
   )
   const foldPcbs = foldPcbsOverride ?? props.foldPcbs
   const resolvedFoldPcbs = resolveFoldPcbs(circuitJson, foldPcbs)
-  const resolvedProps = { ...props, circuitJson, children: undefined }
+  const circuitKey = JSON.stringify(circuitJson)
+  const { hiddenCadComponentIds, hideComponent, unhideAllComponents } =
+    useHiddenCadComponents(circuitKey)
+  const resolvedProps = {
+    ...props,
+    circuitJson,
+    children: undefined,
+    hiddenCadComponentIds,
+  }
   const [engine, setEngine] = useState<"jscad" | "manifold">(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
     return stored === "jscad" || stored === "manifold" ? stored : "manifold"
@@ -106,8 +119,13 @@ const CadViewerInner = (props: CadViewerProps) => {
   const sceneRef = useContext(SchematicNavigationContext)!
   const [selectedComponent, setSelectedComponent] =
     useState<ViewSchematicComponentEvent>()
+  const [selectedCadComponent, setSelectedCadComponent] =
+    useState<PickedCadComponent>()
   const handleMenuOpen = useCallback(
     (position: { x: number; y: number }) => {
+      setSelectedCadComponent(
+        pickCadComponent(sceneRef.current, position, circuitJson),
+      )
       setSelectedComponent(
         props.onViewSchematicComponent
           ? pickSchematicComponent(sceneRef.current, position, circuitJson)
@@ -274,9 +292,7 @@ const CadViewerInner = (props: CadViewerProps) => {
     window.localStorage.setItem("cadViewerCameraType", cameraType)
   }, [cameraType])
 
-  const viewerKey = props.circuitJson
-    ? JSON.stringify(props.circuitJson)
-    : undefined
+  const viewerKey = props.circuitJson ? circuitKey : undefined
   return (
     <div
       key={viewerKey}
@@ -323,6 +339,23 @@ const CadViewerInner = (props: CadViewerProps) => {
       )}
       {menuVisible && (
         <ContextMenu
+          componentName={selectedCadComponent?.componentName}
+          onHideComponent={
+            selectedCadComponent
+              ? () => {
+                  hideComponent(selectedCadComponent.cad_component_id)
+                  closeMenu()
+                }
+              : undefined
+          }
+          onUnhideAllComponents={
+            hiddenCadComponentIds.size > 0
+              ? () => {
+                  unhideAllComponents()
+                  closeMenu()
+                }
+              : undefined
+          }
           onViewSchematicComponent={
             selectedComponent && props.onViewSchematicComponent
               ? () => {
