@@ -38,6 +38,7 @@ export const CadComponentGroup = ({
 }) => {
   const scene = useThree()
   const group = useMemo(() => new THREE.Group(), [])
+  group.userData.cad_component_id = cadComponent.cad_component_id
   group.userData.pcb_component_id = cadComponent.pcb_component_id
   useEffect(() => {
     scene.rootObject.add(group)

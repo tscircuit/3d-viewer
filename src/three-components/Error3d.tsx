@@ -52,6 +52,8 @@ export const Error3d = ({
     g.position.fromArray(position as [number, number, number])
     return g
   }, [position])
+  group.userData.cad_component_id = cad_component?.cad_component_id
+  group.userData.pcb_component_id = cad_component?.pcb_component_id
 
   useEffect(() => {
     if (!rootObject) return

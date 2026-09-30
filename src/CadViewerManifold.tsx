@@ -137,6 +137,7 @@ type CadViewerManifoldProps = {
   onCameraControllerReady?: (controller: CameraController | null) => void
   resolveStaticAsset?: (modelUrl: string) => string
   referenceObject?: ReferenceObjectType | null
+  hiddenCadComponentIds?: ReadonlySet<string>
 } & (
   | { circuitJson: AnyCircuitElement[]; children?: React.ReactNode }
   | { circuitJson?: never; children: React.ReactNode }
@@ -154,6 +155,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   onCameraControllerReady,
   resolveStaticAsset,
   referenceObject,
+  hiddenCadComponentIds,
 }) => {
   const childrenCircuitJson = useConvertChildrenToCircuitJson(children)
   const circuitJson = useMemo(() => {
@@ -286,8 +288,11 @@ try {
     foldPcbs,
   ])
   const cadComponents = useMemo(
-    () => su(flex.posedJson).cad_component.list(),
-    [flex.posedJson],
+    () =>
+      su(flex.posedJson)
+        .cad_component.list()
+        .filter((cad) => !hiddenCadComponentIds?.has(cad.cad_component_id)),
+    [flex.posedJson, hiddenCadComponentIds],
   )
 
   const boardDimensions = useMemo(() => {

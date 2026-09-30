@@ -31,6 +31,7 @@ interface Props {
   onCameraControllerReady?: (controller: CameraController | null) => void
   resolveStaticAsset?: (modelUrl: string) => string
   referenceObject?: ReferenceObjectType | null
+  hiddenCadComponentIds?: ReadonlySet<string>
 }
 
 export const CadViewerJscad = forwardRef<
@@ -47,6 +48,7 @@ export const CadViewerJscad = forwardRef<
       onCameraControllerReady,
       resolveStaticAsset,
       referenceObject,
+      hiddenCadComponentIds,
     },
     ref,
   ) => {
@@ -128,7 +130,9 @@ export const CadViewerJscad = forwardRef<
     // Use the state `boardGeom` which starts simplified and gets updated
     const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
 
-    const cad_components = su(internalCircuitJson).cad_component.list()
+    const cad_components = su(internalCircuitJson)
+      .cad_component.list()
+      .filter((cad) => !hiddenCadComponentIds?.has(cad.cad_component_id))
 
     return (
       <CadViewerContainer
