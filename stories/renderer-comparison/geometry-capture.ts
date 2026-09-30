@@ -10,10 +10,10 @@ export const CAPTURE_SIZE = 640
 export const CREASE_THRESHOLD_DEGREES = 30
 
 export function comparisonCamera(
-  fixture: PreparedComparison,
+  fixture: Pick<PreparedComparison, "camera">,
   view: ComparisonView,
 ) {
-  const { span, target } = fixture.camera
+  const { target, span } = fixture.camera
   if (!Number.isFinite(span) || span <= 0 || !target.every(Number.isFinite)) {
     throw new Error(
       "Comparison camera must have a finite target and positive span",
@@ -207,7 +207,7 @@ export function captureGeometry(
         mutation,
         cameraPosition: camera.position.toArray(),
         cameraTarget: [...fixture.camera.target],
-        cameraSpan: fixture.camera.span,
+        cameraSpan: camera.top - camera.bottom,
         cameraFromBelow: Boolean(fixture.camera.fromBelow),
         viewerVertexCount,
         exporterVertexCount,

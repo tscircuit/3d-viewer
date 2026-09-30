@@ -3,5 +3,9 @@ import { RendererComparison } from "../../stories/renderer-comparison/RendererCo
 
 const root = document.getElementById("root")
 if (!root) throw new Error("Missing comparison application root")
-const caseId = new URLSearchParams(location.search).get("case") ?? undefined
-createRoot(root).render(<RendererComparison caseId={caseId} />)
+const params = new URLSearchParams(location.search)
+const caseId = params.get("case") ?? undefined
+const manifestUrl = params.get("manifest") ?? undefined
+createRoot(root).render(
+  <RendererComparison caseId={caseId} manifestUrl={manifestUrl} />,
+)

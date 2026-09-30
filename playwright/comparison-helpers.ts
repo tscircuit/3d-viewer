@@ -10,8 +10,14 @@ import type {
   GeometryCapture,
 } from "../tests/fixtures/renderer-parity/types"
 
-export async function openComparison(page: Page, caseId: string) {
-  await page.goto(`?case=${encodeURIComponent(caseId)}`)
+export async function openComparison(
+  page: Page,
+  caseId: string,
+  manifestUrl?: string,
+) {
+  const params = new URLSearchParams({ case: caseId })
+  if (manifestUrl) params.set("manifest", manifestUrl)
+  await page.goto(`?${params}`)
   await page.waitForFunction(
     () =>
       window.rendererComparison?.status === "ready" ||
@@ -130,4 +136,24 @@ export async function compareCapture(
     })
   }
   return { ...metrics, exportMessages: capture.exportMessages }
+}
+
+export async function expectRendererAgreement(page: Page, testInfo: TestInfo) {
+  testInfo.annotations.push({
+    type: "diagnostic",
+    description: "Renderer disagreements are recorded and non-blocking in CI.",
+  })
+  try {
+    const oblique = await compareCapture(page, testInfo, "oblique")
+    const side = await compareCapture(page, testInfo, "side")
+    expect(oblique.exportMessages).toEqual([])
+    expect(side.exportMessages).toEqual([])
+    expect.soft(oblique.matches, JSON.stringify(oblique, null, 2)).toBe(true)
+    expect.soft(side.matches, JSON.stringify(side, null, 2)).toBe(true)
+  } finally {
+    await testInfo.attach("comparison-story", {
+      body: await page.getByTestId("renderer-comparison-context").screenshot(),
+      contentType: "image/png",
+    })
+  }
 }
