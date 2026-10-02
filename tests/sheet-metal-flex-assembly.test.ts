@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import { modelDefinitionSchema } from "modelprinter"
+import { modelDefinitionSchema } from "@tscircuit/modelprinter"
 import { z } from "zod"
 import type { CadComponent } from "circuit-json"
 import {

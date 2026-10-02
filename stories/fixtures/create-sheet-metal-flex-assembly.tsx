@@ -1,10 +1,10 @@
 import { Circuit, assembly } from "@tscircuit/core"
 import {
   createSheetMetalMesh,
-  mp,
   createHexSocketBoltMesh,
   type SheetMetalMesh,
-} from "modelprinter"
+} from "jscad-electronics/vanilla"
+import { mp } from "@tscircuit/modelprinter"
 
 /** OBJ preserves modelprinter's right-handed, millimeter, +Z-up frame. */
 function meshToObjUrl(mesh: SheetMetalMesh): string {
