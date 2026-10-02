@@ -1,3 +1,5 @@
+import type { ManifoldToplevel } from "manifold-3d"
+
 export function createViaCopper({
   Manifold,
   x,
@@ -7,6 +9,15 @@ export function createViaCopper({
   thickness,
   zOffset = 0.001,
   segments = 32,
+}: {
+  Manifold: ManifoldToplevel["Manifold"]
+  x: number
+  y: number
+  outerDiameter: number
+  holeDiameter: number
+  thickness: number
+  zOffset?: number
+  segments?: number
 }) {
   const platingThickness = zOffset // Visual thickness for the barrel wall
 

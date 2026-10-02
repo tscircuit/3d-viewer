@@ -1,3 +1,5 @@
+import type { ManifoldToplevel } from "manifold-3d"
+
 export function createCircleHoleDrill({
   Manifold,
   x,
@@ -5,6 +7,13 @@ export function createCircleHoleDrill({
   diameter,
   thickness,
   segments = 32,
+}: {
+  Manifold: ManifoldToplevel["Manifold"]
+  x: number
+  y: number
+  diameter: number
+  thickness: number
+  segments?: number
 }) {
   const drill = Manifold.cylinder(
     thickness * 1.2,
@@ -24,6 +33,14 @@ export function createPlatedHoleDrill({
   thickness,
   zOffset = 0.001,
   segments = 32,
+}: {
+  Manifold: ManifoldToplevel["Manifold"]
+  x: number
+  y: number
+  holeDiameter: number
+  thickness: number
+  zOffset?: number
+  segments?: number
 }) {
   const boardHoleRadius = holeDiameter / 2 + zOffset
   const drill = Manifold.cylinder(
