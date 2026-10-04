@@ -44,6 +44,7 @@ test("keeps one orientation canvas after a StrictMode effect replay", async () =
   const previousDocument = globalThis.document
   const previousRequestAnimationFrame = globalThis.requestAnimationFrame
   const previousCancelAnimationFrame = globalThis.cancelAnimationFrame
+  const previousIntersectionObserver = globalThis.IntersectionObserver
   let animationFrameId = 0
 
   Object.assign(globalThis, {
@@ -51,6 +52,10 @@ test("keeps one orientation canvas after a StrictMode effect replay", async () =
     document: dom.window.document,
     requestAnimationFrame: () => ++animationFrameId,
     cancelAnimationFrame: () => {},
+    IntersectionObserver: class {
+      observe() {}
+      disconnect() {}
+    },
     IS_REACT_ACT_ENVIRONMENT: true,
   })
 
@@ -76,6 +81,7 @@ test("keeps one orientation canvas after a StrictMode effect replay", async () =
       document: previousDocument,
       requestAnimationFrame: previousRequestAnimationFrame,
       cancelAnimationFrame: previousCancelAnimationFrame,
+      IntersectionObserver: previousIntersectionObserver,
       IS_REACT_ACT_ENVIRONMENT: false,
     })
     dom.window.close()
