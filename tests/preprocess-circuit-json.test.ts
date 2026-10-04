@@ -19,7 +19,8 @@ test("adds faux board and defaults cad component z to half board thickness", () 
     (element) => element.type === "cad_component",
   ) as CadComponent
 
-  expect(updatedComponent.position?.z).toBeCloseTo(0.8)
+  const board = result.find((element) => element.type === "pcb_board")!
+  expect(updatedComponent.position?.z).toBeCloseTo(board.thickness / 2)
   expect(
     result.some(
       (element) =>
@@ -35,5 +36,6 @@ test("respects existing cad component z offsets when adding faux board", () => {
     (element) => element.type === "cad_component",
   ) as CadComponent
 
-  expect(updatedComponent.position?.z).toBeCloseTo(1.8)
+  const board = result.find((element) => element.type === "pcb_board")!
+  expect(updatedComponent.position?.z).toBeCloseTo(1 + board.thickness / 2)
 })
