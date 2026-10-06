@@ -1,11 +1,14 @@
 import { CadViewer } from "src/CadViewer"
 import bugsPadsAndTracesSoup from "./assets/soic-with-traces.json"
+// Snapshot of the same EasyEDA model previously loaded through a dev-only proxy:
+// https://modules.easyeda.com/3dmodel/47443b588a77418ba6b4ea51975c36c0
+import ssopModelUrl from "./assets/ssop.obj?url"
 import type { CadComponent } from "circuit-json"
 
 const cad_component: CadComponent = {
   type: "cad_component",
   cad_component_id: "1",
-  model_obj_url: "/easyeda-models/47443b588a77418ba6b4ea51975c36c0",
+  model_obj_url: ssopModelUrl,
   position: { x: 0, y: 0, z: 0.7 },
   rotation: { x: 0, y: 0, z: 0 },
   pcb_component_id: "todo",
@@ -51,7 +54,7 @@ export const BottomLayer = () => (
           y: 0,
           z: 0,
         },
-        model_obj_url: "/easyeda-models/47443b588a77418ba6b4ea51975c36c0",
+        model_obj_url: ssopModelUrl,
         anchor_alignment: "center",
         model_object_fit: "contain_within_bounds",
       },
@@ -77,7 +80,7 @@ export const SSOPRotated = () => (
           y: 0,
           z: 90,
         },
-        model_obj_url: "/easyeda-models/47443b588a77418ba6b4ea51975c36c0",
+        model_obj_url: ssopModelUrl,
         anchor_alignment: "center",
         model_object_fit: "contain_within_bounds",
       },

@@ -21,7 +21,7 @@ import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
 import { calculateOutlineBounds } from "./utils/outline-bounds"
-import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
+import { preprocessCircuitJson } from "./utils/preprocess-circuit-json"
 
 declare global {
   interface Window {
@@ -160,7 +160,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   const childrenCircuitJson = useConvertChildrenToCircuitJson(children)
   const circuitJson = useMemo(() => {
     const rawCircuitJson = circuitJsonProp ?? childrenCircuitJson
-    return addFauxBoardIfNeeded(rawCircuitJson)
+    return preprocessCircuitJson(rawCircuitJson)
   }, [circuitJsonProp, childrenCircuitJson])
 
   const [manifoldJSModule, setManifoldJSModule] = useState<any | null>(null)

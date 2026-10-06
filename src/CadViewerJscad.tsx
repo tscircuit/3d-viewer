@@ -16,7 +16,7 @@ import { JscadBoardTextures } from "./three-components/JscadBoardTextures"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
 import { calculateOutlineBounds } from "./utils/outline-bounds"
-import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
+import { preprocessCircuitJson } from "./utils/preprocess-circuit-json"
 
 interface Props {
   /**
@@ -54,7 +54,7 @@ export const CadViewerJscad = forwardRef<
   ) => {
     const childrenSoup = useConvertChildrenToCircuitJson(children)
     const internalCircuitJson = useMemo(() => {
-      return addFauxBoardIfNeeded(
+      return preprocessCircuitJson(
         circuitJson ?? childrenSoup,
       ) as AnyCircuitElement[]
     }, [circuitJson, childrenSoup])
