@@ -18,8 +18,8 @@ const circuitJson = [
     cableprinter_string: "jst_ph_pins4",
     from_source_component_id: "source_component_motor",
     to_source_component_id: "source_component_controller",
-    from_connector_pin1_position: { x: -10, y: 0, z: 4 },
-    to_connector_pin1_position: { x: 10, y: 0, z: 4 },
+    from_connector_pin1_position: { x: -10, y: -1, z: 4 },
+    to_connector_pin1_position: { x: 10, y: -1, z: 4 },
     path: [
       { x: -10, y: 0, z: 4 },
       { x: -8, y: 0, z: 8 },
