@@ -27,6 +27,7 @@ interface Props {
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
   cameraType?: "orthographic" | "perspective"
+  initialCameraPosition?: readonly [number, number, number]
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
   resolveStaticAsset?: (modelUrl: string) => string
@@ -44,6 +45,7 @@ export const CadViewerJscad = forwardRef<
       children,
       autoRotateDisabled,
       clickToInteractEnabled,
+      initialCameraPosition: initialCameraPositionOverride,
       onUserInteraction,
       onCameraControllerReady,
       resolveStaticAsset,
@@ -63,6 +65,7 @@ export const CadViewerJscad = forwardRef<
     const boardGeom = useBoardGeomBuilder(internalCircuitJson)
 
     const initialCameraPosition = useMemo(() => {
+      if (initialCameraPositionOverride) return initialCameraPositionOverride
       if (!internalCircuitJson) return [5, -5, 5] as const
       try {
         const board = su(internalCircuitJson as any).pcb_board.list()[0]
@@ -87,7 +90,7 @@ export const CadViewerJscad = forwardRef<
         console.error(e)
         return [5, -5, 5] as const
       }
-    }, [internalCircuitJson])
+    }, [initialCameraPositionOverride, internalCircuitJson])
 
     const isFauxBoard = useMemo(() => {
       if (!internalCircuitJson) return false
