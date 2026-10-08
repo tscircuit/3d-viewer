@@ -10,7 +10,14 @@ import {
   type PickedCadComponent,
 } from "./utils/pick-cad-component"
 import { useHiddenCadComponents } from "./hooks/useHiddenCadComponents"
-import { useCallback, useContext, useEffect, useRef, useState } from "react"
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import * as THREE from "three"
 
 // Constants for camera initialization - defined once, reused across renders
@@ -31,6 +38,7 @@ import type { AnyCircuitElement } from "circuit-json"
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
 import { ContextMenu } from "./components/ContextMenu"
+import { ExplodedViewControl } from "./components/ExplodedViewControl"
 import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
 import { AppearanceProvider } from "./contexts/appearance-context"
 import {
@@ -46,6 +54,7 @@ import type { CameraController, CameraPreset } from "./hooks/cameraAnimation"
 import { useCameraPreset } from "./hooks/useCameraPreset"
 import { useContextMenu } from "./hooks/useContextMenu"
 import { useGlobalDownloadGltf } from "./hooks/useGlobalDownloadGltf"
+import { useExplodedViewScene } from "./hooks/useExplodedViewScene"
 import {
   registerHotkeyViewer,
   useRegisteredHotkey,
@@ -54,6 +63,7 @@ import {
   type ReferenceObjectType,
   toggleReferenceObject,
 } from "./reference-objects/reference-object"
+import { getExplodedViewSceneConfig } from "./utils/get-exploded-view-scene-config"
 
 export type CadViewerProps = Omit<
   React.ComponentProps<typeof CadViewerJscad>,
@@ -81,8 +91,14 @@ const CadViewerInner = (props: CadViewerProps) => {
   const foldPcbs = foldPcbsOverride ?? props.foldPcbs
   const resolvedFoldPcbs = resolveFoldPcbs(circuitJson, foldPcbs)
   const circuitKey = JSON.stringify(circuitJson)
+  const explodedViewSceneConfig = useMemo(
+    () => getExplodedViewSceneConfig(circuitJson),
+    [circuitKey],
+  )
+  const [explodedViewAmount, setExplodedViewAmount] = useState(0)
   const { hiddenCadComponentIds, hideComponent, unhideAllComponents } =
     useHiddenCadComponents(circuitKey)
+  const hiddenComponentKey = [...hiddenCadComponentIds].sort().join("|")
   const resolvedProps = {
     ...props,
     circuitJson,
@@ -121,6 +137,17 @@ const CadViewerInner = (props: CadViewerProps) => {
     useState<ViewSchematicComponentEvent>()
   const [selectedCadComponent, setSelectedCadComponent] =
     useState<PickedCadComponent>()
+
+  useEffect(() => {
+    setExplodedViewAmount(0)
+  }, [circuitKey])
+
+  useExplodedViewScene({
+    explodedViewAmount,
+    explodedViewSceneConfig,
+    sceneRef,
+    sceneRevisionKey: `${circuitKey}:${engine}:${hiddenComponentKey}:${resolvedFoldPcbs}`,
+  })
   const handleMenuOpen = useCallback(
     (position: { x: number; y: number }) => {
       setSelectedCadComponent(
@@ -337,6 +364,12 @@ const CadViewerInner = (props: CadViewerProps) => {
           referenceObject={referenceObject}
         />
       )}
+      {explodedViewSceneConfig.parts.length > 0 && (
+        <ExplodedViewControl
+          explodedViewAmount={explodedViewAmount}
+          onExplodedViewAmountChange={setExplodedViewAmount}
+        />
+      )}
       {menuVisible && (
         <ContextMenu
           componentName={selectedCadComponent?.componentName}
@@ -426,7 +459,9 @@ export const CadViewer = (props: CadViewerProps) => {
     <SchematicNavigationContext.Provider value={sceneRef}>
       <CameraControllerProvider
         defaultTarget={DEFAULT_TARGET}
-        initialCameraPosition={INITIAL_CAMERA_POSITION}
+        initialCameraPosition={
+          props.initialCameraPosition ?? INITIAL_CAMERA_POSITION
+        }
         initialCameraType={readStoredCameraType()}
       >
         <LayerVisibilityProvider>

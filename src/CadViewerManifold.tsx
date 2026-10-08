@@ -134,6 +134,7 @@ type CadViewerManifoldProps = {
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
   cameraType?: "orthographic" | "perspective"
+  initialCameraPosition?: readonly [number, number, number]
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
   resolveStaticAsset?: (modelUrl: string) => string
@@ -151,6 +152,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   foldPcbs,
   autoRotateDisabled,
   clickToInteractEnabled,
+  initialCameraPosition: initialCameraPositionOverride,
   onUserInteraction,
   children,
   onCameraControllerReady,
@@ -313,6 +315,7 @@ try {
   }, [boardData])
 
   const initialCameraPosition = useMemo(() => {
+    if (initialCameraPositionOverride) return initialCameraPositionOverride
     if (!boardData) return [5, -5, 5] as const
     const { width = 0, height = 0 } = boardData
     const safeWidth = Math.max(width, 1)
@@ -323,7 +326,7 @@ try {
       -largestDim * 0.7, // Move back (negative Y)
       largestDim * 0.9, // Keep height but slightly lower than top-down
     ] as const
-  }, [boardData])
+  }, [boardData, initialCameraPositionOverride])
 
   if (manifoldLoadingError) {
     return (

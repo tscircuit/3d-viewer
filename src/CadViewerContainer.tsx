@@ -173,6 +173,7 @@ export const CadViewerContainer = forwardRef<
           {children}
         </Canvas>
         <div
+          data-testid="viewer-version"
           style={{
             position: "absolute",
             right: 24,
