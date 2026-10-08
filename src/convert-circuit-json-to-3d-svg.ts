@@ -4,6 +4,7 @@ import Debug from "debug"
 import * as THREE from "three"
 import { SVGRenderer } from "three/examples/jsm/renderers/SVGRenderer.js"
 import { createSimplifiedBoardGeom } from "./soup-to-3d"
+import { createCadCableObject, getCadCables } from "./three-components/CadCable"
 import { createBoardMaterial } from "./utils/create-board-material"
 import { createGeometryFromPolygons } from "./utils/create-geometry-from-polygons"
 import { getBoardEdgeColor } from "./utils/get-board-edge-color"
@@ -91,6 +92,14 @@ export async function convertCircuitJsonTo3dSvg(
   const components = su(circuitJson).cad_component.list()
   for (const component of components) {
     await renderComponent(component, scene)
+  }
+
+  for (const cable of getCadCables(circuitJson)) {
+    try {
+      scene.add(createCadCableObject(cable))
+    } catch (error) {
+      log(`Failed to render CAD cable ${cable.cad_cable_id}`, error)
+    }
   }
 
   const boards = su(circuitJson).pcb_board.list()
