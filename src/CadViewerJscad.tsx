@@ -15,6 +15,7 @@ import { Error3d } from "./three-components/Error3d"
 import { JscadBoardTextures } from "./three-components/JscadBoardTextures"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
+import { CadCable, getCadCables } from "./three-components/CadCable"
 import { calculateOutlineBounds } from "./utils/outline-bounds"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 
@@ -133,6 +134,7 @@ export const CadViewerJscad = forwardRef<
     const cad_components = su(internalCircuitJson)
       .cad_component.list()
       .filter((cad) => !hiddenCadComponentIds?.has(cad.cad_component_id))
+    const cadCables = getCadCables(internalCircuitJson)
 
     return (
       <CadViewerContainer
@@ -174,6 +176,9 @@ export const CadViewerJscad = forwardRef<
               resolveStaticAsset={resolveStaticAsset}
             />
           </ThreeErrorBoundary>
+        ))}
+        {cadCables.map((cable) => (
+          <CadCable key={cable.cad_cable_id} cable={cable} />
         ))}
       </CadViewerContainer>
     )

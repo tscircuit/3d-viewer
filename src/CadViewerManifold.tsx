@@ -19,6 +19,7 @@ import type { ReferenceObjectType } from "./reference-objects/reference-object"
 import { createTextureMeshes } from "./textures"
 import { Error3d } from "./three-components/Error3d"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
+import { CadCable, getCadCables } from "./three-components/CadCable"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
 import { calculateOutlineBounds } from "./utils/outline-bounds"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
@@ -294,6 +295,10 @@ try {
         .filter((cad) => !hiddenCadComponentIds?.has(cad.cad_component_id)),
     [flex.posedJson, hiddenCadComponentIds],
   )
+  const cadCables = useMemo(
+    () => getCadCables(flex.posedJson),
+    [flex.posedJson],
+  )
 
   const boardDimensions = useMemo(() => {
     if (!boardData) return undefined
@@ -385,6 +390,9 @@ try {
             resolveStaticAsset={resolveStaticAsset}
           />
         </ThreeErrorBoundary>
+      ))}
+      {cadCables.map((cable) => (
+        <CadCable key={cable.cad_cable_id} cable={cable} />
       ))}
     </CadViewerContainer>
   )
