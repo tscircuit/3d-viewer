@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react"
+import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import { getCachedStepGlb, setCachedStepGlb } from "src/utils/step-glb-cache"
 import { GLTFExporter } from "three-stdlib"
 import { GltfModel } from "./GltfModel"
-import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
-import { occtMeshesToGroup, type OcctMesh } from "./step-mesh-to-group"
+import { type OcctMesh, occtMeshesToGroup } from "./step-mesh-to-group"
 
 type OcctImportParams = {
   linearUnit?: "millimeter" | "centimeter" | "meter" | "inch" | "foot"
@@ -95,58 +96,16 @@ async function convertStepUrlToGlb(stepUrl: string): Promise<ArrayBuffer> {
   return glb
 }
 
-const CACHE_PREFIX = "step-glb-cache:v2:"
-
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer)
-  const chunkSize = 0x8000
-  let binary = ""
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.subarray(i, i + chunkSize)
-    binary += String.fromCharCode(...chunk)
-  }
-  return btoa(binary)
-}
-
-function base64ToArrayBuffer(base64: string): ArrayBuffer {
-  const binary = atob(base64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i += 1) {
-    bytes[i] = binary.charCodeAt(i)
-  }
-  return bytes.buffer
-}
-
-function getCachedGlb(stepUrl: string): ArrayBuffer | null {
-  try {
-    const cached = localStorage.getItem(`${CACHE_PREFIX}${stepUrl}`)
-    if (!cached) {
-      return null
-    }
-    return base64ToArrayBuffer(cached)
-  } catch (error) {
-    console.warn("Failed to read STEP GLB cache", error)
-    return null
-  }
-}
-
-function setCachedGlb(stepUrl: string, glb: ArrayBuffer): void {
-  try {
-    const encoded = arrayBufferToBase64(glb)
-    localStorage.setItem(`${CACHE_PREFIX}${stepUrl}`, encoded)
-  } catch (error) {
-    console.warn("Failed to write STEP GLB cache", error)
-  }
-}
-
 type ConvertedStepFile = {
   arrayBuffer: ArrayBuffer
   blobUrl: string
 }
 
+type StepModelUrl = string
+
 type StepUrlConversionRegistry = {
-  inProgress: Map<string, Promise<ConvertedStepFile>>
-  completed: Map<string, ConvertedStepFile>
+  inProgress: Map<StepModelUrl, Promise<ConvertedStepFile>>
+  completed: Map<StepModelUrl, ConvertedStepFile>
 }
 
 function getStepUrlConversionRegistry(): StepUrlConversionRegistry {
@@ -160,6 +119,53 @@ function getStepUrlConversionRegistry(): StepUrlConversionRegistry {
     }
   }
   return globalScope.stepUrlToGltfModelConversions
+}
+
+function createConvertedStepFile(arrayBuffer: ArrayBuffer): ConvertedStepFile {
+  return {
+    arrayBuffer,
+    blobUrl: URL.createObjectURL(
+      new Blob([arrayBuffer], { type: "model/gltf-binary" }),
+    ),
+  }
+}
+
+async function getConvertedStepFile({
+  registry,
+  stepUrl,
+}: {
+  registry: StepUrlConversionRegistry
+  stepUrl: string
+}): Promise<ConvertedStepFile> {
+  const completedConversion = registry.completed.get(stepUrl)
+  if (completedConversion) return completedConversion
+
+  const cachedGlb = await getCachedStepGlb(stepUrl)
+  const conversionCompletedWhileReadingCache = registry.completed.get(stepUrl)
+  if (conversionCompletedWhileReadingCache) {
+    return conversionCompletedWhileReadingCache
+  }
+  if (cachedGlb) {
+    const cachedConversion = createConvertedStepFile(cachedGlb)
+    registry.completed.set(stepUrl, cachedConversion)
+    return cachedConversion
+  }
+
+  let conversionPromise = registry.inProgress.get(stepUrl)
+  if (!conversionPromise) {
+    conversionPromise = convertStepUrlToGlb(stepUrl)
+      .then((glbBuffer) => {
+        const convertedStepFile = createConvertedStepFile(glbBuffer)
+        registry.completed.set(stepUrl, convertedStepFile)
+        void setCachedStepGlb(stepUrl, glbBuffer)
+        return convertedStepFile
+      })
+      .finally(() => {
+        registry.inProgress.delete(stepUrl)
+      })
+    registry.inProgress.set(stepUrl, conversionPromise)
+  }
+  return conversionPromise
 }
 
 type StepModelProps = {
@@ -197,70 +203,11 @@ export const StepModel = ({
 
   useEffect(() => {
     let isActive = true
-    let objectUrl: string | null = null
-    let shouldRevokeObjectUrl = true
     const registry = getStepUrlConversionRegistry()
-    const cachedGlb = getCachedGlb(stepUrl)
-    if (cachedGlb) {
-      const cachedConverted: ConvertedStepFile = {
-        arrayBuffer: cachedGlb,
-        blobUrl: URL.createObjectURL(
-          new Blob([cachedGlb], { type: "model/gltf-binary" }),
-        ),
-      }
-      registry.completed.set(stepUrl, cachedConverted)
-      objectUrl = cachedConverted.blobUrl
-      shouldRevokeObjectUrl = false
-      setStepGltfUrl(cachedConverted.blobUrl)
-      return () => {
-        isActive = false
-        if (objectUrl && shouldRevokeObjectUrl) {
-          URL.revokeObjectURL(objectUrl)
-        }
-      }
-    }
-    const existingCompleted = registry.completed.get(stepUrl)
-    if (existingCompleted) {
-      objectUrl = existingCompleted.blobUrl
-      shouldRevokeObjectUrl = false
-      setStepGltfUrl(existingCompleted.blobUrl)
-      setCachedGlb(stepUrl, existingCompleted.arrayBuffer)
-      return () => {
-        isActive = false
-        if (objectUrl && shouldRevokeObjectUrl) {
-          URL.revokeObjectURL(objectUrl)
-        }
-      }
-    }
-    let conversionPromise = registry.inProgress.get(stepUrl)
-    if (!conversionPromise) {
-      conversionPromise = convertStepUrlToGlb(stepUrl)
-        .then((glbBuffer) => {
-          const converted: ConvertedStepFile = {
-            arrayBuffer: glbBuffer,
-            blobUrl: URL.createObjectURL(
-              new Blob([glbBuffer], { type: "model/gltf-binary" }),
-            ),
-          }
-          registry.completed.set(stepUrl, converted)
-          registry.inProgress.delete(stepUrl)
-          return converted
-        })
-        .catch((error) => {
-          registry.inProgress.delete(stepUrl)
-          throw error
-        })
-      registry.inProgress.set(stepUrl, conversionPromise)
-    }
-    void conversionPromise
+
+    void getConvertedStepFile({ registry, stepUrl })
       .then((converted) => {
-        if (!isActive) {
-          return
-        }
-        objectUrl = converted.blobUrl
-        shouldRevokeObjectUrl = false
-        setStepGltfUrl(converted.blobUrl)
-        setCachedGlb(stepUrl, converted.arrayBuffer)
+        if (isActive) setStepGltfUrl(converted.blobUrl)
       })
       .catch((error) => {
         console.error("Failed to convert STEP file to GLB", error)
@@ -270,9 +217,6 @@ export const StepModel = ({
       })
     return () => {
       isActive = false
-      if (objectUrl && shouldRevokeObjectUrl) {
-        URL.revokeObjectURL(objectUrl)
-      }
     }
   }, [stepUrl])
 
