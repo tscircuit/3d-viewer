@@ -21,6 +21,7 @@
     "start": "bun run storybook",
     "dev:old": "bunx --bun vite",
     "build": "tsup",
+    "prepare": "bun run scripts/prepare-git-dependency.ts",
     "prepublish": "npm run build",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
