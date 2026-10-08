@@ -41,7 +41,7 @@
     "@tscircuit/cableprinter": "^0.0.6",
     "circuit-json": "^0.0.515",
     "circuit-to-canvas": "^0.0.131",
-    "jscad-electronics": "^0.0.213",
+    "jscad-electronics": "https://pkg.pr.new/tscircuit/jscad-electronics@05b82f6930ae5e00ea04c67ca01164b1b73d8665",
     "react-hot-toast": "^2.6.0",
     "three": "^0.165.0",
     "three-stdlib": "^2.36.0",
@@ -92,7 +92,7 @@
     "vite-tsconfig-paths": "^4.3.2",
     "circuit-json-to-gltf": "0.0.143",
     "zod": "^3.25.67",
-    "@tscircuit/modelprinter": "^0.0.6"
+    "@tscircuit/modelprinter": "^0.0.18"
   },
   "engines": {
     "node": "24.x"
