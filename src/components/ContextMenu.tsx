@@ -168,6 +168,21 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             sideOffset={0}
             align="start"
           >
+            {onHideComponent && (
+              <DropdownMenu.Item
+                style={{
+                  ...itemStyles,
+                  ...itemPaddingStyles,
+                  backgroundColor:
+                    hoveredItem === "hide" ? "#404040" : "transparent",
+                }}
+                onSelect={onHideComponent}
+                onMouseEnter={() => setHoveredItem("hide")}
+                onMouseLeave={() => setHoveredItem(null)}
+              >
+                {`Hide "${componentName}"`}
+              </DropdownMenu.Item>
+            )}
             {onViewSchematicComponent && (
               <>
                 <DropdownMenu.Item
@@ -184,21 +199,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                   Show on schematic
                 </DropdownMenu.Item>
               </>
-            )}
-            {onHideComponent && (
-              <DropdownMenu.Item
-                style={{
-                  ...itemStyles,
-                  ...itemPaddingStyles,
-                  backgroundColor:
-                    hoveredItem === "hide" ? "#404040" : "transparent",
-                }}
-                onSelect={onHideComponent}
-                onMouseEnter={() => setHoveredItem("hide")}
-                onMouseLeave={() => setHoveredItem(null)}
-              >
-                {`Hide "${componentName}"`}
-              </DropdownMenu.Item>
             )}
             {onUnhideAllComponents && (
               <DropdownMenu.Item
