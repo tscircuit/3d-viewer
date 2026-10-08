@@ -39,11 +39,15 @@ export const getCadCables = (elements: readonly unknown[]) =>
 
 const toCablePoint = ({ x, y, z }: Point3d): CablePoint => [x, y, z]
 
-const getConnectorPin1Side = (
-  path: Point3d[],
-  pin1Position: Point3d | undefined,
-  end: "start" | "end",
-): CablePoint | undefined => {
+const getConnectorPin1Side = ({
+  path,
+  pin1Position,
+  end,
+}: {
+  path: Point3d[]
+  pin1Position: Point3d | undefined
+  end: "start" | "end"
+}): CablePoint | undefined => {
   if (!pin1Position || path.length < 2) return undefined
 
   const endpoint = end === "start" ? path[0] : path[path.length - 1]
@@ -74,16 +78,16 @@ export const createCadCableObject = (cable: CadCableElement) => {
   const cableMeshes = createCableMeshes({
     definition,
     path: cable.path.map(toCablePoint),
-    startPin1Side: getConnectorPin1Side(
-      cable.path,
-      cable.from_connector_pin1_position,
-      "start",
-    ),
-    endPin1Side: getConnectorPin1Side(
-      cable.path,
-      cable.to_connector_pin1_position,
-      "end",
-    ),
+    startPin1Side: getConnectorPin1Side({
+      path: cable.path,
+      pin1Position: cable.from_connector_pin1_position,
+      end: "start",
+    }),
+    endPin1Side: getConnectorPin1Side({
+      path: cable.path,
+      pin1Position: cable.to_connector_pin1_position,
+      end: "end",
+    }),
   })
 
   const group = new THREE.Group()
