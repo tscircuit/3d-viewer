@@ -1,5 +1,5 @@
 import { CadViewer } from "src/CadViewer"
-import type { CadComponent } from "circuit-json"
+import type { CadComponent, PcbBoard } from "circuit-json"
 
 function modelViewer(modelString: string) {
   const model: CadComponent = {
@@ -13,7 +13,17 @@ function modelViewer(modelString: string) {
     position: { x: 0, y: 0, z: 0 },
     rotation: { x: 0, y: 0, z: 0 },
   }
-  return <CadViewer circuitJson={[model]} />
+  const board: PcbBoard = {
+    type: "pcb_board",
+    pcb_board_id: "mechanical_preview_board",
+    center: { x: 0, y: 0 },
+    width: 50,
+    height: 50,
+    thickness: 1.4,
+    material: "fr4",
+    num_layers: 2,
+  }
+  return <CadViewer circuitJson={[board, model]} />
 }
 
 export const SetScrewShaftCollar = () =>
