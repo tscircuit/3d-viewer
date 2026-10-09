@@ -73,17 +73,6 @@ const MyPCBViewer = () => {
 export default MyPCBViewer
 ```
 
-### Hide and restore 3D objects
-
-Right-click a model and select **Hide "name"**. Right-click anywhere in the
-viewer and open **Show hidden objects (count)** to restore an individual model,
-or select **Unhide All Components** to restore every hidden model. The submenu
-also supports keyboard navigation.
-
-Visibility is local to each viewer. It survives rendering-engine switches and
-resets when the circuit changes. These controls also work for mechanical CAD
-objects without PCB components and do not modify Circuit JSON or the design.
-
 ### Navigate to a schematic component
 
 Pass `onViewSchematicComponent` to enable **Show on schematic** when a user
