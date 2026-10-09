@@ -33,7 +33,8 @@
     "storybook:comparisons": "bun run prepare:renderer-comparisons && bun run storybook --initial-path '/story/diagnostics-renderer-parity--x-rotation'",
     "test:renderer-comparisons:serve": "bun run prepare:renderer-comparisons && vite --config playwright/vite.config.ts",
     "test:renderer-calibration": "playwright test --project=calibration",
-    "test:renderer-comparisons": "bun scripts/run-renderer-comparisons.ts"
+    "test:renderer-comparisons": "bun scripts/run-renderer-comparisons.ts",
+    "test:visibility": "playwright test --config playwright/visibility.config.ts"
   },
   "dependencies": {
     "@jscad/regl-renderer": "^2.6.12",

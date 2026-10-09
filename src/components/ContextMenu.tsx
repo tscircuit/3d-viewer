@@ -14,6 +14,7 @@ import {
 } from "../reference-objects/reference-object"
 import { AppearanceMenu } from "./AppearanceMenu"
 import { CheckIcon, ChevronRightIcon, DotIcon } from "./Icons"
+import type { PickedCadComponent } from "../utils/pick-cad-component"
 
 interface ContextMenuProps {
   menuRef: React.RefObject<HTMLDivElement | null>
@@ -34,6 +35,8 @@ interface ContextMenuProps {
   onViewSchematicComponent?: () => void
   componentName?: string
   onHideComponent?: () => void
+  hiddenComponents?: readonly PickedCadComponent[]
+  onUnhideComponent?: (cadComponentId: string) => void
   onUnhideAllComponents?: () => void
   onDownloadGltf: () => void
   onOpenKeyboardShortcuts: () => void
@@ -134,6 +137,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onViewSchematicComponent,
   componentName,
   onHideComponent,
+  hiddenComponents = [],
+  onUnhideComponent,
   onUnhideAllComponents,
   onDownloadGltf,
   onOpenKeyboardShortcuts,
@@ -142,6 +147,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   const { gridEnabled, setGridEnabled } = useAppearance()
   const [cameraSubOpen, setCameraSubOpen] = useState(false)
   const [referenceObjectSubOpen, setReferenceObjectSubOpen] = useState(false)
+  const [hiddenComponentsSubOpen, setHiddenComponentsSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
   return (
@@ -200,6 +206,61 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 </DropdownMenu.Item>
               </>
             )}
+            {hiddenComponents.length > 0 && onUnhideComponent && (
+              <DropdownMenu.Sub onOpenChange={setHiddenComponentsSubOpen}>
+                <DropdownMenu.SubTrigger
+                  style={{
+                    ...itemStyles,
+                    ...itemPaddingStyles,
+                    backgroundColor:
+                      hiddenComponentsSubOpen || hoveredItem === "hidden"
+                        ? "#404040"
+                        : "transparent",
+                  }}
+                  onMouseEnter={() => setHoveredItem("hidden")}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  onTouchStart={() => setHoveredItem("hidden")}
+                >
+                  <span style={{ flex: 1 }}>
+                    Show hidden objects ({hiddenComponents.length})
+                  </span>
+                  <ChevronRightIcon isOpen={hiddenComponentsSubOpen} />
+                </DropdownMenu.SubTrigger>
+                <DropdownMenu.Portal>
+                  <ViewportSubContent
+                    style={{ ...contentStyles, marginLeft: -2 }}
+                    collisionPadding={10}
+                    avoidCollisions={true}
+                  >
+                    {hiddenComponents.map((component) => (
+                      <DropdownMenu.Item
+                        key={component.cad_component_id}
+                        title={component.cad_component_id}
+                        style={{
+                          ...itemStyles,
+                          backgroundColor:
+                            hoveredItem === component.cad_component_id
+                              ? "#404040"
+                              : "transparent",
+                        }}
+                        onSelect={() =>
+                          onUnhideComponent(component.cad_component_id)
+                        }
+                        onMouseEnter={() =>
+                          setHoveredItem(component.cad_component_id)
+                        }
+                        onMouseLeave={() => setHoveredItem(null)}
+                        onTouchStart={() =>
+                          setHoveredItem(component.cad_component_id)
+                        }
+                      >
+                        {`Show "${component.componentName}"`}
+                      </DropdownMenu.Item>
+                    ))}
+                  </ViewportSubContent>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Sub>
+            )}
             {onUnhideAllComponents && (
               <DropdownMenu.Item
                 style={{
@@ -217,6 +278,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             )}
             {(onViewSchematicComponent ||
               onHideComponent ||
+              (hiddenComponents.length > 0 && onUnhideComponent) ||
               onUnhideAllComponents) && (
               <DropdownMenu.Separator style={separatorStyles} />
             )}

@@ -24,6 +24,15 @@ export const useHiddenCadComponents = (circuitKey: string) => {
         ]),
       }))
     },
+    unhideComponent: (id: string) => {
+      setState((current) => {
+        const ids = new Set(
+          current.circuitKey === circuitKey ? current.ids : [],
+        )
+        ids.delete(id)
+        return { circuitKey, ids }
+      })
+    },
     unhideAllComponents: () => {
       setState({ circuitKey, ids: NO_HIDDEN_COMPONENTS })
     },

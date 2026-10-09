@@ -10,7 +10,15 @@ import {
   type PickedCadComponent,
 } from "./utils/pick-cad-component"
 import { useHiddenCadComponents } from "./hooks/useHiddenCadComponents"
-import { useCallback, useContext, useEffect, useRef, useState } from "react"
+import { getHiddenCadComponents } from "./utils/get-hidden-cad-components"
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import * as THREE from "three"
 
 // Constants for camera initialization - defined once, reused across renders
@@ -81,8 +89,16 @@ const CadViewerInner = (props: CadViewerProps) => {
   const foldPcbs = foldPcbsOverride ?? props.foldPcbs
   const resolvedFoldPcbs = resolveFoldPcbs(circuitJson, foldPcbs)
   const circuitKey = JSON.stringify(circuitJson)
-  const { hiddenCadComponentIds, hideComponent, unhideAllComponents } =
-    useHiddenCadComponents(circuitKey)
+  const {
+    hiddenCadComponentIds,
+    hideComponent,
+    unhideComponent,
+    unhideAllComponents,
+  } = useHiddenCadComponents(circuitKey)
+  const hiddenComponents = useMemo(
+    () => getHiddenCadComponents({ circuitJson, hiddenCadComponentIds }),
+    [circuitJson, hiddenCadComponentIds],
+  )
   const resolvedProps = {
     ...props,
     circuitJson,
@@ -339,6 +355,11 @@ const CadViewerInner = (props: CadViewerProps) => {
       )}
       {menuVisible && (
         <ContextMenu
+          hiddenComponents={hiddenComponents}
+          onUnhideComponent={(cadComponentId) => {
+            unhideComponent(cadComponentId)
+            closeMenu()
+          }}
           componentName={selectedCadComponent?.componentName}
           onHideComponent={
             selectedCadComponent
