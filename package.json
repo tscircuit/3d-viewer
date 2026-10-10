@@ -21,7 +21,7 @@
     "start": "bun run storybook",
     "dev:old": "bunx --bun vite",
     "build": "tsup",
-    "prepublish": "npm run build",
+    "prepublishOnly": "bun run build",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "bun run prepare:renderer-comparisons && storybook build",
