@@ -90,6 +90,10 @@ const setDrawerBounds = (
   })
 }
 
+const isPcbAnnotation = (element: AnyCircuitElement) =>
+  element.type.startsWith("pcb_note_") ||
+  element.type.startsWith("pcb_fabrication_note_")
+
 export const drawSoldermaskLayer = ({
   ctx,
   layer,
@@ -141,19 +145,19 @@ export const drawSoldermaskLayer = ({
     },
   })
   setDrawerBounds(drawer, bounds)
-  const elementsWithoutKeepouts = elements.filter(
-    (element) => element.type !== "pcb_keepout",
+  const elementsWithoutAnnotationsOrKeepouts = elements.filter(
+    (element) => element.type !== "pcb_keepout" && !isPcbAnnotation(element),
   )
 
   // Let circuit-to-canvas handle board/panel soldermask composition internally.
-  drawer.drawElements(elementsWithoutKeepouts, {
+  drawer.drawElements(elementsWithoutAnnotationsOrKeepouts, {
     layers: [copperRenderLayer],
     drawSoldermask: true,
     drawSoldermaskTop: layer === "top",
     drawSoldermaskBottom: layer === "bottom",
   })
 
-  const uncoveredPours = elementsWithoutKeepouts.filter(
+  const uncoveredPours = elementsWithoutAnnotationsOrKeepouts.filter(
     (e): e is PcbCopperPour =>
       e.type === "pcb_copper_pour" &&
       e.layer === layer &&
