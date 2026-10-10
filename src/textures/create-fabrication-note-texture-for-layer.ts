@@ -13,7 +13,8 @@ const isFabricationNoteElement = (
 
   return (
     elementType.startsWith("pcb_fabrication_note_") &&
-    elementType !== "pcb_fabrication_note_text"
+    elementType !== "pcb_fabrication_note_text" &&
+    elementType !== "pcb_fabrication_note_dimension"
   )
 }
 
