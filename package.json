@@ -39,7 +39,7 @@
     "@jscad/regl-renderer": "^2.6.12",
     "@jscad/stl-serializer": "^2.1.20",
     "@tscircuit/cableprinter": "^0.0.6",
-    "circuit-json": "^0.0.515",
+    "circuit-json": "^0.0.525",
     "circuit-to-canvas": "^0.0.135",
     "jscad-electronics": "^0.0.213",
     "react-hot-toast": "^2.6.0",
@@ -65,10 +65,10 @@
     "@storybook/blocks": "9.0.0-alpha.17",
     "@storybook/react-vite": "^9.1.5",
     "@tscircuit/alphabet": "^0.0.25",
-    "@tscircuit/circuit-json-util": "^0.0.119",
+    "@tscircuit/circuit-json-util": "^0.0.121",
     "@tscircuit/copper-pour-solver": "^0.0.29",
-    "@tscircuit/core": "^0.0.2079",
-    "@tscircuit/props": "^0.0.685",
+    "@tscircuit/core": "^0.0.2130",
+    "@tscircuit/props": "^0.0.698",
     "@tscircuit/solver-utils": "^0.0.4",
     "@types/debug": "^4.1.13",
     "@types/jsdom": "^21.1.7",
@@ -92,7 +92,7 @@
     "vite-tsconfig-paths": "^4.3.2",
     "circuit-json-to-gltf": "0.0.143",
     "zod": "^3.25.67",
-    "@tscircuit/modelprinter": "^0.0.6"
+    "@tscircuit/modelprinter": "^0.0.18"
   },
   "engines": {
     "node": "24.x"
