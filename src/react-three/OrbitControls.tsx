@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from "react"
 import * as THREE from "three"
 import { OrbitControls as ThreeOrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
+import { applyInfiniteDolly, getMinimumDollyDistance } from "./infinite-dolly"
 import { useFrame, useThree } from "./ThreeContext"
 
 interface OrbitControlsProps {
@@ -34,6 +35,22 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
     if (!camera || !renderer) return null
     return new ThreeOrbitControls(camera, renderer.domElement)
   }, [camera, renderer])
+
+  const minimumDollyDistance = useMemo(() => {
+    if (!controls || !(camera instanceof THREE.PerspectiveCamera)) {
+      return Number.EPSILON
+    }
+
+    const initialOrbitDistance = target
+      ? Math.hypot(
+          camera.position.x - target[0],
+          camera.position.y - target[1],
+          camera.position.z - target[2],
+        )
+      : controls.getDistance()
+
+    return getMinimumDollyDistance({ camera, initialOrbitDistance })
+  }, [camera, controls, target])
 
   useEffect(() => {
     onControlsChange?.(controls ?? null)
@@ -106,8 +123,10 @@ export const OrbitControls: React.FC<OrbitControlsProps> = ({
   }, [controls])
 
   useFrame(() => {
-    controls?.update()
-  }, [controls])
+    if (!controls) return
+    applyInfiniteDolly({ camera, controls, minimumDollyDistance })
+    controls.update()
+  }, [camera, controls, minimumDollyDistance])
 
   return null
 }
