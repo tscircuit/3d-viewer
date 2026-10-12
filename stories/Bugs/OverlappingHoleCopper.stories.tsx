@@ -121,3 +121,6 @@ export const TentedViaAtSmtPadEdge = () => (
     ]}
   />
 )
+
+TentedViaAtSmtPadEdge.storyName =
+  "Tented Via At SMT Pad Edge — Full Through Hole"
