@@ -1,7 +1,3 @@
-import {
-  applyCopperMaskUvs,
-  cloneMaskedCopperMaterial,
-} from "../create-masked-copper-material"
 import * as THREE from "three"
 import type { ManifoldGeoms } from "../../hooks/useManifoldBoardBuilder"
 import { configureObjectShadows } from "../configure-object-shadows"
@@ -9,7 +5,6 @@ import { createBoardMaterial } from "../create-board-material"
 
 export function createGeometryMeshes(
   geoms: ManifoldGeoms | null,
-  copperMaterial?: THREE.MeshStandardMaterial,
 ): THREE.Mesh[] {
   const meshes: THREE.Mesh[] = []
   if (!geoms) return meshes
@@ -38,17 +33,13 @@ export function createGeometryMeshes(
   ) => {
     if (geomArray) {
       for (const comp of geomArray) {
-        if (copperMaterial) applyCopperMaskUvs(comp.geometry, copperMaterial)
         const mesh = new THREE.Mesh(
           comp.geometry,
-          (copperMaterial
-            ? cloneMaskedCopperMaterial(copperMaterial)
-            : undefined) ??
-            new THREE.MeshStandardMaterial({
-              color: comp.color,
-              side: THREE.DoubleSide,
-              flatShading: true, // Consistent with board
-            }),
+          new THREE.MeshStandardMaterial({
+            color: comp.color,
+            side: THREE.DoubleSide,
+            flatShading: true, // Consistent with board
+          }),
         )
         mesh.name = comp.key // Use provided key for identification
         configureObjectShadows(mesh)

@@ -1,100 +1,47 @@
 import { expect, test } from "bun:test"
-import { createCanvas } from "@napi-rs/canvas"
 import { geom3 } from "@jscad/modeling/src/geometries"
-import type { AnyCircuitElement, PcbBoard } from "circuit-json"
 import ManifoldModule from "manifold-3d"
 import * as THREE from "three"
+import { colors } from "../src/geoms/constants"
 import { createViaCopper as createJscadVia } from "../src/geoms/via-geoms"
-import {
-  applyCopperMaskUvs,
-  createMaskedCopperMaterial,
-} from "../src/utils/create-masked-copper-material"
 import { createGeometryFromPolygons } from "../src/utils/create-geometry-from-polygons"
 import { manifoldMeshToThreeGeometry } from "../src/utils/manifold-mesh-to-three-geometry"
+import { createGeometryMeshes } from "../src/utils/manifold/create-three-geometry-meshes"
 import { createViaCopper as createManifoldVia } from "../src/utils/via-geoms"
 
 for (const engine of ["jscad", "manifold"] as const) {
-  test(`${engine}: bore stays gold while the outer wall and rim retain soldermask`, async () => {
-    const previousDocument = globalThis.document
-    Object.assign(globalThis, {
-      document: { createElement: () => createCanvas(1, 1) },
-    })
-    const board: PcbBoard = {
-      type: "pcb_board",
-      pcb_board_id: "board",
-      center: { x: 0, y: 0 },
-      width: 6,
-      height: 4,
-      thickness: 1.6,
-      num_layers: 2,
-      material: "fr4",
-    }
-    const via = {
-      type: "pcb_via",
-      pcb_via_id: "via",
+  test(`${engine}: the full bore has gold walls without a custom shader or retessellation`, async () => {
+    const options = {
       x: 1,
       y: 0,
-      hole_diameter: 1,
-      outer_diameter: 1.4,
-      layers: ["top", "bottom"],
-      tented_on_top: true,
-      tented_on_bottom: true,
+      holeDiameter: 1,
+      outerDiameter: 1.4,
+      thickness: 1.6,
     }
-    const circuit = [
-      board,
-      {
-        type: "pcb_smtpad",
-        pcb_smtpad_id: "pad",
-        pcb_component_id: "component",
-        shape: "rect",
-        x: 0,
-        y: 0,
-        width: 2,
-        height: 3,
-        layer: "top",
-      },
-      via,
-    ] as AnyCircuitElement[]
     let op: any
+    let geometry: THREE.BufferGeometry
+    if (engine === "jscad") {
+      geometry = createGeometryFromPolygons(
+        geom3.toPolygons(createJscadVia(options)),
+      )
+    } else {
+      const module = await ManifoldModule()
+      module.setup()
+      op = createManifoldVia({ ...options, Manifold: module.Manifold })
+      geometry = manifoldMeshToThreeGeometry(op.getMesh())
+    }
     try {
-      const coating = createMaskedCopperMaterial({
-        circuitJson: circuit,
-        boardData: board,
-        visibility: { topMask: true, bottomMask: true },
-      })
-      const options = {
-        x: 1,
-        y: 0,
-        holeDiameter: 1,
-        outerDiameter: 1.4,
-        thickness: 1.6,
-      }
-      let geometry: THREE.BufferGeometry
-      if (engine === "jscad") {
-        geometry = createGeometryFromPolygons(
-          geom3.toPolygons(createJscadVia(options)),
-        )
-      } else {
-        const module = await ManifoldModule()
-        module.setup()
-        op = createManifoldVia({ ...options, Manifold: module.Manifold })
-        geometry = manifoldMeshToThreeGeometry(op.getMesh())
-      }
-      applyCopperMaskUvs(geometry, coating.material)
-      const mesh = new THREE.Mesh(geometry, coating.material)
-      const hit = (
-        origin: [number, number, number],
-        direction: [number, number, number],
-      ) => {
-        const intersections = new THREE.Raycaster(
-          new THREE.Vector3(...origin),
-          new THREE.Vector3(...direction),
-        ).intersectObject(mesh)
-        expect(intersections.length).toBeGreaterThan(0)
-        return intersections[0]!
-      }
-      // Rays from the bore hit its actual inner wall, on both board halves and
-      // all four sides, including the side outside the exposed pad.
+      const vertexCount = geometry.getAttribute("position").count
+      const gold = new THREE.Color(...colors.copper)
+      const mesh = createGeometryMeshes({
+        vias: [{ key: "via", geometry, color: gold }],
+      })[0]!
+      const material = mesh.material as THREE.MeshStandardMaterial
+      expect(material.color.equals(gold)).toBe(true)
+      expect(material.onBeforeCompile).toBe(
+        THREE.Material.prototype.onBeforeCompile,
+      )
+      expect(geometry.getAttribute("position").count).toBe(vertexCount)
       for (const z of [-0.4, 0.4])
         for (const direction of [
           [1, 0, 0],
@@ -102,16 +49,17 @@ for (const engine of ["jscad", "manifold"] as const) {
           [0, 1, 0],
           [0, -1, 0],
         ] as [number, number, number][]) {
-          expect(hit([1, 0, z], direction).uv!.x).toBe(-1)
+          const hits = new THREE.Raycaster(
+            new THREE.Vector3(1, 0, z),
+            new THREE.Vector3(...direction),
+          ).intersectObject(mesh)
+          expect(hits.length).toBeGreaterThan(0)
+          expect(hits[0]!.distance).toBeCloseTo(0.5, 4)
         }
-      // The outside wall and top rim still sample the green mask atlas.
-      expect(hit([2, 0, 0.4], [-1, 0, 0]).uv!.x).toBeGreaterThan(0)
-      expect(hit([1.5005, 0, 2], [0, 0, -1]).uv!.x).toBeGreaterThan(0)
-      geometry.dispose()
-      coating.dispose()
+      material.dispose()
     } finally {
+      geometry.dispose()
       op?.delete()
-      Object.assign(globalThis, { document: previousDocument })
     }
   })
 }

@@ -1,7 +1,3 @@
-import {
-  applyCopperMaskUvs,
-  cloneMaskedCopperMaterial,
-} from "../utils/create-masked-copper-material"
 import { useState, useEffect, useMemo } from "react"
 import * as THREE from "three"
 import { STLLoader } from "three-stdlib"
@@ -16,7 +12,6 @@ export function STLModel({
   color,
   opacity = 1,
   layerType,
-  material: materialOverride,
 }: {
   stlUrl?: string
   stlData?: ArrayBuffer
@@ -24,7 +19,6 @@ export function STLModel({
   mtlUrl?: string
   opacity?: number
   layerType?: LayerType
-  material?: THREE.MeshStandardMaterial
 }) {
   const { rootObject } = useThree()
   const [geom, setGeom] = useState<THREE.BufferGeometry | null>(null)
@@ -51,21 +45,16 @@ export function STLModel({
   const mesh = useMemo(() => {
     if (!geom) return null
     const isBoardLayer = layerType === "board"
-    if (materialOverride) applyCopperMaskUvs(geom, materialOverride)
-    const material =
-      (materialOverride
-        ? cloneMaskedCopperMaterial(materialOverride)
-        : undefined) ??
-      new THREE.MeshStandardMaterial({
-        color: Array.isArray(color)
-          ? new THREE.Color(color[0], color[1], color[2])
-          : color,
-        transparent: opacity !== 1,
-        opacity: opacity,
-        polygonOffset: isBoardLayer,
-        polygonOffsetFactor: isBoardLayer ? 6 : 0,
-        polygonOffsetUnits: isBoardLayer ? 6 : 0,
-      })
+    const material = new THREE.MeshStandardMaterial({
+      color: Array.isArray(color)
+        ? new THREE.Color(color[0], color[1], color[2])
+        : color,
+      transparent: opacity !== 1,
+      opacity: opacity,
+      polygonOffset: isBoardLayer,
+      polygonOffsetFactor: isBoardLayer ? 6 : 0,
+      polygonOffsetUnits: isBoardLayer ? 6 : 0,
+    })
     const createdMesh = new THREE.Mesh(geom, material)
     createdMesh.renderOrder = isBoardLayer ? -1 : 1
     configureObjectShadows(createdMesh, {
@@ -73,7 +62,7 @@ export function STLModel({
       receiveShadow: true,
     })
     return createdMesh
-  }, [geom, color, opacity, layerType, materialOverride])
+  }, [geom, color, opacity, layerType])
 
   useEffect(() => {
     if (!rootObject || !mesh) return

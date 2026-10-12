@@ -1,4 +1,3 @@
-import type * as THREE from "three"
 import { useLayerVisibility } from "../contexts/LayerVisibilityContext"
 import type { LayerType } from "../hooks/use-stls-from-geom"
 import { STLModel } from "./STLModel"
@@ -8,7 +7,6 @@ interface VisibleSTLModelProps {
   color: any
   opacity?: number
   layerType?: LayerType
-  material?: THREE.MeshStandardMaterial
 }
 
 export function VisibleSTLModel({
@@ -16,7 +14,6 @@ export function VisibleSTLModel({
   color,
   opacity = 1,
   layerType,
-  material,
 }: VisibleSTLModelProps) {
   const { visibility } = useLayerVisibility()
 
@@ -46,7 +43,6 @@ export function VisibleSTLModel({
       color={color}
       opacity={opacity}
       layerType={layerType}
-      material={material}
     />
   )
 }

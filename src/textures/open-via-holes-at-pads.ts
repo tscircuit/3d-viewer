@@ -73,8 +73,8 @@ export function getViaHolesAtExposedPads(
       for (let y = minY; y <= maxY && !overlaps; y++) {
         for (let x = minX; x <= maxX; x++) {
           if (
-            ((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 <= 1 &&
-            pixels[(y * width + x) * 4 + 3]! >= 128
+            pixels[(y * width + x) * 4 + 3]! >= 128 &&
+            ((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 <= 1
           ) {
             overlaps = true
             break
