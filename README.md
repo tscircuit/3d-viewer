@@ -73,6 +73,20 @@ const MyPCBViewer = () => {
 export default MyPCBViewer
 ```
 
+### Folded-board orientation
+
+Folded boards open with the face of the most-populated rigid panel pointing up.
+The viewer applies one rigid transform to the complete scene, including the native
+PCB, its copper and stiffeners, mechanical CAD and cables. Circuit JSON, flat PCB
+coordinates, component layers and the relative assembly geometry are preserved.
+Unfolded boards and equally populated panels keep their authored orientation.
+
+To display the original assembled coordinate frame, use:
+
+```tsx
+<CadViewer circuitJson={circuitJson} foldedBoardOrientation="as-authored" />
+```
+
 ### Navigate to a schematic component
 
 Pass `onViewSchematicComponent` to enable **Show on schematic** when a user

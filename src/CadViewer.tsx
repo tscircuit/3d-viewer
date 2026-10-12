@@ -5,6 +5,7 @@ import {
   type ViewSchematicComponentEvent,
 } from "./utils/pick-schematic-component"
 import { resolveFoldPcbs } from "./utils/resolve-fold-pcbs"
+import type { FoldedBoardOrientation } from "./utils/folded-board-presentation"
 import {
   pickCadComponent,
   type PickedCadComponent,
@@ -62,6 +63,8 @@ export type CadViewerProps = Omit<
   // Preserve support for raw JSON imports whose `type` fields widen to string.
   circuitJson?: any[]
   foldPcbs?: boolean
+  /** Display the primary populated folded panel face-up; opt out for authored coordinates. */
+  foldedBoardOrientation?: FoldedBoardOrientation
   /** Enable right-click navigation using the same identity as the PCB viewer. */
   onViewSchematicComponent?: (event: ViewSchematicComponentEvent) => void
 }

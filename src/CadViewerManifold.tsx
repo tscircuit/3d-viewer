@@ -1,4 +1,9 @@
 import { resolveFoldPcbs } from "./utils/resolve-fold-pcbs"
+import {
+  getFoldedBoardPresentation,
+  transformPresentationBounds,
+  type FoldedBoardOrientation,
+} from "./utils/folded-board-presentation"
 import { transformCircuitJsonCadComponents } from "@tscircuit/flex-utils"
 import { createFlexMeshes } from "./utils/flex-meshes"
 import { FitCameraToComparison } from "./three-components/reference-object"
@@ -130,6 +135,7 @@ export const BoardMeshes = ({
 }
 
 type CadViewerManifoldProps = {
+  foldedBoardOrientation?: FoldedBoardOrientation
   foldPcbs?: boolean
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
@@ -149,6 +155,7 @@ const MANIFOLD_CDN_BASE_URL = "https://cdn.jsdelivr.net/npm/manifold-3d@3.2.1"
 const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   circuitJson: circuitJsonProp,
   foldPcbs,
+  foldedBoardOrientation,
   autoRotateDisabled,
   clickToInteractEnabled,
   onUserInteraction,
@@ -269,7 +276,18 @@ try {
         circuitJson,
         resolvedFoldPcbs,
       )
-      return { ...meshes, posedJson, error: undefined }
+      const presentation = getFoldedBoardPresentation(
+        circuitJson,
+        resolvedFoldPcbs,
+        foldedBoardOrientation,
+      )
+      return {
+        ...meshes,
+        bounds: transformPresentationBounds(meshes.bounds, presentation),
+        presentation,
+        posedJson,
+        error: undefined,
+      }
     } catch (error) {
       return {
         error: error instanceof Error ? error.message : String(error),
@@ -277,6 +295,7 @@ try {
         textureMeshes: [],
         posedJson: circuitJson,
         bounds: undefined,
+        presentation: undefined,
       }
     }
   }, [
@@ -287,6 +306,7 @@ try {
     isFauxBoard,
     circuitJson,
     foldPcbs,
+    foldedBoardOrientation,
   ])
   const cadComponents = useMemo(
     () =>
@@ -307,10 +327,15 @@ try {
   }, [boardData])
 
   const boardCenter = useMemo(() => {
+    if (flex.bounds)
+      return {
+        x: (flex.bounds.minX + flex.bounds.maxX) / 2,
+        y: (flex.bounds.minY + flex.bounds.maxY) / 2,
+      }
     if (!boardData) return undefined
     const bounds = calculateOutlineBounds(boardData)
     return { x: bounds.centerX, y: bounds.centerY }
-  }, [boardData])
+  }, [boardData, flex.bounds])
 
   const initialCameraPosition = useMemo(() => {
     if (!boardData) return [5, -5, 5] as const
@@ -363,6 +388,7 @@ try {
 
   return (
     <CadViewerContainer
+      scenePresentation={flex.presentation}
       initialCameraPosition={initialCameraPosition}
       autoRotateDisabled={autoRotateDisabled}
       clickToInteractEnabled={clickToInteractEnabled}
