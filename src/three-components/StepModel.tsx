@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
+import {
+  type ConvertedStepFile,
+  getOrLoadConvertedStepFile,
+  type StepUrlConversionRegistry,
+} from "src/utils/get-or-load-converted-step-file"
 import { getCachedStepGlb, setCachedStepGlb } from "src/utils/step-glb-cache"
 import { GLTFExporter } from "three-stdlib"
 import { GltfModel } from "./GltfModel"
@@ -96,17 +101,6 @@ async function convertStepUrlToGlb(stepUrl: string): Promise<ArrayBuffer> {
   return glb
 }
 
-type ConvertedStepFile = {
-  blobUrl: string
-}
-
-type StepModelUrl = string
-
-type StepUrlConversionRegistry = {
-  inProgress: Map<StepModelUrl, Promise<ConvertedStepFile>>
-  completed: Map<StepModelUrl, ConvertedStepFile>
-}
-
 function getStepUrlConversionRegistry(): StepUrlConversionRegistry {
   const globalScope = globalThis as {
     stepUrlToGltfModelConversions?: StepUrlConversionRegistry
@@ -137,31 +131,6 @@ async function loadConvertedStepFile(
   const glbBuffer = await convertStepUrlToGlb(stepUrl)
   await setCachedStepGlb(stepUrl, glbBuffer)
   return createConvertedStepFile(glbBuffer)
-}
-
-function getConvertedStepFile({
-  registry,
-  stepUrl,
-}: {
-  registry: StepUrlConversionRegistry
-  stepUrl: string
-}): Promise<ConvertedStepFile> {
-  const completedConversion = registry.completed.get(stepUrl)
-  if (completedConversion) return Promise.resolve(completedConversion)
-
-  let conversionPromise = registry.inProgress.get(stepUrl)
-  if (!conversionPromise) {
-    conversionPromise = loadConvertedStepFile(stepUrl)
-      .then((convertedStepFile) => {
-        registry.completed.set(stepUrl, convertedStepFile)
-        return convertedStepFile
-      })
-      .finally(() => {
-        registry.inProgress.delete(stepUrl)
-      })
-    registry.inProgress.set(stepUrl, conversionPromise)
-  }
-  return conversionPromise
 }
 
 type StepModelProps = {
@@ -201,7 +170,11 @@ export const StepModel = ({
     let isActive = true
     const registry = getStepUrlConversionRegistry()
 
-    void getConvertedStepFile({ registry, stepUrl })
+    void getOrLoadConvertedStepFile({
+      loadConvertedStepFile,
+      registry,
+      stepUrl,
+    })
       .then((converted) => {
         if (isActive) setStepGltfUrl(converted.blobUrl)
       })
