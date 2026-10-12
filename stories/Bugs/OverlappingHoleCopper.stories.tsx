@@ -122,5 +122,4 @@ export const TentedViaAtSmtPadEdge = () => (
   />
 )
 
-TentedViaAtSmtPadEdge.storyName =
-  "Tented Via At SMT Pad Edge — Full Through Hole"
+TentedViaAtSmtPadEdge.storyName = "Tented Via At SMT Pad Edge — Gold Inner Wall"

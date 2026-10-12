@@ -4,6 +4,7 @@ import type { LayerVisibilityState } from "../contexts/LayerVisibilityContext"
 import { colors, TRACE_TEXTURE_RESOLUTION } from "../geoms/constants"
 import { createSoldermaskTextureForLayer } from "../textures/create-soldermask-texture-for-layer"
 import { getSoldermaskRenderBounds } from "../textures/soldermask/soldermask-bounds"
+import { getPcbVias } from "./get-pcb-vias"
 import { getLayerTextureResolution } from "./layer-texture-resolution"
 
 export function createMaskedCopperMaterial({
@@ -66,6 +67,11 @@ export function createMaskedCopperMaterial({
     bounds.width,
     bounds.height,
   ]
+  material.userData.copperMaskVias = getPcbVias(circuitJson).map((via) => [
+    via.x,
+    via.y,
+    via.hole_diameter / 2,
+  ])
   material.onBeforeCompile = (shader) => {
     shader.uniforms.copperMaskAtlas = { value: mask }
     shader.vertexShader = shader.vertexShader
@@ -86,7 +92,8 @@ export function createMaskedCopperMaterial({
         "#include <color_fragment>",
         `#include <color_fragment>
         vec4 copperMask = texture2D(copperMaskAtlas, vCopperMaskUv);
-        float copperMaskCoverage = copperMask.a;
+        // Negative U marks the plated inner wall, which stays exposed gold.
+        float copperMaskCoverage = vCopperMaskUv.x < -0.5 ? 0.0 : copperMask.a;
         diffuseColor.rgb = mix(diffuseColor.rgb, copperMask.rgb, copperMaskCoverage);
       `,
       )
@@ -99,7 +106,7 @@ export function createMaskedCopperMaterial({
         "#include <metalnessmap_fragment>\nmetalnessFactor = mix(metalnessFactor, 0.025, copperMaskCoverage);",
       )
   }
-  material.customProgramCacheKey = () => "masked-hole-copper-v1"
+  material.customProgramCacheKey = () => "masked-hole-copper-v2"
   for (const source of masks) source?.dispose()
   return {
     material,
@@ -129,6 +136,17 @@ export function applyCopperMaskUvs(
 ) {
   const [minX, minY, width, height] = material.userData
     .copperMaskBounds as number[]
+  geometry.computeBoundingBox()
+  const bounds = geometry.boundingBox!
+  const nearbyVias = (
+    (material.userData.copperMaskVias ?? []) as number[][]
+  ).filter(
+    ([x, y, radius]) =>
+      x! + radius! >= bounds.min.x &&
+      x! - radius! <= bounds.max.x &&
+      y! + radius! >= bounds.min.y &&
+      y! - radius! <= bounds.max.y,
+  )
   const source = geometry.index ? geometry.toNonIndexed() : geometry
   const attribute = source.getAttribute("position")
   const positions: number[] = [],
@@ -136,17 +154,33 @@ export function applyCopperMaskUvs(
   const emit = (polygon: THREE.Vector3[], top: boolean) => {
     for (let i = 1; i < polygon.length - 1; i++) {
       const triangle = [polygon[0]!, polygon[i]!, polygon[i + 1]!]
-      if (
-        new THREE.Vector3()
-          .subVectors(triangle[1]!, triangle[0]!)
-          .cross(new THREE.Vector3().subVectors(triangle[2]!, triangle[0]!))
-          .lengthSq() < 1e-20
-      )
-        continue
+      const normal = new THREE.Vector3()
+        .subVectors(triangle[1]!, triangle[0]!)
+        .cross(new THREE.Vector3().subVectors(triangle[2]!, triangle[0]!))
+      if (normal.lengthSq() < 1e-20) continue
+      normal.normalize()
+      const center = triangle[0]!
+        .clone()
+        .add(triangle[1]!)
+        .add(triangle[2]!)
+        .divideScalar(3)
+      // Only the bore-facing cylinder wall stays gold. Outer walls and the
+      // horizontal rim keep their mask coverage. Allow for faceted drill arcs.
+      const innerWall =
+        Math.abs(normal.z) < 1e-5 &&
+        nearbyVias.some(
+          ([x, y, radius]) =>
+            normal.x * (center.x - x!) + normal.y * (center.y - y!) < 0 &&
+            triangle.every(
+              (point) =>
+                Math.abs(Math.hypot(point.x - x!, point.y - y!) - radius!) <
+                radius! * 0.02 + 1e-5,
+            ),
+        )
       for (const point of triangle) {
         positions.push(point.x, point.y, point.z)
         uvs.push(
-          (point.x - minX!) / width!,
+          innerWall ? -1 : (point.x - minX!) / width!,
           ((point.y - minY!) / height! + Number(top)) / 2,
         )
       }

@@ -9,7 +9,7 @@ import {
 import { createGeometryMeshes } from "../src/utils/manifold/create-three-geometry-meshes"
 
 for (const layer of ["top", "bottom"] as const) {
-  test(`${layer}: tented via lining follows the overlapping SMT pad opening`, () => {
+  test(`${layer}: tented via surface coating follows the overlapping SMT pad opening`, () => {
     const previousDocument = globalThis.document
     Object.assign(globalThis, {
       document: { createElement: () => createCanvas(1, 1) },
@@ -80,7 +80,7 @@ for (const layer of ["top", "bottom"] as const) {
         Array.from(
           canvas.getContext("2d").getImageData(x, y, 1, 1).data,
         ) as number[]
-      // Pad edge is at board x=10: the left half of the lining is in the
+      // Pad edge is at board x=10: the left half of the surface copper is in the
       // aperture, and the right half lies under opaque green soldermask.
       const left = pixel(
         Math.floor(canvas.width * 0.45),
