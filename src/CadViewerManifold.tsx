@@ -1,3 +1,4 @@
+import { useMaskedCopperMaterial } from "./hooks/useMaskedCopperMaterial"
 import { resolveFoldPcbs } from "./utils/resolve-fold-pcbs"
 import { transformCircuitJsonCadComponents } from "@tscircuit/flex-utils"
 import { createFlexMeshes } from "./utils/flex-meshes"
@@ -257,6 +258,8 @@ try {
     isFauxBoard,
   } = useManifoldBoardBuilder(manifoldJSModule, circuitJson, visibility)
 
+  const copperMaterial = useMaskedCopperMaterial(circuitJson, boardData)
+
   const flex = useMemo(() => {
     try {
       const resolvedFoldPcbs = resolveFoldPcbs(circuitJson, foldPcbs)
@@ -264,7 +267,7 @@ try {
         foldPcbs: resolvedFoldPcbs,
       })
       const meshes = createFlexMeshes(
-        createGeometryMeshes(geoms),
+        createGeometryMeshes(geoms, copperMaterial),
         createTextureMeshes(textures, boardData, pcbThickness, isFauxBoard),
         circuitJson,
         resolvedFoldPcbs,
@@ -280,6 +283,7 @@ try {
       }
     }
   }, [
+    copperMaterial,
     geoms,
     textures,
     boardData,

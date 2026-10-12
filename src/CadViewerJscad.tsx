@@ -1,3 +1,4 @@
+import { useMaskedCopperMaterial } from "./hooks/useMaskedCopperMaterial"
 import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement } from "circuit-json"
 import type * as React from "react"
@@ -126,6 +127,14 @@ export const CadViewerJscad = forwardRef<
       }
     }, [internalCircuitJson])
 
+    const copperBoardData = useMemo(
+      () => su(internalCircuitJson).pcb_board.list()[0] ?? null,
+      [internalCircuitJson],
+    )
+    const copperMaterial = useMaskedCopperMaterial(
+      internalCircuitJson,
+      copperBoardData,
+    )
     const pcbThickness = usePcbThickness(internalCircuitJson)
 
     // Use the state `boardGeom` which starts simplified and gets updated
@@ -155,6 +164,7 @@ export const CadViewerJscad = forwardRef<
             color={color}
             opacity={index === 0 ? (isFauxBoard ? 0.8 : 0.95) : 1}
             layerType={layerType}
+            material={index > 0 ? copperMaterial : undefined}
           />
         ))}
         <JscadBoardTextures

@@ -58,3 +58,66 @@ export const PlatedHoleAndViaAtPadEdge = () => (
   <CadViewer circuitJson={circuitJson} />
 )
 export default { title: "Bugs/Overlapping Hole Copper" }
+
+export const ResistorAndCapacitorWithVias = () => (
+  <CadViewer>
+    <board width="10mm" height="10mm">
+      <resistor resistance="1k" footprint="0402" name="R1" />
+      <capacitor
+        capacitance="1000pF"
+        footprint="0402"
+        name="C1"
+        connections={{ pin1: "R1.pin1" }}
+      />
+      <via pcbX={0.8} pcbY={0} />
+      <via pcbX={1.8} pcbY={0} tented />
+    </board>
+  </CadViewer>
+)
+
+export const TentedViaAtSmtPadEdge = () => (
+  <CadViewer
+    autoRotateDisabled
+    onCameraControllerReady={(controller) =>
+      controller?.animateTo({
+        position: [2, -2.5, 3],
+        target: [1, 0, 0.5],
+        durationMs: 0,
+      })
+    }
+    circuitJson={[
+      {
+        type: "pcb_board",
+        pcb_board_id: "board",
+        center: { x: 0, y: 0 },
+        width: 6,
+        height: 4,
+        thickness: 1,
+        num_layers: 2,
+        material: "fr4",
+      },
+      ...(["top", "bottom"] as const).map((layer) => ({
+        type: "pcb_smtpad",
+        pcb_smtpad_id: `pad-${layer}`,
+        pcb_component_id: "component",
+        shape: "rect",
+        x: 0,
+        y: 0,
+        width: 2,
+        height: 3,
+        layer,
+      })),
+      {
+        type: "pcb_via",
+        pcb_via_id: "edge-via",
+        x: 1,
+        y: 0,
+        hole_diameter: 1,
+        outer_diameter: 1.4,
+        layers: ["top", "bottom"],
+        tented_on_top: true,
+        tented_on_bottom: true,
+      },
+    ]}
+  />
+)
