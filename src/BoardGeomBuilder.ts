@@ -6,6 +6,7 @@ import {
   subtract,
   union,
 } from "@jscad/modeling/src/operations/booleans"
+import { measureBoundingBox } from "@jscad/modeling/src/measurements"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { rotateZ, translate } from "@jscad/modeling/src/operations/transforms"
 import {
@@ -75,6 +76,13 @@ export class BoardGeomBuilder {
   private boardGeom: Geom3 | null = null
   private platedHoleGeoms: Geom3[] = []
   private viaGeoms: Geom3[] = [] // Combined with platedHoleGeoms
+  // Drills are in board space (mm, +Z up). Apply them after all copper exists,
+  // excluding each barrel's own drill so its thin plating is preserved.
+  private copperDrills: {
+    geom: Geom3
+    platedHoleIndex?: number
+    viaIndex?: number
+  }[] = []
   private boardClipGeom: Geom3 | null = null
 
   private state: BuilderState = "initializing"
@@ -331,6 +339,10 @@ export class BoardGeomBuilder {
 
       if (!opts.dontCutBoard) {
         this.boardGeom = subtract(this.boardGeom, cyGeom)
+        this.copperDrills.push({
+          geom: cyGeom,
+          platedHoleIndex: this.platedHoleGeoms.length,
+        })
       }
 
       const platedHoleGeom = platedHole(ph, this.ctx, {
@@ -379,6 +391,10 @@ export class BoardGeomBuilder {
 
       if (!opts.dontCutBoard) {
         this.boardGeom = subtract(this.boardGeom, pillHole)
+        this.copperDrills.push({
+          geom: pillHole,
+          platedHoleIndex: this.platedHoleGeoms.length,
+        })
       }
 
       const platedHoleGeom = platedHole(ph, this.ctx, {
@@ -445,6 +461,10 @@ export class BoardGeomBuilder {
 
       if (!opts.dontCutBoard) {
         this.boardGeom = subtract(this.boardGeom, pillHole)
+        this.copperDrills.push({
+          geom: pillHole,
+          platedHoleIndex: this.platedHoleGeoms.length,
+        })
       }
 
       const platedHoleGeom = platedHole(ph, this.ctx, {
@@ -512,6 +532,10 @@ export class BoardGeomBuilder {
 
       if (!opts.dontCutBoard) {
         this.boardGeom = subtract(this.boardGeom, pillHole)
+        this.copperDrills.push({
+          geom: pillHole,
+          platedHoleIndex: this.platedHoleGeoms.length,
+        })
       }
 
       const platedHoleGeom = platedHole(ph, this.ctx, {
@@ -536,11 +560,11 @@ export class BoardGeomBuilder {
 
       if (!opts.dontCutBoard) {
         this.boardGeom = subtract(this.boardGeom, boardHole)
+        this.copperDrills.push({
+          geom: boardHole,
+          platedHoleIndex: this.platedHoleGeoms.length,
+        })
       }
-
-      this.platedHoleGeoms = this.platedHoleGeoms.map((phg) =>
-        colorize(colors.copper, subtract(phg, copperHole)),
-      )
 
       const platedHoleGeom = platedHole(ph, this.ctx, {
         clipGeom: this.boardClipGeom,
@@ -570,9 +594,7 @@ export class BoardGeomBuilder {
         radius: hole.hole_diameter / 2 + M / 2,
         height: holeDepth,
       })
-      this.platedHoleGeoms = this.platedHoleGeoms.map((phg) =>
-        colorize(colors.copper, subtract(phg, copperCut)),
-      )
+      this.copperDrills.push({ geom: copperCut })
     } else if (
       hole.hole_shape === "pill" ||
       hole.hole_shape === "rotated_pill" ||
@@ -650,9 +672,7 @@ export class BoardGeomBuilder {
 
       if (copperCut) {
         const positionedCopperCut = translate([hole.x, hole.y, 0], copperCut)
-        this.platedHoleGeoms = this.platedHoleGeoms.map((phg) =>
-          colorize(colors.copper, subtract(phg, positionedCopperCut)),
-        )
+        this.copperDrills.push({ geom: positionedCopperCut })
       }
     }
   }
@@ -660,6 +680,7 @@ export class BoardGeomBuilder {
   private processVia(via: PcbVia) {
     if (!this.boardGeom) return
 
+    let viaCopperIndex: number | undefined
     // Create via copper geometry (barrel + annular rings)
     if (
       typeof via.outer_diameter === "number" &&
@@ -681,6 +702,7 @@ export class BoardGeomBuilder {
         finalViaGeom = colorize(colors.copper, finalViaGeom)
       }
 
+      viaCopperIndex = this.viaGeoms.length
       this.viaGeoms.push(finalViaGeom)
     }
 
@@ -695,11 +717,47 @@ export class BoardGeomBuilder {
 
       // Subtract drill from board
       this.boardGeom = subtract(this.boardGeom, viaDrill)
+      this.copperDrills.push({
+        geom: viaDrill,
+        viaIndex: viaCopperIndex,
+      })
     }
   }
 
   private finalize() {
     if (!this.boardGeom) return
+    const drillBounds = this.copperDrills.map((drill) => ({
+      ...drill,
+      bounds: measureBoundingBox(drill.geom),
+    }))
+    const cutCopper = (
+      geom: Geom3,
+      index: number,
+      kind: "platedHoleIndex" | "viaIndex",
+    ) => {
+      const bounds = measureBoundingBox(geom)
+      const drills = drillBounds
+        .filter(
+          (drill) =>
+            drill[kind] !== index &&
+            [0, 1, 2].every(
+              (axis) =>
+                drill.bounds[0][axis]! <= bounds[1][axis]! &&
+                drill.bounds[1][axis]! >= bounds[0][axis]!,
+            ),
+        )
+        .map((drill) => drill.geom)
+      return colorize(
+        colors.copper,
+        drills.length ? subtract(geom, union(...drills)) : geom,
+      )
+    }
+    this.platedHoleGeoms = this.platedHoleGeoms.map((geom, index) =>
+      cutCopper(geom, index, "platedHoleIndex"),
+    )
+    this.viaGeoms = this.viaGeoms.map((geom, index) =>
+      cutCopper(geom, index, "viaIndex"),
+    )
     // Colorize the final board geometry
     const boardEdgeColor = getBoardEdgeColor(this.board)
     this.boardGeom = colorize(

@@ -1,4 +1,8 @@
-import type { AnyCircuitElement, PcbBoard } from "circuit-json"
+import {
+  clearViaHolesFromSurface,
+  getViaHolesAtExposedPads,
+} from "./open-via-holes-at-pads"
+import type { AnyCircuitElement, PcbBoard, PcbVia } from "circuit-json"
 import * as THREE from "three"
 import type { LayerVisibilityState } from "../contexts/LayerVisibilityContext"
 import { colors as defaultColors } from "../geoms/constants"
@@ -99,7 +103,9 @@ const createCombinedTexture = ({
   boardData,
   traceTextureResolution,
   layer,
+  openViaHoles,
 }: {
+  openViaHoles: PcbVia[]
   textures: Array<THREE.CanvasTexture | null | undefined>
   boardData: PcbBoard
   traceTextureResolution: number
@@ -129,6 +135,14 @@ const createCombinedTexture = ({
     ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight)
   }
 
+  clearViaHolesFromSurface({
+    ctx,
+    vias: openViaHoles,
+    boardData,
+    layer,
+    width: canvasWidth,
+    height: canvasHeight,
+  })
   applySoldermaskSurfaceFilter(ctx, canvasWidth, canvasHeight, {
     includeReflection: layer === "top",
   })
@@ -212,6 +226,11 @@ export function createCombinedBoardTextures({
   const copperColor = toRgb(defaultColors.copper)
 
   const showBoardBody = visibility?.boardBody ?? true
+  const openViaHoles = getViaHolesAtExposedPads(
+    circuitJson,
+    boardData,
+    traceTextureResolution,
+  )
 
   const buildForLayer = (layer: "top" | "bottom") => {
     const showMask =
@@ -344,6 +363,7 @@ export function createCombinedBoardTextures({
       : null
 
     const boardTexture = createCombinedTexture({
+      openViaHoles,
       textures: [
         copperPourTexture,
         traceTexture,
