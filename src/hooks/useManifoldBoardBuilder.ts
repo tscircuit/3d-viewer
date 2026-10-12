@@ -249,6 +249,7 @@ export const useManifoldBoardBuilder = (
         currentPcbThickness,
         manifoldInstancesForCleanup.current,
         boardClipVolume,
+        allBoardDrills,
       )
       allBoardDrills.push(...viaBoardDrills)
       currentGeoms.vias = viaCopperGeoms
