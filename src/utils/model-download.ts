@@ -1,4 +1,4 @@
-import importer from "@tscircuit/internal-dynamic-import/source"
+import importer from "@tscircuit/internal-dynamic-import"
 import type { CadComponent } from "circuit-json"
 import { getCadModelType } from "./get-cad-model-type"
 import { resolveModelUrl } from "./resolve-model-url"

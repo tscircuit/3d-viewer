@@ -5,7 +5,7 @@ export default defineConfig({
   platform: "neutral",
   format: "esm",
   dts: { resolve: ["@tscircuit/flex-utils"] },
-  noExternal: ["@tscircuit/flex-utils", "@tscircuit/internal-dynamic-import"],
+  noExternal: ["@tscircuit/flex-utils"],
   external: ["react", "react-dom"],
   bundle: true,
   splitting: true,

@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from "bun:test"
-import { setDynamicImportResolver } from "@tscircuit/internal-dynamic-import/source"
+import { setDynamicImportResolver } from "@tscircuit/internal-dynamic-import"
 import type { CadComponent } from "circuit-json"
 import {
   createModelDownload,
