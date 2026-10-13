@@ -45,7 +45,8 @@
     "react-hot-toast": "^2.6.0",
     "three": "^0.165.0",
     "three-stdlib": "^2.36.0",
-    "troika-three-text": "^0.52.4"
+    "troika-three-text": "^0.52.4",
+    "@tscircuit/internal-dynamic-import": "^0.0.17"
   },
   "peerDependencies": {
     "zod": "*",

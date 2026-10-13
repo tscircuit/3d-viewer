@@ -1,3 +1,7 @@
+import {
+  modelDownloadFormats,
+  type ModelDownloadFormat,
+} from "../utils/model-download"
 import { ViewportSubContent } from "./ViewportSubContent"
 import { menuViewportStyles } from "./menu-viewport-styles"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
@@ -35,6 +39,8 @@ interface ContextMenuProps {
   componentName?: string
   onHideComponent?: () => void
   onUnhideAllComponents?: () => void
+  modelDownloads?: Record<ModelDownloadFormat, boolean>
+  onDownloadModel?: (format: ModelDownloadFormat) => void
   onDownloadGltf: () => void
   onOpenKeyboardShortcuts: () => void
 }
@@ -135,11 +141,14 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   componentName,
   onHideComponent,
   onUnhideAllComponents,
+  modelDownloads,
+  onDownloadModel,
   onDownloadGltf,
   onOpenKeyboardShortcuts,
 }) => {
   const { cameraType, setCameraType } = useCameraController()
   const { gridEnabled, setGridEnabled } = useAppearance()
+  const [downloadSubOpen, setDownloadSubOpen] = useState(false)
   const [cameraSubOpen, setCameraSubOpen] = useState(false)
   const [referenceObjectSubOpen, setReferenceObjectSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
@@ -458,23 +467,69 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
 
             <DropdownMenu.Separator style={separatorStyles} />
 
-            {/* Download GLTF */}
-            <DropdownMenu.Item
-              style={{
-                ...itemStyles,
-                ...itemPaddingStyles,
-                backgroundColor:
-                  hoveredItem === "download" ? "#404040" : "transparent",
-              }}
-              onSelect={onDownloadGltf}
-              onMouseEnter={() => setHoveredItem("download")}
-              onMouseLeave={() => setHoveredItem(null)}
-              onTouchStart={() => setHoveredItem("download")}
-            >
-              <span style={{ display: "flex", alignItems: "center" }}>
+            {modelDownloads && onDownloadModel ? (
+              <DropdownMenu.Sub onOpenChange={setDownloadSubOpen}>
+                <DropdownMenu.SubTrigger
+                  style={{
+                    ...itemStyles,
+                    ...itemPaddingStyles,
+                    backgroundColor: downloadSubOpen
+                      ? "#404040"
+                      : "transparent",
+                  }}
+                >
+                  <span style={{ flex: 1 }}>Download</span>
+                  <ChevronRightIcon isOpen={downloadSubOpen} />
+                </DropdownMenu.SubTrigger>
+                <DropdownMenu.Portal>
+                  <ViewportSubContent
+                    style={contentStyles}
+                    collisionPadding={10}
+                  >
+                    {modelDownloadFormats.map((format) => (
+                      <DropdownMenu.Item
+                        key={format}
+                        disabled={!modelDownloads[format]}
+                        title={
+                          modelDownloads[format]
+                            ? undefined
+                            : `${format} is unavailable for this model`
+                        }
+                        style={{
+                          ...itemStyles,
+                          ...itemPaddingStyles,
+                          opacity: modelDownloads[format] ? 1 : 0.4,
+                          backgroundColor:
+                            hoveredItem === format && modelDownloads[format]
+                              ? "#404040"
+                              : "transparent",
+                        }}
+                        onSelect={() => onDownloadModel(format)}
+                        onFocus={() => setHoveredItem(format)}
+                        onMouseEnter={() => setHoveredItem(format)}
+                        onMouseLeave={() => setHoveredItem(null)}
+                      >
+                        {format}
+                      </DropdownMenu.Item>
+                    ))}
+                  </ViewportSubContent>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Sub>
+            ) : (
+              <DropdownMenu.Item
+                style={{
+                  ...itemStyles,
+                  ...itemPaddingStyles,
+                  backgroundColor:
+                    hoveredItem === "download" ? "#404040" : "transparent",
+                }}
+                onSelect={onDownloadGltf}
+                onMouseEnter={() => setHoveredItem("download")}
+                onMouseLeave={() => setHoveredItem(null)}
+              >
                 Download GLTF
-              </span>
-            </DropdownMenu.Item>
+              </DropdownMenu.Item>
+            )}
 
             <DropdownMenu.Separator style={separatorStyles} />
 

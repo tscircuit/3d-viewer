@@ -1,3 +1,9 @@
+import {
+  createModelDownload,
+  getModelDownloadAvailability,
+  saveModelDownload,
+  type ModelDownloadFormat,
+} from "./utils/model-download"
 import { SchematicNavigationContext } from "./contexts/SchematicNavigationContext"
 import type { ThreeContextState } from "./react-three/ThreeContext"
 import {
@@ -142,6 +148,40 @@ const CadViewerInner = (props: CadViewerProps) => {
     contextMenuEventHandlers,
     setMenuVisible,
   } = useContextMenu({ containerRef, onOpen: handleMenuOpen })
+
+  const selectedModel = circuitJson.find(
+    (element) =>
+      element.type === "cad_component" &&
+      element.cad_component_id === selectedCadComponent?.cad_component_id,
+  )
+  const downloadInProgress = useRef(false)
+  const handleModelDownload = async (format: ModelDownloadFormat) => {
+    if (selectedModel?.type !== "cad_component" || downloadInProgress.current)
+      return
+    downloadInProgress.current = true
+    setMenuVisible(false)
+    showToast(`Preparing ${format} download…`)
+    try {
+      const blob = await createModelDownload(
+        selectedModel,
+        format,
+        props.resolveStaticAsset,
+      )
+      saveModelDownload(
+        blob,
+        selectedCadComponent?.componentName ?? "model",
+        format,
+      )
+      showToast(`${format} download ready`)
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Model download failed",
+        5000,
+      )
+    } finally {
+      downloadInProgress.current = false
+    }
+  }
 
   const autoRotateUserToggledRef = useRef(autoRotateUserToggled)
   autoRotateUserToggledRef.current = autoRotateUserToggled
@@ -339,6 +379,12 @@ const CadViewerInner = (props: CadViewerProps) => {
       )}
       {menuVisible && (
         <ContextMenu
+          modelDownloads={
+            selectedModel?.type === "cad_component"
+              ? getModelDownloadAvailability(selectedModel)
+              : undefined
+          }
+          onDownloadModel={handleModelDownload}
           componentName={selectedCadComponent?.componentName}
           onHideComponent={
             selectedCadComponent
