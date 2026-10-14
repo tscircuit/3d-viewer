@@ -7,14 +7,16 @@ import { getSoldermaskRenderBounds } from "./soldermask/soldermask-bounds"
 const isFabricationNoteElement = (
   element: AnyCircuitElement,
   layer: "top" | "bottom",
+  includeAnnotations: boolean,
 ) => {
   if (!("layer" in element) || element.layer !== layer) return false
   const elementType = element.type as string
 
   return (
     elementType.startsWith("pcb_fabrication_note_") &&
-    elementType !== "pcb_fabrication_note_text" &&
-    elementType !== "pcb_fabrication_note_dimension"
+    (includeAnnotations ||
+      (elementType !== "pcb_fabrication_note_text" &&
+        elementType !== "pcb_fabrication_note_dimension"))
   )
 }
 
@@ -23,14 +25,17 @@ export function createFabricationNoteTextureForLayer({
   circuitJson,
   boardData,
   traceTextureResolution = TRACE_TEXTURE_RESOLUTION,
+  includeAnnotations = false,
 }: {
   layer: "top" | "bottom"
   circuitJson: AnyCircuitElement[]
   boardData: PcbBoard
   traceTextureResolution?: number
+  /** Show text and dimensions while inspecting assembly orientation. */
+  includeAnnotations?: boolean
 }): THREE.CanvasTexture | null {
   const elements = circuitJson.filter((element) =>
-    isFabricationNoteElement(element, layer),
+    isFabricationNoteElement(element, layer, includeAnnotations),
   )
   if (elements.length === 0) return null
 

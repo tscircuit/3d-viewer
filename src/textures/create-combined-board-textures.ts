@@ -325,14 +325,17 @@ export function createCombinedBoardTextures({
         })
       : null
 
-    const fabricationNoteTexture = showSilkscreen
-      ? createFabricationNoteTextureForLayer({
-          layer,
-          circuitJson,
-          boardData,
-          traceTextureResolution,
-        })
-      : null
+    const showFabricationNotes = visibility?.fabricationNotes ?? false
+    const fabricationNoteTexture =
+      showSilkscreen || showFabricationNotes
+        ? createFabricationNoteTextureForLayer({
+            layer,
+            circuitJson,
+            boardData,
+            traceTextureResolution,
+            includeAnnotations: showFabricationNotes,
+          })
+        : null
 
     const showPcbNotes = visibility?.pcbNotes ?? false
     const pcbNoteTexture = showPcbNotes

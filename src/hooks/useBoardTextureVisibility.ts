@@ -14,6 +14,7 @@ export const useBoardTextureVisibility = (visibility: LayerVisibilityState) => {
     bottomMask,
     keepout,
     pcbNotes,
+    fabricationNotes,
   } = visibility
   return useMemo(
     () => ({
@@ -26,6 +27,7 @@ export const useBoardTextureVisibility = (visibility: LayerVisibilityState) => {
       bottomMask,
       keepout,
       pcbNotes,
+      fabricationNotes,
     }),
     [
       boardBody,
@@ -37,6 +39,7 @@ export const useBoardTextureVisibility = (visibility: LayerVisibilityState) => {
       bottomMask,
       keepout,
       pcbNotes,
+      fabricationNotes,
     ],
   )
 }
