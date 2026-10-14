@@ -19,6 +19,7 @@ import {
   type ReferenceObjectType,
 } from "./reference-objects/reference-object"
 import { OrientationCubeCanvas } from "./three-components/OrientationCubeCanvas"
+import { ScenePresentation } from "./three-components/ScenePresentation"
 import {
   FitCameraToComparison,
   ReferenceObject,
@@ -43,6 +44,7 @@ export const RotationTracker = () => {
 }
 
 interface Props {
+  scenePresentation?: THREE.Matrix4
   autoRotateDisabled?: boolean
   initialCameraPosition?: readonly [number, number, number] | undefined
   clickToInteractEnabled?: boolean
@@ -60,6 +62,7 @@ export const CadViewerContainer = forwardRef<
   (
     {
       children,
+      scenePresentation,
       initialCameraPosition = [5, -5, 5],
       autoRotateDisabled,
       clickToInteractEnabled = false,
@@ -126,6 +129,7 @@ export const CadViewerContainer = forwardRef<
             handleCameraCreated(camera)
           }}
         >
+          <ScenePresentation matrix={scenePresentation} />
           <SchematicNavigationScene />
           <CameraAnimatorWithContext />
           <RotationTracker />
