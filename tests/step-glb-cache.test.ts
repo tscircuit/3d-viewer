@@ -1,15 +1,16 @@
 import { expect, test } from "bun:test"
+import type { StepModelUrl } from "../src/utils/get-or-load-converted-step-file"
 import { getCachedStepGlb, setCachedStepGlb } from "../src/utils/step-glb-cache"
 import { replaceGlobalProperty } from "./helpers/replace-global-property"
 
-function getCacheRequestUrl(request: RequestInfo | URL): string {
+function getCacheRequestUrl(request: RequestInfo | URL): StepModelUrl {
   if (typeof request === "string") return request
   if (request instanceof URL) return request.href
   return request.url
 }
 
 test("stores converted STEP GLBs as binary cache responses", async () => {
-  const cacheEntries = new Map<string, Response>()
+  const cacheEntries = new Map<StepModelUrl, Response>()
   const removedLegacyKeys: string[] = []
   const restoreCaches = replaceGlobalProperty({
     propertyName: "caches",
