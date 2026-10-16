@@ -29,6 +29,7 @@
     "format": "biome format . --write",
     "format:check": "biome format .",
     "test:node-bundle": "node ./scripts/load-bundle-in-node.js",
+    "test:visual-snapshots": "playwright test --config=playwright.visual.config.ts",
     "prepare:renderer-comparisons": "bun scripts/prepare-renderer-comparisons.ts",
     "storybook:comparisons": "bun run prepare:renderer-comparisons && bun run storybook --initial-path '/story/diagnostics-renderer-parity--x-rotation'",
     "test:renderer-comparisons:serve": "bun run prepare:renderer-comparisons && vite --config playwright/vite.config.ts",

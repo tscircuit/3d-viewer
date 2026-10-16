@@ -140,7 +140,32 @@ Props:
 
 - `circuit-json`: (optional) An array of AnyCircuitElement objects representing the PCB layout.
 - `children`: (optional) React children elements describing the PCB layout (alternative to using `circuit-json`).
+- `initialCameraPosition`: (optional) Initial `[x, y, z]` camera position for custom assembly framing.
 - `resolveStaticAsset`: (optional) Function that receives each component model URL (`obj`, `wrl`, `stl`, `gltf`, `glb`, `step`) and returns the resolved URL to load.
+
+Exploded views are authored with flat props on each TSX assembly part. Core
+normalizes each direction and emits `cad_component.explode_offset` in
+Circuit JSON. `CadViewer` automatically shows the slider when at least one CAD
+component has a non-zero offset.
+
+```tsx
+<assembly.device name="CONTROLLER">
+  <assembly.printedpart
+    name="ENCLOSURE_BASE"
+    model="controller_base"
+    explodeDirection="below"
+    explodeDistance="40mm"
+  />
+  <assembly.printedpart
+    name="ENCLOSURE_LID"
+    model="controller_lid"
+    explodeDirection="above"
+    explodeDistance="40mm"
+  />
+</assembly.device>
+
+<CadViewer circuitJson={circuitJson} />
+```
 
 ### `<board>`
 
