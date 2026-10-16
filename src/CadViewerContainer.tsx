@@ -1,4 +1,3 @@
-import { SchematicNavigationScene } from "./contexts/SchematicNavigationContext"
 import type * as React from "react"
 import { forwardRef, useEffect, useMemo, useState } from "react"
 import * as THREE from "three"
@@ -6,6 +5,7 @@ import { zIndexMap } from "../lib/utils/z-index-map"
 import packageJson from "../package.json"
 import { useAppearance } from "./contexts/appearance-context"
 import { useCameraController } from "./contexts/CameraControllerContext"
+import { SchematicNavigationScene } from "./contexts/SchematicNavigationContext"
 import type { CameraController } from "./hooks/cameraAnimation"
 import { CameraAnimatorWithContext } from "./hooks/cameraAnimation"
 import { useCameraSession } from "./hooks/useCameraSession"
@@ -48,6 +48,7 @@ interface Props {
   clickToInteractEnabled?: boolean
   boardDimensions?: { width?: number; height?: number }
   boardCenter?: { x: number; y: number }
+  cameraSessionScope?: string
   referenceObject?: ReferenceObjectType | null
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
@@ -65,6 +66,7 @@ export const CadViewerContainer = forwardRef<
       clickToInteractEnabled = false,
       boardDimensions,
       boardCenter,
+      cameraSessionScope,
       referenceObject,
       onUserInteraction,
       onCameraControllerReady,
@@ -82,7 +84,7 @@ export const CadViewerContainer = forwardRef<
     const {
       handleCameraCreated,
       handleControlsChange: handleSessionControlsChange,
-    } = useCameraSession()
+    } = useCameraSession({ cameraSessionScope })
 
     useEffect(() => {
       if (onCameraControllerReady) {
@@ -118,6 +120,7 @@ export const CadViewerContainer = forwardRef<
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
         <OrientationCubeCanvas />
         <Canvas
+          key={cameraSessionScope}
           ref={ref}
           scene={{ up: new THREE.Vector3(0, 0, 1) }}
           camera={{ up: [0, 0, 1], position: initialCameraPosition }}

@@ -1,53 +1,85 @@
-import { useCallback, useRef } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import type * as THREE from "three"
+import { useCameraController } from "../contexts/CameraControllerContext"
 import {
-  loadCameraFromSession,
-  saveCameraToSession,
-  useCameraController,
-} from "../contexts/CameraControllerContext"
+  loadCameraSession,
+  saveCameraSession,
+} from "../utils/camera-session-storage"
 
-export const useCameraSession = () => {
+const CAMERA_SESSION_NOT_RESTORED = Symbol("camera-session-not-restored")
+
+export const useCameraSession = ({
+  cameraSessionScope,
+}: {
+  cameraSessionScope?: string
+} = {}) => {
   const { controlsRef } = useCameraController()
   const cameraRef = useRef<THREE.Camera | null>(null)
-  const cameraRestoredRef = useRef(false)
-  const saveTimeoutRef = useRef<any>(null)
+  const restoredCameraSessionScopeRef = useRef<
+    string | undefined | typeof CAMERA_SESSION_NOT_RESTORED
+  >(CAMERA_SESSION_NOT_RESTORED)
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current !== null) {
+        clearTimeout(saveTimeoutRef.current)
+        saveTimeoutRef.current = null
+      }
+    }
+  }, [cameraSessionScope])
 
   const handleCameraCreated = useCallback(
     (camera: THREE.Camera) => {
       cameraRef.current = camera
-      if (!cameraRestoredRef.current && controlsRef.current) {
-        const restored = loadCameraFromSession(camera, controlsRef.current)
+      if (
+        restoredCameraSessionScopeRef.current !== cameraSessionScope &&
+        controlsRef.current
+      ) {
+        const restored = loadCameraSession({
+          camera,
+          controls: controlsRef.current,
+          cameraSessionScope,
+        })
+        restoredCameraSessionScopeRef.current = cameraSessionScope
         if (restored) {
-          cameraRestoredRef.current = true
+          return
         }
       }
     },
-    [controlsRef],
+    [cameraSessionScope, controlsRef],
   )
 
   const handleControlsChange = useCallback(() => {
     if (!cameraRef.current || !controlsRef.current) return
 
     // Attempt one-time restore on first controls change
-    if (!cameraRestoredRef.current) {
-      const restored = loadCameraFromSession(
-        cameraRef.current,
-        controlsRef.current,
-      )
+    if (restoredCameraSessionScopeRef.current !== cameraSessionScope) {
+      const restored = loadCameraSession({
+        camera: cameraRef.current,
+        controls: controlsRef.current,
+        cameraSessionScope,
+      })
+      restoredCameraSessionScopeRef.current = cameraSessionScope
       if (restored) {
-        cameraRestoredRef.current = true
         return
       }
     }
 
     // Save camera state with debounce
-    clearTimeout(saveTimeoutRef.current)
+    if (saveTimeoutRef.current !== null) {
+      clearTimeout(saveTimeoutRef.current)
+    }
     saveTimeoutRef.current = setTimeout(() => {
       if (cameraRef.current && controlsRef.current) {
-        saveCameraToSession(cameraRef.current, controlsRef.current)
+        saveCameraSession({
+          camera: cameraRef.current,
+          controls: controlsRef.current,
+          cameraSessionScope,
+        })
       }
     }, 150)
-  }, [controlsRef])
+  }, [cameraSessionScope, controlsRef])
 
   return {
     handleCameraCreated,

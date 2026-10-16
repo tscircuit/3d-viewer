@@ -16,6 +16,7 @@ import { JscadBoardTextures } from "./three-components/JscadBoardTextures"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
 import { CadCable, getCadCables } from "./three-components/CadCable"
+import { getInitialCameraPosition } from "./utils/get-initial-camera-position"
 import { calculateOutlineBounds } from "./utils/outline-bounds"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 
@@ -63,37 +64,10 @@ export const CadViewerJscad = forwardRef<
     // Use the new hook to manage board geometry building
     const boardGeom = useBoardGeomBuilder(internalCircuitJson)
 
-    const initialCameraPosition = useMemo(() => {
-      if (!internalCircuitJson) return [5, -5, 5] as const
-      try {
-        const board = su(internalCircuitJson as any).pcb_board.list()[0]
-        if (!board) return [5, -5, 5] as const
-        const { width, height } = board
-
-        if (!width && !height) {
-          return [5, -5, 5] as const
-        }
-
-        const minCameraDistance = 5
-        const adjustedBoardWidth = Math.max(width!, minCameraDistance)
-        const adjustedBoardHeight = Math.max(height!, minCameraDistance)
-        const largestDim = Math.max(adjustedBoardWidth, adjustedBoardHeight)
-        // Position the camera for a top-front-right view
-        return [
-          largestDim * 0.4, // Move right
-          -largestDim * 0.7, // Move back (negative Y)
-          largestDim * 0.9, // Keep height but slightly lower than top-down
-        ] as const
-      } catch (e) {
-        console.error(e)
-        return [5, -5, 5] as const
-      }
-    }, [internalCircuitJson])
-
     const isFauxBoard = useMemo(() => {
       if (!internalCircuitJson) return false
       try {
-        const board = su(internalCircuitJson as any).pcb_board.list()[0]
+        const board = su(internalCircuitJson).pcb_board.list()[0]
         return !!board && board.pcb_board_id === "faux-board"
       } catch (e) {
         return false
@@ -103,7 +77,7 @@ export const CadViewerJscad = forwardRef<
     const boardDimensions = useMemo(() => {
       if (!internalCircuitJson) return undefined
       try {
-        const board = su(internalCircuitJson as any).pcb_board.list()[0]
+        const board = su(internalCircuitJson).pcb_board.list()[0]
         if (!board) return undefined
         const bounds = calculateOutlineBounds(board)
         return { width: bounds.width, height: bounds.height }
@@ -116,7 +90,7 @@ export const CadViewerJscad = forwardRef<
     const boardCenter = useMemo(() => {
       if (!internalCircuitJson) return undefined
       try {
-        const board = su(internalCircuitJson as any).pcb_board.list()[0]
+        const board = su(internalCircuitJson).pcb_board.list()[0]
         if (!board) return undefined
         const bounds = calculateOutlineBounds(board)
         return { x: bounds.centerX, y: bounds.centerY }
@@ -125,6 +99,21 @@ export const CadViewerJscad = forwardRef<
         return undefined
       }
     }, [internalCircuitJson])
+
+    const cameraSessionScope = useMemo(() => {
+      if (!internalCircuitJson) return undefined
+      const board = su(internalCircuitJson).pcb_board.list()[0]
+      if (!board) return undefined
+      return JSON.stringify({
+        pcbBoardId: board.pcb_board_id,
+        center: boardCenter,
+        dimensions: boardDimensions,
+      })
+    }, [internalCircuitJson, boardCenter, boardDimensions])
+
+    const initialCameraPosition = useMemo(() => {
+      return getInitialCameraPosition({ boardDimensions, boardCenter })
+    }, [boardDimensions, boardCenter])
 
     const pcbThickness = usePcbThickness(internalCircuitJson)
 
@@ -144,6 +133,7 @@ export const CadViewerJscad = forwardRef<
         clickToInteractEnabled={clickToInteractEnabled}
         boardDimensions={boardDimensions}
         boardCenter={boardCenter}
+        cameraSessionScope={cameraSessionScope}
         referenceObject={referenceObject}
         onUserInteraction={onUserInteraction}
         onCameraControllerReady={onCameraControllerReady}
