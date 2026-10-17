@@ -1,8 +1,5 @@
-import { resolveFoldPcbs } from "./utils/resolve-fold-pcbs"
-import { transformCircuitJsonCadComponents } from "@tscircuit/flex-utils"
-import { createFlexMeshes } from "./utils/flex-meshes"
-import { FitCameraToComparison } from "./three-components/reference-object"
 import { su } from "@tscircuit/circuit-json-util"
+import { transformCircuitJsonCadComponents } from "@tscircuit/flex-utils"
 import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import type { ManifoldToplevel } from "manifold-3d"
 import type React from "react"
@@ -17,12 +14,16 @@ import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
 import { useThree } from "./react-three/ThreeContext"
 import type { ReferenceObjectType } from "./reference-objects/reference-object"
 import { createTextureMeshes } from "./textures"
-import { Error3d } from "./three-components/Error3d"
-import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { CadCable, getCadCables } from "./three-components/CadCable"
+import { Error3d } from "./three-components/Error3d"
+import { FitCameraToComparison } from "./three-components/reference-object"
+import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
+import { createFlexMeshes } from "./utils/flex-meshes"
+import { getInitialCameraPosition } from "./utils/get-initial-camera-position"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
 import { calculateOutlineBounds } from "./utils/outline-bounds"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
+import { resolveFoldPcbs } from "./utils/resolve-fold-pcbs"
 
 declare global {
   interface Window {
@@ -313,17 +314,17 @@ try {
   }, [boardData])
 
   const initialCameraPosition = useMemo(() => {
-    if (!boardData) return [5, -5, 5] as const
-    const { width = 0, height = 0 } = boardData
-    const safeWidth = Math.max(width, 1)
-    const safeHeight = Math.max(height, 1)
-    const largestDim = Math.max(safeWidth, safeHeight, 5)
-    return [
-      largestDim * 0.4, // Move right
-      -largestDim * 0.7, // Move back (negative Y)
-      largestDim * 0.9, // Keep height but slightly lower than top-down
-    ] as const
-  }, [boardData])
+    return getInitialCameraPosition({ boardDimensions, boardCenter })
+  }, [boardDimensions, boardCenter])
+
+  const cameraSessionScope = useMemo(() => {
+    if (!boardData) return undefined
+    return JSON.stringify({
+      pcbBoardId: boardData.pcb_board_id,
+      center: boardCenter,
+      dimensions: boardDimensions,
+    })
+  }, [boardData, boardCenter, boardDimensions])
 
   if (manifoldLoadingError) {
     return (
@@ -368,6 +369,7 @@ try {
       clickToInteractEnabled={clickToInteractEnabled}
       boardDimensions={boardDimensions}
       boardCenter={boardCenter}
+      cameraSessionScope={cameraSessionScope}
       referenceObject={referenceObject}
       onUserInteraction={onUserInteraction}
       onCameraControllerReady={onCameraControllerReady}
