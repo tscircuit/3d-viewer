@@ -10,11 +10,13 @@ const easeInOutCubic = (t: number) =>
 export type CameraPreset =
   | "Custom"
   | "Top Down"
+  | "Bottom"
   | "Top Left Corner"
   | "Top Right Corner"
   | "Left Sideview"
   | "Right Sideview"
   | "Front"
+  | "Back"
   | "Top Center Angled"
 
 export interface CameraAnimationConfig {

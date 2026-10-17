@@ -43,11 +43,13 @@ const cameraOptions: CameraPreset[] = [
   "Custom",
   "Top Center Angled",
   "Top Down",
+  "Bottom",
   "Top Left Corner",
   "Top Right Corner",
   "Left Sideview",
   "Right Sideview",
   "Front",
+  "Back",
 ]
 
 const contentStyles: React.CSSProperties = {
