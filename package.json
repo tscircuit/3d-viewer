@@ -45,7 +45,8 @@
     "react-hot-toast": "^2.6.0",
     "three": "^0.165.0",
     "three-stdlib": "^2.36.0",
-    "troika-three-text": "^0.52.4"
+    "troika-three-text": "^0.52.4",
+    "@tscircuit/internal-dynamic-import": "https://github.com/tscircuit/internal-dynamic-import/archive/a2f28a499ce3dcb86e444205d26ee73391cd86c9.tar.gz"
   },
   "peerDependencies": {
     "zod": "*",
