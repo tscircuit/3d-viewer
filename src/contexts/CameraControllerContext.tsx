@@ -18,17 +18,37 @@ import {
   loadCameraSession,
   saveCameraSession,
 } from "../utils/camera-session-storage"
+import type {
+  CameraControls,
+  CameraSessionContext,
+} from "../utils/camera-session-storage"
 
 // Camera session storage functions
-export const saveCameraToSession = (camera: THREE.Camera, controls: any) => {
-  saveCameraSession({ camera, controls })
+type CameraSessionContextInput = CameraControls | CameraSessionContext
+
+function resolveCameraSessionContext(
+  cameraSessionContext: CameraSessionContextInput,
+): CameraSessionContext {
+  if ("controls" in cameraSessionContext) return cameraSessionContext
+  return { controls: cameraSessionContext }
+}
+
+export const saveCameraToSession = (
+  camera: THREE.Camera,
+  cameraSessionContext: CameraSessionContextInput,
+) => {
+  const { controls, cameraSessionScope } =
+    resolveCameraSessionContext(cameraSessionContext)
+  saveCameraSession({ camera, controls, cameraSessionScope })
 }
 
 export const loadCameraFromSession = (
   camera: THREE.Camera,
-  controls: any,
+  cameraSessionContext: CameraSessionContextInput,
 ): boolean => {
-  return loadCameraSession({ camera, controls })
+  const { controls, cameraSessionScope } =
+    resolveCameraSessionContext(cameraSessionContext)
+  return loadCameraSession({ camera, controls, cameraSessionScope })
 }
 
 interface CameraControllerContextValue {
@@ -46,8 +66,8 @@ interface CameraControllerContextValue {
   setCameraPosition: (position: readonly [number, number, number]) => void
   cameraRotation: THREE.Euler
   setCameraRotation: (rotation: THREE.Euler) => void
-  saveCameraToSession: (camera: THREE.Camera, controls: any) => void
-  loadCameraFromSession: (camera: THREE.Camera, controls: any) => boolean
+  saveCameraToSession: typeof saveCameraToSession
+  loadCameraFromSession: typeof loadCameraFromSession
 }
 
 const CameraControllerContext = createContext<

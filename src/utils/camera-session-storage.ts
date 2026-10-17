@@ -1,8 +1,13 @@
 import * as THREE from "three"
 import type { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
 
-type CameraControls = Pick<OrbitControls, "target"> & {
+export type CameraControls = Pick<OrbitControls, "target"> & {
   update: () => unknown
+}
+
+export type CameraSessionContext = {
+  controls: CameraControls
+  cameraSessionScope?: string
 }
 
 type StoredCameraSession = {

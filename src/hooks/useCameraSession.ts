@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef } from "react"
 import type * as THREE from "three"
-import { useCameraController } from "../contexts/CameraControllerContext"
 import {
-  loadCameraSession,
-  saveCameraSession,
-} from "../utils/camera-session-storage"
+  loadCameraFromSession,
+  saveCameraToSession,
+  useCameraController,
+} from "../contexts/CameraControllerContext"
 
 const CAMERA_SESSION_NOT_RESTORED = Symbol("camera-session-not-restored")
 
@@ -36,8 +36,7 @@ export const useCameraSession = ({
         restoredCameraSessionScopeRef.current !== cameraSessionScope &&
         controlsRef.current
       ) {
-        const restored = loadCameraSession({
-          camera,
+        const restored = loadCameraFromSession(camera, {
           controls: controlsRef.current,
           cameraSessionScope,
         })
@@ -55,8 +54,7 @@ export const useCameraSession = ({
 
     // Attempt one-time restore on first controls change
     if (restoredCameraSessionScopeRef.current !== cameraSessionScope) {
-      const restored = loadCameraSession({
-        camera: cameraRef.current,
+      const restored = loadCameraFromSession(cameraRef.current, {
         controls: controlsRef.current,
         cameraSessionScope,
       })
@@ -72,8 +70,7 @@ export const useCameraSession = ({
     }
     saveTimeoutRef.current = setTimeout(() => {
       if (cameraRef.current && controlsRef.current) {
-        saveCameraSession({
-          camera: cameraRef.current,
+        saveCameraToSession(cameraRef.current, {
           controls: controlsRef.current,
           cameraSessionScope,
         })
