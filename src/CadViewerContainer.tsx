@@ -14,6 +14,7 @@ import { Grid } from "./react-three/Grid"
 import { Lights } from "./react-three/Lights"
 import { OrbitControls } from "./react-three/OrbitControls"
 import { useFrame, useThree } from "./react-three/ThreeContext"
+import { Wireframe } from "./react-three/Wireframe"
 import {
   getComparisonBounds,
   type ReferenceObjectType,
@@ -132,6 +133,7 @@ export const CadViewerContainer = forwardRef<
           <SchematicNavigationScene />
           <CameraAnimatorWithContext />
           <RotationTracker />
+          <Wireframe />
           {isInteractionEnabled && (
             <OrbitControls
               autoRotate={!autoRotateDisabled}

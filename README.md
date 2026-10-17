@@ -73,6 +73,13 @@ const MyPCBViewer = () => {
 export default MyPCBViewer
 ```
 
+### Wireframe mode
+
+Right-click the 3D viewer (or long-press on a touch device), then select
+**Appearance → Wireframe** to display the board and component meshes as triangle
+edges. Select it again to restore their original surfaces. The setting applies
+to both JSCAD and Manifold and starts off in each new viewer.
+
 ### Navigate to a schematic component
 
 Pass `onViewSchematicComponent` to enable **Show on schematic** when a user

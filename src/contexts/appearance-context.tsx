@@ -8,6 +8,8 @@ interface AppearanceContextType {
   setGridEnabled: (enabled: boolean) => void
   lightingEnabled: boolean
   setLightingEnabled: (enabled: boolean) => void
+  wireframeEnabled: boolean
+  setWireframeEnabled: (enabled: boolean) => void
 }
 
 const LIGHTING_STORAGE_KEY = "cadViewerLightingEnabled"
@@ -28,6 +30,7 @@ export const AppearanceProvider: React.FC<{ children: React.ReactNode }> = ({
   // aid and intentionally does not persist between new viewer sessions.
   const [darkBackgroundEnabled, setDarkBackgroundEnabled] = useState(false)
   const [gridEnabled, setGridEnabled] = useState(false)
+  const [wireframeEnabled, setWireframeEnabled] = useState(false)
   const [lightingEnabled, setLightingEnabled] = useState<boolean>(
     readStoredLightingEnabled,
   )
@@ -47,8 +50,10 @@ export const AppearanceProvider: React.FC<{ children: React.ReactNode }> = ({
       setGridEnabled,
       lightingEnabled,
       setLightingEnabled,
+      wireframeEnabled,
+      setWireframeEnabled,
     }),
-    [darkBackgroundEnabled, gridEnabled, lightingEnabled],
+    [darkBackgroundEnabled, gridEnabled, lightingEnabled, wireframeEnabled],
   )
 
   return (

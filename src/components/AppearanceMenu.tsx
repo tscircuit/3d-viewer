@@ -72,6 +72,8 @@ export const AppearanceMenu = () => {
     setDarkBackgroundEnabled,
     lightingEnabled,
     setLightingEnabled,
+    wireframeEnabled,
+    setWireframeEnabled,
   } = useAppearance()
   const [appearanceSubOpen, setAppearanceSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
@@ -160,6 +162,27 @@ export const AppearanceMenu = () => {
                 Lighting
               </span>
             </DropdownMenu.Item>
+
+            <DropdownMenu.CheckboxItem
+              checked={wireframeEnabled}
+              onCheckedChange={setWireframeEnabled}
+              onSelect={(e) => e.preventDefault()}
+              style={{
+                ...itemStyles,
+                backgroundColor:
+                  hoveredItem === "wireframe" ? "#404040" : "transparent",
+              }}
+              onMouseEnter={() => setHoveredItem("wireframe")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("wireframe")}
+            >
+              <span style={iconContainerStyles}>
+                <DropdownMenu.ItemIndicator>
+                  <CheckIcon />
+                </DropdownMenu.ItemIndicator>
+              </span>
+              <span>Wireframe</span>
+            </DropdownMenu.CheckboxItem>
 
             <DropdownMenu.Separator style={separatorStyles} />
 
