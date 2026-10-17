@@ -13,6 +13,7 @@ import { CadViewerContainer } from "./CadViewerContainer"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
 import type { CameraController } from "./hooks/cameraAnimation"
 import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
+import { getVisibleCadComponents } from "./hooks/useHiddenCadComponents"
 import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
 import { useThree } from "./react-three/ThreeContext"
 import type { ReferenceObjectType } from "./reference-objects/reference-object"
@@ -132,6 +133,8 @@ export const BoardMeshes = ({
 type CadViewerManifoldProps = {
   foldPcbs?: boolean
   autoRotateDisabled?: boolean
+  hideCadComponents?: boolean
+  cadComponentsDisabled?: boolean
   clickToInteractEnabled?: boolean
   cameraType?: "orthographic" | "perspective"
   onUserInteraction?: () => void
@@ -150,6 +153,8 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   circuitJson: circuitJsonProp,
   foldPcbs,
   autoRotateDisabled,
+  hideCadComponents,
+  cadComponentsDisabled,
   clickToInteractEnabled,
   onUserInteraction,
   children,
@@ -290,10 +295,18 @@ try {
   ])
   const cadComponents = useMemo(
     () =>
-      su(flex.posedJson)
-        .cad_component.list()
-        .filter((cad) => !hiddenCadComponentIds?.has(cad.cad_component_id)),
-    [flex.posedJson, hiddenCadComponentIds],
+      getVisibleCadComponents({
+        circuitJson: flex.posedJson,
+        hiddenCadComponentIds,
+        hideCadComponents,
+        cadComponentsDisabled,
+      }),
+    [
+      flex.posedJson,
+      hiddenCadComponentIds,
+      hideCadComponents,
+      cadComponentsDisabled,
+    ],
   )
   const cadCables = useMemo(
     () => getCadCables(flex.posedJson),
