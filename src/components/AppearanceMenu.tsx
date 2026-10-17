@@ -379,6 +379,34 @@ export const AppearanceMenu = () => {
               style={{
                 ...itemStyles,
                 backgroundColor:
+                  hoveredItem === "fabricationNotes"
+                    ? "#404040"
+                    : "transparent",
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                setLayerVisibility(
+                  "fabricationNotes",
+                  !visibility.fabricationNotes,
+                )
+              }}
+              onMouseEnter={() => setHoveredItem("fabricationNotes")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("fabricationNotes")}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.fabricationNotes && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Fabrication Notes
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              style={{
+                ...itemStyles,
+                backgroundColor:
                   hoveredItem === "smtModels" ? "#404040" : "transparent",
               }}
               onSelect={(e) => e.preventDefault()}

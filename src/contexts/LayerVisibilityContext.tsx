@@ -26,6 +26,7 @@ export interface LayerVisibilityState {
   modelBoundingBoxes: boolean
   threedAxis: boolean
   pcbNotes: boolean
+  fabricationNotes: boolean
   backgroundStart: boolean
   backgroundEnd: boolean
   /**
@@ -80,6 +81,7 @@ const defaultVisibility: LayerVisibilityState = {
   modelBoundingBoxes: false,
   threedAxis: false,
   pcbNotes: false,
+  fabricationNotes: false,
   backgroundStart: true,
   backgroundEnd: true,
   enclosure: "translucent",
