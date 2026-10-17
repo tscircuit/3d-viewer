@@ -69,6 +69,18 @@ export const FootprinterModel = ({
     rootObject.add(group)
     return () => {
       rootObject.remove(group)
+      group.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          if (child.geometry) child.geometry.dispose()
+          if (child.material) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach((material) => material.dispose())
+            } else {
+              child.material.dispose()
+            }
+          }
+        }
+      })
     }
   }, [rootObject, group])
 
