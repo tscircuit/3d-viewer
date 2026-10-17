@@ -121,10 +121,15 @@ const CadViewerInner = (props: CadViewerProps) => {
     useState<ViewSchematicComponentEvent>()
   const [selectedCadComponent, setSelectedCadComponent] =
     useState<PickedCadComponent>()
+  const shouldHideAllCadComponents = Boolean(
+    props.hideCadComponents || props.cadComponentsDisabled,
+  )
   const handleMenuOpen = useCallback(
     (position: { x: number; y: number }) => {
       setSelectedCadComponent(
-        pickCadComponent(sceneRef.current, position, circuitJson),
+        shouldHideAllCadComponents
+          ? undefined
+          : pickCadComponent(sceneRef.current, position, circuitJson),
       )
       setSelectedComponent(
         props.onViewSchematicComponent
@@ -132,7 +137,12 @@ const CadViewerInner = (props: CadViewerProps) => {
           : undefined,
       )
     },
-    [sceneRef, circuitJson, props.onViewSchematicComponent],
+    [
+      sceneRef,
+      circuitJson,
+      shouldHideAllCadComponents,
+      props.onViewSchematicComponent,
+    ],
   )
 
   const {

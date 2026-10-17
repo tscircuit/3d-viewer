@@ -1,6 +1,25 @@
+import { su } from "@tscircuit/circuit-json-util"
+import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import { useState } from "react"
 
 const NO_HIDDEN_COMPONENTS: ReadonlySet<string> = new Set()
+
+export const getVisibleCadComponents = ({
+  circuitJson,
+  hiddenCadComponentIds,
+  hideCadComponents,
+  cadComponentsDisabled,
+}: {
+  circuitJson: AnyCircuitElement[]
+  hiddenCadComponentIds?: ReadonlySet<string>
+  hideCadComponents?: boolean
+  cadComponentsDisabled?: boolean
+}): CadComponent[] => {
+  if (hideCadComponents || cadComponentsDisabled) return []
+  return su(circuitJson)
+    .cad_component.list()
+    .filter((cad) => !hiddenCadComponentIds?.has(cad.cad_component_id))
+}
 
 // Keep visibility local to this viewer and circuit, including across engine switches.
 export const useHiddenCadComponents = (circuitKey: string) => {
