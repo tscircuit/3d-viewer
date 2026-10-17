@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react"
 import * as THREE from "three"
 import { Text as TroikaText } from "troika-three-text"
 import { useCameraController } from "../contexts/CameraControllerContext"
+import type { CameraPreset } from "../hooks/cameraAnimation"
 import { zIndexMap } from "../../lib/utils/z-index-map"
 
 function computePointInFront(
@@ -25,9 +26,39 @@ function computePointInFront(
   return result
 }
 
-export const OrientationCubeCanvas = () => {
-  const { mainCameraRef } = useCameraController()
+export function getPresetForCubeFaceNormal(
+  normal: THREE.Vector3,
+): CameraPreset | null {
+  if (normal.z > 0.5) return "Front"
+  if (normal.z < -0.5) return "Back"
+  if (normal.x > 0.5) return "Right Sideview"
+  if (normal.x < -0.5) return "Left Sideview"
+  if (normal.y > 0.5) return "Top Down"
+  if (normal.y < -0.5) return "Bottom"
+  return null
+}
+
+export const OrientationCubeCanvas = ({
+  onUserInteraction,
+}: {
+  onUserInteraction?: () => void
+} = {}) => {
+  const {
+    mainCameraRef,
+    controlsRef,
+    defaultTarget,
+    controller,
+    getPresetConfig,
+  } = useCameraController()
   const containerRef = useRef<HTMLDivElement>(null)
+  const controllerRef = useRef(controller)
+  controllerRef.current = controller
+  const getPresetConfigRef = useRef(getPresetConfig)
+  getPresetConfigRef.current = getPresetConfig
+  const defaultTargetRef = useRef(defaultTarget)
+  defaultTargetRef.current = defaultTarget
+  const onUserInteractionRef = useRef(onUserInteraction)
+  onUserInteractionRef.current = onUserInteraction
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -137,16 +168,10 @@ export const OrientationCubeCanvas = () => {
     group.add(topText)
     group.add(bottomText)
 
-    // Animation loop
-    let animationFrameId: number | null = null
-    let isVisible = true
-    const visibilityObserver = new IntersectionObserver(([entry]) => {
-      isVisible = entry?.isIntersecting ?? false
-    })
-    visibilityObserver.observe(canvas)
-    const animate = () => {
-      animationFrameId = requestAnimationFrame(animate)
-      if (!isVisible) return
+    const raycaster = new THREE.Raycaster()
+    const pointer = new THREE.Vector2()
+
+    const syncCubeCamera = () => {
       if (mainCameraRef.current) {
         const cameraPosition = computePointInFront(
           mainCameraRef.current.rotation ?? new THREE.Euler(0, 0, 0),
@@ -157,7 +182,86 @@ export const OrientationCubeCanvas = () => {
           camera.position.copy(cameraPosition)
           camera.lookAt(0, 0, 0)
         }
+      } else if (camera.position.lengthSq() === 0) {
+        camera.position.set(0, -2, 0)
+        camera.lookAt(0, 0, 0)
       }
+      camera.updateMatrixWorld()
+      group.updateMatrixWorld(true)
+    }
+
+    const pickFacePreset = (event: MouseEvent): CameraPreset | null => {
+      syncCubeCamera()
+      const rect = canvas.getBoundingClientRect()
+      const width = rect.width || canvas.width || 120
+      const height = rect.height || canvas.height || 120
+      pointer.x = ((event.clientX - rect.left) / width) * 2 - 1
+      pointer.y = -((event.clientY - rect.top) / height) * 2 + 1
+      raycaster.setFromCamera(pointer, camera)
+      const [hit] = raycaster.intersectObject(box, false)
+      if (!hit?.face) return null
+      return getPresetForCubeFaceNormal(hit.face.normal)
+    }
+
+    const handleMouseMove = (event: MouseEvent) => {
+      const preset = pickFacePreset(event)
+      canvas.style.cursor = preset ? "pointer" : "default"
+    }
+
+    const handleMouseLeave = () => {
+      canvas.style.cursor = "default"
+    }
+
+    const handleClick = (event: MouseEvent) => {
+      const preset = pickFacePreset(event)
+      if (!preset) return
+
+      onUserInteractionRef.current?.()
+
+      if (controllerRef.current) {
+        controllerRef.current.animateToPreset(preset)
+        return
+      }
+
+      const config = getPresetConfigRef.current(preset)
+      if (config && mainCameraRef.current) {
+        mainCameraRef.current.position.set(
+          config.position[0],
+          config.position[1],
+          config.position[2],
+        )
+        if (config.up) {
+          mainCameraRef.current.up.set(config.up[0], config.up[1], config.up[2])
+        }
+        const target = config.target
+          ? new THREE.Vector3(
+              config.target[0],
+              config.target[1],
+              config.target[2],
+            )
+          : defaultTargetRef.current
+        mainCameraRef.current.lookAt(target)
+        mainCameraRef.current.updateMatrixWorld()
+        controlsRef.current?.target.copy(target)
+        controlsRef.current?.update()
+      }
+    }
+
+    canvas.addEventListener("mousemove", handleMouseMove)
+    canvas.addEventListener("mouseleave", handleMouseLeave)
+    canvas.addEventListener("click", handleClick)
+
+    // Animation loop
+    let animationFrameId: number | null = null
+    let isVisible = true
+    const visibilityObserver = new IntersectionObserver(([entry]) => {
+      isVisible = entry?.isIntersecting ?? false
+    })
+    visibilityObserver.observe(canvas)
+    const animate = () => {
+      animationFrameId = requestAnimationFrame(animate)
+      if (!isVisible) return
+      syncCubeCamera()
 
       renderer.render(scene, camera)
     }
@@ -169,6 +273,9 @@ export const OrientationCubeCanvas = () => {
       // StrictMode clears DOM refs before replaying passive effects, so clean up
       // the canvas owned by this effect instead of reading containerRef.current.
       visibilityObserver.disconnect()
+      canvas.removeEventListener("mousemove", handleMouseMove)
+      canvas.removeEventListener("mouseleave", handleMouseLeave)
+      canvas.removeEventListener("click", handleClick)
       canvas.remove()
 
       if (animationFrameId !== null) {
