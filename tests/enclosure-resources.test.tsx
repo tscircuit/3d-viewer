@@ -15,9 +15,9 @@ import {
   ThreeContext,
   type ThreeContextState,
 } from "../src/react-three/ThreeContext"
+import * as textureModule from "../src/textures/create-combined-board-textures"
 import { JscadBoardTextures } from "../src/three-components/JscadBoardTextures"
 import { JscadModel } from "../src/three-components/JscadModel"
-import * as textureModule from "../src/textures/create-combined-board-textures"
 
 async function withScene(
   run: (scene: {

@@ -1,13 +1,13 @@
+import * as jscadModeling from "@jscad/modeling"
 import {
   convertCSGToThreeGeom,
   getJscadModelForFootprint,
 } from "jscad-electronics/vanilla"
-import { useMemo, useEffect } from "react"
-import * as jscadModeling from "@jscad/modeling"
-import * as THREE from "three"
-import { useThree } from "src/react-three/ThreeContext"
+import { useEffect, useMemo } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
+import { useThree } from "src/react-three/ThreeContext"
 import { configureObjectShadows } from "src/utils/configure-object-shadows"
+import * as THREE from "three"
 
 export const FootprinterModel = ({
   positionOffset,

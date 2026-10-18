@@ -1,12 +1,12 @@
-import type { JscadOperation } from "jscad-planner"
-import { executeJscadOperations } from "jscad-planner"
 import jscad from "@jscad/modeling"
 import { convertCSGToThreeGeom } from "jscad-electronics/vanilla"
-import * as THREE from "three"
-import { useState, useEffect } from "react"
+import type { JscadOperation } from "jscad-planner"
+import { executeJscadOperations } from "jscad-planner"
+import { useEffect, useState } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
 import { configureObjectShadows } from "src/utils/configure-object-shadows"
+import * as THREE from "three"
 import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 type JscadPlanInput =
