@@ -31,16 +31,31 @@ export const FootprinterModel = ({
   const { rootObject } = useThree()
   const group = useMemo(() => {
     if (!footprint) return null
-    const { geometries } = getJscadModelForFootprint(footprint, jscadModeling)
+    const normalizedFootprint = footprint.replace(
+      /^pin-header(?=_|\b)/i,
+      "pinheader",
+    )
+    let modelResult: { geometries?: any[] } | null = null
+    try {
+      modelResult = getJscadModelForFootprint(
+        normalizedFootprint,
+        jscadModeling,
+      )
+    } catch {
+      return null
+    }
+    const geometries = modelResult?.geometries
+    if (!Array.isArray(geometries) || geometries.length === 0) return null
 
     const group = new THREE.Group()
 
     for (const geomInfo of geometries.flat(Infinity) as any[]) {
-      const geom = geomInfo.geom
+      if (!geomInfo) continue
+      const geom = geomInfo.geom ?? geomInfo
       if (!geom || (!geom.polygons && !geom.sides)) {
         continue
       }
-      const color = new THREE.Color(geomInfo.color)
+      const color = new THREE.Color(geomInfo.color ?? [0.6, 0.6, 0.6])
       color.convertLinearToSRGB()
       const geomWithColor = { ...geom, color: [color.r, color.g, color.b] }
 
@@ -63,6 +78,22 @@ export const FootprinterModel = ({
 
     return group
   }, [footprint, isTranslucent])
+
+  useEffect(() => {
+    if (!group) return
+    return () => {
+      group.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry.dispose()
+          if (Array.isArray(child.material)) {
+            for (const mat of child.material) mat.dispose()
+          } else if (child.material instanceof THREE.Material) {
+            child.material.dispose()
+          }
+        }
+      })
+    }
+  }, [group])
 
   useEffect(() => {
     if (!group || !rootObject) return

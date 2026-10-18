@@ -240,3 +240,64 @@ test("enclosure resources are released on plan replacement and StrictMode replay
     materialDispose.mockRestore()
   }
 })
+
+test("JscadModel renders multi-operation plans (e.g. pin-header housing + pins) and disposes all meshes", async () => {
+  const multiPartPlan = [
+    {
+      type: "colorize" as const,
+      color: [0.15, 0.15, 0.15],
+      shape: {
+        type: "cuboid" as const,
+        size: [2.54, 10.16, 2.54] as [number, number, number],
+      },
+    },
+    {
+      type: "colorize" as const,
+      color: [0.85, 0.7, 0.2],
+      shape: {
+        type: "cuboid" as const,
+        size: [0.64, 0.64, 6] as [number, number, number],
+      },
+    },
+  ]
+
+  await withScene(async ({ root, rootObject, context }) => {
+    await act(async () =>
+      root.render(
+        <ThreeContext.Provider value={context}>
+          <HoverContext.Provider value={hover}>
+            <JscadModel
+              jscadPlan={multiPartPlan as any}
+              isHovered={false}
+              onHover={noop}
+              onUnhover={noop}
+            />
+          </HoverContext.Provider>
+        </ThreeContext.Provider>,
+      ),
+    )
+
+    const meshes: THREE.Mesh<
+      THREE.BufferGeometry,
+      THREE.MeshStandardMaterial
+    >[] = []
+    rootObject.traverse((object) => {
+      if (object instanceof THREE.Mesh) {
+        meshes.push(object as any)
+      }
+    })
+    expect(meshes).toHaveLength(2)
+
+    let geometriesDisposed = 0
+    let materialsDisposed = 0
+    for (const mesh of meshes) {
+      mesh.geometry.addEventListener("dispose", () => geometriesDisposed++)
+      mesh.material.addEventListener("dispose", () => materialsDisposed++)
+    }
+
+    await act(async () => root.render(null))
+    expect(rootObject.children).toHaveLength(0)
+    expect(geometriesDisposed).toBe(2)
+    expect(materialsDisposed).toBe(2)
+  })
+})
