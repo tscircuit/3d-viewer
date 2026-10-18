@@ -70,7 +70,9 @@ export function JscadBoardTextures({
   }, [boardData])
 
   const textures = useMemo(() => {
-    if (!boardData?.width || !boardData.height) return null
+    if (!boardData) return null
+    const bounds = calculateOutlineBounds(boardData)
+    if (!bounds.width || !bounds.height) return null
     return createCombinedBoardTextures({
       circuitJson,
       boardData,

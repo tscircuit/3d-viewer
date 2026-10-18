@@ -77,14 +77,22 @@ export const CadViewerContainer = forwardRef<
       !clickToInteractEnabled,
     )
 
-    const { mainCameraRef, handleControlsChange, controller } =
-      useCameraController()
+    const {
+      mainCameraRef,
+      handleControlsChange,
+      controller,
+      setCameraPosition,
+    } = useCameraController()
     const { darkBackgroundEnabled, gridEnabled, lightingEnabled } =
       useAppearance()
     const {
       handleCameraCreated,
       handleControlsChange: handleSessionControlsChange,
     } = useCameraSession({ cameraSessionScope })
+
+    useEffect(() => {
+      setCameraPosition(initialCameraPosition)
+    }, [initialCameraPosition, setCameraPosition])
 
     useEffect(() => {
       if (onCameraControllerReady) {
@@ -171,6 +179,7 @@ export const CadViewerContainer = forwardRef<
               infiniteGrid
               cellSize={3}
               sectionSize={gridSectionSize}
+              offset={boardCenter}
             />
           )}
           {children}

@@ -45,6 +45,8 @@ interface GridProps {
   infiniteGrid?: boolean
   cellSize?: number
   sectionSize?: number
+  fadeDistance?: number
+  offset?: { x: number; y: number; z?: number }
   args?: [number?, number?] // Keep for compatibility, but don't use
 }
 
@@ -53,9 +55,12 @@ export const Grid: React.FC<GridProps> = ({
   infiniteGrid,
   cellSize = 1,
   sectionSize = 10,
+  fadeDistance: fadeDistanceProp,
+  offset,
 }) => {
   const { scene, camera } = useThree()
-  const size = 1000 // A large plane for the "infinite" grid
+  const fadeDistance = fadeDistanceProp ?? Math.max(sectionSize * 5, 100)
+  const size = Math.max(sectionSize * 20, fadeDistance * 4, 1000) // A large plane for the "infinite" grid
 
   const gridMesh = useMemo(() => {
     const geometry = new THREE.PlaneGeometry(size, size)
@@ -70,7 +75,7 @@ export const Grid: React.FC<GridProps> = ({
         sectionSize: { value: sectionSize },
         gridColor: { value: new THREE.Color(0xeeeeee) },
         sectionColor: { value: new THREE.Color(0xccccff) },
-        fadeDistance: { value: 100 }, // Fade out based on sectionSize
+        fadeDistance: { value: fadeDistance }, // Fade out based on sectionSize
         fadeStrength: { value: 1.5 },
       },
       transparent: true,
@@ -81,12 +86,26 @@ export const Grid: React.FC<GridProps> = ({
     if (rotation) {
       mesh.rotation.fromArray(rotation)
     }
+    mesh.position.set(offset?.x ?? 0, offset?.y ?? 0, offset?.z ?? 0)
     return mesh
-  }, [size, cellSize, sectionSize, rotation])
+  }, [
+    size,
+    cellSize,
+    sectionSize,
+    fadeDistance,
+    rotation,
+    offset?.x,
+    offset?.y,
+    offset?.z,
+  ])
 
   useFrame(() => {
     if (infiniteGrid) {
-      gridMesh.position.set(camera.position.x, camera.position.y, 0)
+      gridMesh.position.set(
+        camera.position.x,
+        camera.position.y,
+        offset?.z ?? 0,
+      )
     }
   })
 
