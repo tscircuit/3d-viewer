@@ -6,6 +6,11 @@ declare module "@jscad/stl-serializer" {
 declare module "troika-three-text" {
   import { Mesh, type ColorRepresentation } from "three"
 
+  export function configureTextBuilder(config: {
+    defaultFontURL?: string
+    unicodeFontsURL?: string
+  }): void
+
   export class Text extends Mesh {
     text: string
     font: string | null
