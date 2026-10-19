@@ -26,7 +26,7 @@ export function loadManifold(): Promise<ManifoldToplevel> {
         (
           await import(
             /* @vite-ignore */ /* webpackIgnore: true */
-            getRuntimeAssetUrl("manifold-3d", "3.2.1", "manifold.js")
+            getRuntimeAssetUrl("manifold-3d", "3.5.1", "manifold.js")
           )
         ).default
       // Manifold resolves its matching WASM relative to the imported module URL.
