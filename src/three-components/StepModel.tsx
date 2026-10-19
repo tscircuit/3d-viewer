@@ -3,6 +3,7 @@ import { GLTFExporter } from "three-stdlib"
 import { GltfModel } from "./GltfModel"
 import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
 import { occtMeshesToGroup, type OcctMesh } from "./step-mesh-to-group"
+import { getRuntimeAssetUrl } from "../utils/get-runtime-asset-url"
 
 type OcctImportParams = {
   linearUnit?: "millimeter" | "centimeter" | "meter" | "inch" | "foot"
@@ -32,8 +33,6 @@ type OcctImportFactory = (
 ) => Promise<OcctImport>
 
 let occtImportPromise: Promise<OcctImport> | undefined
-const OCCT_CDN_BASE_URL =
-  "https://cdn.jsdelivr.net/npm/occt-import-js@0.0.23/dist"
 
 function resolveOcctFactory(candidate: unknown): OcctImportFactory {
   if (typeof candidate === "function") {
@@ -52,12 +51,19 @@ function resolveOcctFactory(candidate: unknown): OcctImportFactory {
 
 async function loadOcctImport(): Promise<OcctImport> {
   if (!occtImportPromise) {
-    const imported = await import(
-      /* @vite-ignore */ "https://cdn.jsdelivr.net/npm/occt-import-js@0.0.23/+esm"
-    )
-    const factory = resolveOcctFactory(imported)
-    occtImportPromise = factory({
-      locateFile: (path: string) => `${OCCT_CDN_BASE_URL}/${path}`,
+    occtImportPromise = (async () => {
+      const imported = await import(
+        /* @vite-ignore */ /* webpackIgnore: true */
+        getRuntimeAssetUrl("occt-import-js", "0.0.23", "+esm")
+      )
+      const factory = resolveOcctFactory(imported)
+      return factory({
+        locateFile: (path: string) =>
+          getRuntimeAssetUrl("occt-import-js", "0.0.23", `dist/${path}`),
+      })
+    })().catch((error) => {
+      occtImportPromise = undefined
+      throw error
     })
   }
   return occtImportPromise

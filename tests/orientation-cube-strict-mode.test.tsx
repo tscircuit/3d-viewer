@@ -29,7 +29,10 @@ mock.module("three", () => ({
   ...THREE,
   WebGLRenderer: MockWebGLRenderer,
 }))
-mock.module("troika-three-text", () => ({ Text: MockText }))
+mock.module("troika-three-text", () => ({
+  Text: MockText,
+  configureTextBuilder: () => {},
+}))
 
 const { CameraControllerProvider } = await import(
   "../src/contexts/CameraControllerContext"

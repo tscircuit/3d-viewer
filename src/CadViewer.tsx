@@ -10,6 +10,7 @@ import {
   type PickedCadComponent,
 } from "./utils/pick-cad-component"
 import { useHiddenCadComponents } from "./hooks/useHiddenCadComponents"
+import { configureRuntimeFont } from "./utils/configure-runtime-font"
 import { useCallback, useContext, useEffect, useRef, useState } from "react"
 import * as THREE from "three"
 
@@ -421,6 +422,7 @@ const CadViewerInner = (props: CadViewerProps) => {
 }
 
 export const CadViewer = (props: CadViewerProps) => {
+  configureRuntimeFont()
   const sceneRef = useRef<ThreeContextState | null>(null)
   return (
     <SchematicNavigationContext.Provider value={sceneRef}>
