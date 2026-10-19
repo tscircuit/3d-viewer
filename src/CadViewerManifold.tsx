@@ -1,7 +1,6 @@
 import { su } from "@tscircuit/circuit-json-util"
 import { transformCircuitJsonCadComponents } from "@tscircuit/flex-utils"
 import type { AnyCircuitElement, CadComponent } from "circuit-json"
-import type { ManifoldToplevel } from "manifold-3d"
 import type React from "react"
 import { useEffect, useMemo, useState } from "react"
 import * as THREE from "three"
@@ -21,17 +20,10 @@ import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { createFlexMeshes } from "./utils/flex-meshes"
 import { getInitialCameraPosition } from "./utils/get-initial-camera-position"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
+import { loadManifold } from "./utils/manifold/load-manifold"
 import { calculateOutlineBounds } from "./utils/outline-bounds"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 import { resolveFoldPcbs } from "./utils/resolve-fold-pcbs"
-
-declare global {
-  interface Window {
-    ManifoldModule: any
-    MANIFOLD?: any
-    MANIFOLD_MODULE?: any
-  }
-}
 
 export const BoardMeshes = ({
   geometryMeshes,
@@ -145,8 +137,6 @@ type CadViewerManifoldProps = {
   | { circuitJson?: never; children: React.ReactNode }
 )
 
-const MANIFOLD_CDN_BASE_URL = "https://cdn.jsdelivr.net/npm/manifold-3d@3.2.1"
-
 const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   circuitJson: circuitJsonProp,
   foldPcbs,
@@ -172,79 +162,21 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   const { visibility } = useLayerVisibility()
 
   useEffect(() => {
-    if (
-      window.ManifoldModule &&
-      typeof window.ManifoldModule === "object" &&
-      window.ManifoldModule.setup
-    ) {
-      setManifoldJSModule(window.ManifoldModule)
-      return
-    }
-
-    const initManifold = async (ManifoldModule: any) => {
-      try {
-        const loadedModule: ManifoldToplevel = await ManifoldModule()
-        loadedModule.setup()
-        window.ManifoldModule = loadedModule
-        setManifoldJSModule(loadedModule)
-      } catch (error) {
+    let isActive = true
+    loadManifold()
+      .then((module) => {
+        if (isActive) setManifoldJSModule(module)
+      })
+      .catch((error) => {
+        if (!isActive) return
         console.error("Failed to initialize Manifold:", error)
         setManifoldLoadingError(
           `Failed to initialize Manifold: ${error instanceof Error ? error.message : "Unknown error"}`,
         )
-      }
-    }
-
-    const existingManifold =
-      window.ManifoldModule ?? window.MANIFOLD ?? window.MANIFOLD_MODULE
-    if (existingManifold) {
-      window.ManifoldModule = existingManifold
-      initManifold(window.ManifoldModule)
-      return
-    }
-
-    const eventName = "manifoldLoaded"
-    const handleLoad = () => {
-      const loadedManifold =
-        window.ManifoldModule ?? window.MANIFOLD ?? window.MANIFOLD_MODULE
-      if (loadedManifold) {
-        window.ManifoldModule = loadedManifold
-        initManifold(window.ManifoldModule)
-      } else {
-        const errText = "ManifoldModule not found on window after script load."
-        console.error(errText)
-        setManifoldLoadingError(errText)
-      }
-    }
-
-    window.addEventListener(eventName, handleLoad, { once: true })
-
-    const script = document.createElement("script")
-    script.type = "module"
-    script.innerHTML = `
-try {
-  const { default: ManifoldModule } = await import('${MANIFOLD_CDN_BASE_URL}/manifold.js');
-  window.ManifoldModule = ManifoldModule;
-} catch (e) {
-  console.error('Error importing manifold in dynamic script:', e);
-} finally {
-  window.dispatchEvent(new CustomEvent('${eventName}'));
-}
-    `.trim()
-
-    const scriptError = (err: any) => {
-      const errText = "Failed to load Manifold loader script."
-      console.error(errText, err)
-      setManifoldLoadingError(errText)
-      window.removeEventListener(eventName, handleLoad)
-    }
-
-    script.addEventListener("error", scriptError)
-    document.body.appendChild(script)
+      })
 
     return () => {
-      window.removeEventListener(eventName, handleLoad)
-      script.removeEventListener("error", scriptError)
+      isActive = false
     }
   }, [])
 
