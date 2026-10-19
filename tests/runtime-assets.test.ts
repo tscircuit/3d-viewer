@@ -17,8 +17,8 @@ afterEach(() => {
 })
 
 test("keeps the default CDN URLs when no base URL is configured", () => {
-  expect(getRuntimeAssetUrl("manifold-3d", "3.2.1", "manifold.js")).toBe(
-    "https://cdn.jsdelivr.net/npm/manifold-3d@3.2.1/manifold.js",
+  expect(getRuntimeAssetUrl("manifold-3d", "3.5.1", "manifold.js")).toBe(
+    "https://cdn.jsdelivr.net/npm/manifold-3d@3.5.1/manifold.js",
   )
   expect(getRuntimeAssetUrl("occt-import-js", "0.0.23", "+esm")).toBe(
     "https://cdn.jsdelivr.net/npm/occt-import-js@0.0.23/+esm",
@@ -36,8 +36,8 @@ test.each([
   ["https://assets.example.com/jscdn/", "https://assets.example.com/jscdn"],
 ])("resolves JavaScript and WASM from %s", (baseUrl, expectedBase) => {
   window.TSCIRCUIT_JSCDN_BASE_URL = baseUrl
-  expect(getRuntimeAssetUrl("manifold-3d", "3.2.1", "manifold.js")).toBe(
-    `${expectedBase}/manifold-3d/3.2.1/manifold.js`,
+  expect(getRuntimeAssetUrl("manifold-3d", "3.5.1", "manifold.js")).toBe(
+    `${expectedBase}/manifold-3d/3.5.1/manifold.js`,
   )
   expect(
     getRuntimeAssetUrl("occt-import-js", "0.0.23", "dist/occt-import-js.wasm"),
