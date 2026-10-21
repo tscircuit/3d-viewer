@@ -23,6 +23,7 @@ interface ContextMenuProps {
   foldPcbs?: boolean
   onFoldPcbsToggle?: () => void
   flexScene?: boolean
+  preRendered?: boolean
   autoRotate: boolean
   referenceObject?: ReferenceObjectType | null
   onEngineSwitch: (engine: "jscad" | "manifold") => void
@@ -126,6 +127,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   foldPcbs = false,
   onFoldPcbsToggle,
   flexScene = false,
+  preRendered = false,
   referenceObject = null,
   onEngineSwitch,
   onCameraPresetSelect,
@@ -454,7 +456,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             </DropdownMenu.Item>
 
             {/* Appearance Menu */}
-            <AppearanceMenu />
+            <AppearanceMenu showLayerControls={!preRendered} />
 
             <DropdownMenu.Separator style={separatorStyles} />
 
@@ -479,7 +481,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             <DropdownMenu.Separator style={separatorStyles} />
 
             {/* Engine Switch */}
-            {!flexScene && (
+            {!flexScene && !preRendered && (
               <DropdownMenu.Item
                 style={{
                   ...itemStyles,

@@ -3,7 +3,7 @@ import { useState } from "react"
 const NO_HIDDEN_COMPONENTS: ReadonlySet<string> = new Set()
 
 // Keep visibility local to this viewer and circuit, including across engine switches.
-export const useHiddenCadComponents = (circuitKey: string) => {
+export const useHiddenCadComponents = (circuitKey: string | ArrayBuffer) => {
   const [state, setState] = useState({
     circuitKey,
     ids: NO_HIDDEN_COMPONENTS,
