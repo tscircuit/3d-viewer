@@ -2,6 +2,7 @@ import type { AnyCircuitElement } from "circuit-json"
 import type * as THREE from "three"
 import { pickVisibleMesh } from "./pick-visible-mesh"
 import type { ThreeContextState } from "../react-three/ThreeContext"
+import { getGlbComponentMetadata } from "./prerendered-glb"
 
 /** Same component identity contract as the PCB viewer. */
 export interface ViewSchematicComponentEvent {
@@ -17,8 +18,20 @@ export const pickSchematicComponent = (
 ): ViewSchematicComponentEvent | undefined => {
   let object: THREE.Object3D | null = pickVisibleMesh(scene, position) ?? null
   let pcbComponentId: string | undefined
+  let glbIdentity: ViewSchematicComponentEvent | undefined
   while (object) {
     pcbComponentId ??= object.userData.pcb_component_id
+    const metadata = getGlbComponentMetadata(object)
+    if (
+      metadata?.source_component_id &&
+      metadata.pcb_component_id &&
+      metadata.componentName
+    )
+      glbIdentity ??= {
+        source_component_id: metadata.source_component_id,
+        pcb_component_id: metadata.pcb_component_id,
+        refdes: metadata.componentName,
+      }
     object = object.parent
   }
   // The closest visible surface must belong to a component. Do not pick
@@ -27,7 +40,7 @@ export const pickSchematicComponent = (
   const pcb = circuitJson.find(
     (e) => e.type === "pcb_component" && e.pcb_component_id === pcbComponentId,
   )
-  if (pcb?.type !== "pcb_component") return
+  if (pcb?.type !== "pcb_component") return glbIdentity
   const source = circuitJson.find(
     (e) =>
       e.type === "source_component" &&

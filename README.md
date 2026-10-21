@@ -305,3 +305,27 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### Pre-rendered GLB scenes
+
+To open a self-contained GLB produced by `circuit-json-to-gltf` without rebuilding
+board geometry or fetching component models:
+
+```tsx
+<CadViewer glbUrl="/previews/board.glb" />
+// Or use bytes already available in memory:
+<CadViewer glbData={arrayBuffer} />
+```
+
+Supply one GLB source. It takes precedence over `circuitJson` and JSX children.
+The viewer restores the exporter's coordinate frame (+Y up, mm) to the normal
+viewer frame (+Z up, mm), fits the camera, and retains orbit controls and camera
+presets. Failed loads display an error; replacing a source cancels the previous
+load and disposes its geometry, materials, and textures.
+
+New exports carry lightweight identity in each component node's
+`extras.tscircuit`: `componentName`, `cad_component_id`, `source_component_id`,
+and `pcb_component_id` (when available). These support name tooltips, hiding
+individual components, and `onViewSchematicComponent` without supplying Circuit
+JSON. Existing GLBs without metadata still render. Board layers, folding, and
+model appearance are baked into the GLB; regenerate it to change them.
