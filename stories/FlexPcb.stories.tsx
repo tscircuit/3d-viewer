@@ -6,6 +6,53 @@ import { CadViewer } from "../src/CadViewer"
 
 export default { title: "Flex PCB" }
 
+// No custom solder_mask_color: this exercises the default flex palette.
+const defaultFlexCircuit: AnyCircuitElement[] = [
+  {
+    type: "pcb_board",
+    pcb_board_id: "flex-board",
+    center: { x: 0, y: 0 },
+    width: 32,
+    height: 12,
+    thickness: 0.15,
+    num_layers: 2,
+    material: "flex",
+  },
+  ...(["top", "bottom"] as const).flatMap((layer) =>
+    [-3, -1, 1, 3].flatMap((y, index): AnyCircuitElement[] => [
+      {
+        type: "pcb_trace",
+        pcb_trace_id: `${layer}-trace-${index}`,
+        route: [
+          { route_type: "wire", x: -12, y, width: 0.5, layer },
+          { route_type: "wire", x: -5, y, width: 0.5, layer },
+          { route_type: "wire", x: 5, y: y + 0.5, width: 0.5, layer },
+          { route_type: "wire", x: 12, y: y + 0.5, width: 0.5, layer },
+        ],
+      },
+      ...([-12, 12] as const).map(
+        (x): AnyCircuitElement => ({
+          type: "pcb_smtpad",
+          pcb_smtpad_id: `${layer}-pad-${index}-${x}`,
+          shape: "rect",
+          x,
+          y: x < 0 ? y : y + 0.5,
+          width: 3,
+          height: 1,
+          layer,
+        }),
+      ),
+    ]),
+  ),
+]
+
+/** Inspect both faces: amber polyimide and copper traces without a green tint. */
+export const DefaultAmberAndCopper = () => (
+  <div style={{ width: "100%", height: "90vh" }}>
+    <CadViewer circuitJson={defaultFlexCircuit} autoRotateDisabled />
+  </div>
+)
+
 const radius = 6
 const pitch = 22
 const neckHalfWidth = 1.25
