@@ -1,3 +1,5 @@
+import { createIndependentFlexTails } from "../stories/fixtures/independent-flex-tails"
+import { transformCircuitJsonCadComponents } from "@tscircuit/flex-utils"
 import { resolveFoldPcbs } from "../src/utils/resolve-fold-pcbs"
 import { expect, test } from "bun:test"
 import * as THREE from "three"
@@ -119,24 +121,9 @@ test("default board geometry follows Circuit JSON while explicit folding overrid
 })
 
 function createTwoTailBoard({ fractionalTailEdge = false } = {}) {
-  // The upper encoder tail returns under the body; the lower JST tail bends down.
-  // Their finite axes are deliberately nonparallel and their infinite half-planes
-  // overlap, so each bend must use the outline to select only its own tail.
-  const center = { x: 11, y: -13 }
-  const outline = [
-    [-10, -10],
-    [10, -10],
-    [10, -7],
-    [fractionalTailEdge ? 30.1234567 : 30, -7],
-    [fractionalTailEdge ? 30.1234567 : 30, -3],
-    [10, -3],
-    [10, 3],
-    [40, 3],
-    [40, 7],
-    [10, 7],
-    [10, 10],
-    [-10, 10],
-  ].map(([x, y]) => ({ x: x!, y: y! }))
+  const { center, outline, circuitJson } = createIndependentFlexTails({
+    fractionalTailEdge,
+  })
   const board = new THREE.Mesh(
     new THREE.ExtrudeGeometry(
       new THREE.Shape(outline.map(({ x, y }) => new THREE.Vector2(x, y))),
@@ -173,63 +160,6 @@ function createTwoTailBoard({ fractionalTailEdge = false } = {}) {
   )
   plane.name = "top-board-texture-plane"
   plane.position.set(center.x + 15, center.y, 0.105)
-  const bends = [
-    {
-      type: "pcb_bend",
-      pcb_bend_id: "encoder",
-      pcb_board_id: "board",
-      start: { x: 17, y: 3 },
-      end: { x: 16, y: 7 },
-      bend_radius: 2,
-      bend_angle: -180,
-      bend_side: "right",
-    },
-    {
-      type: "pcb_bend",
-      pcb_bend_id: "jst",
-      pcb_board_id: "board",
-      start: { x: 16, y: -7 },
-      end: { x: 16, y: -3 },
-      bend_radius: 2,
-      bend_angle: -90,
-      bend_side: "right",
-    },
-  ] as AnyCircuitElement[]
-  const stiffener = (name: string, x: number, y: number) => ({
-    type: "pcb_stiffener",
-    pcb_stiffener_id: name,
-    pcb_board_id: "board",
-    layer: "bottom",
-    material: "fr4",
-    thickness: 0.8,
-    adhesive_thickness: 0.05,
-    shape: "polygon",
-    outline: [
-      { x: x - 1, y: y - 1 },
-      { x: x + 1, y: y - 1 },
-      { x: x + 1, y: y + 1 },
-      { x: x - 1, y: y + 1 },
-    ],
-  })
-  const circuitJson = [
-    {
-      type: "pcb_board",
-      pcb_board_id: "board",
-      center,
-      width: 50,
-      height: 20,
-      thickness: 0.2,
-      // Circuit JSON board outlines are global, whereas bend axes are local.
-      outline: outline.map(({ x, y }) => ({
-        x: x + center.x,
-        y: y + center.y,
-      })),
-    },
-    ...bends,
-    stiffener("encoder-stiffener", 35, 5),
-    stiffener("jst-stiffener", 27, -5),
-    stiffener("body-stiffener", 0, 0),
-  ] as AnyCircuitElement[]
   return { center, geometry, plane, circuitJson }
 }
 
@@ -239,6 +169,43 @@ function firstVertex(mesh: THREE.Mesh) {
     0,
   )
 }
+
+test("the Storybook fixture poses each CAD marker on its own tail and unfolds it", () => {
+  const { center, circuitJson } = createIndependentFlexTails()
+  const original = structuredClone(circuitJson)
+  const folded = transformCircuitJsonCadComponents(circuitJson, {
+    foldPcbs: true,
+  })
+  expect(resolveFoldPcbs(circuitJson)).toBe(false)
+  expect(resolveFoldPcbs(folded)).toBe(true)
+  const expected = {
+    encoder: [center.x + 35 - 592 / 17, center.y + 5 - 148 / 17, -4.6],
+    jst: [center.x + 18 - Math.PI / 2 + 0.6, center.y - 5, -13 + Math.PI / 2],
+    body: [center.x, center.y, 0.6],
+  }
+  for (const element of folded) {
+    if (element.type !== "cad_component") continue
+    const position = expected[element.cad_component_id as keyof typeof expected]
+    expect(element.position.x).toBeCloseTo(position[0]!, 8)
+    expect(element.position.y).toBeCloseTo(position[1]!, 8)
+    expect(element.position.z).toBeCloseTo(position[2]!, 8)
+  }
+  const unfolded = transformCircuitJsonCadComponents(folded, {
+    foldPcbs: false,
+  })
+  for (const element of unfolded) {
+    if (element.type !== "cad_component") continue
+    const flat = circuitJson.find(
+      (e) =>
+        e.type === "cad_component" &&
+        e.cad_component_id === element.cad_component_id,
+    )!
+    if (flat.type !== "cad_component") throw new Error("Missing flat marker")
+    for (const axis of ["x", "y", "z"] as const)
+      expect(element.position[axis]).toBeCloseTo(flat.position[axis], 8)
+  }
+  expect(circuitJson).toEqual(original)
+})
 
 test("nonparallel finite bends fold separate tails on a translated board", () => {
   for (const reverseBends of [false, true]) {

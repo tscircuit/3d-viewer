@@ -82,7 +82,7 @@ viewer. The host can switch tabs and focus the schematic using the source ID.
 Omit the callback when schematic navigation is unavailable.
 
 ```tsx
-;<CadViewer
+<CadViewer
   circuitJson={circuitJson}
   onViewSchematicComponent={({ source_component_id }) => {
     // Find the schematic component with this source ID and focus it.
@@ -96,9 +96,9 @@ Omit the callback when schematic navigation is unavailable.
 When using the SVG converter in Node.js environments, you'll need to provide JSDOM:
 
 ```typescript
-import { JSDOM } from "jsdom"
-import { convert3dCircuitToSvg } from "@tscircuit/3d-viewer/3d"
-import { applyJsdomShim } from "@tscircuit/3d-viewer/utils"
+import { JSDOM } from 'jsdom'
+import { convert3dCircuitToSvg } from '@tscircuit/3d-viewer/3d'
+import { applyJsdomShim } from '@tscircuit/3d-viewer/utils'
 
 // Setup JSDOM environment
 const dom = new JSDOM()
@@ -113,8 +113,8 @@ const options = {
   zoom: 50,
   camera: {
     position: { x: 0, y: 0, z: 100 },
-    lookAt: { x: 0, y: 0, z: 0 },
-  },
+    lookAt: { x: 0, y: 0, z: 0 }
+  }
 }
 
 const svgString = await convert3dCircuitToSvg(circuitJson, options)
@@ -137,6 +137,7 @@ The `convert3dCircuitToSvg` function accepts the following options:
 Main component for rendering the 3D PCB viewer.
 
 Props:
+
 - `circuit-json`: (optional) An array of AnyCircuitElement objects representing the PCB layout.
 - `children`: (optional) React children elements describing the PCB layout (alternative to using `circuit-json`).
 - `resolveStaticAsset`: (optional) Function that receives each component model URL (`obj`, `wrl`, `stl`, `gltf`, `glb`, `step`) and returns the resolved URL to load.
@@ -146,12 +147,14 @@ Props:
 Defines the PCB board dimensions.
 
 Props:
+
 - `width`: Width of the board (e.g., "20mm").
 - `height`: Height of the board (e.g., "20mm").
 
 ### Component Elements
 
 Various component elements can be used as children of the `<board>` element:
+
 - `<resistor>`
 - `<capacitor>`
 - `<chip>`
@@ -266,7 +269,7 @@ input remains a distinct diagnostic, not the mounted pose's zero-angle control.
 You can define custom 3D models for components using the `cadModel` prop:
 
 ```jsx
-;<chip
+<chip
   name="U1"
   footprint="soic8"
   cadModel={{
@@ -281,7 +284,7 @@ You can define custom 3D models for components using the `cadModel` prop:
 For more complex or programmatically defined models, you can use JSCAD:
 
 ```jsx
-;<bug
+<bug
   footprint="soic8"
   name="U1"
   cadModel={{
