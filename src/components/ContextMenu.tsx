@@ -35,6 +35,7 @@ interface ContextMenuProps {
   componentName?: string
   onHideComponent?: () => void
   onUnhideAllComponents?: () => void
+  onSectionView?: () => void
   onDownloadGltf: () => void
   onOpenKeyboardShortcuts: () => void
 }
@@ -135,6 +136,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   componentName,
   onHideComponent,
   onUnhideAllComponents,
+  onSectionView,
   onDownloadGltf,
   onOpenKeyboardShortcuts,
 }) => {
@@ -168,6 +170,11 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             sideOffset={0}
             align="start"
           >
+            {onSectionView && (
+              <DropdownMenu.Item style={itemStyles} onSelect={onSectionView}>
+                Section view…
+              </DropdownMenu.Item>
+            )}
             {onHideComponent && (
               <DropdownMenu.Item
                 style={{

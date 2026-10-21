@@ -305,3 +305,21 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+
+### Section views
+
+Click **Section** in the viewer, or choose **Section view…** from the right-click menu.
+Choose X, Y, or Z, then drag the translucent plane or its arrow to move the cut.
+The slider and millimeter field provide precise positioning; **Flip side** changes
+which half remains visible. **Look perpendicular** faces the cut directly; in that
+view, drag vertically to change its depth. Closing the controls preserves the cut;
+**Clear** restores the complete assembly.
+
+Cut faces use a 45-degree diagonal hatch, with holes and cavities left empty.
+Sections work with both rendering engines and are baked into downloaded glTFs.
+Cap loops are computed in a worker, with a synchronous fallback if workers are
+unavailable. Open model boundaries are left uncapped and reported in the panel.
+
+Run section geometry, drag, and export checks with `bun test tests/section-*`.
+Browser interaction checks are available with `bunx playwright test --project=sections`.
