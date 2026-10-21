@@ -11,6 +11,7 @@ import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 export const JscadModel = ({
   jscadPlan,
+  color,
   positionOffset,
   rotationOffset,
   modelOffset = [0, 0, 0],
@@ -25,6 +26,7 @@ export const JscadModel = ({
   isTranslucent = false,
 }: {
   jscadPlan: JscadOperation
+  color?: string
   positionOffset?: [number, number, number]
   rotationOffset?: [number, number, number]
   modelOffset?: [number, number, number]
@@ -65,6 +67,15 @@ export const JscadModel = ({
       material.dispose()
     }
   }, [jscadPlan])
+
+  useEffect(() => {
+    if (!mesh) return
+    // An explicit CAD color overrides the geometry, rather than tinting it.
+    // Keep vertex colors intact so removing the override restores the plan.
+    mesh.material.color.set(color ?? 0xffffff)
+    mesh.material.vertexColors = color === undefined
+    mesh.material.needsUpdate = true
+  }, [mesh, color])
 
   useEffect(() => {
     if (!mesh) return

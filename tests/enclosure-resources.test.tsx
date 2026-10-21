@@ -240,3 +240,53 @@ test("enclosure resources are released on plan replacement and StrictMode replay
     materialDispose.mockRestore()
   }
 })
+
+test("JSCAD color override replaces embedded color and restores it when cleared", async () => {
+  await withScene(async ({ root, rootObject, context }) => {
+    const coloredPlan = {
+      type: "colorize" as const,
+      color: [0, 0, 1] as [number, number, number],
+      shape: plan,
+    }
+    const render = (color?: string, isTranslucent = false) =>
+      act(async () =>
+        root.render(
+          <ThreeContext.Provider value={context}>
+            <HoverContext.Provider value={hover}>
+              <JscadModel
+                jscadPlan={coloredPlan}
+                color={color}
+                isTranslucent={isTranslucent}
+                isHovered={false}
+                onHover={noop}
+                onUnhover={noop}
+              />
+            </HoverContext.Provider>
+          </ThreeContext.Provider>,
+        ),
+      )
+    await render()
+    const mesh = findMesh(rootObject)
+    const geometry = mesh.geometry
+    const colors = geometry.getAttribute("color")
+    expect([colors.getX(0), colors.getY(0), colors.getZ(0)]).toEqual([0, 0, 1])
+    expect(mesh.material.vertexColors).toBe(true)
+
+    await render("#d73e39")
+    expect(findMesh(rootObject).geometry).toBe(geometry)
+    expect(mesh.material.color.getHexString()).toBe("d73e39")
+    expect(mesh.material.vertexColors).toBe(false)
+
+    await render("#00ff00", true)
+    expect(mesh.material.color.getHexString()).toBe("00ff00")
+    expect(mesh.material.opacity).toBe(0.5)
+    expect(mesh.material.vertexColors).toBe(false)
+
+    await render()
+    expect(findMesh(rootObject).geometry).toBe(geometry)
+    expect(mesh.material.vertexColors).toBe(true)
+    expect(mesh.material.color.getHexString()).toBe("ffffff")
+    expect(mesh.material.opacity).toBe(1)
+    expect(geometry.getAttribute("color")).toBe(colors)
+  })
+})
