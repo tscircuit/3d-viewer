@@ -24,6 +24,7 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     MutationObserver: globalThis.MutationObserver,
     Node: globalThis.Node,
     getComputedStyle: globalThis.getComputedStyle,
+    ResizeObserver: globalThis.ResizeObserver,
   }
 
   Object.assign(globalThis, {
@@ -36,6 +37,11 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     MutationObserver: dom.window.MutationObserver,
     Node: dom.window.Node,
     getComputedStyle: dom.window.getComputedStyle,
+    ResizeObserver: class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
     IS_REACT_ACT_ENVIRONMENT: true,
   })
 
@@ -69,7 +75,6 @@ test("component actions snapshot the right-click, close, and restore hidden mode
       } else {
         hideComponents(["case"])
       }
-      menu.setMenuVisible(false)
     }
     const componentId = position.x === 80 ? "case" : "r1"
     const componentName = componentId === "case" ? "CASE" : "R1"
@@ -203,6 +208,55 @@ test("component actions snapshot the right-click, close, and restore hidden mode
       })
       expect(document.querySelector('[role="menu"]')).toBeNull()
     }
+    const toggleAssembly = async (checkedBefore: boolean, keyboard = false) => {
+      const appearance = Array.from(
+        document.querySelectorAll<HTMLElement>('[role="menuitem"]'),
+      ).find((item) => item.textContent === "Appearance")!
+      await act(async () => {
+        appearance.focus()
+        appearance.dispatchEvent(
+          new dom.window.KeyboardEvent("keydown", {
+            key: "ArrowRight",
+            bubbles: true,
+          }),
+        )
+      })
+      await act(
+        () => new Promise<void>((resolve) => dom.window.setTimeout(resolve, 0)),
+      )
+      const assembly = document.querySelector<HTMLElement>(
+        '[role="menuitemcheckbox"]',
+      )!
+      const enclosure = Array.from(
+        document.querySelectorAll('[role="menuitem"]'),
+      ).find((item) => item.textContent === "Enclosure")!
+      expect(assembly.textContent).toBe("Assembly")
+      expect(enclosure.nextElementSibling).toBe(assembly)
+      expect(assembly.getAttribute("aria-checked")).toBe(String(checkedBefore))
+      await act(async () => {
+        if (keyboard) {
+          assembly.focus()
+          assembly.dispatchEvent(
+            new dom.window.KeyboardEvent("keydown", {
+              key: "Enter",
+              bubbles: true,
+            }),
+          )
+        } else {
+          assembly.dispatchEvent(
+            new dom.window.MouseEvent("click", { bubbles: true }),
+          )
+        }
+      })
+      expect(assembly.getAttribute("aria-checked")).toBe(String(!checkedBefore))
+      expect(document.querySelector('[role="menu"]')).not.toBeNull()
+      await act(async () => {
+        viewer.dispatchEvent(
+          new dom.window.MouseEvent("mousedown", { bubbles: true }),
+        )
+      })
+      expect(document.querySelector('[role="menu"]')).toBeNull()
+    }
     await rightClick()
     expect(document.body.textContent).not.toContain("Unhide All Components")
     expect(document.body.textContent).not.toContain("Hide Assembly")
@@ -220,19 +274,19 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     await rightClick(40, 40)
     await select('Hide "R1"')
     await rightClick(0, 0)
-    await select("Hide Assembly", true)
+    await toggleAssembly(true, true)
     expect(viewer.getAttribute("data-hidden")).toBe("r1,case")
     await rightClick(0, 0)
     expect(document.body.textContent).not.toContain("Hide Assembly")
-    await select("Show Assembly", true)
+    await toggleAssembly(false, true)
     expect(viewer.getAttribute("data-hidden")).toBe("r1")
     await rightClick(0, 0)
-    expect(document.body.textContent).toContain("Hide Assembly")
+    expect(document.body.textContent).not.toContain("Hide Assembly")
     await select("Unhide All Components", true)
     expect(viewer.getAttribute("data-hidden")).toBe("")
     await rightClick(0, 0)
     expect(document.body.textContent).not.toContain("Unhide All Components")
-    await select("Hide Assembly")
+    await toggleAssembly(true)
     await act(async () => {
       reactRoot.render(
         <CameraControllerProvider defaultTarget={new THREE.Vector3()}>
@@ -253,7 +307,7 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     expect(document.body.textContent).not.toContain('Hide "')
     expect(document.body.textContent).not.toContain("Unhide All Components")
     // Hiding is independent of optional schematic navigation and remains on a rerender.
-    await select("Show Assembly")
+    await toggleAssembly(false)
     expect(viewer.getAttribute("data-hidden")).toBe("")
     await rightClick()
     expect(document.body.textContent).not.toContain("Show on schematic")
@@ -270,7 +324,7 @@ test("component actions snapshot the right-click, close, and restore hidden mode
       )
     })
     await rightClick()
-    await select("Show Assembly")
+    await toggleAssembly(false)
     await rightClick()
     await select('Hide "CASE"')
     await act(async () => {

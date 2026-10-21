@@ -147,12 +147,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   const [cameraSubOpen, setCameraSubOpen] = useState(false)
   const [referenceObjectSubOpen, setReferenceObjectSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
-  const hideAssemblyStyles = { ...itemStyles, ...itemPaddingStyles }
-  if (hoveredItem === "hide-assembly") {
-    hideAssemblyStyles.backgroundColor = "#404040"
-  }
-  let assemblyActionLabel = "Hide Assembly"
-  if (assemblyHidden) assemblyActionLabel = "Show Assembly"
 
   return (
     <div
@@ -210,18 +204,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 </DropdownMenu.Item>
               </>
             )}
-            {onAssemblyVisibilityToggle && !onHideComponent && (
-              <DropdownMenu.Item
-                style={hideAssemblyStyles}
-                onSelect={onAssemblyVisibilityToggle}
-                onPointerEnter={() => setHoveredItem("hide-assembly")}
-                onPointerLeave={() => setHoveredItem(null)}
-                onFocus={() => setHoveredItem("hide-assembly")}
-                onBlur={() => setHoveredItem(null)}
-              >
-                {assemblyActionLabel}
-              </DropdownMenu.Item>
-            )}
             {onUnhideAllComponents && (
               <DropdownMenu.Item
                 style={{
@@ -239,7 +221,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             )}
             {(onViewSchematicComponent ||
               onHideComponent ||
-              onAssemblyVisibilityToggle ||
               onUnhideAllComponents) && (
               <DropdownMenu.Separator style={separatorStyles} />
             )}
@@ -477,7 +458,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             </DropdownMenu.Item>
 
             {/* Appearance Menu */}
-            <AppearanceMenu />
+            <AppearanceMenu
+              assemblyHidden={assemblyHidden}
+              onAssemblyVisibilityToggle={onAssemblyVisibilityToggle}
+            />
 
             <DropdownMenu.Separator style={separatorStyles} />
 

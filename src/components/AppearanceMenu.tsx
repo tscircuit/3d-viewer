@@ -65,7 +65,13 @@ const iconContainerStyles: React.CSSProperties = {
   flexShrink: 0,
 }
 
-export const AppearanceMenu = () => {
+export const AppearanceMenu = ({
+  assemblyHidden = false,
+  onAssemblyVisibilityToggle,
+}: {
+  assemblyHidden?: boolean
+  onAssemblyVisibilityToggle?: () => void
+}) => {
   const { visibility, setLayerVisibility } = useLayerVisibility()
   const {
     darkBackgroundEnabled,
@@ -75,6 +81,8 @@ export const AppearanceMenu = () => {
   } = useAppearance()
   const [appearanceSubOpen, setAppearanceSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
+  const assemblyStyles = { ...itemStyles }
+  if (hoveredItem === "assembly") assemblyStyles.backgroundColor = "#404040"
 
   return (
     <>
@@ -455,6 +463,25 @@ export const AppearanceMenu = () => {
                 Enclosure
               </span>
             </DropdownMenu.Item>
+            {onAssemblyVisibilityToggle && (
+              <DropdownMenu.CheckboxItem
+                style={assemblyStyles}
+                checked={!assemblyHidden}
+                onCheckedChange={onAssemblyVisibilityToggle}
+                onSelect={(event) => event.preventDefault()}
+                onPointerEnter={() => setHoveredItem("assembly")}
+                onPointerLeave={() => setHoveredItem(null)}
+                onFocus={() => setHoveredItem("assembly")}
+                onBlur={() => setHoveredItem(null)}
+              >
+                <span style={iconContainerStyles}>
+                  <DropdownMenu.ItemIndicator>
+                    <CheckIcon />
+                  </DropdownMenu.ItemIndicator>
+                </span>
+                <span>Assembly</span>
+              </DropdownMenu.CheckboxItem>
+            )}
           </ViewportSubContent>
         </DropdownMenu.Portal>
       </DropdownMenu.Sub>

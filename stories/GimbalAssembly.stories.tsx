@@ -20,7 +20,7 @@ const showFullAssembly = (controller: CameraController | null) => {
 }
 
 // Gimbal One v0.1.3: one populated PCB and 50 standalone mechanical CAD parts.
-// Right-click the background → Hide Assembly → Show Assembly.
+// Right-click → Appearance → Assembly: checked is on, unchecked is off.
 export const GimbalAssembly = () => (
   <CadViewer
     circuitJson={gimbalAssembly}

@@ -105,7 +105,6 @@ const CadViewerInner = (props: CadViewerProps) => {
       } else {
         hideComponents(assemblyCadComponentIds)
       }
-      closeMenu()
     }
   }
   const resolvedProps = {
