@@ -24,28 +24,21 @@ export const useHiddenCadComponents = (circuitKey: string) => {
         ]),
       }))
     },
-    hideComponents: (ids: Iterable<string>) => {
+    setComponentsHidden: (ids: Iterable<string>, hidden: boolean) => {
       setState((current) => {
         const hiddenIds = new Set<string>()
         if (current.circuitKey === circuitKey) {
           for (const id of current.ids) hiddenIds.add(id)
         }
-        for (const id of ids) hiddenIds.add(id)
+        for (const id of ids) {
+          if (hidden) hiddenIds.add(id)
+          else hiddenIds.delete(id)
+        }
         return { circuitKey, ids: hiddenIds }
       })
     },
     unhideAllComponents: () => {
       setState({ circuitKey, ids: NO_HIDDEN_COMPONENTS })
-    },
-    showComponents: (ids: Iterable<string>) => {
-      setState((current) => {
-        if (current.circuitKey !== circuitKey) {
-          return { circuitKey, ids: NO_HIDDEN_COMPONENTS }
-        }
-        const hiddenIds = new Set(current.ids)
-        for (const id of ids) hiddenIds.delete(id)
-        return { circuitKey, ids: hiddenIds }
-      })
     },
   }
 }

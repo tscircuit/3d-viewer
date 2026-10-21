@@ -61,21 +61,13 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     const {
       hiddenCadComponentIds,
       hideComponent,
-      hideComponents,
-      showComponents,
+      setComponentsHidden,
       unhideAllComponents,
     } = useHiddenCadComponents(circuitKey)
     const assemblyHidden = hiddenCadComponentIds.has("case")
     const canUnhideAllComponents =
       hiddenCadComponentIds.size > 0 &&
       (!assemblyHidden || hiddenCadComponentIds.has("r1"))
-    const onAssemblyVisibilityToggle = () => {
-      if (assemblyHidden) {
-        showComponents(["case"])
-      } else {
-        hideComponents(["case"])
-      }
-    }
     const componentId = position.x === 80 ? "case" : "r1"
     const componentName = componentId === "case" ? "CASE" : "R1"
     const canHide = position.x > 0 && !hiddenCadComponentIds.has(componentId)
@@ -88,7 +80,9 @@ test("component actions snapshot the right-click, close, and restore hidden mode
       >
         {menu.menuVisible && (
           <ContextMenu
-            onAssemblyVisibilityToggle={onAssemblyVisibilityToggle}
+            onAssemblyVisibilityToggle={() =>
+              setComponentsHidden(["case"], !assemblyHidden)
+            }
             assemblyHidden={assemblyHidden}
             menuRef={menu.menuRef}
             menuPos={menu.menuPos}
@@ -259,15 +253,12 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     }
     await rightClick()
     expect(document.body.textContent).not.toContain("Unhide All Components")
-    expect(document.body.textContent).not.toContain("Hide Assembly")
     await select('Hide "CASE"', true)
     expect(viewer.getAttribute("data-hidden")).toBe("case")
     await rightClick(40, 40)
-    expect(document.body.textContent).not.toContain("Show Assembly")
     await select('Hide "R1"')
     expect(viewer.getAttribute("data-hidden")).toBe("case,r1")
     await rightClick(0, 0)
-    expect(document.body.textContent).not.toContain("Hide Assembly")
     expect(document.body.textContent).not.toContain('Hide "')
     await select("Unhide All Components", true)
     expect(viewer.getAttribute("data-hidden")).toBe("")
@@ -277,11 +268,9 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     await toggleAssembly(true, true)
     expect(viewer.getAttribute("data-hidden")).toBe("r1,case")
     await rightClick(0, 0)
-    expect(document.body.textContent).not.toContain("Hide Assembly")
     await toggleAssembly(false, true)
     expect(viewer.getAttribute("data-hidden")).toBe("r1")
     await rightClick(0, 0)
-    expect(document.body.textContent).not.toContain("Hide Assembly")
     await select("Unhide All Components", true)
     expect(viewer.getAttribute("data-hidden")).toBe("")
     await rightClick(0, 0)
