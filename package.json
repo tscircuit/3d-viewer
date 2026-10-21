@@ -55,7 +55,7 @@
     "@tscircuit/circuit-json-util": "*"
   },
   "devDependencies": {
-    "@tscircuit/flex-utils": "https://jscdn.tscircuit.com/@tscircuit/flex-utils/0.0.5.tgz",
+    "@tscircuit/flex-utils": "https://jscdn.tscircuit.com/@tscircuit/flex-utils/0.0.8.tgz",
     "@biomejs/biome": "^2.1.4",
     "@chromatic-com/storybook": "^1.9.0",
     "@jscad/modeling": "^2.12.5",
