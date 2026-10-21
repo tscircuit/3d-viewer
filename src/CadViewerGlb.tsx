@@ -53,6 +53,13 @@ function GlbScene({
     const meshes: THREE.Mesh[] = []
     model.traverse((mesh) => {
       if (!(mesh instanceof THREE.Mesh)) return
+      // Raycaster includes invisible objects. Do not let a hidden enclosure
+      // intercept hover events for the components underneath it.
+      let ancestor: THREE.Object3D | null = mesh
+      while (ancestor) {
+        if (!ancestor.visible) return
+        ancestor = ancestor.parent
+      }
       meshes.push(mesh)
       addHoverable({
         object: mesh,
@@ -75,7 +82,7 @@ function GlbScene({
     return () => {
       for (const mesh of meshes) removeHoverable(mesh)
     }
-  }, [model, addHoverable, removeHoverable])
+  }, [model, hiddenCadComponentIds, addHoverable, removeHoverable])
   return (
     <>
       {bounds && <FitCameraToComparison bounds={bounds} />}
