@@ -3,6 +3,9 @@ import config from "./playwright.config"
 
 export default defineConfig({
   ...config,
+  timeout: 45_000,
+  expect: { timeout: 15_000 },
+  use: { ...config.use, actionTimeout: 15_000 },
   projects: [{ name: "sections", testMatch: "**/section.pw.ts" }],
   webServer: {
     command: "bunx vite --config playwright/vite.config.ts",

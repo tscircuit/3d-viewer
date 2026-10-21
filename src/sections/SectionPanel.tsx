@@ -1,3 +1,4 @@
+import { zIndexMap } from "../../lib/utils/z-index-map"
 import type { CSSProperties } from "react"
 import { useSection } from "./SectionContext"
 import type { SectionAxis } from "./section-geometry"
@@ -32,15 +33,15 @@ export function SectionPanel() {
       style={{
         position: "absolute",
         top: 12,
-        left: 12,
-        zIndex: 5,
+        right: 12,
+        zIndex: zIndexMap.sectionControls,
         font: "13px system-ui",
         color: "white",
         background: "#262626",
         border: "1px solid #555",
         borderRadius: 6,
         padding: 8,
-        maxWidth: "calc(100% - 120px)",
+        maxWidth: "calc(100% - 24px)",
       }}
       onPointerDown={(e) => e.stopPropagation()}
       onContextMenu={(e) => e.stopPropagation()}
