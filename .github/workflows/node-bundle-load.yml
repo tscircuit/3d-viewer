@@ -29,6 +29,9 @@ jobs:
       - name: Test flex assembly and shared Zod peer
         run: bun test tests/sheet-metal-flex-assembly.test.ts tests/flex-meshes.test.ts
 
+      - name: Test edge display state and renderer resources
+        run: bun test tests/edge-overlay.test.ts tests/edge-extraction.test.ts tests/edge-appearance.test.tsx
+
       - name: Build
         run: npm run build
 
