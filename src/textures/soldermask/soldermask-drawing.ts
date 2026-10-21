@@ -39,15 +39,17 @@ export const getSoldermaskPalette = (
     soldermaskColors[boardData.material] ?? defaultColors.fr4SolderMaskGreen,
   )
   const legacySoldermaskOverCopper =
-    boardData.material === "flex"
-      ? // Flex uses amber polyimide coverlay; do not tint its copper FR4 green.
-        toRgb(defaultColors.copper)
-      : boardData.material === "fr1"
-        ? toRgb(defaultColors.fr1TracesWithMaskCopper)
-        : toRgb(defaultColors.fr4TracesWithMaskGreen)
-  const requestedSoldermaskColor = resolveSoldermaskColor(
-    boardData.solder_mask_color,
-  )
+    boardData.material === "fr1"
+      ? toRgb(defaultColors.fr1TracesWithMaskCopper)
+      : toRgb(defaultColors.fr4TracesWithMaskGreen)
+  const requestedSoldermaskColor =
+    resolveSoldermaskColor(boardData.solder_mask_color) ??
+    (boardData.material === "flex"
+      ? new THREE.Color().setRGB(
+          ...defaultColors.flexAmber,
+          THREE.SRGBColorSpace,
+        )
+      : null)
 
   if (!requestedSoldermaskColor) {
     return {

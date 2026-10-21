@@ -40,10 +40,27 @@ test("TSX flex board renders amber coverlay and copper traces without FR4 green"
         }
         return matches
       }
-      expect(count(204, 156, 51)).toBeGreaterThan(100)
-      expect(count(199, 161, 99)).toBeGreaterThan(100)
+      expect(count(204, 155, 50)).toBeGreaterThan(100)
+      expect(count(203, 156, 59)).toBeGreaterThan(100)
       expect(count(23, 97, 59)).toBe(0)
       expect(count(15, 79, 48)).toBe(0)
+      // The capsule story specifies this amber explicitly. Rendering the same
+      // TSX board with that override must produce identical surface pixels.
+      const explicitBoard = { ...board, solder_mask_color: "#cc9b32" }
+      const explicitTexture = createSoldermaskTextureForLayer({
+        circuitJson: circuitJson.map((e) => (e === board ? explicitBoard : e)),
+        boardData: explicitBoard,
+        layer: "top",
+        traceTextureResolution: 30,
+      })!
+      try {
+        const explicitPixels = explicitTexture.image
+          .getContext("2d")
+          .getImageData(0, 0, canvas.width, canvas.height).data
+        expect(pixels).toEqual(explicitPixels)
+      } finally {
+        explicitTexture.dispose()
+      }
     } finally {
       texture.dispose()
     }

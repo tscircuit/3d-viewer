@@ -80,11 +80,19 @@ test("flex defaults to amber coverlay with copper-colored traces", () => {
     expect(
       getSoldermaskPalette(createBoard({ material: "flex", solderMaskColor })),
     ).toMatchObject({
-      soldermask: "rgb(204, 156, 51)",
-      soldermaskOverCopper: "rgb(199, 161, 99)",
+      soldermask: "rgb(204,155,50)",
+      soldermaskOverCopper: "rgb(203,156,59)",
       copper: "rgb(199, 161, 99)",
     })
   }
+})
+
+test("default flex palette matches the Three Disc Capsule amber override", () => {
+  expect(getSoldermaskPalette(createBoard({ material: "flex" }))).toEqual(
+    getSoldermaskPalette(
+      createBoard({ material: "flex", solderMaskColor: "#cc9b32" }),
+    ),
+  )
 })
 
 test("flex preserves explicitly configured mask colors", () => {
