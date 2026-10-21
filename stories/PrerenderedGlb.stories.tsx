@@ -18,3 +18,12 @@ export const FidgetCounter = () => (
     />
   </div>
 )
+
+export const FidgetCounterLegacy = () => (
+  <div style={{ height: 600 }}>
+    <CadViewer
+      glbUrl="/prerendered-glb/fidget-counter-legacy.glb"
+      autoRotateDisabled
+    />
+  </div>
+)

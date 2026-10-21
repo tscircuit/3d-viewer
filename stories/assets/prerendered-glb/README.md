@@ -23,3 +23,11 @@ The previous fixture was the original published 7,365,672-byte GLB, downloaded
 from https://api.tscircuit.com/package_files/download?package_file_id=3ea38a93-dd1f-4c8c-b0b2-4cfda3050f47.
 It lacked component identity extras and has been replaced so this demo exercises
 hover interactions on the actual assembly.
+
+## Legacy published fixture
+
+`fidget-counter-legacy.glb` is the unchanged original published GLB from the
+package-file download above (7,365,672 bytes, SHA-256
+`9b7c47a7ffaa7b76fef0111d1a65d2ac58440d015102c2fca779cce333e3fa99`).
+The Fidget Counter Legacy story exercises hover, hide, and restore using its
+39 named mesh nodes, without component identity extras or regeneration.
