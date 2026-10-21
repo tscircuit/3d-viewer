@@ -48,12 +48,19 @@ test("plane drags without orbiting, remains active when closed, and clears", asy
   await page.mouse.move(x + 120, y + 10, { steps: 12 })
   await page.mouse.up()
   await expect.poll(async () => Number(await offset.inputValue())).not.toBe(0)
-  expect(
-    await page.evaluate(() => ({
-      position: (window as any).__sectionCamera.position.toArray(),
-      quaternion: (window as any).__sectionCamera.quaternion.toArray(),
-    })),
-  ).toEqual({ position: before.position, quaternion: before.quaternion })
+  const after = await page.evaluate(() => ({
+    position: (window as any).__sectionCamera.position.toArray() as number[],
+    quaternion: (
+      window as any
+    ).__sectionCamera.quaternion.toArray() as number[],
+  }))
+  // OrbitControls normalizes its spherical coordinates each frame.
+  for (const key of ["position", "quaternion"] as const) {
+    after[key].forEach((value, index) =>
+      expect(value).toBeCloseTo(before[key][index]!, 9),
+    )
+  }
+
   await page.getByRole("button", { name: "Close section controls" }).click()
   await expect(
     page.getByRole("button", { name: "Section on · Edit" }),
@@ -117,6 +124,10 @@ test("GLB URLs render patterned caps without fetching component models", async (
       ),
     )
     .toBeGreaterThan(0)
+  // StrictMode deliberately aborts and replays the initial load in development.
+  // Section operations must not trigger another load after the model is ready.
+  const initialRequests = requests
+  expect(initialRequests).toBeGreaterThan(0)
   await page.getByRole("button", { name: "Section", exact: true }).click()
   await page.getByRole("spinbutton", { name: "Section offset (mm)" }).fill("5")
   await expect
@@ -137,6 +148,6 @@ test("GLB URLs render patterned caps without fetching component models", async (
       ),
     )
     .toBe(true)
-  expect(requests).toBe(1)
+  expect(requests).toBe(initialRequests)
   await page.screenshot({ path: "test-results/section-glb-url.png" })
 })
