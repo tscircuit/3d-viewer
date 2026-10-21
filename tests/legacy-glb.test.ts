@@ -6,7 +6,7 @@ import { pickSchematicComponent } from "../src/utils/pick-schematic-component"
 
 // Retain the fixture's binary data, but model an old export with two instances
 // of a multi-primitive mesh and no component extras.
-async function legacyFixture() {
+async function legacyFixture(nested = false) {
   const bytes = await Bun.file(
     new URL("./assets/prerendered-components.glb", import.meta.url),
   ).arrayBuffer()
@@ -18,6 +18,10 @@ async function legacyFixture() {
   json.meshes[0].primitives.push({ ...json.meshes[0].primitives[0] })
   // Empty assembly nodes should not acquire a hide identity.
   json.nodes.push({ name: "Assembly", children: [0, 1] })
+  if (nested) {
+    json.nodes[0].children = [1]
+    json.nodes[2].children = [0]
+  }
   json.scenes[0].nodes = [2]
   const encoded = new TextEncoder().encode(JSON.stringify(json))
   const paddedLength = Math.ceil(encoded.length / 4) * 4
@@ -80,6 +84,20 @@ test("legacy mesh nodes retain labels and hide as complete, independent parts", 
   part.visible = true
   scene.camera.position.set(5, 7, 30)
   expect(pickCadComponent(scene, position, [])).toEqual(picked)
+  disposeGlbScene(model)
+})
+
+test("nested legacy mesh nodes each receive a hide identity", async () => {
+  const model = await loadGlbScene(
+    await legacyFixture(true),
+    new AbortController().signal,
+  )
+  const ids: string[] = []
+  model.traverse((object) => {
+    if (object.userData.cad_component_id)
+      ids.push(object.userData.cad_component_id)
+  })
+  expect(new Set(ids).size).toBe(2)
   disposeGlbScene(model)
 })
 

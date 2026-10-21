@@ -99,6 +99,11 @@ export async function loadGlbScene(
   // Older exports have mesh-node names but no tscircuit identity. Give each
   // glTF node a local hide identity, keeping shared mesh instances separate
   // and multi-primitive meshes together. Never invent schematic identities.
+  const explicitComponents = new Set<THREE.Object3D>()
+  gltf.scene.traverse((object) => {
+    if (getGlbComponentMetadata(object)?.cad_component_id)
+      explicitComponents.add(object)
+  })
   gltf.scene.traverse((object) => {
     const nodeIndex = gltf.parser.associations.get(object)?.nodes
     if (nodeIndex === undefined) return
@@ -106,7 +111,7 @@ export async function loadGlbScene(
     if (node?.mesh === undefined) return
     let ancestor: THREE.Object3D | null = object
     while (ancestor) {
-      if (getGlbComponentMetadata(ancestor)?.cad_component_id) return
+      if (explicitComponents.has(ancestor)) return
       ancestor = ancestor.parent
     }
     const metadata = getGlbComponentMetadata(object)
