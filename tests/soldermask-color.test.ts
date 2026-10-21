@@ -75,6 +75,29 @@ test("preserves the existing material colors without an explicit preset", () => 
   })
 })
 
+test("flex defaults to amber coverlay with copper-colored traces", () => {
+  for (const solderMaskColor of [undefined, "not_specified", "green"]) {
+    expect(
+      getSoldermaskPalette(createBoard({ material: "flex", solderMaskColor })),
+    ).toMatchObject({
+      soldermask: "rgb(204, 156, 51)",
+      soldermaskOverCopper: "rgb(199, 161, 99)",
+      copper: "rgb(199, 161, 99)",
+    })
+  }
+})
+
+test("flex preserves explicitly configured mask colors", () => {
+  expect(
+    getSoldermaskPalette(
+      createBoard({ material: "flex", solderMaskColor: "#123456" }),
+    ),
+  ).toMatchObject({
+    soldermask: "rgb(18,52,86)",
+    soldermaskOverCopper: "rgb(78,77,88)",
+  })
+})
+
 test("supports custom CSS colors", () => {
   expectResolvedHex("#123456", "#123456")
   expectResolvedHex("rebeccapurple", "#663399")
