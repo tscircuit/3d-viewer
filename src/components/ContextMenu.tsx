@@ -34,6 +34,7 @@ interface ContextMenuProps {
   onViewSchematicComponent?: () => void
   componentName?: string
   onHideComponent?: () => void
+  onHideAssembly?: () => void
   onUnhideAllComponents?: () => void
   onDownloadGltf: () => void
   onOpenKeyboardShortcuts: () => void
@@ -134,6 +135,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onViewSchematicComponent,
   componentName,
   onHideComponent,
+  onHideAssembly,
   onUnhideAllComponents,
   onDownloadGltf,
   onOpenKeyboardShortcuts,
@@ -143,6 +145,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   const [cameraSubOpen, setCameraSubOpen] = useState(false)
   const [referenceObjectSubOpen, setReferenceObjectSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
+  const hideAssemblyStyles = { ...itemStyles, ...itemPaddingStyles }
+  if (hoveredItem === "hide-assembly") {
+    hideAssemblyStyles.backgroundColor = "#404040"
+  }
 
   return (
     <div
@@ -200,6 +206,18 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 </DropdownMenu.Item>
               </>
             )}
+            {onHideAssembly && (
+              <DropdownMenu.Item
+                style={hideAssemblyStyles}
+                onSelect={onHideAssembly}
+                onPointerEnter={() => setHoveredItem("hide-assembly")}
+                onPointerLeave={() => setHoveredItem(null)}
+                onFocus={() => setHoveredItem("hide-assembly")}
+                onBlur={() => setHoveredItem(null)}
+              >
+                Hide Assembly
+              </DropdownMenu.Item>
+            )}
             {onUnhideAllComponents && (
               <DropdownMenu.Item
                 style={{
@@ -217,6 +235,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             )}
             {(onViewSchematicComponent ||
               onHideComponent ||
+              onHideAssembly ||
               onUnhideAllComponents) && (
               <DropdownMenu.Separator style={separatorStyles} />
             )}

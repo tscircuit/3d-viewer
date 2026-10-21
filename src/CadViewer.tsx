@@ -10,6 +10,7 @@ import {
   type PickedCadComponent,
 } from "./utils/pick-cad-component"
 import { useHiddenCadComponents } from "./hooks/useHiddenCadComponents"
+import { getAssemblyCadComponentIds } from "./utils/get-assembly-cad-component-ids"
 import { configureRuntimeFont } from "./utils/configure-runtime-font"
 import { useCallback, useContext, useEffect, useRef, useState } from "react"
 import * as THREE from "three"
@@ -82,8 +83,20 @@ const CadViewerInner = (props: CadViewerProps) => {
   const foldPcbs = foldPcbsOverride ?? props.foldPcbs
   const resolvedFoldPcbs = resolveFoldPcbs(circuitJson, foldPcbs)
   const circuitKey = JSON.stringify(circuitJson)
-  const { hiddenCadComponentIds, hideComponent, unhideAllComponents } =
-    useHiddenCadComponents(circuitKey)
+  const {
+    hiddenCadComponentIds,
+    hideComponent,
+    hideComponents,
+    unhideAllComponents,
+  } = useHiddenCadComponents(circuitKey)
+  const assemblyCadComponentIds = getAssemblyCadComponentIds(circuitJson)
+  let onHideAssembly: (() => void) | undefined
+  if (assemblyCadComponentIds.some((id) => !hiddenCadComponentIds.has(id))) {
+    onHideAssembly = () => {
+      hideComponents(assemblyCadComponentIds)
+      closeMenu()
+    }
+  }
   const resolvedProps = {
     ...props,
     circuitJson,
@@ -340,6 +353,7 @@ const CadViewerInner = (props: CadViewerProps) => {
       )}
       {menuVisible && (
         <ContextMenu
+          onHideAssembly={onHideAssembly}
           componentName={selectedCadComponent?.componentName}
           onHideComponent={
             selectedCadComponent

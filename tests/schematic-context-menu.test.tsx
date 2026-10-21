@@ -52,8 +52,19 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     const containerRef = useRef<HTMLDivElement>(null)
     const [position, setPosition] = useState({ x: 0, y: 0 })
     const menu = useContextMenu({ containerRef, onOpen: setPosition })
-    const { hiddenCadComponentIds, hideComponent, unhideAllComponents } =
-      useHiddenCadComponents(circuitKey)
+    const {
+      hiddenCadComponentIds,
+      hideComponent,
+      hideComponents,
+      unhideAllComponents,
+    } = useHiddenCadComponents(circuitKey)
+    let onHideAssembly: (() => void) | undefined
+    if (!hiddenCadComponentIds.has("case")) {
+      onHideAssembly = () => {
+        hideComponents(["case"])
+        menu.setMenuVisible(false)
+      }
+    }
     const componentId = position.x === 80 ? "case" : "r1"
     const componentName = componentId === "case" ? "CASE" : "R1"
     const canHide = position.x > 0 && !hiddenCadComponentIds.has(componentId)
@@ -66,6 +77,7 @@ test("component actions snapshot the right-click, close, and restore hidden mode
       >
         {menu.menuVisible && (
           <ContextMenu
+            onHideAssembly={onHideAssembly}
             menuRef={menu.menuRef}
             menuPos={menu.menuPos}
             engine="manifold"
@@ -192,12 +204,22 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     await select('Hide "R1"')
     expect(viewer.getAttribute("data-hidden")).toBe("case,r1")
     await rightClick(0, 0)
+    expect(document.body.textContent).not.toContain("Hide Assembly")
     expect(document.body.textContent).not.toContain('Hide "')
+    await select("Unhide All Components", true)
+    expect(viewer.getAttribute("data-hidden")).toBe("")
+    await rightClick(40, 40)
+    await select('Hide "R1"')
+    await rightClick(0, 0)
+    await select("Hide Assembly", true)
+    expect(viewer.getAttribute("data-hidden")).toBe("r1,case")
+    await rightClick(0, 0)
+    expect(document.body.textContent).not.toContain("Hide Assembly")
     await select("Unhide All Components", true)
     expect(viewer.getAttribute("data-hidden")).toBe("")
     await rightClick()
     expect(document.body.textContent).not.toContain("Unhide All Components")
-    await select('Hide "CASE"')
+    await select("Hide Assembly")
     await act(async () => {
       reactRoot.render(
         <CameraControllerProvider defaultTarget={new THREE.Vector3()}>
