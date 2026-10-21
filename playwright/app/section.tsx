@@ -69,7 +69,11 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <div style={{ width: "100vw", height: "100vh", background: "#151515" }}>
       {engine ? (
-        <CadViewer circuitJson={board} autoRotateDisabled />
+        <CadViewer
+          circuitJson={engine === "glb" ? undefined : board}
+          glbUrl={engine === "glb" ? "section-test.glb" : undefined}
+          autoRotateDisabled
+        />
       ) : (
         <CameraControllerProvider defaultTarget={new THREE.Vector3()}>
           <AppearanceProvider>

@@ -322,4 +322,29 @@ Cap loops are computed in a worker, with a synchronous fallback if workers are
 unavailable. Open model boundaries are left uncapped and reported in the panel.
 
 Run section geometry, drag, and export checks with `bun test tests/section-*`.
-Browser interaction checks are available with `bunx playwright test --project=sections`.
+Browser interaction checks, including GLB URLs, are available with `bun run test:sections`.
+Sections also support pre-rendered `glbUrl` and `glbData` sources, including model replacement.
+
+### Pre-rendered GLB scenes
+
+To open a self-contained GLB produced by `circuit-json-to-gltf` without rebuilding
+board geometry or fetching component models:
+
+```tsx
+<CadViewer glbUrl="/previews/board.glb" />
+// Or use bytes already available in memory:
+<CadViewer glbData={arrayBuffer} />
+```
+
+Supply one GLB source. It takes precedence over `circuitJson` and JSX children.
+The viewer restores the exporter's coordinate frame (+Y up, mm) to the normal
+viewer frame (+Z up, mm), fits the camera, and retains orbit controls and camera
+presets. Failed loads display an error; replacing a source cancels the previous
+load and disposes its geometry, materials, and textures.
+
+New exports carry lightweight identity in each component node's
+`extras.tscircuit`: `componentName`, `cad_component_id`, `source_component_id`,
+and `pcb_component_id` (when available). These support name tooltips, hiding
+individual components, and `onViewSchematicComponent` without supplying Circuit
+JSON. Existing GLBs without metadata still render. Board layers, folding, and
+model appearance are baked into the GLB; regenerate it to change them.

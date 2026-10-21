@@ -1,3 +1,4 @@
+import { registerMaterialRestoration } from "../utils/temporary-materials"
 import { useEffect, useRef } from "react"
 import * as THREE from "three"
 import { useCameraController } from "../contexts/CameraControllerContext"
@@ -14,6 +15,7 @@ import {
 
 type CapResult = { loops: Point2[][]; openChains: number }
 type SavedMaterial = {
+  unregister: () => void
   original: THREE.Material | THREE.Material[]
   clipped: THREE.Material | THREE.Material[]
 }
@@ -140,6 +142,7 @@ export function SectionScene() {
       latest.current?.setOpenChains(open)
     }
     const restore = (mesh: THREE.Mesh, entry: SavedMaterial) => {
+      entry.unregister()
       if (mesh.material === entry.clipped) mesh.material = entry.original
       materials(entry.clipped).forEach((m) => m.dispose())
       saved.delete(mesh)
@@ -185,7 +188,9 @@ export function SectionScene() {
       // A camera-facing plane containing the movement axis gives stable dragging
       // in perspective and orthographic views without screen-pixel assumptions.
       const view = camera.getWorldDirection(new THREE.Vector3())
-      const normal = view.addScaledVector(direction, -view.dot(direction))
+      const normal = view
+        .clone()
+        .addScaledVector(direction, -view.dot(direction))
       const endOn = normal.lengthSq() < 0.0001
       if (endOn) normal.copy(view)
       normal.normalize()
@@ -324,7 +329,11 @@ export function SectionScene() {
             return clone
           })
           const clipped = Array.isArray(original) ? clones : clones[0]!
-          saved.set(mesh, { original, clipped })
+          const entry = { original, clipped, unregister: () => {} }
+          entry.unregister = registerMaterialRestoration(mesh, () =>
+            restore(mesh, entry),
+          )
+          saved.set(mesh, entry)
           mesh.material = clipped
         }
       renderer.localClippingEnabled = true
@@ -365,7 +374,12 @@ export function SectionScene() {
               `${m.uuid}:${m.geometry.uuid}:${attributeVersion(m.geometry.getAttribute("position"))}:${m.matrixWorld.elements.join(",")}`,
           )
           .join("|")
-      if (nextSignature === signature || pending) return
+      if (nextSignature === signature) return
+      // Source loads, visibility changes and transforms invalidate in-flight caps.
+      // Never leave a previous GLB's cut faces visible while its replacement loads.
+      revision++
+      clearCaps()
+      if (pending) return
       signature = nextSignature
       const id = ++revision
       const inputs = meshes

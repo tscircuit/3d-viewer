@@ -96,3 +96,47 @@ for (const engine of ["jscad", "manifold"])
       .toBe(-0.3)
     await page.screenshot({ path: `test-results/section-${engine}.png` })
   })
+
+test("GLB URLs render patterned caps without fetching component models", async ({
+  page,
+}) => {
+  const { readFile } = await import("node:fs/promises")
+  const bytes = await readFile(
+    new URL("../tests/assets/prerendered-components.glb", import.meta.url),
+  )
+  let requests = 0
+  await page.route("**/section-test.glb", async (route) => {
+    requests++
+    await route.fulfill({ contentType: "model/gltf-binary", body: bytes })
+  })
+  await page.goto("section.html?engine=glb")
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => window.__TSCIRCUIT_THREE_OBJECT?.children.length ?? 0,
+      ),
+    )
+    .toBeGreaterThan(0)
+  await page.getByRole("button", { name: "Section", exact: true }).click()
+  await page.getByRole("spinbutton", { name: "Section offset (mm)" }).fill("5")
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          window.__TSCIRCUIT_THREE_OBJECT?.parent?.getObjectByName(
+            "Section caps",
+          )?.children.length ?? 0,
+      ),
+    )
+    .toBeGreaterThan(0)
+  await page.getByRole("button", { name: "Flip side", exact: true }).click()
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => window.__TSCIRCUIT_THREE_OBJECT?.userData.sectionView?.flipped,
+      ),
+    )
+    .toBe(true)
+  expect(requests).toBe(1)
+  await page.screenshot({ path: "test-results/section-glb-url.png" })
+})

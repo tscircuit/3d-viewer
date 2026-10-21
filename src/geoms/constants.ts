@@ -11,7 +11,7 @@ export const colors = {
   fr4SolderMaskGreen: [0.06, 0.31, 0.19],
   fr4TracesWithMaskGreen: [0.09, 0.38, 0.23],
   fr4TracesWithoutMaskTan: [0.6, 0.43, 0.28],
-  flexAmber: [0.8, 0.61, 0.2],
+  flexAmber: [204 / 255, 155 / 255, 50 / 255],
   fr1Tan: [0.8, 0.4, 0.2],
   fr1TracesWithMaskCopper: [0.9, 0.6, 0.2],
   fr1SolderMaskGreen: [0.02, 0.1, 0.04],

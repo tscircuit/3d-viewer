@@ -4,7 +4,36 @@ import type { AnyCircuitElement } from "circuit-json"
 import { useEffect, useState } from "react"
 import { CadViewer } from "../src/CadViewer"
 
+import { createDefaultFlexBoard } from "./fixtures/create-default-flex-board"
+
 export default { title: "Flex PCB" }
+
+/** Inspect default flex colors without a custom solderMaskColor override. */
+export const DefaultAmberAndCopper = () => {
+  const [circuitJson, setCircuitJson] = useState<AnyCircuitElement[]>()
+  const [error, setError] = useState<string>()
+  useEffect(() => {
+    let active = true
+    createDefaultFlexBoard().then(
+      (json) => {
+        if (active) setCircuitJson(json)
+      },
+      (error: unknown) => {
+        if (active) setError(String(error))
+      },
+    )
+    return () => {
+      active = false
+    }
+  }, [])
+  if (error) return <div role="alert">Unable to generate flex PCB: {error}</div>
+  if (!circuitJson) return <div role="status">Routing flex PCB…</div>
+  return (
+    <div style={{ width: "100%", height: "90vh" }}>
+      <CadViewer circuitJson={circuitJson} autoRotateDisabled />
+    </div>
+  )
+}
 
 const radius = 6
 const pitch = 22
