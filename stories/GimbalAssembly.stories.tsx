@@ -19,7 +19,7 @@ const showFullAssembly = (controller: CameraController | null) => {
   })
 }
 
-// Gimbal One v0.1.3: one populated PCB and 50 standalone mechanical CAD parts.
+// Gimbal One v0.1.4: one populated PCB, 50 rigid parts and four wiring harnesses.
 // Right-click the background → Hide Assembly → Show Assembly.
 export const GimbalAssembly = () => (
   <CadViewer

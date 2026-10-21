@@ -7,10 +7,10 @@ const cadComponents = gimbalAssembly
   .filter((element) => element.type === "cad_component")
   .map((cad) => cad_component.parse(cad))
 
-test("the full gimbal fixture hides 50 assembly parts and keeps all 74 PCB components", () => {
+test("the full gimbal fixture hides 54 assembly parts including the wiring and keeps all 74 PCB components", () => {
   const ids = new Set(getAssemblyCadComponentIds(cadComponents))
 
-  expect(ids.size).toBe(50)
+  expect(ids.size).toBe(54)
   expect(
     cadComponents.filter((cad) => !ids.has(cad.cad_component_id)),
   ).toHaveLength(74)
