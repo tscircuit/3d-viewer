@@ -4,54 +4,36 @@ import type { AnyCircuitElement } from "circuit-json"
 import { useEffect, useState } from "react"
 import { CadViewer } from "../src/CadViewer"
 
+import { createDefaultFlexBoard } from "./fixtures/create-default-flex-board"
+
 export default { title: "Flex PCB" }
 
-// No custom solder_mask_color: this exercises the default flex palette.
-const defaultFlexCircuit: AnyCircuitElement[] = [
-  {
-    type: "pcb_board",
-    pcb_board_id: "flex-board",
-    center: { x: 0, y: 0 },
-    width: 32,
-    height: 12,
-    thickness: 0.15,
-    num_layers: 2,
-    material: "flex",
-  },
-  ...(["top", "bottom"] as const).flatMap((layer) =>
-    [-3, -1, 1, 3].flatMap((y, index): AnyCircuitElement[] => [
-      {
-        type: "pcb_trace",
-        pcb_trace_id: `${layer}-trace-${index}`,
-        route: [
-          { route_type: "wire", x: -12, y, width: 0.5, layer },
-          { route_type: "wire", x: -5, y, width: 0.5, layer },
-          { route_type: "wire", x: 5, y: y + 0.5, width: 0.5, layer },
-          { route_type: "wire", x: 12, y: y + 0.5, width: 0.5, layer },
-        ],
+/** Inspect default flex colors without a custom solderMaskColor override. */
+export const DefaultAmberAndCopper = () => {
+  const [circuitJson, setCircuitJson] = useState<AnyCircuitElement[]>()
+  const [error, setError] = useState<string>()
+  useEffect(() => {
+    let active = true
+    createDefaultFlexBoard().then(
+      (json) => {
+        if (active) setCircuitJson(json)
       },
-      ...([-12, 12] as const).map(
-        (x): AnyCircuitElement => ({
-          type: "pcb_smtpad",
-          pcb_smtpad_id: `${layer}-pad-${index}-${x}`,
-          shape: "rect",
-          x,
-          y: x < 0 ? y : y + 0.5,
-          width: 3,
-          height: 1,
-          layer,
-        }),
-      ),
-    ]),
-  ),
-]
-
-/** Inspect both faces: amber polyimide and copper traces without a green tint. */
-export const DefaultAmberAndCopper = () => (
-  <div style={{ width: "100%", height: "90vh" }}>
-    <CadViewer circuitJson={defaultFlexCircuit} autoRotateDisabled />
-  </div>
-)
+      (error: unknown) => {
+        if (active) setError(String(error))
+      },
+    )
+    return () => {
+      active = false
+    }
+  }, [])
+  if (error) return <div role="alert">Unable to generate flex PCB: {error}</div>
+  if (!circuitJson) return <div role="status">Routing flex PCB…</div>
+  return (
+    <div style={{ width: "100%", height: "90vh" }}>
+      <CadViewer circuitJson={circuitJson} autoRotateDisabled />
+    </div>
+  )
+}
 
 const radius = 6
 const pitch = 22
