@@ -45,10 +45,7 @@ export const getSoldermaskPalette = (
   const requestedSoldermaskColor =
     resolveSoldermaskColor(boardData.solder_mask_color) ??
     (boardData.material === "flex"
-      ? new THREE.Color().setRGB(
-          ...defaultColors.flexAmber,
-          THREE.SRGBColorSpace,
-        )
+      ? new THREE.Color(toRgb(defaultColors.flexAmber))
       : null)
 
   if (!requestedSoldermaskColor) {
