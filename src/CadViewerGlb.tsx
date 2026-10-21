@@ -10,7 +10,7 @@ import { Html } from "./react-three/Html"
 import { FitCameraToComparison } from "./three-components/reference-object"
 import { getGlbComponentMetadata } from "./utils/prerendered-glb"
 
-function GlbScene({
+export function GlbScene({
   model,
   hiddenCadComponentIds,
 }: {

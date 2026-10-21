@@ -1,3 +1,4 @@
+import { restoreTemporaryMaterials } from "./temporary-materials"
 import * as THREE from "three"
 import { GLTFLoader } from "three-stdlib"
 import { configureObjectShadows } from "./configure-object-shadows"
@@ -49,6 +50,7 @@ export function prepareGlbScene(scene: THREE.Group): THREE.Group {
 
 /** Dispose only resources owned by this load, including shared textures once. */
 export function disposeGlbScene(scene: THREE.Object3D) {
+  restoreTemporaryMaterials(scene)
   const geometries = new Set<THREE.BufferGeometry>()
   const materials = new Set<THREE.Material>()
   const textures = new Set<THREE.Texture>()

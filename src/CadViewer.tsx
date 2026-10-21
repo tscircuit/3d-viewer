@@ -1,3 +1,5 @@
+import { SectionProvider, useSection } from "./sections/SectionContext"
+import { SectionPanel } from "./sections/SectionPanel"
 import { SchematicNavigationContext } from "./contexts/SchematicNavigationContext"
 import type { ThreeContextState } from "./react-three/ThreeContext"
 import {
@@ -73,6 +75,7 @@ export type CadViewerProps = Omit<
 }
 
 const CadViewerInner = (props: CadViewerProps) => {
+  const section = useSection()
   const glbSource = props.glbUrl ?? props.glbData
   const childrenCircuitJson = useConvertChildrenToCircuitJson(
     props.circuitJson || glbSource !== undefined ? undefined : props.children,
@@ -356,6 +359,7 @@ const CadViewerInner = (props: CadViewerProps) => {
           referenceObject={referenceObject}
         />
       )}
+      <SectionPanel />
       {menuVisible && (
         <ContextMenu
           componentName={selectedCadComponent?.componentName}
@@ -383,6 +387,19 @@ const CadViewerInner = (props: CadViewerProps) => {
                 }
               : undefined
           }
+          onSectionView={() => {
+            if (!section?.spec)
+              section?.setSpec({
+                axis: "x",
+                offset: section.bounds
+                  ? (section.bounds.min.x + section.bounds.max.x) / 2
+                  : 0,
+                flipped: false,
+              })
+            section?.setEditing(true)
+            setAutoRotate(false)
+            closeMenu()
+          }}
           menuRef={menuRef}
           menuPos={menuPos}
           engine={engine}
@@ -453,7 +470,9 @@ export const CadViewer = (props: CadViewerProps) => {
         <LayerVisibilityProvider>
           <AppearanceProvider>
             <ToastProvider>
-              <CadViewerInner {...props} />
+              <SectionProvider>
+                <CadViewerInner {...props} />
+              </SectionProvider>
             </ToastProvider>
           </AppearanceProvider>
         </LayerVisibilityProvider>

@@ -1,0 +1,184 @@
+import { expect, test, type Page } from "@playwright/test"
+
+async function openSection(page: Page, engine?: "JSCAD" | "Manifold") {
+  await expect(
+    page.getByRole("button", { name: "Section", exact: true }),
+  ).toHaveCount(0)
+  await page
+    .locator("canvas")
+    .last()
+    .click({ button: "right", position: { x: 200, y: 200 } })
+  await expect(
+    page.getByRole("menuitem", { name: "Section View…", exact: true }),
+  ).toHaveCount(0)
+  await expect(
+    page.getByRole("menuitem", { name: /^Switch to .* Engine$/ }),
+  ).toHaveCount(0)
+  await page.getByRole("menuitem", { name: "Advanced", exact: true }).hover()
+  if (engine)
+    await expect(
+      page.getByRole("menuitem", {
+        name: `Switch to ${engine} Engine`,
+        exact: true,
+      }),
+    ).toBeVisible()
+  else
+    await expect(
+      page.getByRole("menuitem", { name: /^Switch to .* Engine$/ }),
+    ).toHaveCount(0)
+  await page
+    .getByRole("menuitem", { name: "Section View…", exact: true })
+    .click()
+}
+
+test("plane drags without orbiting, remains active when closed, and clears", async ({
+  page,
+}) => {
+  const errors: string[] = []
+  page.on("pageerror", (e) => errors.push(e.message))
+  await page.goto("section.html")
+  await page.getByTestId("start-test-section").click()
+  const offset = page.getByRole("spinbutton", { name: "Section offset (mm)" })
+  await expect(offset).toHaveValue("0")
+  await page.waitForFunction(() =>
+    Boolean(window.__TSCIRCUIT_THREE_OBJECT?.userData.sectionView),
+  )
+  // Wait for the worker to finish and expose visible cap meshes in the scene.
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        window.__TSCIRCUIT_THREE_OBJECT?.parent?.children.some(
+          (o) =>
+            o.type === "Group" &&
+            o.children.some(
+              (c) =>
+                c.type === "Mesh" && (c as any).material.map?.isDataTexture,
+            ),
+        ),
+      ),
+    )
+    .toBe(true)
+  const before = await page.evaluate(() => {
+    const root = window.__TSCIRCUIT_THREE_OBJECT!
+    const helper = root.parent!.children.find(
+      (o) => o.name === "Section plane helper",
+    )!
+    // The camera is accessible through the canvas test instrumentation below.
+    const camera = (window as any).__sectionCamera
+    return {
+      position: camera.position.toArray(),
+      quaternion: camera.quaternion.toArray(),
+      center: helper.position.clone().project(camera).toArray(),
+    }
+  })
+  const size = page.viewportSize()!
+  const x = ((before.center[0]! + 1) / 2) * size.width
+  const y = ((1 - before.center[1]!) / 2) * size.height
+  await page.mouse.move(x, y)
+  await page.mouse.down()
+  await page.mouse.move(x + 120, y + 10, { steps: 12 })
+  await page.mouse.up()
+  await expect.poll(async () => Number(await offset.inputValue())).not.toBe(0)
+  const after = await page.evaluate(() => ({
+    position: (window as any).__sectionCamera.position.toArray() as number[],
+    quaternion: (
+      window as any
+    ).__sectionCamera.quaternion.toArray() as number[],
+  }))
+  // OrbitControls normalizes its spherical coordinates each frame.
+  for (const key of ["position", "quaternion"] as const) {
+    after[key].forEach((value, index) =>
+      expect(value).toBeCloseTo(before[key][index]!, 9),
+    )
+  }
+
+  await page.getByRole("button", { name: "Close section controls" }).click()
+  await expect(
+    page.getByRole("button", { name: "Section on · Edit" }),
+  ).toBeVisible()
+  await page.getByRole("button", { name: "Clear", exact: true }).click()
+  await expect(page.getByTestId("section-state")).toHaveText("null")
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const root = window.__TSCIRCUIT_THREE_OBJECT!
+        let clipped = false
+        root.traverse((o) => {
+          if ((o as any).material?.clippingPlanes?.length) clipped = true
+        })
+        return clipped
+      }),
+    )
+    .toBe(false)
+  expect(errors).toEqual([])
+})
+for (const engine of ["jscad", "manifold"])
+  test(`sections work in ${engine} viewer`, async ({ page }) => {
+    await page.goto(`section.html?engine=${engine}`)
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => window.__TSCIRCUIT_THREE_OBJECT?.children.length ?? 0,
+        ),
+      )
+      .toBeGreaterThan(0)
+    await openSection(page, engine === "jscad" ? "Manifold" : "JSCAD")
+    await page.getByRole("button", { name: "Z", exact: true }).click()
+    await page.getByRole("spinbutton").fill("-0.3")
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => window.__TSCIRCUIT_THREE_OBJECT?.userData.sectionView?.offset,
+        ),
+      )
+      .toBe(-0.3)
+    await page.screenshot({ path: `test-results/section-${engine}.png` })
+  })
+
+test("GLB URLs render patterned caps without fetching component models", async ({
+  page,
+}) => {
+  const { readFile } = await import("node:fs/promises")
+  const bytes = await readFile(
+    new URL("../tests/assets/prerendered-components.glb", import.meta.url),
+  )
+  let requests = 0
+  await page.route("**/section-test.glb", async (route) => {
+    requests++
+    await route.fulfill({ contentType: "model/gltf-binary", body: bytes })
+  })
+  await page.goto("section.html?engine=glb")
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => window.__TSCIRCUIT_THREE_OBJECT?.children.length ?? 0,
+      ),
+    )
+    .toBeGreaterThan(0)
+  // StrictMode deliberately aborts and replays the initial load in development.
+  // Section operations must not trigger another load after the model is ready.
+  const initialRequests = requests
+  expect(initialRequests).toBeGreaterThan(0)
+  await openSection(page)
+  await page.getByRole("spinbutton", { name: "Section offset (mm)" }).fill("5")
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          window.__TSCIRCUIT_THREE_OBJECT?.parent?.getObjectByName(
+            "Section caps",
+          )?.children.length ?? 0,
+      ),
+    )
+    .toBeGreaterThan(0)
+  await page.getByRole("button", { name: "Flip side", exact: true }).click()
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => window.__TSCIRCUIT_THREE_OBJECT?.userData.sectionView?.flipped,
+      ),
+    )
+    .toBe(true)
+  expect(requests).toBe(initialRequests)
+  await page.screenshot({ path: "test-results/section-glb-url.png" })
+})
