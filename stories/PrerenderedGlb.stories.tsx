@@ -9,3 +9,12 @@ export const FromUrl = (args: { glbUrl?: string }) => (
   </div>
 )
 export const FailedLoad = () => <CadViewer glbUrl="/missing-prerendered.glb" />
+
+export const FidgetCounter = () => (
+  <div style={{ height: 600 }}>
+    <CadViewer
+      glbUrl="/prerendered-glb/fidget-counter.glb"
+      autoRotateDisabled
+    />
+  </div>
+)
