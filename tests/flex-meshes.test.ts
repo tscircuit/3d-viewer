@@ -1,7 +1,9 @@
+import { createIndependentFlexTails } from "../stories/fixtures/independent-flex-tails"
+import { transformCircuitJsonCadComponents } from "@tscircuit/flex-utils"
 import { resolveFoldPcbs } from "../src/utils/resolve-fold-pcbs"
 import { expect, test } from "bun:test"
 import * as THREE from "three"
-import { createFlexMeshes } from "../src/utils/flex-meshes"
+import { createFlexMeshes, meshToSurface } from "../src/utils/flex-meshes"
 import { getCadModelTransform } from "../src/utils/cad-model-transform"
 import type { AnyCircuitElement } from "circuit-json"
 
@@ -116,4 +118,251 @@ test("default board geometry follows Circuit JSON while explicit folding overrid
       }
     }
   }
+})
+
+function createTwoTailBoard({ fractionalTailEdge = false } = {}) {
+  const { center, outline, circuitJson } = createIndependentFlexTails({
+    fractionalTailEdge,
+  })
+  const board = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(
+      new THREE.Shape(outline.map(({ x, y }) => new THREE.Vector2(x, y))),
+      { depth: 0.2, bevelEnabled: false },
+    ).translate(0, 0, -0.1),
+    new THREE.MeshStandardMaterial(),
+  )
+  board.name = "board-geom"
+  board.position.set(center.x, center.y, 0)
+  const marker = (name: string, x: number, y: number) => {
+    const geometry = new THREE.BufferGeometry()
+    geometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(
+        [x, y, 0.1, x + 0.1, y, 0.1, x, y + 0.1, 0.1],
+        3,
+      ),
+    )
+    geometry.computeVertexNormals()
+    const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial())
+    mesh.name = name
+    mesh.position.set(center.x, center.y, 0)
+    return mesh
+  }
+  const geometry = [
+    board,
+    marker("encoder-copper", 35, 5),
+    marker("jst-copper", 27, -5),
+    marker("body-copper", 0, 0),
+  ]
+  const plane = new THREE.Mesh(
+    new THREE.PlaneGeometry(50, 20),
+    new THREE.MeshPhysicalMaterial(),
+  )
+  plane.name = "top-board-texture-plane"
+  plane.position.set(center.x + 15, center.y, 0.105)
+  return { center, geometry, plane, circuitJson }
+}
+
+function firstVertex(mesh: THREE.Mesh) {
+  return new THREE.Vector3().fromBufferAttribute(
+    mesh.geometry.getAttribute("position"),
+    0,
+  )
+}
+
+test("the Storybook fixture poses each CAD marker on its own tail and unfolds it", () => {
+  const { center, circuitJson } = createIndependentFlexTails()
+  const original = structuredClone(circuitJson)
+  const folded = transformCircuitJsonCadComponents(circuitJson, {
+    foldPcbs: true,
+  })
+  expect(resolveFoldPcbs(circuitJson)).toBe(false)
+  expect(resolveFoldPcbs(folded)).toBe(true)
+  const expected = {
+    encoder: [center.x + 35 - 592 / 17, center.y + 5 - 148 / 17, -4.6],
+    jst: [center.x + 18 - Math.PI / 2 + 0.6, center.y - 5, -13 + Math.PI / 2],
+    body: [center.x, center.y, 0.6],
+  }
+  for (const element of folded) {
+    if (element.type !== "cad_component") continue
+    const position = expected[element.cad_component_id as keyof typeof expected]
+    expect(element.position.x).toBeCloseTo(position[0]!, 8)
+    expect(element.position.y).toBeCloseTo(position[1]!, 8)
+    expect(element.position.z).toBeCloseTo(position[2]!, 8)
+  }
+  const unfolded = transformCircuitJsonCadComponents(folded, {
+    foldPcbs: false,
+  })
+  for (const element of unfolded) {
+    if (element.type !== "cad_component") continue
+    const flat = circuitJson.find(
+      (e) =>
+        e.type === "cad_component" &&
+        e.cad_component_id === element.cad_component_id,
+    )!
+    if (flat.type !== "cad_component") throw new Error("Missing flat marker")
+    for (const axis of ["x", "y", "z"] as const)
+      expect(element.position[axis]).toBeCloseTo(flat.position[axis], 8)
+  }
+  expect(circuitJson).toEqual(original)
+})
+
+test("nonparallel finite bends fold separate tails on a translated board", () => {
+  for (const reverseBends of [false, true]) {
+    const { center, geometry, plane, circuitJson } = createTwoTailBoard()
+    const flatPositions = geometry.map((mesh) =>
+      mesh.geometry.getAttribute("position").array.slice(),
+    )
+    const orderedJson = reverseBends ? [...circuitJson].reverse() : circuitJson
+    const output = createFlexMeshes(geometry, [plane], orderedJson, true)
+    const encoder = firstVertex(output.geometryMeshes[1]!)
+    // A half turn reflects XY across 4x+y=71 and puts the top copper at Z=-4.1.
+    expect(encoder.x).toBeCloseTo(center.x + 35 - 592 / 17, 5)
+    expect(encoder.y).toBeCloseTo(center.y + 5 - 148 / 17, 5)
+    expect(encoder.z).toBeCloseTo(-4.1, 5)
+    const jst = firstVertex(output.geometryMeshes[2]!)
+    // A radius-2 quarter turn has tangencies at 16 +/- pi/2.
+    expect(jst.x).toBeCloseTo(center.x + 18 - Math.PI / 2 + 0.1, 5)
+    expect(jst.y).toBeCloseTo(center.y - 5, 5)
+    expect(jst.z).toBeCloseTo(-13 + Math.PI / 2, 5)
+    const fixed = firstVertex(output.geometryMeshes[3]!)
+    expect(fixed.x).toBeCloseTo(center.x, 5)
+    expect(fixed.y).toBeCloseTo(center.y, 5)
+    expect(fixed.z).toBeCloseTo(0.1, 5)
+
+    for (const mesh of [...output.geometryMeshes, ...output.textureMeshes]) {
+      for (const name of ["position", "normal", "uv"]) {
+        const attribute = mesh.geometry.getAttribute(name)
+        if (attribute)
+          expect(Array.from(attribute.array).every(Number.isFinite)).toBe(true)
+      }
+    }
+    expect(Object.values(output.bounds!).every(Number.isFinite)).toBe(true)
+    expect(output.textureMeshes[0]!.material).toBe(plane.material)
+    geometry.forEach((mesh, i) => {
+      expect(mesh.geometry.getAttribute("position").array).toEqual(
+        flatPositions[i]!,
+      )
+      expect(output.geometryMeshes[i]!.material).toBe(mesh.material)
+    })
+
+    const stiffeners = output.geometryMeshes.filter(
+      (mesh) => mesh.name === "board-stiffener",
+    )
+    expect(stiffeners).toHaveLength(3)
+    const stiffenerCenters = stiffeners.map((mesh) =>
+      new THREE.Box3().setFromObject(mesh).getCenter(new THREE.Vector3()),
+    )
+    // The adhesive-backed stiffeners stay rigid on their respective islands.
+    const upper = stiffenerCenters.find((p) => Math.abs(p.z + 3.45) < 1e-5)!
+    expect(upper.x).toBeCloseTo(encoder.x, 5)
+    expect(upper.y).toBeCloseTo(encoder.y, 5)
+    const lower = stiffenerCenters.find(
+      (p) => Math.abs(p.y - (center.y - 5)) < 1e-5,
+    )!
+    expect(lower.x).toBeCloseTo(center.x + 18 - Math.PI / 2 - 0.55, 5)
+    expect(lower.z).toBeCloseTo(jst.z, 5)
+    const body = stiffenerCenters.find((p) => Math.abs(p.z + 0.55) < 1e-5)!
+    expect(body.x).toBeCloseTo(center.x, 5)
+    expect(body.y).toBeCloseTo(center.y, 5)
+  }
+})
+
+test("unfolded nonparallel tails retain the original meshes and flat stiffeners", () => {
+  const { center, geometry, plane, circuitJson } = createTwoTailBoard()
+  const output = createFlexMeshes(geometry, [plane], circuitJson, false)
+  expect(output.geometryMeshes.slice(0, geometry.length)).toEqual(geometry)
+  expect(output.textureMeshes).toEqual([plane])
+  const stiffeners = output.geometryMeshes.filter(
+    (mesh) => mesh.name === "board-stiffener",
+  )
+  expect(stiffeners).toHaveLength(3)
+  const centers = stiffeners.map((mesh) =>
+    new THREE.Box3()
+      .setFromObject(mesh)
+      .getCenter(new THREE.Vector3())
+      .toArray(),
+  )
+  for (const [i, [x, y]] of [
+    [35, 5],
+    [27, -5],
+    [0, 0],
+  ].entries()) {
+    expect(centers[i]![0]).toBeCloseTo(center.x + x!, 5)
+    expect(centers[i]![1]).toBeCloseTo(center.y + y!, 5)
+    expect(centers[i]![2]).toBeCloseTo(-0.55, 5)
+  }
+})
+
+test("Float32 outline boundary vertices stay on their folded tail", () => {
+  const { center, geometry, plane, circuitJson } = createTwoTailBoard({
+    fractionalTailEdge: true,
+  })
+  // THREE stores this outer edge slightly outside the double-precision outline.
+  // Passing those vertices to the fold unchanged leaves them flat and creates
+  // long triangles joining the folded tail to the original distal edge.
+  expect(Math.fround(30.1234567)).toBeGreaterThan(30.1234567 + 1e-7)
+  const output = createFlexMeshes(geometry, [plane], circuitJson, true)
+  for (const [mesh, topZ] of [
+    [output.geometryMeshes[0]!, 0.1],
+    [output.textureMeshes[0]!, 0.105],
+  ] as const) {
+    const positions = mesh.geometry.getAttribute("position")
+    const lowerTail = Array.from({ length: positions.count }, (_, i) => ({
+      x: positions.getX(i),
+      y: positions.getY(i),
+      z: positions.getZ(i),
+    })).filter((p) => p.y < center.y - 3 - 1e-5)
+    expect(lowerTail.length).toBeGreaterThan(0)
+    // The distal edge lies below the board after the quarter turn, including
+    // every side wall and the texture clipped to the same native outline.
+    expect(Math.min(...lowerTail.map((p) => p.z))).toBeCloseTo(
+      14 - 30.1234567 + Math.PI / 2,
+      5,
+    )
+    expect(Math.max(...lowerTail.map((p) => p.x))).toBeCloseTo(
+      center.x + 18 - Math.PI / 2 + topZ,
+      5,
+    )
+    expect(lowerTail.every((p) => p.x < center.x + 18)).toBe(true)
+  }
+})
+
+test("outline precision restoration respects mesh transforms and interior vertices", () => {
+  const edge = 30.1234567
+  const center = { x: 11, y: -13 }
+  const geometry = new THREE.BufferGeometry()
+  geometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(
+      [edge, -7, 0.1, 29, -6.9, 0.1, edge - 0.01, -6.8, 0.1],
+      3,
+    ),
+  )
+  const mesh = new THREE.Mesh(geometry)
+  mesh.position.set(center.x, center.y, 2)
+  mesh.rotation.z = Math.PI / 2
+  mesh.scale.set(2, 3, 1)
+  mesh.updateMatrix()
+  const outline = [
+    [10, -7],
+    [edge, -7],
+    [edge, -3],
+    [10, -3],
+  ].map(([x, y]) => {
+    const p = new THREE.Vector3(x!, y!, 0).applyMatrix4(mesh.matrix)
+    return { x: p.x, y: p.y }
+  })
+  const original = geometry.getAttribute("position").array.slice()
+  const raw = meshToSurface(mesh, center)
+  const restored = meshToSurface(mesh, center, outline)
+  const boundary = restored.triangles[0]!.vertices[0]
+  expect(boundary.x).toBeCloseTo(21, 10)
+  expect(boundary.y).toBeCloseTo(edge * 2, 10)
+  expect(boundary.z).toBe(raw.triangles[0]!.vertices[0].z)
+  expect(restored.triangles[0]!.vertices.slice(1)).toEqual(
+    raw.triangles[0]!.vertices.slice(1),
+  )
+  expect(restored.triangles[0]!.vertices[2].y).toBeLessThan(edge * 2 - 0.019)
+  expect(geometry.getAttribute("position").array).toEqual(original)
 })

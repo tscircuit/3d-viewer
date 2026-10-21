@@ -2,7 +2,6 @@
 
 These inputs exercise the actual viewer and the development-only
 `circuit-json-to-gltf` dependency. They are not image baselines.
-
 - `clip.circuit.json` is the existing OBJ story from
   `3d-viewer/stories/Models.stories.tsx`, captured with the original angles and
   CAD datum. Geometry preparation creates explicitly labelled variants of this
@@ -29,7 +28,6 @@ isolate rotation from the contact-centering discrepancy. The missing-origin
 cases intentionally preserve that discrepancy.
 The nonzero angle probes are deliberately non-cardinal. The USB mounting case
 is instead constrained by its physical mounting features:
-
 - Native mesh is already Z-up; right-handed rotation is `(0, 0, 270)` degrees.
 - Absolute CAD datum is `(1.3824742, 0, 1.975)` mm, with explicit model origin zero.
 - Gold contacts sit at the reference board's top surface, Z = 0.7 mm.
