@@ -65,13 +65,7 @@ const iconContainerStyles: React.CSSProperties = {
   flexShrink: 0,
 }
 
-export const AppearanceMenu = ({
-  assemblyHidden = false,
-  onAssemblyVisibilityToggle,
-}: {
-  assemblyHidden?: boolean
-  onAssemblyVisibilityToggle?: () => void
-}) => {
+export const AppearanceMenu = () => {
   const { visibility, setLayerVisibility } = useLayerVisibility()
   const {
     darkBackgroundEnabled,
@@ -463,25 +457,24 @@ export const AppearanceMenu = ({
                 Enclosure
               </span>
             </DropdownMenu.Item>
-            {onAssemblyVisibilityToggle && (
-              <DropdownMenu.CheckboxItem
-                style={assemblyStyles}
-                checked={!assemblyHidden}
-                onCheckedChange={onAssemblyVisibilityToggle}
-                onSelect={(event) => event.preventDefault()}
-                onPointerEnter={() => setHoveredItem("assembly")}
-                onPointerLeave={() => setHoveredItem(null)}
-                onFocus={() => setHoveredItem("assembly")}
-                onBlur={() => setHoveredItem(null)}
-              >
-                <span style={iconContainerStyles}>
-                  <DropdownMenu.ItemIndicator>
-                    <CheckIcon />
-                  </DropdownMenu.ItemIndicator>
-                </span>
-                <span>Assembly</span>
-              </DropdownMenu.CheckboxItem>
-            )}
+            <DropdownMenu.Item
+              style={assemblyStyles}
+              onSelect={(e) => e.preventDefault()}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                setLayerVisibility("assembly", !visibility.assembly)
+              }}
+              onMouseEnter={() => setHoveredItem("assembly")}
+              onMouseLeave={() => setHoveredItem(null)}
+              onTouchStart={() => setHoveredItem("assembly")}
+            >
+              <span style={iconContainerStyles}>
+                {visibility.assembly && <CheckIcon />}
+              </span>
+              <span style={{ display: "flex", alignItems: "center" }}>
+                Assembly
+              </span>
+            </DropdownMenu.Item>
           </ViewportSubContent>
         </DropdownMenu.Portal>
       </DropdownMenu.Sub>

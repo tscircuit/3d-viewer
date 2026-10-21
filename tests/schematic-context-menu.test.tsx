@@ -24,7 +24,6 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     MutationObserver: globalThis.MutationObserver,
     Node: globalThis.Node,
     getComputedStyle: globalThis.getComputedStyle,
-    ResizeObserver: globalThis.ResizeObserver,
   }
 
   Object.assign(globalThis, {
@@ -37,11 +36,6 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     MutationObserver: dom.window.MutationObserver,
     Node: dom.window.Node,
     getComputedStyle: dom.window.getComputedStyle,
-    ResizeObserver: class {
-      observe() {}
-      unobserve() {}
-      disconnect() {}
-    },
     IS_REACT_ACT_ENVIRONMENT: true,
   })
 
@@ -58,16 +52,8 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     const containerRef = useRef<HTMLDivElement>(null)
     const [position, setPosition] = useState({ x: 0, y: 0 })
     const menu = useContextMenu({ containerRef, onOpen: setPosition })
-    const {
-      hiddenCadComponentIds,
-      hideComponent,
-      setComponentsHidden,
-      unhideAllComponents,
-    } = useHiddenCadComponents(circuitKey)
-    const assemblyHidden = hiddenCadComponentIds.has("case")
-    const canUnhideAllComponents =
-      hiddenCadComponentIds.size > 0 &&
-      (!assemblyHidden || hiddenCadComponentIds.has("r1"))
+    const { hiddenCadComponentIds, hideComponent, unhideAllComponents } =
+      useHiddenCadComponents(circuitKey)
     const componentId = position.x === 80 ? "case" : "r1"
     const componentName = componentId === "case" ? "CASE" : "R1"
     const canHide = position.x > 0 && !hiddenCadComponentIds.has(componentId)
@@ -80,10 +66,6 @@ test("component actions snapshot the right-click, close, and restore hidden mode
       >
         {menu.menuVisible && (
           <ContextMenu
-            onAssemblyVisibilityToggle={() =>
-              setComponentsHidden(["case"], !assemblyHidden)
-            }
-            assemblyHidden={assemblyHidden}
             menuRef={menu.menuRef}
             menuPos={menu.menuPos}
             engine="manifold"
@@ -104,7 +86,7 @@ test("component actions snapshot the right-click, close, and restore hidden mode
                 : undefined
             }
             onUnhideAllComponents={
-              canUnhideAllComponents
+              hiddenCadComponentIds.size > 0
                 ? () => {
                     unhideAllComponents()
                     menu.setMenuVisible(false)
@@ -202,55 +184,6 @@ test("component actions snapshot the right-click, close, and restore hidden mode
       })
       expect(document.querySelector('[role="menu"]')).toBeNull()
     }
-    const toggleAssembly = async (checkedBefore: boolean, keyboard = false) => {
-      const appearance = Array.from(
-        document.querySelectorAll<HTMLElement>('[role="menuitem"]'),
-      ).find((item) => item.textContent === "Appearance")!
-      await act(async () => {
-        appearance.focus()
-        appearance.dispatchEvent(
-          new dom.window.KeyboardEvent("keydown", {
-            key: "ArrowRight",
-            bubbles: true,
-          }),
-        )
-      })
-      await act(
-        () => new Promise<void>((resolve) => dom.window.setTimeout(resolve, 0)),
-      )
-      const assembly = document.querySelector<HTMLElement>(
-        '[role="menuitemcheckbox"]',
-      )!
-      const enclosure = Array.from(
-        document.querySelectorAll('[role="menuitem"]'),
-      ).find((item) => item.textContent === "Enclosure")!
-      expect(assembly.textContent).toBe("Assembly")
-      expect(enclosure.nextElementSibling).toBe(assembly)
-      expect(assembly.getAttribute("aria-checked")).toBe(String(checkedBefore))
-      await act(async () => {
-        if (keyboard) {
-          assembly.focus()
-          assembly.dispatchEvent(
-            new dom.window.KeyboardEvent("keydown", {
-              key: "Enter",
-              bubbles: true,
-            }),
-          )
-        } else {
-          assembly.dispatchEvent(
-            new dom.window.MouseEvent("click", { bubbles: true }),
-          )
-        }
-      })
-      expect(assembly.getAttribute("aria-checked")).toBe(String(!checkedBefore))
-      expect(document.querySelector('[role="menu"]')).not.toBeNull()
-      await act(async () => {
-        viewer.dispatchEvent(
-          new dom.window.MouseEvent("mousedown", { bubbles: true }),
-        )
-      })
-      expect(document.querySelector('[role="menu"]')).toBeNull()
-    }
     await rightClick()
     expect(document.body.textContent).not.toContain("Unhide All Components")
     await select('Hide "CASE"', true)
@@ -262,20 +195,9 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     expect(document.body.textContent).not.toContain('Hide "')
     await select("Unhide All Components", true)
     expect(viewer.getAttribute("data-hidden")).toBe("")
-    await rightClick(40, 40)
-    await select('Hide "R1"')
-    await rightClick(0, 0)
-    await toggleAssembly(true, true)
-    expect(viewer.getAttribute("data-hidden")).toBe("r1,case")
-    await rightClick(0, 0)
-    await toggleAssembly(false, true)
-    expect(viewer.getAttribute("data-hidden")).toBe("r1")
-    await rightClick(0, 0)
-    await select("Unhide All Components", true)
-    expect(viewer.getAttribute("data-hidden")).toBe("")
-    await rightClick(0, 0)
+    await rightClick()
     expect(document.body.textContent).not.toContain("Unhide All Components")
-    await toggleAssembly(true)
+    await select('Hide "CASE"')
     await act(async () => {
       reactRoot.render(
         <CameraControllerProvider defaultTarget={new THREE.Vector3()}>
@@ -294,9 +216,8 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     expect(document.querySelector('[role="menu"]')).not.toBeNull()
     expect(document.body.textContent).not.toContain("Show on schematic")
     expect(document.body.textContent).not.toContain('Hide "')
-    expect(document.body.textContent).not.toContain("Unhide All Components")
     // Hiding is independent of optional schematic navigation and remains on a rerender.
-    await toggleAssembly(false)
+    await select("Unhide All Components")
     expect(viewer.getAttribute("data-hidden")).toBe("")
     await rightClick()
     expect(document.body.textContent).not.toContain("Show on schematic")
@@ -313,7 +234,7 @@ test("component actions snapshot the right-click, close, and restore hidden mode
       )
     })
     await rightClick()
-    await toggleAssembly(false)
+    await select("Unhide All Components")
     await rightClick()
     await select('Hide "CASE"')
     await act(async () => {

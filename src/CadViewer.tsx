@@ -10,7 +10,6 @@ import {
   type PickedCadComponent,
 } from "./utils/pick-cad-component"
 import { useHiddenCadComponents } from "./hooks/useHiddenCadComponents"
-import { getAssemblyCadComponentIds } from "./utils/get-assembly-cad-component-ids"
 import { configureRuntimeFont } from "./utils/configure-runtime-font"
 import { useCallback, useContext, useEffect, useRef, useState } from "react"
 import * as THREE from "three"
@@ -83,19 +82,8 @@ const CadViewerInner = (props: CadViewerProps) => {
   const foldPcbs = foldPcbsOverride ?? props.foldPcbs
   const resolvedFoldPcbs = resolveFoldPcbs(circuitJson, foldPcbs)
   const circuitKey = JSON.stringify(circuitJson)
-  const {
-    hiddenCadComponentIds,
-    hideComponent,
-    setComponentsHidden,
-    unhideAllComponents,
-  } = useHiddenCadComponents(circuitKey)
-  const assemblyCadComponentIds = getAssemblyCadComponentIds(circuitJson)
-  const assemblyHidden =
-    assemblyCadComponentIds.length > 0 &&
-    assemblyCadComponentIds.every((id) => hiddenCadComponentIds.has(id))
-  const canUnhideAllComponents = [...hiddenCadComponentIds].some(
-    (id) => !assemblyHidden || !assemblyCadComponentIds.includes(id),
-  )
+  const { hiddenCadComponentIds, hideComponent, unhideAllComponents } =
+    useHiddenCadComponents(circuitKey)
   const resolvedProps = {
     ...props,
     circuitJson,
@@ -352,11 +340,6 @@ const CadViewerInner = (props: CadViewerProps) => {
       )}
       {menuVisible && (
         <ContextMenu
-          {...(assemblyCadComponentIds.length > 0 && {
-            onAssemblyVisibilityToggle: () =>
-              setComponentsHidden(assemblyCadComponentIds, !assemblyHidden),
-          })}
-          assemblyHidden={assemblyHidden}
           componentName={selectedCadComponent?.componentName}
           onHideComponent={
             selectedCadComponent
@@ -367,7 +350,7 @@ const CadViewerInner = (props: CadViewerProps) => {
               : undefined
           }
           onUnhideAllComponents={
-            canUnhideAllComponents
+            hiddenCadComponentIds.size > 0
               ? () => {
                   unhideAllComponents()
                   closeMenu()

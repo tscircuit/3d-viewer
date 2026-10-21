@@ -301,6 +301,8 @@ export const AnyCadComponent = ({
     )
   }
 
+  if (!cad_component.pcb_component_id && !visibility.assembly) return null
+
   // The generated enclosure gets its own three-state display control. Other CAD
   // models retain the existing translucent/SMT/through-hole category toggles.
   if (isEnclosure) {

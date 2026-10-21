@@ -34,6 +34,7 @@ export interface LayerVisibilityState {
    * check openings against the board, opaque to inspect the print itself.
    */
   enclosure: EnclosureVisibility
+  assembly: boolean
 }
 
 export type EnclosureVisibility = "hidden" | "translucent" | "opaque"
@@ -83,6 +84,7 @@ const defaultVisibility: LayerVisibilityState = {
   backgroundStart: true,
   backgroundEnd: true,
   enclosure: "translucent",
+  assembly: true,
 }
 
 const LayerVisibilityContext = createContext<

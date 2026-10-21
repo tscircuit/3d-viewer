@@ -34,8 +34,6 @@ interface ContextMenuProps {
   onViewSchematicComponent?: () => void
   componentName?: string
   onHideComponent?: () => void
-  onAssemblyVisibilityToggle?: () => void
-  assemblyHidden?: boolean
   onUnhideAllComponents?: () => void
   onDownloadGltf: () => void
   onOpenKeyboardShortcuts: () => void
@@ -136,8 +134,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onViewSchematicComponent,
   componentName,
   onHideComponent,
-  onAssemblyVisibilityToggle,
-  assemblyHidden = false,
   onUnhideAllComponents,
   onDownloadGltf,
   onOpenKeyboardShortcuts,
@@ -458,10 +454,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             </DropdownMenu.Item>
 
             {/* Appearance Menu */}
-            <AppearanceMenu
-              assemblyHidden={assemblyHidden}
-              onAssemblyVisibilityToggle={onAssemblyVisibilityToggle}
-            />
+            <AppearanceMenu />
 
             <DropdownMenu.Separator style={separatorStyles} />
 
