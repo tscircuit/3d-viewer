@@ -210,7 +210,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 </DropdownMenu.Item>
               </>
             )}
-            {onAssemblyVisibilityToggle && (
+            {onAssemblyVisibilityToggle && !onHideComponent && (
               <DropdownMenu.Item
                 style={hideAssemblyStyles}
                 onSelect={onAssemblyVisibilityToggle}

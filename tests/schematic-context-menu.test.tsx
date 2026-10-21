@@ -205,9 +205,11 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     }
     await rightClick()
     expect(document.body.textContent).not.toContain("Unhide All Components")
+    expect(document.body.textContent).not.toContain("Hide Assembly")
     await select('Hide "CASE"', true)
     expect(viewer.getAttribute("data-hidden")).toBe("case")
     await rightClick(40, 40)
+    expect(document.body.textContent).not.toContain("Show Assembly")
     await select('Hide "R1"')
     expect(viewer.getAttribute("data-hidden")).toBe("case,r1")
     await rightClick(0, 0)
@@ -228,7 +230,7 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     expect(document.body.textContent).toContain("Hide Assembly")
     await select("Unhide All Components", true)
     expect(viewer.getAttribute("data-hidden")).toBe("")
-    await rightClick()
+    await rightClick(0, 0)
     expect(document.body.textContent).not.toContain("Unhide All Components")
     await select("Hide Assembly")
     await act(async () => {
