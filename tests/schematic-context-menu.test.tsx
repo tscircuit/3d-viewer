@@ -56,14 +56,20 @@ test("component actions snapshot the right-click, close, and restore hidden mode
       hiddenCadComponentIds,
       hideComponent,
       hideComponents,
+      showComponents,
       unhideAllComponents,
     } = useHiddenCadComponents(circuitKey)
-    let onHideAssembly: (() => void) | undefined
-    if (!hiddenCadComponentIds.has("case")) {
-      onHideAssembly = () => {
+    const assemblyHidden = hiddenCadComponentIds.has("case")
+    const canUnhideAllComponents =
+      hiddenCadComponentIds.size > 0 &&
+      (!assemblyHidden || hiddenCadComponentIds.has("r1"))
+    const onAssemblyVisibilityToggle = () => {
+      if (assemblyHidden) {
+        showComponents(["case"])
+      } else {
         hideComponents(["case"])
-        menu.setMenuVisible(false)
       }
+      menu.setMenuVisible(false)
     }
     const componentId = position.x === 80 ? "case" : "r1"
     const componentName = componentId === "case" ? "CASE" : "R1"
@@ -77,7 +83,8 @@ test("component actions snapshot the right-click, close, and restore hidden mode
       >
         {menu.menuVisible && (
           <ContextMenu
-            onHideAssembly={onHideAssembly}
+            onAssemblyVisibilityToggle={onAssemblyVisibilityToggle}
+            assemblyHidden={assemblyHidden}
             menuRef={menu.menuRef}
             menuPos={menu.menuPos}
             engine="manifold"
@@ -98,7 +105,7 @@ test("component actions snapshot the right-click, close, and restore hidden mode
                 : undefined
             }
             onUnhideAllComponents={
-              hiddenCadComponentIds.size > 0
+              canUnhideAllComponents
                 ? () => {
                     unhideAllComponents()
                     menu.setMenuVisible(false)
@@ -215,6 +222,10 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     expect(viewer.getAttribute("data-hidden")).toBe("r1,case")
     await rightClick(0, 0)
     expect(document.body.textContent).not.toContain("Hide Assembly")
+    await select("Show Assembly", true)
+    expect(viewer.getAttribute("data-hidden")).toBe("r1")
+    await rightClick(0, 0)
+    expect(document.body.textContent).toContain("Hide Assembly")
     await select("Unhide All Components", true)
     expect(viewer.getAttribute("data-hidden")).toBe("")
     await rightClick()
@@ -238,8 +249,9 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     expect(document.querySelector('[role="menu"]')).not.toBeNull()
     expect(document.body.textContent).not.toContain("Show on schematic")
     expect(document.body.textContent).not.toContain('Hide "')
+    expect(document.body.textContent).not.toContain("Unhide All Components")
     // Hiding is independent of optional schematic navigation and remains on a rerender.
-    await select("Unhide All Components")
+    await select("Show Assembly")
     expect(viewer.getAttribute("data-hidden")).toBe("")
     await rightClick()
     expect(document.body.textContent).not.toContain("Show on schematic")
@@ -256,7 +268,7 @@ test("component actions snapshot the right-click, close, and restore hidden mode
       )
     })
     await rightClick()
-    await select("Unhide All Components")
+    await select("Show Assembly")
     await rightClick()
     await select('Hide "CASE"')
     await act(async () => {

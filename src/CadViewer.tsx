@@ -87,13 +87,24 @@ const CadViewerInner = (props: CadViewerProps) => {
     hiddenCadComponentIds,
     hideComponent,
     hideComponents,
+    showComponents,
     unhideAllComponents,
   } = useHiddenCadComponents(circuitKey)
   const assemblyCadComponentIds = getAssemblyCadComponentIds(circuitJson)
-  let onHideAssembly: (() => void) | undefined
-  if (assemblyCadComponentIds.some((id) => !hiddenCadComponentIds.has(id))) {
-    onHideAssembly = () => {
-      hideComponents(assemblyCadComponentIds)
+  const assemblyHidden =
+    assemblyCadComponentIds.length > 0 &&
+    assemblyCadComponentIds.every((id) => hiddenCadComponentIds.has(id))
+  const canUnhideAllComponents = [...hiddenCadComponentIds].some(
+    (id) => !assemblyHidden || !assemblyCadComponentIds.includes(id),
+  )
+  let onAssemblyVisibilityToggle: (() => void) | undefined
+  if (assemblyCadComponentIds.length > 0) {
+    onAssemblyVisibilityToggle = () => {
+      if (assemblyHidden) {
+        showComponents(assemblyCadComponentIds)
+      } else {
+        hideComponents(assemblyCadComponentIds)
+      }
       closeMenu()
     }
   }
@@ -353,7 +364,8 @@ const CadViewerInner = (props: CadViewerProps) => {
       )}
       {menuVisible && (
         <ContextMenu
-          onHideAssembly={onHideAssembly}
+          onAssemblyVisibilityToggle={onAssemblyVisibilityToggle}
+          assemblyHidden={assemblyHidden}
           componentName={selectedCadComponent?.componentName}
           onHideComponent={
             selectedCadComponent
@@ -364,7 +376,7 @@ const CadViewerInner = (props: CadViewerProps) => {
               : undefined
           }
           onUnhideAllComponents={
-            hiddenCadComponentIds.size > 0
+            canUnhideAllComponents
               ? () => {
                   unhideAllComponents()
                   closeMenu()

@@ -34,7 +34,8 @@ interface ContextMenuProps {
   onViewSchematicComponent?: () => void
   componentName?: string
   onHideComponent?: () => void
-  onHideAssembly?: () => void
+  onAssemblyVisibilityToggle?: () => void
+  assemblyHidden?: boolean
   onUnhideAllComponents?: () => void
   onDownloadGltf: () => void
   onOpenKeyboardShortcuts: () => void
@@ -135,7 +136,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onViewSchematicComponent,
   componentName,
   onHideComponent,
-  onHideAssembly,
+  onAssemblyVisibilityToggle,
+  assemblyHidden = false,
   onUnhideAllComponents,
   onDownloadGltf,
   onOpenKeyboardShortcuts,
@@ -149,6 +151,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   if (hoveredItem === "hide-assembly") {
     hideAssemblyStyles.backgroundColor = "#404040"
   }
+  let assemblyActionLabel = "Hide Assembly"
+  if (assemblyHidden) assemblyActionLabel = "Show Assembly"
 
   return (
     <div
@@ -206,16 +210,16 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 </DropdownMenu.Item>
               </>
             )}
-            {onHideAssembly && (
+            {onAssemblyVisibilityToggle && (
               <DropdownMenu.Item
                 style={hideAssemblyStyles}
-                onSelect={onHideAssembly}
+                onSelect={onAssemblyVisibilityToggle}
                 onPointerEnter={() => setHoveredItem("hide-assembly")}
                 onPointerLeave={() => setHoveredItem(null)}
                 onFocus={() => setHoveredItem("hide-assembly")}
                 onBlur={() => setHoveredItem(null)}
               >
-                Hide Assembly
+                {assemblyActionLabel}
               </DropdownMenu.Item>
             )}
             {onUnhideAllComponents && (
@@ -235,7 +239,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             )}
             {(onViewSchematicComponent ||
               onHideComponent ||
-              onHideAssembly ||
+              onAssemblyVisibilityToggle ||
               onUnhideAllComponents) && (
               <DropdownMenu.Separator style={separatorStyles} />
             )}

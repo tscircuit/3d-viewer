@@ -37,5 +37,15 @@ export const useHiddenCadComponents = (circuitKey: string) => {
     unhideAllComponents: () => {
       setState({ circuitKey, ids: NO_HIDDEN_COMPONENTS })
     },
+    showComponents: (ids: Iterable<string>) => {
+      setState((current) => {
+        if (current.circuitKey !== circuitKey) {
+          return { circuitKey, ids: NO_HIDDEN_COMPONENTS }
+        }
+        const hiddenIds = new Set(current.ids)
+        for (const id of ids) hiddenIds.delete(id)
+        return { circuitKey, ids: hiddenIds }
+      })
+    },
   }
 }
