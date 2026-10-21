@@ -309,7 +309,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Section views
 
-Click **Section** in the viewer, or choose **Section view…** from the right-click menu.
+Right-click the viewer and choose **Advanced → Section View…**.
+The Advanced submenu also contains the engine switch for generated scenes.
 Choose X, Y, or Z, then drag the translucent plane or its arrow to move the cut.
 The slider and millimeter field provide precise positioning; **Flip side** changes
 which half remains visible. **Look perpendicular** faces the cut directly; in that

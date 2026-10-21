@@ -1,4 +1,35 @@
-import { expect, test } from "@playwright/test"
+import { expect, test, type Page } from "@playwright/test"
+
+async function openSection(page: Page, engine?: "JSCAD" | "Manifold") {
+  await expect(
+    page.getByRole("button", { name: "Section", exact: true }),
+  ).toHaveCount(0)
+  await page
+    .locator("canvas")
+    .last()
+    .click({ button: "right", position: { x: 200, y: 200 } })
+  await expect(
+    page.getByRole("menuitem", { name: "Section View…", exact: true }),
+  ).toHaveCount(0)
+  await expect(
+    page.getByRole("menuitem", { name: /^Switch to .* Engine$/ }),
+  ).toHaveCount(0)
+  await page.getByRole("menuitem", { name: "Advanced", exact: true }).hover()
+  if (engine)
+    await expect(
+      page.getByRole("menuitem", {
+        name: `Switch to ${engine} Engine`,
+        exact: true,
+      }),
+    ).toBeVisible()
+  else
+    await expect(
+      page.getByRole("menuitem", { name: /^Switch to .* Engine$/ }),
+    ).toHaveCount(0)
+  await page
+    .getByRole("menuitem", { name: "Section View…", exact: true })
+    .click()
+}
 
 test("plane drags without orbiting, remains active when closed, and clears", async ({
   page,
@@ -6,7 +37,7 @@ test("plane drags without orbiting, remains active when closed, and clears", asy
   const errors: string[] = []
   page.on("pageerror", (e) => errors.push(e.message))
   await page.goto("section.html")
-  await page.getByRole("button", { name: "Section", exact: true }).click()
+  await page.getByTestId("start-test-section").click()
   const offset = page.getByRole("spinbutton", { name: "Section offset (mm)" })
   await expect(offset).toHaveValue("0")
   await page.waitForFunction(() =>
@@ -91,7 +122,7 @@ for (const engine of ["jscad", "manifold"])
         ),
       )
       .toBeGreaterThan(0)
-    await page.getByRole("button", { name: "Section", exact: true }).click()
+    await openSection(page, engine === "jscad" ? "Manifold" : "JSCAD")
     await page.getByRole("button", { name: "Z", exact: true }).click()
     await page.getByRole("spinbutton").fill("-0.3")
     await expect
@@ -128,7 +159,7 @@ test("GLB URLs render patterned caps without fetching component models", async (
   // Section operations must not trigger another load after the model is ready.
   const initialRequests = requests
   expect(initialRequests).toBeGreaterThan(0)
-  await page.getByRole("button", { name: "Section", exact: true }).click()
+  await openSection(page)
   await page.getByRole("spinbutton", { name: "Section offset (mm)" }).fill("5")
   await expect
     .poll(() =>

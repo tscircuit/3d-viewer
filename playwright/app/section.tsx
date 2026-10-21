@@ -43,12 +43,25 @@ function Fixture() {
 function Probe() {
   const section = useSection()
   return (
-    <output
-      data-testid="section-state"
-      style={{ position: "absolute", bottom: 0, color: "white" }}
-    >
-      {JSON.stringify(section?.spec)}
-    </output>
+    <>
+      <button
+        type="button"
+        data-testid="start-test-section"
+        style={{ position: "absolute", bottom: 24, left: 12 }}
+        onClick={() => {
+          section!.setSpec({ axis: "x", offset: 0, flipped: false })
+          section!.setEditing(true)
+        }}
+      >
+        Start test section
+      </button>
+      <output
+        data-testid="section-state"
+        style={{ position: "absolute", bottom: 0, color: "white" }}
+      >
+        {JSON.stringify(section?.spec)}
+      </output>
+    </>
   )
 }
 const params = new URLSearchParams(location.search)

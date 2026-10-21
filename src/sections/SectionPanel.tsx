@@ -13,17 +13,9 @@ const button: CSSProperties = {
 }
 export function SectionPanel() {
   const section = useSection()
-  if (!section) return null
+  if (!section?.spec) return null
   const { spec, setSpec, editing, setEditing, bounds, openChains } = section
-  const start = () => {
-    if (!spec)
-      setSpec({
-        axis: "x",
-        offset: bounds ? (bounds.min.x + bounds.max.x) / 2 : 0,
-        flipped: false,
-      })
-    setEditing(true)
-  }
+  const start = () => setEditing(true)
   const clear = () => {
     setSpec(null)
     setEditing(false)
@@ -46,16 +38,14 @@ export function SectionPanel() {
       onPointerDown={(e) => e.stopPropagation()}
       onContextMenu={(e) => e.stopPropagation()}
     >
-      {!editing || !spec ? (
+      {!editing ? (
         <div style={{ display: "flex", gap: 6 }}>
           <button type="button" style={button} onClick={start}>
-            {spec ? "Section on · Edit" : "Section"}
+            Section on · Edit
           </button>
-          {spec && (
-            <button type="button" style={button} onClick={clear}>
-              Clear
-            </button>
-          )}
+          <button type="button" style={button} onClick={clear}>
+            Clear
+          </button>
         </div>
       ) : (
         <div style={{ display: "grid", gap: 9, width: 220, maxWidth: "100%" }}>
@@ -66,7 +56,7 @@ export function SectionPanel() {
               justifyContent: "space-between",
             }}
           >
-            <strong>Section view</strong>
+            <strong>Section View</strong>
             <button
               type="button"
               style={button}
