@@ -6,7 +6,8 @@ export function createCoverlayCircuit(
   return [
     {
       type: "pcb_board",
-      pcb_board_id: "board", subcircuit_id: "flex",
+      pcb_board_id: "board",
+      subcircuit_id: "flex",
       material: "flex",
       coverlay_color: coverlayColor,
       center: { x: 0, y: 0 },
