@@ -2,6 +2,7 @@ import { ViewportSubContent } from "./ViewportSubContent"
 import { menuViewportStyles } from "./menu-viewport-styles"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import type React from "react"
+import type { AnyCircuitElement } from "circuit-json"
 import { useState } from "react"
 import { zIndexMap } from "../../lib/utils/z-index-map"
 import { useAppearance } from "../contexts/appearance-context"
@@ -66,10 +67,15 @@ const iconContainerStyles: React.CSSProperties = {
 }
 
 export const AppearanceMenu = ({
+  circuitJson = [],
   showLayerControls = true,
 }: {
+  circuitJson?: AnyCircuitElement[]
   showLayerControls?: boolean
 }) => {
+  const hasAssembly = circuitJson.some(
+    (element) => element.type === "cad_component" && !element.pcb_component_id,
+  )
   const { visibility, setLayerVisibility } = useLayerVisibility()
   const {
     darkBackgroundEnabled,
@@ -472,24 +478,26 @@ export const AppearanceMenu = ({
                     Enclosure
                   </span>
                 </DropdownMenu.Item>
-                <DropdownMenu.Item
-                  style={assemblyStyles}
-                  onSelect={(e) => e.preventDefault()}
-                  onPointerDown={(e) => {
-                    e.preventDefault()
-                    setLayerVisibility("assembly", !visibility.assembly)
-                  }}
-                  onMouseEnter={() => setHoveredItem("assembly")}
-                  onMouseLeave={() => setHoveredItem(null)}
-                  onTouchStart={() => setHoveredItem("assembly")}
-                >
-                  <span style={iconContainerStyles}>
-                    {visibility.assembly && <CheckIcon />}
-                  </span>
-                  <span style={{ display: "flex", alignItems: "center" }}>
-                    Assembly
-                  </span>
-                </DropdownMenu.Item>
+                {hasAssembly && (
+                  <DropdownMenu.Item
+                    style={assemblyStyles}
+                    onSelect={(e) => e.preventDefault()}
+                    onPointerDown={(e) => {
+                      e.preventDefault()
+                      setLayerVisibility("assembly", !visibility.assembly)
+                    }}
+                    onMouseEnter={() => setHoveredItem("assembly")}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    onTouchStart={() => setHoveredItem("assembly")}
+                  >
+                    <span style={iconContainerStyles}>
+                      {visibility.assembly && <CheckIcon />}
+                    </span>
+                    <span style={{ display: "flex", alignItems: "center" }}>
+                      Assembly
+                    </span>
+                  </DropdownMenu.Item>
+                )}
               </>
             )}
           </ViewportSubContent>

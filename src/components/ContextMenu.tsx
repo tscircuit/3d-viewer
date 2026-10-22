@@ -2,6 +2,7 @@ import { ViewportSubContent } from "./ViewportSubContent"
 import { menuViewportStyles } from "./menu-viewport-styles"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import type React from "react"
+import type { AnyCircuitElement } from "circuit-json"
 import { useState } from "react"
 import { zIndexMap } from "../../lib/utils/z-index-map"
 import packageJson from "../../package.json"
@@ -16,6 +17,7 @@ import { AppearanceMenu } from "./AppearanceMenu"
 import { CheckIcon, ChevronRightIcon, DotIcon } from "./Icons"
 
 interface ContextMenuProps {
+  circuitJson?: AnyCircuitElement[]
   menuRef: React.RefObject<HTMLDivElement | null>
   menuPos: { x: number; y: number }
   engine: "jscad" | "manifold"
@@ -120,6 +122,7 @@ const badgeStyles: React.CSSProperties = {
 }
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({
+  circuitJson,
   menuRef,
   menuPos,
   engine,
@@ -459,7 +462,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             </DropdownMenu.Item>
 
             {/* Appearance Menu */}
-            <AppearanceMenu showLayerControls={!preRendered} />
+            <AppearanceMenu
+              circuitJson={circuitJson}
+              showLayerControls={!preRendered}
+            />
 
             <DropdownMenu.Separator style={separatorStyles} />
 

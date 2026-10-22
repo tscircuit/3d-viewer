@@ -362,6 +362,7 @@ const CadViewerInner = (props: CadViewerProps) => {
       <SectionPanel />
       {menuVisible && (
         <ContextMenu
+          circuitJson={circuitJson}
           componentName={selectedCadComponent?.componentName}
           onHideComponent={
             selectedCadComponent
