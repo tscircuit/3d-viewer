@@ -10,11 +10,44 @@ import {
 import * as THREE from "three"
 import { configureObjectShadows } from "./configure-object-shadows"
 
+function restoreOutlinePrecision(
+  point: THREE.Vector3,
+  outline: NonNullable<PcbBoard["outline"]>,
+  tolerance: number,
+) {
+  let distanceSquared = tolerance * tolerance
+  let closest: { x: number; y: number } | undefined
+  for (let i = 0; i < outline.length; i++) {
+    const a = outline[i]!
+    const b = outline[(i + 1) % outline.length]!
+    const dx = b.x - a.x
+    const dy = b.y - a.y
+    const lengthSquared = dx * dx + dy * dy
+    if (lengthSquared === 0) continue
+    const t = Math.max(
+      0,
+      Math.min(
+        1,
+        ((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSquared,
+      ),
+    )
+    const x = a.x + t * dx
+    const y = a.y + t * dy
+    const distance = (x - point.x) ** 2 + (y - point.y) ** 2
+    if (distance <= distanceSquared) {
+      distanceSquared = distance
+      closest = { x, y }
+    }
+  }
+  if (closest) point.set(closest.x, closest.y, point.z)
+}
+
 /** Native Three geometry -> board-local Circuit JSON (+Z up, mm). Mesh matrices
  * are applied once; PCB coordinates and flat texture UVs are never changed. */
 export function meshToSurface(
   mesh: THREE.Mesh,
   center: { x: number; y: number },
+  outline?: PcbBoard["outline"],
 ): SurfaceMesh {
   mesh.updateMatrix()
   const geometry = mesh.geometry.index
@@ -25,9 +58,30 @@ export function meshToSurface(
   const triangles: Triangle[] = []
   for (let i = 0; i < position.count; i += 3) {
     const vertices = [0, 1, 2].map((j) => {
-      const v = new THREE.Vector3()
-        .fromBufferAttribute(position, i + j)
-        .applyMatrix4(mesh.matrix)
+      const v = new THREE.Vector3().fromBufferAttribute(position, i + j)
+      const localMagnitude = Math.max(
+        1,
+        Math.abs(v.x),
+        Math.abs(v.y),
+        Math.abs(v.z),
+      )
+      v.applyMatrix4(mesh.matrix)
+      if (outline && position.array instanceof Float32Array) {
+        // Float32 edge vertices can round outside a finite bend's moving region.
+        // Restore only coordinates within the input mesh's rounding uncertainty;
+        // the authoritative outline, bend axes, Z and texture UVs stay unchanged.
+        const m = mesh.matrix.elements
+        const xyScale = Math.max(
+          Math.abs(m[0]!) + Math.abs(m[4]!) + Math.abs(m[8]!),
+          Math.abs(m[1]!) + Math.abs(m[5]!) + Math.abs(m[9]!),
+        )
+        restoreOutlinePrecision(
+          v,
+          outline,
+          localMagnitude * 2 ** -22 * xyScale +
+            Math.max(1, Math.abs(v.x), Math.abs(v.y)) * Number.EPSILON * 4,
+        )
+      }
       return { x: v.x - center.x, y: v.y - center.y, z: v.z }
     }) as Triangle["vertices"]
     const [a, b, c] = vertices
@@ -112,15 +166,26 @@ export function createFlexMeshes(
       "Flex rendering requires one board, matching board references, and no panel",
     )
   const fold = foldPcbs
-    ? createPcbFold(bends, board.thickness ?? 1.6)
+    ? createPcbFold(bends, board.thickness ?? 1.6, {
+        outline: board.outline?.map((point) => ({
+          x: point.x - board.center.x,
+          y: point.y - board.center.y,
+        })),
+      })
     : undefined
   const body = geometryMeshes.find((m) => m.name === "board-geom")
-  const flatBody = body ? meshToSurface(body, board.center) : undefined
+  const flatBody =
+    fold && body ? meshToSurface(body, board.center, board.outline) : undefined
   const geometry = fold
     ? geometryMeshes.map((mesh) =>
         replaceGeometry(
           mesh,
-          foldSurfaceMesh(meshToSurface(mesh, board.center), fold),
+          foldSurfaceMesh(
+            mesh === body && flatBody
+              ? flatBody
+              : meshToSurface(mesh, board.center, board.outline),
+            fold,
+          ),
           board,
         ),
       )

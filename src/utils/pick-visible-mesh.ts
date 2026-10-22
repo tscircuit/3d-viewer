@@ -34,6 +34,15 @@ export const pickVisibleMesh = (
       if (!object.visible) visible = false
       object = object.parent
     }
+    const material = Array.isArray(hit.object.material)
+      ? hit.object.material[hit.face?.materialIndex ?? 0]
+      : hit.object.material
+    if (
+      material?.clippingPlanes?.some(
+        (plane: THREE.Plane) => plane.distanceToPoint(hit.point) < 0,
+      )
+    )
+      continue
     if (visible) return hit.object
   }
 }

@@ -20,6 +20,10 @@ const config: StorybookConfig = {
   stories: ["../stories/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
   staticDirs: [
     {
+      from: "../stories/assets/prerendered-glb",
+      to: "/prerendered-glb",
+    },
+    {
       from: "../stories/renderer-comparison/public",
       to: "/renderer-comparison",
     },

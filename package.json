@@ -1,6 +1,6 @@
 {
   "name": "@tscircuit/3d-viewer",
-  "version": "0.0.627",
+  "version": "0.0.631",
   "repository": {
     "type": "git",
     "url": "https://github.com/tscircuit/3d-viewer"
@@ -33,7 +33,8 @@
     "storybook:comparisons": "bun run prepare:renderer-comparisons && bun run storybook --initial-path '/story/diagnostics-renderer-parity--x-rotation'",
     "test:renderer-comparisons:serve": "bun run prepare:renderer-comparisons && vite --config playwright/vite.config.ts",
     "test:renderer-calibration": "playwright test --project=calibration",
-    "test:renderer-comparisons": "bun scripts/run-renderer-comparisons.ts"
+    "test:renderer-comparisons": "bun scripts/run-renderer-comparisons.ts",
+    "test:sections": "playwright test --config playwright.sections.config.ts"
   },
   "dependencies": {
     "@jscad/regl-renderer": "^2.6.12",
@@ -55,7 +56,7 @@
     "@tscircuit/circuit-json-util": "*"
   },
   "devDependencies": {
-    "@tscircuit/flex-utils": "https://jscdn.tscircuit.com/@tscircuit/flex-utils/0.0.5.tgz",
+    "@tscircuit/flex-utils": "https://jscdn.tscircuit.com/@tscircuit/flex-utils/0.0.8.tgz",
     "@biomejs/biome": "^2.1.4",
     "@chromatic-com/storybook": "^1.9.0",
     "@jscad/modeling": "^2.12.5",
@@ -67,8 +68,8 @@
     "@tscircuit/alphabet": "^0.0.25",
     "@tscircuit/circuit-json-util": "^0.0.119",
     "@tscircuit/copper-pour-solver": "^0.0.29",
-    "@tscircuit/core": "^0.0.2152",
-    "@tscircuit/props": "^0.0.701",
+    "@tscircuit/core": "^0.0.2188",
+    "@tscircuit/props": "^0.0.705",
     "@tscircuit/solver-utils": "^0.0.4",
     "@types/debug": "^4.1.13",
     "@types/jsdom": "^21.1.7",

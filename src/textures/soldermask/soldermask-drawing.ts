@@ -42,9 +42,11 @@ export const getSoldermaskPalette = (
     boardData.material === "fr1"
       ? toRgb(defaultColors.fr1TracesWithMaskCopper)
       : toRgb(defaultColors.fr4TracesWithMaskGreen)
-  const requestedSoldermaskColor = resolveSoldermaskColor(
-    boardData.solder_mask_color,
-  )
+  const requestedSoldermaskColor =
+    resolveSoldermaskColor(boardData.solder_mask_color) ??
+    (boardData.material === "flex"
+      ? new THREE.Color(toRgb(defaultColors.flexAmber))
+      : null)
 
   if (!requestedSoldermaskColor) {
     return {

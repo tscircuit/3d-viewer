@@ -1,6 +1,7 @@
 import type { AnyCircuitElement } from "circuit-json"
 import type * as THREE from "three"
 import { pickVisibleMesh } from "./pick-visible-mesh"
+import { getGlbComponentMetadata } from "./prerendered-glb"
 
 export interface PickedCadComponent {
   cad_component_id: string
@@ -20,7 +21,15 @@ export const pickCadComponent = (
         (e) =>
           e.type === "cad_component" && e.cad_component_id === cadComponentId,
       )
-      if (cad?.type !== "cad_component") return
+      if (cad?.type !== "cad_component") {
+        const metadata = getGlbComponentMetadata(object)
+        if (metadata && metadata.cad_component_id === cadComponentId)
+          return {
+            cad_component_id: cadComponentId,
+            componentName: metadata.componentName ?? cadComponentId,
+          }
+        return
+      }
       const source = circuitJson.find(
         (e) =>
           e.type === "source_component" &&

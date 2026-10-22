@@ -82,7 +82,7 @@ viewer. The host can switch tabs and focus the schematic using the source ID.
 Omit the callback when schematic navigation is unavailable.
 
 ```tsx
-<CadViewer
+;<CadViewer
   circuitJson={circuitJson}
   onViewSchematicComponent={({ source_component_id }) => {
     // Find the schematic component with this source ID and focus it.
@@ -96,9 +96,9 @@ Omit the callback when schematic navigation is unavailable.
 When using the SVG converter in Node.js environments, you'll need to provide JSDOM:
 
 ```typescript
-import { JSDOM } from 'jsdom'
-import { convert3dCircuitToSvg } from '@tscircuit/3d-viewer/3d'
-import { applyJsdomShim } from '@tscircuit/3d-viewer/utils'
+import { JSDOM } from "jsdom"
+import { convert3dCircuitToSvg } from "@tscircuit/3d-viewer/3d"
+import { applyJsdomShim } from "@tscircuit/3d-viewer/utils"
 
 // Setup JSDOM environment
 const dom = new JSDOM()
@@ -113,8 +113,8 @@ const options = {
   zoom: 50,
   camera: {
     position: { x: 0, y: 0, z: 100 },
-    lookAt: { x: 0, y: 0, z: 0 }
-  }
+    lookAt: { x: 0, y: 0, z: 0 },
+  },
 }
 
 const svgString = await convert3dCircuitToSvg(circuitJson, options)
@@ -137,7 +137,6 @@ The `convert3dCircuitToSvg` function accepts the following options:
 Main component for rendering the 3D PCB viewer.
 
 Props:
-
 - `circuit-json`: (optional) An array of AnyCircuitElement objects representing the PCB layout.
 - `children`: (optional) React children elements describing the PCB layout (alternative to using `circuit-json`).
 - `resolveStaticAsset`: (optional) Function that receives each component model URL (`obj`, `wrl`, `stl`, `gltf`, `glb`, `step`) and returns the resolved URL to load.
@@ -147,14 +146,12 @@ Props:
 Defines the PCB board dimensions.
 
 Props:
-
 - `width`: Width of the board (e.g., "20mm").
 - `height`: Height of the board (e.g., "20mm").
 
 ### Component Elements
 
 Various component elements can be used as children of the `<board>` element:
-
 - `<resistor>`
 - `<capacitor>`
 - `<chip>`
@@ -269,7 +266,7 @@ input remains a distinct diagnostic, not the mounted pose's zero-angle control.
 You can define custom 3D models for components using the `cadModel` prop:
 
 ```jsx
-<chip
+;<chip
   name="U1"
   footprint="soic8"
   cadModel={{
@@ -284,7 +281,7 @@ You can define custom 3D models for components using the `cadModel` prop:
 For more complex or programmatically defined models, you can use JSCAD:
 
 ```jsx
-<bug
+;<bug
   footprint="soic8"
   name="U1"
   cadModel={{
@@ -308,3 +305,47 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+
+### Section views
+
+Right-click the viewer and choose **Advanced → Section View…**.
+The Advanced submenu also contains the engine switch for generated scenes.
+Choose X, Y, or Z, then drag the translucent plane or its arrow to move the cut.
+The slider and millimeter field provide precise positioning; **Flip side** changes
+which half remains visible. **Look perpendicular** faces the cut directly; in that
+view, drag vertically to change its depth. Closing the controls preserves the cut;
+**Clear** restores the complete assembly.
+
+Cut faces use a 45-degree diagonal hatch, with holes and cavities left empty.
+Sections work with both rendering engines and are baked into downloaded glTFs.
+Cap loops are computed in a worker, with a synchronous fallback if workers are
+unavailable. Open model boundaries are left uncapped and reported in the panel.
+
+Run section geometry, drag, and export checks with `bun test tests/section-*`.
+Browser interaction checks, including GLB URLs, are available with `bun run test:sections`.
+Sections also support pre-rendered `glbUrl` and `glbData` sources, including model replacement.
+
+### Pre-rendered GLB scenes
+
+To open a self-contained GLB produced by `circuit-json-to-gltf` without rebuilding
+board geometry or fetching component models:
+
+```tsx
+<CadViewer glbUrl="/previews/board.glb" />
+// Or use bytes already available in memory:
+<CadViewer glbData={arrayBuffer} />
+```
+
+Supply one GLB source. It takes precedence over `circuitJson` and JSX children.
+The viewer restores the exporter's coordinate frame (+Y up, mm) to the normal
+viewer frame (+Z up, mm), fits the camera, and retains orbit controls and camera
+presets. Failed loads display an error; replacing a source cancels the previous
+load and disposes its geometry, materials, and textures.
+
+New exports carry lightweight identity in each component node's
+`extras.tscircuit`: `componentName`, `cad_component_id`, `source_component_id`,
+and `pcb_component_id` (when available). These support name tooltips, hiding
+individual components, and `onViewSchematicComponent` without supplying Circuit
+JSON. Existing GLBs without metadata still render. Board layers, folding, and
+model appearance are baked into the GLB; regenerate it to change them.

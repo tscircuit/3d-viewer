@@ -1,3 +1,5 @@
+import { useSection } from "./sections/SectionContext"
+import { SectionScene } from "./sections/SectionScene"
 import type * as React from "react"
 import { forwardRef, useEffect, useMemo, useState } from "react"
 import * as THREE from "three"
@@ -73,6 +75,7 @@ export const CadViewerContainer = forwardRef<
     },
     ref,
   ) => {
+    const section = useSection()
     const [isInteractionEnabled, setIsInteractionEnabled] = useState(
       !clickToInteractEnabled,
     )
@@ -129,12 +132,13 @@ export const CadViewerContainer = forwardRef<
             handleCameraCreated(camera)
           }}
         >
+          <SectionScene />
           <SchematicNavigationScene />
           <CameraAnimatorWithContext />
           <RotationTracker />
           {isInteractionEnabled && (
             <OrbitControls
-              autoRotate={!autoRotateDisabled}
+              autoRotate={!autoRotateDisabled && !section?.spec}
               autoRotateSpeed={1}
               onStart={onUserInteraction}
               rotateSpeed={0.5}
