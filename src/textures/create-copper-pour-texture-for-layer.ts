@@ -24,11 +24,6 @@ const toRgb = (colorArr: number[]) => {
   )})`
 }
 
-// circuit-to-canvas currently renders top/bottom copper pours at 0.5 alpha.
-// Re-drawing the same pours several times over transparent background makes
-// the final result effectively opaque to match traces/pads copper texture color.
-const COPPER_POUR_OPACITY_COMPENSATION_PASSES = 8
-
 export function createCopperPourTextureForLayer({
   layer,
   circuitJson,
@@ -140,18 +135,11 @@ export function createCopperPourTextureForLayer({
     })
     drawer.drawElements(elementsToDraw, {
       layers: [pcbRenderLayer],
+      copperPourOpacity: 1,
       drawSoldermask: false,
       drawSoldermaskTop: false,
       drawSoldermaskBottom: false,
     })
-    for (let i = 1; i < COPPER_POUR_OPACITY_COMPENSATION_PASSES; i += 1) {
-      drawer.drawElements(elementsToDraw, {
-        layers: [pcbRenderLayer],
-        drawSoldermask: false,
-        drawSoldermaskTop: false,
-        drawSoldermaskBottom: false,
-      })
-    }
   }
 
   const coveredPours = poursOnLayer.filter(
