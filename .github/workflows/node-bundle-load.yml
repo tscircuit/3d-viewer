@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Test copper pour opacity
+        run: bun test tests/copper-pour-opacity.test.ts
+
       - name: Test flex assembly and shared Zod peer
         run: bun test tests/sheet-metal-flex-assembly.test.ts tests/flex-meshes.test.ts
 
