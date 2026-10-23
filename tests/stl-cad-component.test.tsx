@@ -177,6 +177,99 @@ test("keeps OBJ parsing separate from a cached STL at the same URL", async () =>
   expect(fetchSpy).toHaveBeenCalledTimes(2)
 })
 
+test("reuses a completed STL request with a distinct model instance", async () => {
+  fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
+    new Response(asciiStl),
+  )
+  const cadComponent: CadComponent = {
+    type: "cad_component",
+    cad_component_id: "first_holder",
+    source_component_id: "holder_source",
+    model_stl_url: "/api/holder",
+    position: { x: 0, y: 0, z: 0 },
+    anchor_alignment: "center",
+    model_object_fit: "contain_within_bounds",
+  }
+  await renderCadComponent(cadComponent)
+  const firstMesh = sceneRoot.getObjectByProperty("type", "Mesh") as THREE.Mesh
+
+  await renderCadComponent({
+    ...cadComponent,
+    cad_component_id: "second_holder",
+  })
+
+  const secondMesh = sceneRoot.getObjectByProperty("type", "Mesh") as THREE.Mesh
+  expect(secondMesh.geometry.getAttribute("position").count).toBe(3)
+  expect(secondMesh).not.toBe(firstMesh)
+  expect(fetchSpy).toHaveBeenCalledTimes(1)
+})
+
+test("shares a pending STL request between models with separate transforms", async () => {
+  const request = Promise.withResolvers<Response>()
+  fetchSpy = spyOn(globalThis, "fetch").mockReturnValue(request.promise)
+  const firstHolder: CadComponent = {
+    type: "cad_component",
+    cad_component_id: "first_holder",
+    source_component_id: "holder_source",
+    model_stl_url: "/api/holder",
+    position: { x: 10, y: 0, z: 0 },
+    anchor_alignment: "center",
+    model_object_fit: "contain_within_bounds",
+  }
+  const secondHolder: CadComponent = {
+    ...firstHolder,
+    cad_component_id: "second_holder",
+    position: { x: 20, y: 0, z: 0 },
+  }
+  const context: ThreeContextState = {
+    scene: new THREE.Scene(),
+    camera: new THREE.PerspectiveCamera(),
+    renderer: {} as THREE.WebGLRenderer,
+    rootObject: sceneRoot,
+    addFrameListener: () => {},
+    removeFrameListener: () => {},
+  }
+  await act(async () => {
+    reactRoot.render(
+      <ThreeContext.Provider value={context}>
+        <HoverContext.Provider
+          value={{ addHoverable: () => {}, removeHoverable: () => {} }}
+        >
+          <LayerVisibilityProvider>
+            <AnyCadComponent
+              cad_component={firstHolder}
+              circuitJson={[firstHolder]}
+            />
+            <AnyCadComponent
+              cad_component={secondHolder}
+              circuitJson={[secondHolder]}
+            />
+          </LayerVisibilityProvider>
+        </HoverContext.Provider>
+      </ThreeContext.Provider>,
+    )
+  })
+  expect(fetchSpy).toHaveBeenCalledTimes(1)
+
+  await act(async () => request.resolve(new Response(asciiStl)))
+  sceneRoot.updateMatrixWorld(true)
+
+  const firstMesh = sceneRoot.children[0]!.getObjectByProperty(
+    "type",
+    "Mesh",
+  ) as THREE.Mesh
+  const secondMesh = sceneRoot.children[1]!.getObjectByProperty(
+    "type",
+    "Mesh",
+  ) as THREE.Mesh
+  expect(firstMesh.geometry.getAttribute("position").count).toBe(3)
+  expect(secondMesh.geometry.getAttribute("position").count).toBe(3)
+  expect(secondMesh).not.toBe(firstMesh)
+  expect(firstMesh.getWorldPosition(new THREE.Vector3()).x).toBeCloseTo(10)
+  expect(secondMesh.getWorldPosition(new THREE.Vector3()).x).toBeCloseTo(20)
+  expect(fetchSpy).toHaveBeenCalledTimes(1)
+})
+
 test("preserves VRML loading with the declared model format", async () => {
   fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
     new Response(`#VRML V2.0 utf8

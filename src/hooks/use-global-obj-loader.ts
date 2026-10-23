@@ -3,26 +3,30 @@ import { loadVrml } from "src/utils/vrml"
 import { Mesh, MeshStandardMaterial, type Object3D } from "three"
 import { MTLLoader, OBJLoader, STLLoader } from "three-stdlib"
 
-// Define the type for our cache
+type ModelType = "stl" | "obj" | "wrl"
+type ModelUrl = string
+
 interface CacheItem {
-  promise: Promise<any>
+  promise: Promise<Object3D | Error>
   result: Object3D | null
 }
 
+type ModelCache = Map<ModelUrl, CacheItem>
+
 declare global {
   interface Window {
-    TSCIRCUIT_OBJ_LOADER_CACHE: Map<string, CacheItem>
+    TSCIRCUIT_OBJ_LOADER_CACHE: Map<ModelType, ModelCache>
   }
 }
 
 // Ensure the global cache exists
 if (typeof window !== "undefined" && !window.TSCIRCUIT_OBJ_LOADER_CACHE) {
-  window.TSCIRCUIT_OBJ_LOADER_CACHE = new Map<string, CacheItem>()
+  window.TSCIRCUIT_OBJ_LOADER_CACHE = new Map<ModelType, ModelCache>()
 }
 
 export function useGlobalObjLoader(
   url: string | null,
-  modelType: "stl" | "obj" | "wrl",
+  modelType: ModelType,
 ): Object3D | null | Error {
   const [obj, setObj] = useState<Object3D | null | Error>(null)
 
@@ -30,9 +34,10 @@ export function useGlobalObjLoader(
     if (!url) return
 
     const cleanUrl = url.replace(/&cachebust_origin=$/, "")
-    const cacheKey = `${modelType}:${cleanUrl}`
-
-    const cache = window.TSCIRCUIT_OBJ_LOADER_CACHE
+    const cachesByModelType = window.TSCIRCUIT_OBJ_LOADER_CACHE
+    const cache =
+      cachesByModelType.get(modelType) ?? new Map<ModelUrl, CacheItem>()
+    cachesByModelType.set(modelType, cache)
     let hasUrlChanged = false
 
     async function loadAndParseObj() {
@@ -82,8 +87,8 @@ export function useGlobalObjLoader(
     }
 
     function loadUrl() {
-      if (cache.has(cacheKey)) {
-        const cacheItem = cache.get(cacheKey)!
+      if (cache.has(cleanUrl)) {
+        const cacheItem = cache.get(cleanUrl)!
         if (cacheItem.result) {
           // If we have a result, clone it
           return Promise.resolve(cacheItem.result.clone())
@@ -100,10 +105,10 @@ export function useGlobalObjLoader(
           // If the result is an Error, return it
           return result
         }
-        cache.set(cacheKey, { ...cache.get(cacheKey)!, result })
+        cache.set(cleanUrl, { ...cache.get(cleanUrl)!, result })
         return result
       })
-      cache.set(cacheKey, { promise, result: null })
+      cache.set(cleanUrl, { promise, result: null })
       return promise
     }
 
