@@ -66,12 +66,18 @@ export function GlbScene({
         onHover: ({ mousePosition }) => {
           let object: THREE.Object3D | null = mesh
           let name: string | undefined
+          let nodeName: string | undefined
           let visible = true
           while (object) {
             name ??= getGlbComponentMetadata(object)?.componentName
+            // GLTFLoader preserves the original label before sanitizing object.name.
+            if (!nodeName && typeof object.userData.name === "string") {
+              nodeName = object.userData.name
+            }
             visible &&= object.visible
             object = object.parent
           }
+          name ??= nodeName
           setHover(
             name && visible ? { name, position: mousePosition } : undefined,
           )
