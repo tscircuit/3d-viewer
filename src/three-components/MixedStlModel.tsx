@@ -9,6 +9,7 @@ import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 export function MixedStlModel({
   url,
+  modelType,
   position,
   rotation,
   modelOffset = [0, 0, 0],
@@ -23,6 +24,7 @@ export function MixedStlModel({
   isTranslucent = false,
 }: {
   url: string
+  modelType: "stl" | "obj" | "wrl"
   position?: Vector3 | [number, number, number]
   rotation?: Euler | [number, number, number]
   modelOffset?: [number, number, number]
@@ -36,7 +38,7 @@ export function MixedStlModel({
   scale?: number
   isTranslucent?: boolean
 }) {
-  const obj = useGlobalObjLoader(url)
+  const obj = useGlobalObjLoader(url, modelType)
   const model = useMemo(() => {
     if (obj && !(obj instanceof Error)) {
       obj.traverse((child) => {

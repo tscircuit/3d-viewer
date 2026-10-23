@@ -168,6 +168,7 @@ export const AnyCadComponent = ({
         <MixedStlModel
           key={`${cad_component.cad_component_id}-mixed-${url}`}
           url={url}
+          modelType={meshModelType}
           position={adjustedPosition}
           rotation={rotationOffset}
           modelOffset={modelTransform.modelPosition}
