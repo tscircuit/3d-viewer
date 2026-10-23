@@ -2,7 +2,6 @@ import { ViewportSubContent } from "./ViewportSubContent"
 import { menuViewportStyles } from "./menu-viewport-styles"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import type React from "react"
-import type { AnyCircuitElement } from "circuit-json"
 import { useState } from "react"
 import { zIndexMap } from "../../lib/utils/z-index-map"
 import { useAppearance } from "../contexts/appearance-context"
@@ -67,15 +66,12 @@ const iconContainerStyles: React.CSSProperties = {
 }
 
 export const AppearanceMenu = ({
-  circuitJson = [],
+  hasAssembly = false,
   showLayerControls = true,
 }: {
-  circuitJson?: AnyCircuitElement[]
+  hasAssembly?: boolean
   showLayerControls?: boolean
 }) => {
-  const hasAssembly = circuitJson.some(
-    (element) => element.type === "cad_component" && !element.pcb_component_id,
-  )
   const { visibility, setLayerVisibility } = useLayerVisibility()
   const {
     darkBackgroundEnabled,

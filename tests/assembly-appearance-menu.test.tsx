@@ -1,5 +1,4 @@
 import { expect, test } from "bun:test"
-import { cad_component, type AnyCircuitElement } from "circuit-json"
 import { JSDOM } from "jsdom"
 import { act } from "react"
 import { createRoot } from "react-dom/client"
@@ -39,14 +38,14 @@ test("Assembly menu is available only for circuits with standalone CAD", async (
   const DropdownMenu = await import("@radix-ui/react-dropdown-menu")
   const { AppearanceMenu } = await import("../src/components/AppearanceMenu")
   const root = createRoot(document.getElementById("root")!)
-  const render = async (circuitJson: AnyCircuitElement[]) => {
+  const render = async (hasAssembly: boolean) => {
     await act(async () => {
       root.render(
         <LayerVisibilityProvider>
           <AppearanceProvider>
             <DropdownMenu.Root open>
               <DropdownMenu.Content>
-                <AppearanceMenu circuitJson={circuitJson} />
+                <AppearanceMenu hasAssembly={hasAssembly} />
               </DropdownMenu.Content>
             </DropdownMenu.Root>
           </AppearanceProvider>
@@ -55,7 +54,7 @@ test("Assembly menu is available only for circuits with standalone CAD", async (
     })
   }
   try {
-    await render([])
+    await render(false)
     const appearance = Array.from(
       document.querySelectorAll('[role="menuitem"]'),
     ).find((item) => item.textContent === "Appearance")!
@@ -70,22 +69,7 @@ test("Assembly menu is available only for circuits with standalone CAD", async (
     expect(document.body.textContent).toContain("Enclosure")
     expect(document.body.textContent).not.toContain("Assembly")
 
-    const mountedCad = cad_component.parse({
-      type: "cad_component",
-      cad_component_id: "mounted",
-      source_component_id: "source_component",
-      pcb_component_id: "pcb_component",
-      position: { x: 0, y: 0, z: 0 },
-    })
-    await render([mountedCad])
-    expect(document.body.textContent).not.toContain("Assembly")
-
-    const standaloneCad = cad_component.parse({
-      ...mountedCad,
-      cad_component_id: "mechanical",
-      pcb_component_id: undefined,
-    })
-    await render([mountedCad, standaloneCad])
+    await render(true)
     const assembly = Array.from(
       document.querySelectorAll('[role="menuitem"]'),
     ).find((item) => item.textContent === "Assembly")!
@@ -102,7 +86,7 @@ test("Assembly menu is available only for circuits with standalone CAD", async (
     expect(assembly.isConnected).toBe(true)
     expect(assembly.querySelector("svg")).toBeNull()
 
-    await render([mountedCad])
+    await render(false)
     expect(document.body.textContent).not.toContain("Assembly")
   } finally {
     await act(async () => root.unmount())
