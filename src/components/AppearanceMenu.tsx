@@ -66,8 +66,10 @@ const iconContainerStyles: React.CSSProperties = {
 }
 
 export const AppearanceMenu = ({
+  hasAssembly = false,
   showLayerControls = true,
 }: {
+  hasAssembly?: boolean
   showLayerControls?: boolean
 }) => {
   const { visibility, setLayerVisibility } = useLayerVisibility()
@@ -79,6 +81,8 @@ export const AppearanceMenu = ({
   } = useAppearance()
   const [appearanceSubOpen, setAppearanceSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
+  const assemblyStyles = { ...itemStyles }
+  if (hoveredItem === "assembly") assemblyStyles.backgroundColor = "#404040"
 
   return (
     <>
@@ -470,6 +474,26 @@ export const AppearanceMenu = ({
                     Enclosure
                   </span>
                 </DropdownMenu.Item>
+                {hasAssembly && (
+                  <DropdownMenu.Item
+                    style={assemblyStyles}
+                    onSelect={(e) => e.preventDefault()}
+                    onPointerDown={(e) => {
+                      e.preventDefault()
+                      setLayerVisibility("assembly", !visibility.assembly)
+                    }}
+                    onMouseEnter={() => setHoveredItem("assembly")}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    onTouchStart={() => setHoveredItem("assembly")}
+                  >
+                    <span style={iconContainerStyles}>
+                      {visibility.assembly && <CheckIcon />}
+                    </span>
+                    <span style={{ display: "flex", alignItems: "center" }}>
+                      Assembly
+                    </span>
+                  </DropdownMenu.Item>
+                )}
               </>
             )}
           </ViewportSubContent>

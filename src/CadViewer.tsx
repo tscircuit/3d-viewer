@@ -82,6 +82,9 @@ const CadViewerInner = (props: CadViewerProps) => {
   )
   const circuitJson: AnyCircuitElement[] =
     props.circuitJson ?? childrenCircuitJson
+  const hasAssembly = circuitJson.some(
+    (element) => element.type === "cad_component" && !element.pcb_component_id,
+  )
   const hasBends = circuitJson.some((element) => element.type === "pcb_bend")
   const hasFlexGeometry =
     hasBends || circuitJson.some((element) => element.type === "pcb_stiffener")
@@ -362,6 +365,7 @@ const CadViewerInner = (props: CadViewerProps) => {
       <SectionPanel />
       {menuVisible && (
         <ContextMenu
+          hasAssembly={hasAssembly}
           componentName={selectedCadComponent?.componentName}
           onHideComponent={
             selectedCadComponent

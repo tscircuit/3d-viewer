@@ -16,6 +16,7 @@ import { AppearanceMenu } from "./AppearanceMenu"
 import { CheckIcon, ChevronRightIcon, DotIcon } from "./Icons"
 
 interface ContextMenuProps {
+  hasAssembly?: boolean
   menuRef: React.RefObject<HTMLDivElement | null>
   menuPos: { x: number; y: number }
   engine: "jscad" | "manifold"
@@ -120,6 +121,7 @@ const badgeStyles: React.CSSProperties = {
 }
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({
+  hasAssembly = false,
   menuRef,
   menuPos,
   engine,
@@ -459,7 +461,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             </DropdownMenu.Item>
 
             {/* Appearance Menu */}
-            <AppearanceMenu showLayerControls={!preRendered} />
+            <AppearanceMenu
+              hasAssembly={hasAssembly}
+              showLayerControls={!preRendered}
+            />
 
             <DropdownMenu.Separator style={separatorStyles} />
 
