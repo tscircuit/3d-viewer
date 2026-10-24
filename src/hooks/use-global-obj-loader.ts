@@ -40,7 +40,7 @@ export function useGlobalObjLoader(
     cachesByModelType.set(modelType, cache)
     let hasUrlChanged = false
 
-    async function loadAndParseObj() {
+    async function loadAndParseModel() {
       try {
         if (modelType === "wrl") {
           return await loadVrml(cleanUrl)
@@ -100,7 +100,7 @@ export function useGlobalObjLoader(
         })
       }
       // If it's not in the cache, create a new promise and cache it
-      const promise = loadAndParseObj().then((result) => {
+      const promise = loadAndParseModel().then((result) => {
         if (result instanceof Error) {
           // If the result is an Error, return it
           return result

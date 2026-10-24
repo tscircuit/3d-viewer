@@ -147,10 +147,11 @@ test("loads the binary gimbal holder from a base64 data URL", async () => {
   expect(mesh.geometry.getAttribute("position").count).toBe(30420)
 })
 
-test("keeps OBJ parsing separate from a cached STL at the same URL", async () => {
+test("clears the previous OBJ while loading STL at the same URL", async () => {
+  const request = Promise.withResolvers<Response>()
   fetchSpy = spyOn(globalThis, "fetch")
-    .mockResolvedValueOnce(new Response(asciiStl))
     .mockResolvedValueOnce(new Response("v 0 0 0\nv 4 0 0\nv 0 5 0\nf 1 2 3\n"))
+    .mockReturnValueOnce(request.promise)
   const cadComponent: CadComponent = {
     type: "cad_component",
     cad_component_id: "shared_url",
@@ -161,19 +162,23 @@ test("keeps OBJ parsing separate from a cached STL at the same URL", async () =>
   }
   await renderCadComponent({
     ...cadComponent,
-    model_stl_url: "/api/model",
-  })
-  const stlMesh = sceneRoot.getObjectByProperty("type", "Mesh") as THREE.Mesh
-  expect(stlMesh.geometry.getAttribute("position").getX(1)).toBe(1)
-
-  await renderCadComponent({
-    ...cadComponent,
     model_obj_url: "/api/model",
   })
-
   const objMesh = sceneRoot.getObjectByProperty("type", "Mesh") as THREE.Mesh
   expect(objMesh.geometry.getAttribute("position").count).toBe(3)
   expect(objMesh.geometry.getAttribute("position").getX(1)).toBe(4)
+
+  await renderCadComponent({
+    ...cadComponent,
+    model_stl_url: "/api/model",
+  })
+  expect(sceneRoot.getObjectById(objMesh.id)).toBeUndefined()
+
+  await act(async () => request.resolve(new Response(asciiStl)))
+
+  const stlMesh = sceneRoot.getObjectByProperty("type", "Mesh") as THREE.Mesh
+  expect(stlMesh.geometry.getAttribute("position").count).toBe(3)
+  expect(stlMesh.geometry.getAttribute("position").getX(1)).toBe(1)
   expect(fetchSpy).toHaveBeenCalledTimes(2)
 })
 
