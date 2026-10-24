@@ -41,7 +41,7 @@
     "@jscad/stl-serializer": "^2.1.20",
     "@tscircuit/cableprinter": "^0.0.6",
     "circuit-json": "^0.0.525",
-    "circuit-to-canvas": "^0.0.135",
+    "circuit-to-canvas": "^0.0.139",
     "jscad-electronics": "^0.0.213",
     "react-hot-toast": "^2.6.0",
     "three": "^0.165.0",
