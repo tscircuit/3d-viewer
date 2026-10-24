@@ -21,12 +21,6 @@ import {
   Rotated37Degrees,
 } from "../stories/JaeUsbPolygonPads.stories"
 
-declare module "bun:test" {
-  interface Test {
-    failing: Test
-  }
-}
-
 const cases: { rotation: number; circuit: AnyCircuitElement[] }[] = [
   { rotation: 0, circuit: Unrotated().props.circuitJson },
   { rotation: 90, circuit: Rotated90Degrees().props.circuitJson },
@@ -165,9 +159,8 @@ for (const { rotation, circuit } of cases) {
     }
   })
 
-  const it = rotation === 0 ? test : test.failing
   for (const engine of ["jscad", "manifold"] as const) {
-    it(`${engine}: ${rotation}° polygon copper rotates and overlapping drills stay open`, () => {
+    test(`${engine}: ${rotation}° polygon copper rotates and overlapping drills stay open`, () => {
       const model = buildMeshes(engine, circuit)
       try {
         for (const { point, label } of drillPoints) {
@@ -190,7 +183,7 @@ for (const { rotation, circuit } of cases) {
   }
 
   for (const showMask of [true, false]) {
-    test.failing(`${rotation}° shared surface textures expose every drill with soldermask=${showMask}`, () => {
+    test(`${rotation}° shared surface textures expose every drill with soldermask=${showMask}`, () => {
       const previousDocument = globalThis.document
       Object.assign(globalThis, {
         document: { createElement: () => createCanvas(1, 1) },
