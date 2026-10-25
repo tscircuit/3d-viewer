@@ -41,7 +41,8 @@ test("URL-loaded GLBs support transformed section caps, export, hiding, and sour
   ).arrayBuffer()
   const requests: string[] = []
   let complete: (() => void) | undefined
-  const fetchSpy = spyOn(globalThis, "fetch").mockImplementation(
+  const fetchTarget: Pick<Window, "fetch"> = globalThis
+  const fetchSpy = spyOn(fetchTarget, "fetch").mockImplementation(
     async (url) => {
       requests.push(String(url))
       if (String(url).includes("second"))
