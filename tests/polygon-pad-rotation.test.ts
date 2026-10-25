@@ -20,8 +20,7 @@ import {
   Rotated37Degrees,
 } from "../stories/JaeUsbPolygonPads.stories"
 
-// @ts-expect-error -- The Bun runtime supports failing, but bun-types 1.2.1 omits it.
-test.failing("JAE polygon pads at 0°, 90°, and 37° preserve rotation and open drills", async () => {
+test("JAE polygon pads at 0°, 90°, and 37° preserve rotation and open drills", async () => {
   const previousWindow = globalThis.window
   const previousDocument = globalThis.document
   const dom = new JSDOM()

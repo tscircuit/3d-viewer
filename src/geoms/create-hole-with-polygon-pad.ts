@@ -74,51 +74,48 @@ const createPillPrism = (width: number, height: number, depth: number) => {
 
 export const createHoleWithPolygonPadHoleGeom = (
   hole: PolygonPadHoleInput,
-  height: number,
+  depth: number,
   options: { sizeDelta?: number } = {},
 ): Geom3 | null => {
   const holeShape = hole.hole_shape || "circle"
   const sizeDelta = options.sizeDelta ?? 0
   const offsetX = hole.hole_offset_x || 0
   const offsetY = hole.hole_offset_y || 0
-  const center: [number, number, number] = [
-    hole.x + offsetX,
-    hole.y + offsetY,
-    0,
-  ]
+  let drill: Geom3
 
   if (holeShape === "circle") {
     const diameter = Math.max((hole.hole_diameter ?? 0) + sizeDelta, M)
-    const radius = Math.max(diameter / 2, M / 2)
-    return cylinder({ center, radius, height })
-  }
-
-  const baseWidth = hole.hole_width ?? hole.hole_diameter
-  const baseHeight = hole.hole_height ?? hole.hole_diameter
-  if (!baseWidth || !baseHeight) {
-    return null
-  }
-  const width = Math.max(baseWidth + sizeDelta, M)
-  const heightVal = Math.max(baseHeight + sizeDelta, M)
-
-  if (holeShape === "oval") {
-    const ellipsePrism = createEllipsePrism(width, heightVal, height)
-    return translate([center[0], center[1], 0], ellipsePrism)
-  }
-
-  if (holeShape === "pill" || holeShape === "rotated_pill") {
-    let pill = createPillPrism(width, heightVal, height)
-    if (!pill) return null
-    const rotation = hole.ccw_rotation || 0
-    if (rotation) {
-      pill = rotateZ((rotation * Math.PI) / 180, pill)
+    const radius = diameter / 2
+    drill = cylinder({ center: [0, 0, 0], radius, height: depth })
+  } else {
+    const baseWidth = hole.hole_width ?? hole.hole_diameter
+    const baseHeight = hole.hole_height ?? hole.hole_diameter
+    if (!baseWidth || !baseHeight) {
+      return null
     }
-    return translate(center, pill)
+    const shapeWidth = Math.max(baseWidth + sizeDelta, M)
+    const shapeHeight = Math.max(baseHeight + sizeDelta, M)
+
+    if (holeShape === "oval") {
+      drill = createEllipsePrism(shapeWidth, shapeHeight, depth)
+    } else if (holeShape === "pill" || holeShape === "rotated_pill") {
+      drill = createPillPrism(shapeWidth, shapeHeight, depth)
+    } else {
+      const fallbackDiameter = Math.max(
+        (hole.hole_diameter ?? baseWidth) + sizeDelta,
+        M,
+      )
+      drill = cylinder({
+        center: [0, 0, 0],
+        radius: fallbackDiameter / 2,
+        height: depth,
+      })
+    }
   }
 
-  const fallbackDiameter = Math.max(
-    (hole.hole_diameter ?? baseWidth ?? baseHeight ?? M) + sizeDelta,
-    M,
-  )
-  return cylinder({ center, radius: fallbackDiameter / 2, height })
+  drill = translate([offsetX, offsetY, 0], drill)
+  if (hole.ccw_rotation) {
+    drill = rotateZ((hole.ccw_rotation * Math.PI) / 180, drill)
+  }
+  return translate([hole.x, hole.y, 0], drill)
 }
