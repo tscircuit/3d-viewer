@@ -1,6 +1,6 @@
 import { createSectionExport } from "../sections/section-export"
 import { useCallback } from "react"
-import { GLTFExporter } from "three-stdlib"
+import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js"
 import type * as THREE from "three"
 
 declare global {
