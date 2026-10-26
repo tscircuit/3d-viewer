@@ -3,6 +3,7 @@ import {
   getViaHolesAtExposedPads,
 } from "./open-via-holes-at-pads"
 import type { AnyCircuitElement, PcbBoard, PcbVia } from "circuit-json"
+import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import * as THREE from "three"
 import type { LayerVisibilityState } from "../contexts/LayerVisibilityContext"
 import { colors as defaultColors } from "../geoms/constants"
@@ -104,8 +105,10 @@ const createCombinedTexture = ({
   traceTextureResolution,
   layer,
   openViaHoles,
+  drillElements,
 }: {
   openViaHoles: PcbVia[]
+  drillElements: AnyCircuitElement[]
   textures: Array<THREE.CanvasTexture | null | undefined>
   boardData: PcbBoard
   traceTextureResolution: number
@@ -133,6 +136,31 @@ const createCombinedTexture = ({
     if (!texture?.image) continue
     const image = texture.image as HTMLCanvasElement
     ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight)
+  }
+
+  if (drillElements.length > 0) {
+    const apertureMask = document.createElement("canvas")
+    apertureMask.width = canvasWidth
+    apertureMask.height = canvasHeight
+    const maskCtx = apertureMask.getContext("2d")
+    if (maskCtx) {
+      maskCtx.fillStyle = "black"
+      maskCtx.fillRect(0, 0, canvasWidth, canvasHeight)
+      if (layer === "bottom") {
+        maskCtx.translate(0, canvasHeight)
+        maskCtx.scale(1, -1)
+      }
+      const drawer = new CircuitToCanvasDrawer(maskCtx)
+      drawer.setCameraBounds(boardOutlineBounds)
+      drawer.drawElements(drillElements, {
+        layers: [layer === "top" ? "top_copper" : "bottom_copper"],
+        clearDrillHoles: true,
+      })
+      ctx.save()
+      ctx.globalCompositeOperation = "destination-in"
+      ctx.drawImage(apertureMask, 0, 0, canvasWidth, canvasHeight)
+      ctx.restore()
+    }
   }
 
   clearViaHolesFromSurface({
@@ -226,6 +254,12 @@ export function createCombinedBoardTextures({
   const copperColor = toRgb(defaultColors.copper)
 
   const showBoardBody = visibility?.boardBody ?? true
+  const drillElements = circuitJson.filter(
+    (element) =>
+      element.type === "pcb_hole" ||
+      element.type === "pcb_plated_hole" ||
+      element.type === "pcb_cutout",
+  )
   const openViaHoles = getViaHolesAtExposedPads(
     circuitJson,
     boardData,
@@ -364,6 +398,7 @@ export function createCombinedBoardTextures({
 
     const boardTexture = createCombinedTexture({
       openViaHoles,
+      drillElements,
       textures: [
         copperPourTexture,
         traceTexture,
