@@ -38,7 +38,7 @@ beforeEach(() => {
     document: dom.window.document,
     IS_REACT_ACT_ENVIRONMENT: true,
   })
-  window.TSCIRCUIT_OBJ_LOADER_CACHE = new Map()
+  window.TSCIRCUIT_MODEL_LOADER_CACHE = new Map()
   reactRoot = createRoot(document.getElementById("root")!)
   sceneRoot = new THREE.Object3D()
 })

@@ -1,5 +1,5 @@
 import ContainerWithTooltip from "src/ContainerWithTooltip"
-import { useGlobalObjLoader } from "src/hooks/use-global-obj-loader"
+import { useGlobalModelLoader } from "src/hooks/use-global-model-loader"
 import type { Euler, Vector3 } from "three"
 import { useMemo } from "react"
 import * as THREE from "three"
@@ -38,7 +38,7 @@ export function MixedStlModel({
   scale?: number
   isTranslucent?: boolean
 }) {
-  const obj = useGlobalObjLoader(url, modelType)
+  const obj = useGlobalModelLoader(url, modelType)
   const model = useMemo(() => {
     if (obj && !(obj instanceof Error)) {
       obj.traverse((child) => {

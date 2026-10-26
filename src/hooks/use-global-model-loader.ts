@@ -15,16 +15,16 @@ type ModelCache = Map<ModelUrl, CacheItem>
 
 declare global {
   interface Window {
-    TSCIRCUIT_OBJ_LOADER_CACHE: Map<ModelType, ModelCache>
+    TSCIRCUIT_MODEL_LOADER_CACHE: Map<ModelType, ModelCache>
   }
 }
 
 // Ensure the global cache exists
-if (typeof window !== "undefined" && !window.TSCIRCUIT_OBJ_LOADER_CACHE) {
-  window.TSCIRCUIT_OBJ_LOADER_CACHE = new Map<ModelType, ModelCache>()
+if (typeof window !== "undefined" && !window.TSCIRCUIT_MODEL_LOADER_CACHE) {
+  window.TSCIRCUIT_MODEL_LOADER_CACHE = new Map<ModelType, ModelCache>()
 }
 
-export function useGlobalObjLoader(
+export function useGlobalModelLoader(
   url: string | null,
   modelType: ModelType,
 ): Object3D | null | Error {
@@ -34,7 +34,7 @@ export function useGlobalObjLoader(
     if (!url) return
 
     const cleanUrl = url.replace(/&cachebust_origin=$/, "")
-    const cachesByModelType = window.TSCIRCUIT_OBJ_LOADER_CACHE
+    const cachesByModelType = window.TSCIRCUIT_MODEL_LOADER_CACHE
     const cache =
       cachesByModelType.get(modelType) ?? new Map<ModelUrl, CacheItem>()
     cachesByModelType.set(modelType, cache)
