@@ -114,6 +114,7 @@ export function CadViewerGlb({
   hiddenCadComponentIds?: ReadonlySet<string>
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
+  gizmoCubeDisabled?: boolean
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
   referenceObject?: ReferenceObjectType | null

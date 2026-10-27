@@ -330,6 +330,7 @@ const CadViewerInner = (props: CadViewerProps) => {
           hiddenCadComponentIds={hiddenCadComponentIds}
           autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
           clickToInteractEnabled={props.clickToInteractEnabled}
+          gizmoCubeDisabled={props.gizmoCubeDisabled}
           onUserInteraction={handleUserInteraction}
           onCameraControllerReady={handleCameraControllerReady}
           referenceObject={referenceObject}
