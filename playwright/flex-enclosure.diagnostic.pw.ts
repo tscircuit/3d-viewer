@@ -1,4 +1,4 @@
-import { expect, test, type Locator } from "@playwright/test"
+import { expect, test, type Locator, type Page } from "@playwright/test"
 import { createCanvas, loadImage } from "@napi-rs/canvas"
 
 async function stableScreenshot(canvas: Locator) {
@@ -28,6 +28,14 @@ async function changedPixels(before: Buffer, after: Buffer) {
       changed++
   }
   return changed
+}
+
+async function textures(page: Page, visible: boolean) {
+  await page.evaluate((visible) => {
+    window.__TSCIRCUIT_THREE_OBJECT!.traverse((object) => {
+      if (object.name.includes("board-texture")) object.visible = visible
+    })
+  }, visible)
 }
 
 for (const material of ["flex", "fr4", "fr1"] as const) {
@@ -70,14 +78,6 @@ for (const material of ["flex", "fr4", "fr1"] as const) {
                 [25, -30, -1.25],
               ]
         const canvas = page.locator("canvas").last()
-        async function textures(visible: boolean) {
-          await page.evaluate((visible) => {
-            window.__TSCIRCUIT_THREE_OBJECT!.traverse((object) => {
-              if (object.name.includes("board-texture"))
-                object.visible = visible
-            })
-          }, visible)
-        }
         for (const [i, position] of positions.entries()) {
           await page.evaluate(
             ({ position, target }) => {
@@ -91,7 +91,7 @@ for (const material of ["flex", "fr4", "fr1"] as const) {
           )
           await page.waitForTimeout(500)
           const withCopper = await stableScreenshot(canvas)
-          await textures(false)
+          await textures(page, false)
           const withoutCopper = await stableScreenshot(canvas)
           await testInfo.attach(`with-${i}`, {
             body: withCopper,
@@ -107,7 +107,7 @@ for (const material of ["flex", "fr4", "fr1"] as const) {
           )
           // Allow a few antialiased silhouette pixels, but no copper lines.
           expect(changed).toBeLessThanOrEqual(4)
-          await textures(true)
+          await textures(page, true)
         }
         // Positive control: removing the enclosure must expose visible textures.
         await page.evaluate(() => {
@@ -123,7 +123,7 @@ for (const material of ["flex", "fr4", "fr1"] as const) {
         })
         await page.waitForTimeout(500)
         const exposed = await stableScreenshot(canvas)
-        await textures(false)
+        await textures(page, false)
         const withoutTextures = await stableScreenshot(canvas)
         expect(await changedPixels(exposed, withoutTextures)).toBeGreaterThan(
           100,
