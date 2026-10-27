@@ -47,9 +47,9 @@ function createTexturePlane(
     side: THREE.FrontSide,
     depthWrite: true,
     polygonOffset: usePolygonOffset,
-    // A slope-scaled bias grows without bound at grazing angles and can
-    // pull folded PCB textures through an opaque enclosure. The surface
-    // offset and constant depth bias already separate the copper layers.
+    // A slope-scaled bias can pull PCB textures through opaque geometry
+    // at grazing angles, regardless of board material. The physical surface
+    // separation and constant depth bias already handle coplanar layering.
     polygonOffsetFactor: 0,
     polygonOffsetUnits: usePolygonOffset ? -4 : 0,
     opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,

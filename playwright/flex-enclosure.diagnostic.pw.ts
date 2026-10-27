@@ -30,61 +30,105 @@ async function changedPixels(before: Buffer, after: Buffer) {
   return changed
 }
 
-test("opaque enclosure occludes folded PCB textures at grazing angles", async ({
-  page,
-}, testInfo) => {
-  await page.setViewportSize({ width: 1000, height: 800 })
-  await page.goto("flex-enclosure.html")
-  await page.waitForFunction(() => {
-    let ready = false
-    window.__TSCIRCUIT_THREE_OBJECT?.traverse((object: any) => {
-      if (
-        object.name === "top-board-texture-plane" &&
-        object.material.map?.image &&
-        object.geometry.attributes.position.count > 6
-      )
-        ready = true
-    })
-    return ready
-  })
-  // Let the enclosure model and the first shadow map finish rendering.
-  await page.waitForTimeout(2000)
-
-  for (const orbit of [false, true]) {
-    if (orbit) {
-      await page.mouse.move(500, 400)
-      await page.mouse.down()
-      await page.mouse.move(650, 450, { steps: 20 })
-      await page.mouse.up()
-      await page.waitForTimeout(1000)
+for (const material of ["flex", "fr4", "fr1"] as const) {
+  for (const shape of ["ring", "flat"] as const) {
+    for (const engine of shape === "ring"
+      ? ["manifold"]
+      : ["manifold", "jscad"]) {
+      test(`${material} ${shape} ${engine}: enclosure occludes textures and exposed copper remains visible`, async ({
+        page,
+      }, testInfo) => {
+        await page.setViewportSize({ width: 1000, height: 800 })
+        const params = new URLSearchParams({ material, engine })
+        if (shape === "flat") params.set("flat", "1")
+        await page.goto(`flex-enclosure.html?${params}`)
+        await page.waitForFunction(() => {
+          let ready = false
+          window.__TSCIRCUIT_THREE_OBJECT?.traverse((object: any) => {
+            if (
+              object.name.includes("board-texture") &&
+              object.material.map?.image
+            )
+              ready = true
+          })
+          return ready && Boolean(window.enclosureCamera)
+        })
+        await page.waitForTimeout(1500)
+        const target: [number, number, number] = [
+          0,
+          0,
+          shape === "flat" ? 0 : 10,
+        ]
+        const positions: [number, number, number][] =
+          shape === "ring"
+            ? [
+                [25, -30, 30],
+                [30, -15, 12],
+              ]
+            : [
+                [25, -30, 1.25],
+                [25, -30, -1.25],
+              ]
+        const canvas = page.locator("canvas").last()
+        async function textures(visible: boolean) {
+          await page.evaluate((visible) => {
+            window.__TSCIRCUIT_THREE_OBJECT!.traverse((object) => {
+              if (object.name.includes("board-texture"))
+                object.visible = visible
+            })
+          }, visible)
+        }
+        for (const [i, position] of positions.entries()) {
+          await page.evaluate(
+            ({ position, target }) => {
+              window.enclosureCamera!.animateTo({
+                position,
+                target,
+                durationMs: 1,
+              })
+            },
+            { position, target },
+          )
+          await page.waitForTimeout(500)
+          const withCopper = await stableScreenshot(canvas)
+          await textures(false)
+          const withoutCopper = await stableScreenshot(canvas)
+          await testInfo.attach(`with-${i}`, {
+            body: withCopper,
+            contentType: "image/png",
+          })
+          await testInfo.attach(`without-${i}`, {
+            body: withoutCopper,
+            contentType: "image/png",
+          })
+          const changed = await changedPixels(withCopper, withoutCopper)
+          console.log(
+            `${material} ${shape} ${engine} angle ${i}: ${changed} changed pixels`,
+          )
+          // Allow a few antialiased silhouette pixels, but no copper lines.
+          expect(changed).toBeLessThanOrEqual(4)
+          await textures(true)
+        }
+        // Positive control: removing the enclosure must expose visible textures.
+        await page.evaluate(() => {
+          window.__TSCIRCUIT_THREE_OBJECT!.traverse((object: any) => {
+            if (object.isMesh && object.material.vertexColors && !object.name)
+              object.visible = false
+          })
+          window.enclosureCamera!.animateTo({
+            position: [25, -30, 30],
+            target: [0, 0, 0],
+            durationMs: 1,
+          })
+        })
+        await page.waitForTimeout(500)
+        const exposed = await stableScreenshot(canvas)
+        await textures(false)
+        const withoutTextures = await stableScreenshot(canvas)
+        expect(await changedPixels(exposed, withoutTextures)).toBeGreaterThan(
+          100,
+        )
+      })
     }
-    const canvas = page.locator("canvas").last()
-    const withCopper = await stableScreenshot(canvas)
-    await page.evaluate(() => {
-      window.__TSCIRCUIT_THREE_OBJECT!.traverse((object) => {
-        if (object.name.endsWith("board-texture-plane")) object.visible = false
-      })
-    })
-    await page.waitForTimeout(200)
-    const withoutCopper = await stableScreenshot(canvas)
-    // Removing enclosed textures must leave the shell unchanged. Allow a
-    // few antialiased silhouette pixels, but no copper lines through it.
-    await testInfo.attach(`with-${orbit}`, {
-      body: withCopper,
-      contentType: "image/png",
-    })
-    await testInfo.attach(`without-${orbit}`, {
-      body: withoutCopper,
-      contentType: "image/png",
-    })
-    expect(await changedPixels(withCopper, withoutCopper)).toBeLessThanOrEqual(
-      4,
-    )
-    await page.evaluate(() => {
-      window.__TSCIRCUIT_THREE_OBJECT!.traverse((object) => {
-        if (object.name.endsWith("board-texture-plane")) object.visible = true
-      })
-    })
-    await page.waitForTimeout(200)
   }
-})
+}
