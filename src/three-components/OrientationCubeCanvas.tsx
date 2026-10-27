@@ -25,9 +25,27 @@ function computePointInFront(
   return result
 }
 
-export const OrientationCubeCanvas = () => {
-  const { mainCameraRef } = useCameraController()
+export const OrientationCubeCanvas = ({
+  onUserInteraction,
+}: {
+  onUserInteraction?: () => void
+} = {}) => {
+  const {
+    mainCameraRef,
+    controlsRef,
+    controller,
+    defaultTarget,
+    baseDistance,
+  } = useCameraController()
   const containerRef = useRef<HTMLDivElement>(null)
+  const controllerRef = useRef(controller)
+  controllerRef.current = controller
+  const defaultTargetRef = useRef(defaultTarget)
+  defaultTargetRef.current = defaultTarget
+  const baseDistanceRef = useRef(baseDistance)
+  baseDistanceRef.current = baseDistance
+  const onUserInteractionRef = useRef(onUserInteraction)
+  onUserInteractionRef.current = onUserInteraction
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -52,6 +70,8 @@ export const OrientationCubeCanvas = () => {
     // Create camera
     const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000)
     camera.up.set(0, 0, 1)
+    camera.position.set(0, -2, 0)
+    camera.lookAt(0, 0, 0)
 
     // Add ambient light
     const ambientLight = new THREE.AmbientLight(0xffffff, Math.PI / 2)
@@ -63,10 +83,14 @@ export const OrientationCubeCanvas = () => {
 
     const cubeSize = 1
 
-    // Create cube mesh
+    // Create cube mesh with per-face materials for hover feedback
+    const faceMaterials = Array.from(
+      { length: 6 },
+      () => new THREE.MeshStandardMaterial({ color: "white" }),
+    )
     const box = new THREE.Mesh(
       new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize),
-      new THREE.MeshStandardMaterial({ color: "white" }),
+      faceMaterials,
     )
     group.add(box)
 
@@ -137,6 +161,97 @@ export const OrientationCubeCanvas = () => {
     group.add(topText)
     group.add(bottomText)
 
+    const raycaster = new THREE.Raycaster()
+    const pointer = new THREE.Vector2()
+
+    const syncCubeCamera = () => {
+      if (mainCameraRef.current) {
+        const cameraPosition = computePointInFront(
+          mainCameraRef.current.rotation ?? new THREE.Euler(0, 0, 0),
+          2,
+        )
+        if (!cameraPosition.equals(camera.position)) {
+          camera.position.copy(cameraPosition)
+          camera.lookAt(0, 0, 0)
+        }
+      }
+      camera.updateMatrixWorld()
+      group.updateMatrixWorld(true)
+    }
+
+    const intersectCubeFace = (event: MouseEvent) => {
+      syncCubeCamera()
+      const rect = canvas.getBoundingClientRect()
+      const width = rect.width || 120
+      const height = rect.height || 120
+      pointer.x = ((event.clientX - rect.left) / width) * 2 - 1
+      pointer.y = -((event.clientY - rect.top) / height) * 2 + 1
+      raycaster.setFromCamera(pointer, camera)
+      const hits = raycaster.intersectObject(box, false)
+      return hits[0]?.face ?? null
+    }
+
+    const resetFaceHighlights = () => {
+      for (const material of faceMaterials) {
+        material.color.set("white")
+      }
+      canvas.style.cursor = "default"
+    }
+
+    const handleMouseMove = (event: MouseEvent) => {
+      const face = intersectCubeFace(event)
+      resetFaceHighlights()
+      if (face && faceMaterials[face.materialIndex]) {
+        faceMaterials[face.materialIndex]!.color.set("#dbeafe")
+        canvas.style.cursor = "pointer"
+      }
+    }
+
+    const handleMouseLeave = () => {
+      resetFaceHighlights()
+    }
+
+    const handleClick = (event: MouseEvent) => {
+      const face = intersectCubeFace(event)
+      if (!face) return
+
+      onUserInteractionRef.current?.()
+      const target = controlsRef.current?.target ?? defaultTargetRef.current
+      const distance = mainCameraRef.current
+        ? mainCameraRef.current.position.distanceTo(target) ||
+          baseDistanceRef.current
+        : baseDistanceRef.current
+
+      const worldNormal = face.normal
+        .clone()
+        .applyQuaternion(group.quaternion)
+        .normalize()
+
+      const nextPosition: [number, number, number] = [
+        target.x + worldNormal.x * distance,
+        target.y + worldNormal.y * distance,
+        target.z + worldNormal.z * distance,
+      ]
+
+      if (controllerRef.current) {
+        controllerRef.current.animateTo({
+          position: nextPosition,
+          target: [target.x, target.y, target.z],
+          up: [0, 0, 1],
+        })
+      } else if (mainCameraRef.current) {
+        mainCameraRef.current.position.set(...nextPosition)
+        mainCameraRef.current.up.set(0, 0, 1)
+        mainCameraRef.current.lookAt(target)
+        mainCameraRef.current.updateMatrixWorld()
+        controlsRef.current?.update()
+      }
+    }
+
+    canvas.addEventListener("mousemove", handleMouseMove)
+    canvas.addEventListener("mouseleave", handleMouseLeave)
+    canvas.addEventListener("click", handleClick)
+
     // Animation loop
     let animationFrameId: number | null = null
     let isVisible = true
@@ -147,17 +262,7 @@ export const OrientationCubeCanvas = () => {
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate)
       if (!isVisible) return
-      if (mainCameraRef.current) {
-        const cameraPosition = computePointInFront(
-          mainCameraRef.current.rotation ?? new THREE.Euler(0, 0, 0),
-          2,
-        )
-
-        if (!cameraPosition.equals(camera.position)) {
-          camera.position.copy(cameraPosition)
-          camera.lookAt(0, 0, 0)
-        }
-      }
+      syncCubeCamera()
 
       renderer.render(scene, camera)
     }
@@ -168,6 +273,9 @@ export const OrientationCubeCanvas = () => {
     return () => {
       // StrictMode clears DOM refs before replaying passive effects, so clean up
       // the canvas owned by this effect instead of reading containerRef.current.
+      canvas.removeEventListener("mousemove", handleMouseMove)
+      canvas.removeEventListener("mouseleave", handleMouseLeave)
+      canvas.removeEventListener("click", handleClick)
       visibilityObserver.disconnect()
       canvas.remove()
 
@@ -183,7 +291,9 @@ export const OrientationCubeCanvas = () => {
       bottomText.dispose()
 
       box.geometry.dispose()
-      ;(box.material as THREE.Material).dispose()
+      for (const material of faceMaterials) {
+        material.dispose()
+      }
       edges.geometry.dispose()
       ;(edges.material as THREE.Material).dispose()
 
@@ -191,7 +301,7 @@ export const OrientationCubeCanvas = () => {
       renderer.dispose()
       renderer.forceContextLoss()
     }
-  }, [mainCameraRef])
+  }, [mainCameraRef, controlsRef])
 
   return (
     <div

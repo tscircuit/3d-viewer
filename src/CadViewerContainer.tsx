@@ -121,7 +121,7 @@ export const CadViewerContainer = forwardRef<
 
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
-        <OrientationCubeCanvas />
+        <OrientationCubeCanvas onUserInteraction={onUserInteraction} />
         <Canvas
           key={cameraSessionScope}
           ref={ref}
