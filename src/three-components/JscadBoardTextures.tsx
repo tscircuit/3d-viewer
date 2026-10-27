@@ -146,7 +146,9 @@ export function JscadBoardTextures({
         side: THREE.FrontSide,
         depthWrite,
         polygonOffset: usePolygonOffset,
-        polygonOffsetFactor: usePolygonOffset ? -4 : 0,
+        // Keep the bias bounded at grazing angles so copper cannot show
+        // through nearby opaque models.
+        polygonOffsetFactor: 0,
         polygonOffsetUnits: usePolygonOffset ? -4 : 0,
         opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
       } satisfies THREE.MeshBasicMaterialParameters

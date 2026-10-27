@@ -47,7 +47,10 @@ function createTexturePlane(
     side: THREE.FrontSide,
     depthWrite: true,
     polygonOffset: usePolygonOffset,
-    polygonOffsetFactor: usePolygonOffset ? -4 : 0, // Increased for better z-fighting prevention
+    // A slope-scaled bias can pull PCB textures through opaque geometry
+    // at grazing angles, regardless of board material. The physical surface
+    // separation and constant depth bias already handle coplanar layering.
+    polygonOffsetFactor: 0,
     polygonOffsetUnits: usePolygonOffset ? -4 : 0,
     opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
   } satisfies THREE.MeshBasicMaterialParameters
