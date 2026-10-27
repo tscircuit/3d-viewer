@@ -47,7 +47,10 @@ function createTexturePlane(
     side: THREE.FrontSide,
     depthWrite: true,
     polygonOffset: usePolygonOffset,
-    polygonOffsetFactor: usePolygonOffset ? -4 : 0, // Increased for better z-fighting prevention
+    // A slope-scaled bias grows without bound at grazing angles and can
+    // pull folded PCB textures through an opaque enclosure. The surface
+    // offset and constant depth bias already separate the copper layers.
+    polygonOffsetFactor: 0,
     polygonOffsetUnits: usePolygonOffset ? -4 : 0,
     opacity: isFaux ? FAUX_BOARD_OPACITY : 1.0,
   } satisfies THREE.MeshBasicMaterialParameters
