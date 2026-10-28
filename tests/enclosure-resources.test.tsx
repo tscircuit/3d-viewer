@@ -3,7 +3,7 @@ import { createCanvas } from "@napi-rs/canvas"
 import type { AnyCircuitElement } from "circuit-json"
 import { cad_component, pcb_component } from "circuit-json"
 import { JSDOM } from "jsdom"
-import { act, StrictMode } from "react"
+import { act, type ComponentProps, StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import * as THREE from "three"
 import { AnyCadComponent } from "../src/AnyCadComponent"
@@ -343,6 +343,37 @@ test("enclosure resources are released on plan replacement and StrictMode replay
   }
 })
 
+async function renderColoredJscadModel({
+  root,
+  context,
+  coloredPlan,
+  color,
+  isTranslucent = false,
+}: {
+  root: ReturnType<typeof createRoot>
+  context: ThreeContextState
+  coloredPlan: ComponentProps<typeof JscadModel>["jscadPlan"]
+  color?: string
+  isTranslucent?: boolean
+}) {
+  await act(async () =>
+    root.render(
+      <ThreeContext.Provider value={context}>
+        <HoverContext.Provider value={hover}>
+          <JscadModel
+            jscadPlan={coloredPlan}
+            color={color}
+            isTranslucent={isTranslucent}
+            isHovered={false}
+            onHover={noop}
+            onUnhover={noop}
+          />
+        </HoverContext.Provider>
+      </ThreeContext.Provider>,
+    ),
+  )
+}
+
 test("JSCAD color override replaces embedded color and restores it when cleared", async () => {
   await withScene(async ({ root, rootObject, context }) => {
     const coloredPlan = {
@@ -350,41 +381,29 @@ test("JSCAD color override replaces embedded color and restores it when cleared"
       color: [0, 0, 1] as [number, number, number],
       shape: plan,
     }
-    const render = (color?: string, isTranslucent = false) =>
-      act(async () =>
-        root.render(
-          <ThreeContext.Provider value={context}>
-            <HoverContext.Provider value={hover}>
-              <JscadModel
-                jscadPlan={coloredPlan}
-                color={color}
-                isTranslucent={isTranslucent}
-                isHovered={false}
-                onHover={noop}
-                onUnhover={noop}
-              />
-            </HoverContext.Provider>
-          </ThreeContext.Provider>,
-        ),
-      )
-    await render()
+    const renderContext = { root, context, coloredPlan }
+    await renderColoredJscadModel(renderContext)
     const mesh = findMesh(rootObject)
     const geometry = mesh.geometry
     const colors = geometry.getAttribute("color")
     expect([colors.getX(0), colors.getY(0), colors.getZ(0)]).toEqual([0, 0, 1])
     expect(mesh.material.vertexColors).toBe(true)
 
-    await render("#d73e39")
+    await renderColoredJscadModel({ ...renderContext, color: "#d73e39" })
     expect(findMesh(rootObject).geometry).toBe(geometry)
     expect(mesh.material.color.getHexString()).toBe("d73e39")
     expect(mesh.material.vertexColors).toBe(false)
 
-    await render("#00ff00", true)
+    await renderColoredJscadModel({
+      ...renderContext,
+      color: "#00ff00",
+      isTranslucent: true,
+    })
     expect(mesh.material.color.getHexString()).toBe("00ff00")
     expect(mesh.material.opacity).toBe(0.5)
     expect(mesh.material.vertexColors).toBe(false)
 
-    await render()
+    await renderColoredJscadModel(renderContext)
     expect(findMesh(rootObject).geometry).toBe(geometry)
     expect(mesh.material.vertexColors).toBe(true)
     expect(mesh.material.color.getHexString()).toBe("ffffff")
