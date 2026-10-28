@@ -361,7 +361,7 @@ Pass ordinary Circuit JSON containing `cad_explosion_stage` and
 `cad_explosion_move` records:
 
 ```tsx
-<CadViewer circuitJson={assembledCircuitJson} />
+;<CadViewer circuitJson={assembledCircuitJson} />
 ```
 
 The document contains assembled geometry and the complete explosion program.
@@ -377,7 +377,7 @@ TSX children and settled circuits use the same JSON playback path:
 import { assembly } from "@tscircuit/core"
 import { CadViewer } from "@tscircuit/3d-viewer"
 
-<CadViewer>
+;<CadViewer>
   <assembly.device name="case">
     <assembly.part name="lid" cadModel={{ jscad: { type: "cube", size: 8 } }} />
     <assembly.explosion.stage name="lift">

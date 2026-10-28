@@ -56,7 +56,6 @@
     "@tscircuit/circuit-json-util": "*"
   },
   "devDependencies": {
-    "@tscircuit/flex-utils": "https://jscdn.tscircuit.com/@tscircuit/flex-utils/0.0.8.tgz",
     "@biomejs/biome": "^2.1.4",
     "@chromatic-com/storybook": "^1.9.0",
     "@jscad/modeling": "^2.12.5",
@@ -69,6 +68,9 @@
     "@tscircuit/circuit-json-util": "^0.0.119",
     "@tscircuit/copper-pour-solver": "^0.0.29",
     "@tscircuit/core": "https://pkg.pr.new/@tscircuit/core@90821979e",
+    "@tscircuit/eval": "0.0.1435",
+    "@tscircuit/flex-utils": "https://jscdn.tscircuit.com/@tscircuit/flex-utils/0.0.8.tgz",
+    "@tscircuit/modelprinter": "^0.0.18",
     "@tscircuit/props": "0.0.714",
     "@tscircuit/solver-utils": "^0.0.4",
     "@types/debug": "^4.1.13",
@@ -79,6 +81,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "bun-match-svg": "^0.0.9",
     "bun-types": "1.2.1",
+    "circuit-json-to-gltf": "0.0.143",
     "debug": "^4.4.0",
     "jscad-planner": "^0.0.18",
     "jsdom": "^26.0.0",
@@ -91,9 +94,7 @@
     "typescript": "^5.7.3",
     "vite": "^7.1.5",
     "vite-tsconfig-paths": "^4.3.2",
-    "circuit-json-to-gltf": "0.0.143",
-    "zod": "^3.25.67",
-    "@tscircuit/modelprinter": "^0.0.18"
+    "zod": "^3.25.67"
   },
   "engines": {
     "node": "24.x"
