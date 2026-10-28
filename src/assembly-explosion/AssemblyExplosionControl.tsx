@@ -6,11 +6,13 @@ export function AssemblyExplosionControl({
   amount,
   onChange,
   error,
+  onClose,
 }: {
   stages: string[]
   amount: number
   onChange: (amount: number) => void
   error?: Error
+  onClose?: () => void
 }) {
   const id = useId()
   if (!stages.length && !error) return null
@@ -32,6 +34,16 @@ export function AssemblyExplosionControl({
       onPointerDown={(event) => event.stopPropagation()}
       onContextMenu={(event) => event.stopPropagation()}
     >
+      {onClose && (
+        <button
+          type="button"
+          aria-label="Close exploded view"
+          onClick={onClose}
+          style={{ float: "right", marginLeft: 12 }}
+        >
+          ×
+        </button>
+      )}
       {error ? (
         <div role="alert">Cannot show assembly explosion: {error.message}</div>
       ) : (

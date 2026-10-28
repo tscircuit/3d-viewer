@@ -352,7 +352,8 @@ model appearance are baked into the GLB; regenerate it to change them.
 
 ### TSX assembly explosion views
 
-`CadViewer` retains the rendered TSX tree and shows a stage slider when it contains
+Right-click the viewer and select **Advanced → Exploded view…** to open the
+built-in slider. `CadViewer` retains the rendered TSX tree when it contains
 `assembly.explosion.stage` instructions. Drag the slider to advance through ordered
 stages and their moves, or select **Reset** to return to the assembled view.
 Movement guides appear as dashed lines. Both Manifold and JSCAD support this view.
@@ -374,7 +375,8 @@ import { CadViewer } from "@tscircuit/3d-viewer"
 For an existing circuit, first `await circuit.renderUntilSettled()`, then pass
 `<CadViewer circuit={circuit} />`. Replace the circuit instance when the design
 changes. `circuitJson` takes precedence over `circuit` and TSX children. JSON-only
-and pre-rendered GLB inputs have no authored stage tree and do not show the slider.
+inputs without a target pose and pre-rendered GLB inputs have no explosion
+information, so the menu action is disabled.
 TSX children are rendered asynchronously before displaying the assembly.
 
 Core evaluates stage ordering, sequential moves, multi-target moves, and mounted
@@ -384,5 +386,20 @@ leaving the assembled geometry visible. Core currently supports mechanical CAD
 moves only; PCB/cable-containing targets are rejected. These views do not verify
 collision clearance.
 
-See **Assembly / Explosion / Staged Tsx** in Storybook. Run the browser regression
+For JSON exports, supply both poses to the same built-in control:
+
+```tsx
+<CadViewer
+  circuitJson={assembledCircuitJson}
+  explodedCircuitJson={explodedCircuitJson}
+/>
+```
+
+The viewer interpolates CAD translations between these poses. Both exports must
+preserve CAD IDs, models, rotations, PCB geometry and source records. This does
+not restore authored stage ordering: Circuit JSON does not currently serialize
+explosion instructions. The target pose takes precedence over live TSX stages.
+Closing the control resets the assembly.
+
+See **Assembly / Explosion / Staged Tsx** and **Rp2040 Motor Assembly** in Storybook. Run the browser regression
 with `bunx playwright test --config playwright.explosion.config.ts`.

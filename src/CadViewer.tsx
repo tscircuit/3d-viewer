@@ -29,6 +29,7 @@ const readStoredCameraType = (): "perspective" | "orthographic" | undefined => {
 }
 
 import type { RootCircuit } from "@tscircuit/core"
+import { useExplosionSnapshot } from "./assembly-explosion/use-explosion-snapshot"
 import { useAssemblyExplosion } from "./assembly-explosion/use-assembly-explosion"
 import { AssemblyExplosionContext } from "./assembly-explosion/AssemblyExplosionScene"
 import { AssemblyExplosionControl } from "./assembly-explosion/AssemblyExplosionControl"
@@ -70,6 +71,8 @@ export type CadViewerProps = Omit<
   circuitJson?: any[]
   /** Settled circuit retaining authored assembly.explosion stages. */
   circuit?: RootCircuit
+  /** Optional exported target pose for built-in Advanced > Exploded view. CAD translations only. */
+  explodedCircuitJson?: AnyCircuitElement[]
   /** Pre-rendered circuit-json-to-gltf GLB URL. Bypasses geometry/model generation. */
   glbUrl?: string
   /** In-memory alternative to glbUrl. Supply only one GLB source. */
@@ -82,12 +85,24 @@ export type CadViewerProps = Omit<
 const CadViewerInner = (props: CadViewerProps) => {
   const section = useSection()
   const glbSource = props.glbUrl ?? props.glbData
-  const explosion = useAssemblyExplosion(
+  const authoredExplosion = useAssemblyExplosion(
     props.circuitJson || glbSource !== undefined ? undefined : props.children,
     props.circuitJson || glbSource !== undefined ? undefined : props.circuit,
   )
   const circuitJson: AnyCircuitElement[] =
-    props.circuitJson ?? explosion.assembled
+    props.circuitJson ?? authoredExplosion.assembled
+  const snapshotExplosion = useExplosionSnapshot(
+    circuitJson,
+    glbSource === undefined ? props.explodedCircuitJson : undefined,
+  )
+  const explosion =
+    props.explodedCircuitJson && glbSource === undefined
+      ? snapshotExplosion
+      : authoredExplosion
+  const [explosionPanelSource, setExplosionPanelSource] = useState<
+    AnyCircuitElement[] | null
+  >(null)
+  const explosionPanelOpen = explosionPanelSource === circuitJson
   const hasAssembly = circuitJson.some(
     (element) => element.type === "cad_component" && !element.pcb_component_id,
   )
@@ -331,12 +346,18 @@ const CadViewerInner = (props: CadViewerProps) => {
         }}
         {...contextMenuEventHandlers}
       >
-        <AssemblyExplosionControl
-          stages={explosion.stages}
-          amount={explosion.amount}
-          onChange={explosion.setAmount}
-          error={explosion.error}
-        />
+        {explosionPanelOpen && (
+          <AssemblyExplosionControl
+            stages={explosion.stages}
+            amount={explosion.amount}
+            onChange={explosion.setAmount}
+            error={explosion.error}
+            onClose={() => {
+              explosion.setAmount(0)
+              setExplosionPanelSource(null)
+            }}
+          />
+        )}
         {glbSource !== undefined ? (
           <CadViewerGlb
             source={glbSource}
@@ -404,6 +425,14 @@ const CadViewerInner = (props: CadViewerProps) => {
                   }
                 : undefined
             }
+            explosionAvailable={
+              explosion.stages.length > 0 || !!explosion.error
+            }
+            onExplosionView={() => {
+              setExplosionPanelSource(circuitJson)
+              setAutoRotate(false)
+              closeMenu()
+            }}
             onSectionView={() => {
               if (!section?.spec)
                 section?.setSpec({
