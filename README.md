@@ -349,3 +349,40 @@ and `pcb_component_id` (when available). These support name tooltips, hiding
 individual components, and `onViewSchematicComponent` without supplying Circuit
 JSON. Existing GLBs without metadata still render. Board layers, folding, and
 model appearance are baked into the GLB; regenerate it to change them.
+
+### TSX assembly explosion views
+
+`CadViewer` retains the rendered TSX tree and shows a stage slider when it contains
+`assembly.explosion.stage` instructions. Drag the slider to advance through ordered
+stages and their moves, or select **Reset** to return to the assembled view.
+Movement guides appear as dashed lines. Both Manifold and JSCAD support this view.
+
+```tsx
+import { assembly } from "@tscircuit/core"
+import { CadViewer } from "@tscircuit/3d-viewer"
+
+<CadViewer>
+  <assembly.device name="case">
+    <assembly.part name="lid" cadModel={{ jscad: { type: "cube", size: 8 } }} />
+    <assembly.explosion.stage name="lift">
+      <assembly.explosion.move targetRef="lid" offZ="20mm" />
+    </assembly.explosion.stage>
+  </assembly.device>
+</CadViewer>
+```
+
+For an existing circuit, first `await circuit.renderUntilSettled()`, then pass
+`<CadViewer circuit={circuit} />`. Replace the circuit instance when the design
+changes. `circuitJson` takes precedence over `circuit` and TSX children. JSON-only
+and pre-rendered GLB inputs have no authored stage tree and do not show the slider.
+TSX children are rendered asynchronously before displaying the assembly.
+
+Core evaluates stage ordering, sequential moves, multi-target moves, and mounted
+assembly frames. The viewer applies translations without rebuilding models or
+resetting the camera. Invalid explosion instructions display an error while
+leaving the assembled geometry visible. Core currently supports mechanical CAD
+moves only; PCB/cable-containing targets are rejected. These views do not verify
+collision clearance.
+
+See **Assembly / Explosion / Staged Tsx** in Storybook. Run the browser regression
+with `bunx playwright test --config playwright.explosion.config.ts`.

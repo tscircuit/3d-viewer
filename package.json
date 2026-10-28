@@ -52,7 +52,7 @@
     "zod": "*",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "@tscircuit/core": "*",
+    "@tscircuit/core": ">=0.0.2195",
     "@tscircuit/circuit-json-util": "*"
   },
   "devDependencies": {
