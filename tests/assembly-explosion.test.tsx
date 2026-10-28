@@ -163,16 +163,22 @@ test("viewer scrubs stages, resets on input changes, plays serialized JSON progr
         await new Promise((resolve) => setTimeout(resolve, 10))
       })
     expect(state.stages).toHaveLength(3)
-    const invalid = new Circuit()
-    invalid.add(
-      <assembly.device name="bad">
-        <assembly.explosion.stage name="lift">
-          <assembly.explosion.move targetRef="missing" offZ={1} />
-        </assembly.explosion.stage>
-      </assembly.device>,
+    // Invalid TSX now fails in core's render phase, before JSON export.
+    await act(async () =>
+      root.render(
+        <Harness>
+          <assembly.device name="bad">
+            <assembly.explosion.stage name="lift">
+              <assembly.explosion.move targetRef="missing" offZ={1} />
+            </assembly.explosion.stage>
+          </assembly.device>
+        </Harness>,
+      ),
     )
-    await invalid.renderUntilSettled()
-    await act(async () => root.render(<Harness circuit={invalid} />))
+    for (let i = 0; i < 50 && !state.error; i++)
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10))
+      })
     expect(
       dom.window.document.querySelector('[role="alert"]')?.textContent,
     ).toContain('target "missing"')

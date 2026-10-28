@@ -393,7 +393,8 @@ import { CadViewer } from "@tscircuit/3d-viewer"
 For an existing circuit, `await circuit.renderUntilSettled()` and pass
 `<CadViewer circuit={circuit} />`. Replace the instance when the design changes.
 `circuitJson` takes precedence over `circuit` and TSX children. TSX renders
-asynchronously before display. Inputs without an explosion program and
+asynchronously before display. Core emits the explosion program in its CAD render
+phases; invalid TSX references are reported as render errors. Inputs without an explosion program and
 pre-rendered GLBs have the menu action disabled.
 
 Invalid programs show an error while retaining assembled geometry. The evaluator

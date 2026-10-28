@@ -67,7 +67,7 @@
     "@tscircuit/alphabet": "^0.0.25",
     "@tscircuit/circuit-json-util": "^0.0.119",
     "@tscircuit/copper-pour-solver": "^0.0.29",
-    "@tscircuit/core": "https://pkg.pr.new/@tscircuit/core@7b99e8884",
+    "@tscircuit/core": "https://pkg.pr.new/@tscircuit/core@badf7102e",
     "@tscircuit/eval": "0.0.1435",
     "@tscircuit/flex-utils": "https://jscdn.tscircuit.com/@tscircuit/flex-utils/0.0.8.tgz",
     "@tscircuit/modelprinter": "^0.0.18",
