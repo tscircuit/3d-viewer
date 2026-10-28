@@ -11,6 +11,7 @@ import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 export const JscadModel = ({
   jscadPlan,
+  color,
   positionOffset,
   rotationOffset,
   modelOffset = [0, 0, 0],
@@ -25,6 +26,7 @@ export const JscadModel = ({
   isTranslucent = false,
 }: {
   jscadPlan: JscadOperation
+  color?: string
   positionOffset?: [number, number, number]
   rotationOffset?: [number, number, number]
   modelOffset?: [number, number, number]
@@ -69,6 +71,8 @@ export const JscadModel = ({
   useEffect(() => {
     if (!mesh) return
     const material = mesh.material
+    material.color.set(color ?? "#ffffff")
+    material.vertexColors = color === undefined
     material.transparent = isTranslucent
     material.opacity = isTranslucent ? 0.5 : 1
     material.depthWrite = !isTranslucent
@@ -78,7 +82,7 @@ export const JscadModel = ({
       castShadow: !isTranslucent,
       receiveShadow: true,
     })
-  }, [mesh, isTranslucent])
+  }, [mesh, isTranslucent, color])
 
   const material = mesh?.material
   const { boardTransformGroup } = useCadModelTransformGraph({
