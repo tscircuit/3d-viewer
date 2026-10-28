@@ -28,6 +28,7 @@ interface Props {
   circuitJson?: AnyCircuitElement[]
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
+  gizmoCubeDisabled?: boolean
   cameraType?: "orthographic" | "perspective"
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
@@ -46,6 +47,7 @@ export const CadViewerJscad = forwardRef<
       children,
       autoRotateDisabled,
       clickToInteractEnabled,
+      gizmoCubeDisabled,
       onUserInteraction,
       onCameraControllerReady,
       resolveStaticAsset,
@@ -131,6 +133,7 @@ export const CadViewerJscad = forwardRef<
         autoRotateDisabled={autoRotateDisabled}
         initialCameraPosition={initialCameraPosition}
         clickToInteractEnabled={clickToInteractEnabled}
+        gizmoCubeDisabled={gizmoCubeDisabled}
         boardDimensions={boardDimensions}
         boardCenter={boardCenter}
         cameraSessionScope={cameraSessionScope}

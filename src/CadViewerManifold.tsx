@@ -126,6 +126,7 @@ type CadViewerManifoldProps = {
   foldPcbs?: boolean
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
+  gizmoCubeDisabled?: boolean
   cameraType?: "orthographic" | "perspective"
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
@@ -142,6 +143,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   foldPcbs,
   autoRotateDisabled,
   clickToInteractEnabled,
+  gizmoCubeDisabled,
   onUserInteraction,
   children,
   onCameraControllerReady,
@@ -299,6 +301,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
       initialCameraPosition={initialCameraPosition}
       autoRotateDisabled={autoRotateDisabled}
       clickToInteractEnabled={clickToInteractEnabled}
+      gizmoCubeDisabled={gizmoCubeDisabled}
       boardDimensions={boardDimensions}
       boardCenter={boardCenter}
       cameraSessionScope={cameraSessionScope}
