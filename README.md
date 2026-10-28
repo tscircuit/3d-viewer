@@ -401,11 +401,11 @@ validates every stage even during partial playback. This version supports CAD an
 reference-surface translations; PCB/cable-containing movements and rotations are
 not supported. Displaying an explosion does not verify collision clearance.
 
-The schema and core changes are tracked in
-[circuit-json #937](https://github.com/tscircuit/circuit-json/pull/937) and
-[core #4990](https://github.com/tscircuit/core/pull/4990). This draft uses their
-preview packages, which must be replaced with published versions before merge.
-Set the core peer minimum to the release containing these APIs at that time.
+The schema is published in `circuit-json@0.0.539` following
+[circuit-json #937](https://github.com/tscircuit/circuit-json/pull/937).
+This draft still uses the preview of [core #4990](https://github.com/tscircuit/core/pull/4990).
+Replace that core preview with its published release and set the core peer minimum
+to that release before merging.
 
 See **Assembly / Explosion / Staged Tsx** and **Assembly / RP2040 motor controller**
 in Storybook. The real board fixture has five serialized stages, including a

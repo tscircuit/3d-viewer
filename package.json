@@ -40,7 +40,7 @@
     "@jscad/regl-renderer": "^2.6.12",
     "@jscad/stl-serializer": "^2.1.20",
     "@tscircuit/cableprinter": "^0.0.6",
-    "circuit-json": "https://pkg.pr.new/circuit-json@28323b4",
+    "circuit-json": "^0.0.539",
     "circuit-to-canvas": "^0.0.139",
     "jscad-electronics": "^0.0.213",
     "react-hot-toast": "^2.6.0",
@@ -67,7 +67,7 @@
     "@tscircuit/alphabet": "^0.0.25",
     "@tscircuit/circuit-json-util": "^0.0.119",
     "@tscircuit/copper-pour-solver": "^0.0.29",
-    "@tscircuit/core": "https://pkg.pr.new/@tscircuit/core@90821979e",
+    "@tscircuit/core": "https://pkg.pr.new/@tscircuit/core@7b99e8884",
     "@tscircuit/eval": "0.0.1435",
     "@tscircuit/flex-utils": "https://jscdn.tscircuit.com/@tscircuit/flex-utils/0.0.8.tgz",
     "@tscircuit/modelprinter": "^0.0.18",
@@ -100,7 +100,7 @@
     "node": "24.x"
   },
   "overrides": {
-    "circuit-json": "https://pkg.pr.new/circuit-json@28323b4",
+    "circuit-json": "^0.0.539",
     "@tscircuit/props": "0.0.714"
   }
 }
