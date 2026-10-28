@@ -1,16 +1,17 @@
 import { expect, test } from "bun:test"
 import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import raw from "../stories/fixtures/rp2040-motor-assembly/assembled.circuit.json"
-import positions from "../stories/fixtures/rp2040-motor-assembly/exploded-positions.json"
+import { getCircuitJsonAssemblyExplosion } from "@tscircuit/core"
 
 const assembled = raw as unknown as AnyCircuitElement[]
 const cad = assembled.filter(
   (e): e is CadComponent => e.type === "cad_component",
 )
-const explodedPositions = positions as Record<
-  string,
-  { x: number; y: number; z: number }
->
+const explodedPositions = Object.fromEntries(
+  getCircuitJsonAssemblyExplosion(JSON.parse(JSON.stringify(assembled)))
+    .circuitJson.filter((e): e is CadComponent => e.type === "cad_component")
+    .map((e) => [e.cad_component_id, e.position]),
+)
 
 test("real RP2040 fixture includes routed four-layer PCB and all mechanical parts", () => {
   const board = assembled.find((e) => e.type === "pcb_board")!
@@ -60,6 +61,19 @@ test("exported explosion moves ten mechanical parts and keeps all PCB components
   expect(deltaZ("cover")).toBe(24)
   expect(deltaZ("motor")).toBe(-24)
   expect(deltaZ("spacer1")).toBe(-12)
-  // This fixture is deliberately a pair of static exports, not a proposed schema.
-  expect(assembled.some((e) => e.type.includes("explosion"))).toBe(false)
+  expect(
+    assembled.filter((e) => e.type === "cad_explosion_stage"),
+  ).toHaveLength(5)
+  const moves = assembled.filter((e) => e.type === "cad_explosion_move")
+  expect(moves).toHaveLength(5)
+  expect(moves.at(-1)?.targets[0]?.type).toBe("cad_explosion_stage")
+  const beforePark = getCircuitJsonAssemblyExplosion(assembled, {
+    throughStageRef: "RP2040_NEMA17.park-bolts",
+    stageProgress: 0,
+  })
+  for (const record of beforePark.circuitJson) {
+    if (record.type !== "cad_component") continue
+    const final = explodedPositions[record.cad_component_id]!
+    expect(final.z).toBe(record.position.z)
+  }
 })

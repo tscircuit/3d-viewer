@@ -10,6 +10,12 @@ if (!source)
     "Usage: bun scripts/export-rp2040-assembly.tsx <rp2040-source-directory> <output-directory>",
   )
 const sourceDir = resolve(source)
+// Compile PCB geometry with the board's pinned renderer. Export instructions
+// from that same live TSX tree using the viewer's newer core/schema packages.
+const explosionCoreModule = process.argv[4]
+  ? resolve(process.argv[4])
+  : import.meta.resolve("@tscircuit/core")
+const schemaModule = import.meta.resolve("circuit-json")
 const outputDir = resolve(process.argv[3] ?? "work/rp2040-assembly")
 const buildDir = join(sourceDir, ".viewer-assembly")
 await mkdir(buildDir, { recursive: true })
@@ -23,22 +29,23 @@ await copyFile(
 await Bun.write(
   join(buildDir, "build.tsx"),
   `
-import { Circuit, getAssemblyExplosion } from "@tscircuit/core"
-import { any_circuit_element } from "circuit-json"
+import { Circuit } from "@tscircuit/core"
+import { serializeAssemblyExplosion, getCircuitJsonAssemblyExplosion } from ${JSON.stringify(explosionCoreModule)}
+import { any_circuit_element } from ${JSON.stringify(schemaModule)}
 import Board from "../index.circuit"
 import { Rp2040MotorAssembly } from "./assembly"
 const circuit = new Circuit()
 // An opaque root group provides schematic scope for the board beneath a device.
 circuit.add(<group name="product" subcircuit><Rp2040MotorAssembly board={<Board />} /></group>)
 await circuit.renderUntilSettled()
-const assembled = circuit.getCircuitJson()
-const view = getAssemblyExplosion(circuit)
+const geometry = circuit.getCircuitJson().filter(e => e.type !== "cad_explosion_stage" && e.type !== "cad_explosion_move")
+const assembled = [...geometry, ...serializeAssemblyExplosion(circuit.children, geometry)]
+const view = getCircuitJsonAssemblyExplosion(JSON.parse(JSON.stringify(assembled)))
 if (assembled.filter(e => e.type === "pcb_board").length !== 1) throw new Error("Expected the real controller PCB")
 if (assembled.some(e => e.type.endsWith("_error"))) throw new Error("Circuit build emitted errors")
 const out = ${JSON.stringify(outputDir)}
 await Bun.write(out + "/assembled.circuit.json", JSON.stringify(assembled))
 await Bun.write(out + "/exploded.circuit.json", JSON.stringify(view.circuitJson))
-await Bun.write(out + "/exploded-positions.json", JSON.stringify(Object.fromEntries(view.circuitJson.filter(e => e.type === "cad_component").map(e => [e.cad_component_id, e.position])), null, 2))
 // Diagnostic evaluator output, deliberately NOT presented as Circuit JSON.
 await Bun.write(out + "/explosion-evaluation.json", JSON.stringify({ stages: view.stages, lines: view.lines, collisionCheckStatus: view.collisionCheckStatus }, null, 2))
 const invalid = assembled.filter(e => !any_circuit_element.safeParse(e).success)

@@ -107,20 +107,31 @@ test("real RP2040 uses Advanced menu, continuous scrubbing and reset without rep
     .getByRole("menuitem", { name: "Exploded view…", exact: true })
     .click()
   const slider = page.getByRole("slider", { name: "Assembly explosion" })
-  await slider.fill("0.5")
+  await expect(slider).toHaveAttribute("max", "5")
+  await slider.fill("1.5")
   await expect
     .poll(async () => (await positions()).cad_component_112?.[2])
     .toBe(12)
-  await slider.fill("1")
+  await slider.fill("5")
   await expect
     .poll(async () => (await positions()).cad_component_112?.[2])
     .toBe(24)
+  await expect
+    .poll(async () => (await positions()).cad_component_113?.[0])
+    .toBe(24)
+  await slider.fill("4.5")
+  await expect
+    .poll(async () => (await positions()).cad_component_113?.[0])
+    .toBe(12)
+  await expect
+    .poll(async () => (await positions()).cad_component_113?.[2])
+    .toBe(65)
   expect(
     await page.evaluate(() => (window as any).__originalCanvas.isConnected),
   ).toBe(true)
   await page.getByRole("button", { name: "Reset", exact: true }).click()
   await expect.poll(positions).toEqual(original)
-  await slider.fill("1")
+  await slider.fill("5")
   await page.getByRole("button", { name: "Close exploded view" }).click()
   await expect(slider).toHaveCount(0)
   await expect.poll(positions).toEqual(original)

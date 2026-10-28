@@ -350,13 +350,28 @@ individual components, and `onViewSchematicComponent` without supplying Circuit
 JSON. Existing GLBs without metadata still render. Board layers, folding, and
 model appearance are baked into the GLB; regenerate it to change them.
 
-### TSX assembly explosion views
+### Assembly explosion views
 
 Right-click the viewer and select **Advanced → Exploded view…** to open the
-built-in slider. `CadViewer` retains the rendered TSX tree when it contains
-`assembly.explosion.stage` instructions. Drag the slider to advance through ordered
-stages and their moves, or select **Reset** to return to the assembled view.
-Movement guides appear as dashed lines. Both Manifold and JSCAD support this view.
+built-in slider. Drag through ordered stages and sequential moves; **Reset** or
+closing the panel restores the assembled view. Both Manifold and JSCAD apply
+translations in place and show dashed movement guides.
+
+Pass ordinary Circuit JSON containing `cad_explosion_stage` and
+`cad_explosion_move` records:
+
+```tsx
+<CadViewer circuitJson={assembledCircuitJson} />
+```
+
+The document contains assembled geometry and the complete explosion program.
+No second pose, live TSX tree or external selector is needed. The viewer consumes
+explicit stage membership, typed movement targets, resolved order and world-space
+translation vectors. A movement may target an entire explosion stage: all of its
+members move together, preserving their earlier relative displacement. Overlapping
+targets move once per instruction; separate instructions accumulate.
+
+TSX children and settled circuits use the same JSON playback path:
 
 ```tsx
 import { assembly } from "@tscircuit/core"
@@ -368,38 +383,32 @@ import { CadViewer } from "@tscircuit/3d-viewer"
     <assembly.explosion.stage name="lift">
       <assembly.explosion.move targetRef="lid" offZ="20mm" />
     </assembly.explosion.stage>
+    <assembly.explosion.stage name="park" prevStageRef="lift">
+      <assembly.explosion.move targetRef="lift" offX="15mm" />
+    </assembly.explosion.stage>
   </assembly.device>
 </CadViewer>
 ```
 
-For an existing circuit, first `await circuit.renderUntilSettled()`, then pass
-`<CadViewer circuit={circuit} />`. Replace the circuit instance when the design
-changes. `circuitJson` takes precedence over `circuit` and TSX children. JSON-only
-inputs without a target pose and pre-rendered GLB inputs have no explosion
-information, so the menu action is disabled.
-TSX children are rendered asynchronously before displaying the assembly.
+For an existing circuit, `await circuit.renderUntilSettled()` and pass
+`<CadViewer circuit={circuit} />`. Replace the instance when the design changes.
+`circuitJson` takes precedence over `circuit` and TSX children. TSX renders
+asynchronously before display. Inputs without an explosion program and
+pre-rendered GLBs have the menu action disabled.
 
-Core evaluates stage ordering, sequential moves, multi-target moves, and mounted
-assembly frames. The viewer applies translations without rebuilding models or
-resetting the camera. Invalid explosion instructions display an error while
-leaving the assembled geometry visible. Core currently supports mechanical CAD
-moves only; PCB/cable-containing targets are rejected. These views do not verify
-collision clearance.
+Invalid programs show an error while retaining assembled geometry. The evaluator
+validates every stage even during partial playback. This version supports CAD and
+reference-surface translations; PCB/cable-containing movements and rotations are
+not supported. Displaying an explosion does not verify collision clearance.
 
-For JSON exports, supply both poses to the same built-in control:
+The schema and core changes are tracked in
+[circuit-json #937](https://github.com/tscircuit/circuit-json/pull/937) and
+[core #4990](https://github.com/tscircuit/core/pull/4990). This draft uses their
+preview packages, which must be replaced with published versions before merge.
+Set the core peer minimum to the release containing these APIs at that time.
 
-```tsx
-<CadViewer
-  circuitJson={assembledCircuitJson}
-  explodedCircuitJson={explodedCircuitJson}
-/>
-```
-
-The viewer interpolates CAD translations between these poses. Both exports must
-preserve CAD IDs, models, rotations, PCB geometry and source records. This does
-not restore authored stage ordering: Circuit JSON does not currently serialize
-explosion instructions. The target pose takes precedence over live TSX stages.
-Closing the control resets the assembly.
-
-See **Assembly / Explosion / Staged Tsx** and **Rp2040 Motor Assembly** in Storybook. Run the browser regression
-with `bunx playwright test --config playwright.explosion.config.ts`.
+See **Assembly / Explosion / Staged Tsx** and **Assembly / RP2040 motor controller**
+in Storybook. The real board fixture has five serialized stages, including a
+final whole-stage move that parks all four previously lifted bolts together.
+Run browser regressions with
+`bunx playwright test --config playwright.explosion.config.ts`.

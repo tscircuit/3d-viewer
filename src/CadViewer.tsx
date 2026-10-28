@@ -29,7 +29,6 @@ const readStoredCameraType = (): "perspective" | "orthographic" | undefined => {
 }
 
 import type { RootCircuit } from "@tscircuit/core"
-import { useExplosionSnapshot } from "./assembly-explosion/use-explosion-snapshot"
 import { useAssemblyExplosion } from "./assembly-explosion/use-assembly-explosion"
 import { AssemblyExplosionContext } from "./assembly-explosion/AssemblyExplosionScene"
 import { AssemblyExplosionControl } from "./assembly-explosion/AssemblyExplosionControl"
@@ -71,8 +70,6 @@ export type CadViewerProps = Omit<
   circuitJson?: any[]
   /** Settled circuit retaining authored assembly.explosion stages. */
   circuit?: RootCircuit
-  /** Optional exported target pose for built-in Advanced > Exploded view. CAD translations only. */
-  explodedCircuitJson?: AnyCircuitElement[]
   /** Pre-rendered circuit-json-to-gltf GLB URL. Bypasses geometry/model generation. */
   glbUrl?: string
   /** In-memory alternative to glbUrl. Supply only one GLB source. */
@@ -85,20 +82,13 @@ export type CadViewerProps = Omit<
 const CadViewerInner = (props: CadViewerProps) => {
   const section = useSection()
   const glbSource = props.glbUrl ?? props.glbData
-  const authoredExplosion = useAssemblyExplosion(
+  const explosion = useAssemblyExplosion(
     props.circuitJson || glbSource !== undefined ? undefined : props.children,
     props.circuitJson || glbSource !== undefined ? undefined : props.circuit,
+    glbSource === undefined ? props.circuitJson : undefined,
   )
   const circuitJson: AnyCircuitElement[] =
-    props.circuitJson ?? authoredExplosion.assembled
-  const snapshotExplosion = useExplosionSnapshot(
-    circuitJson,
-    glbSource === undefined ? props.explodedCircuitJson : undefined,
-  )
-  const explosion =
-    props.explodedCircuitJson && glbSource === undefined
-      ? snapshotExplosion
-      : authoredExplosion
+    props.circuitJson ?? explosion.assembled
   const [explosionPanelSource, setExplosionPanelSource] = useState<
     AnyCircuitElement[] | null
   >(null)

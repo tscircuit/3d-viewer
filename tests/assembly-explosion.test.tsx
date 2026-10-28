@@ -3,6 +3,7 @@ import {
   Circuit,
   assembly,
   getAssemblyExplosion,
+  getCircuitJsonAssemblyExplosion,
   type RootCircuit,
 } from "@tscircuit/core"
 import { JSDOM } from "jsdom"
@@ -74,7 +75,7 @@ test("TSX stages move parent/child and multiple targets, preserve assembled data
   expect(circuit.getCircuitJson()).toEqual(original)
 })
 
-test("viewer scrubs stages, resets on input changes, hides controls for JSON-only input, and reports invalid targets", async () => {
+test("viewer scrubs stages, resets on input changes, plays serialized JSON programs, and reports invalid targets", async () => {
   const dom = new JSDOM('<div id="root"></div>', { url: "http://localhost" })
   const previous = {
     window: globalThis.window,
@@ -91,11 +92,13 @@ test("viewer scrubs stages, resets on input changes, hides controls for JSON-onl
   function Harness({
     circuit,
     children,
+    circuitJson,
   }: {
     circuit?: RootCircuit
+    circuitJson?: ReturnType<RootCircuit["getCircuitJson"]>
     children?: React.ReactNode
   }) {
-    state = useAssemblyExplosion(children, circuit)
+    state = useAssemblyExplosion(children, circuit, circuitJson)
     return (
       <AssemblyExplosionControl
         stages={state.stages}
@@ -111,14 +114,14 @@ test("viewer scrubs stages, resets on input changes, hides controls for JSON-onl
     expect(state.stages).toEqual(["case.lift", "case.slide", "case.remove-cap"])
     await act(async () => state.setAmount(1.5))
     expect(state.view).toEqual(
-      getAssemblyExplosion(circuit, {
+      getCircuitJsonAssemblyExplosion(circuit.getCircuitJson(), {
         throughStageRef: "case.slide",
         stageProgress: 0.5,
       }),
     )
     await act(async () => state.setAmount(0.5))
     expect(state.view).toEqual(
-      getAssemblyExplosion(circuit, {
+      getCircuitJsonAssemblyExplosion(circuit.getCircuitJson(), {
         throughStageRef: "case.lift",
         stageProgress: 0.5,
       }),
@@ -131,6 +134,26 @@ test("viewer scrubs stages, resets on input changes, hides controls for JSON-onl
       root.render(<Harness circuit={await createCircuit()} />),
     )
     expect(state.amount).toBe(0)
+    const json = JSON.parse(JSON.stringify(circuit.getCircuitJson()))
+    await act(async () => root.render(<Harness circuitJson={json} />))
+    expect(state.stages).toHaveLength(3)
+    await act(async () => state.setAmount(1.5))
+    expect(state.view).toEqual(
+      getCircuitJsonAssemblyExplosion(json, {
+        throughStageRef: "case.slide",
+        stageProgress: 0.5,
+      }),
+    )
+    await act(async () =>
+      root.render(
+        <Harness
+          circuitJson={json.filter(
+            (record: any) => !record.type.startsWith("cad_explosion_"),
+          )}
+        />,
+      ),
+    )
+    expect(state.stages).toHaveLength(0)
     await act(async () => root.render(<Harness />))
     expect(dom.window.document.querySelector('input[type="range"]')).toBeNull()
     await act(async () => root.render(<Harness>{explosionAssembly}</Harness>))

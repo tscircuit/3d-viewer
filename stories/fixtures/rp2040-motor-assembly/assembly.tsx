@@ -125,6 +125,12 @@ export function Rp2040MotorAssembly({ board }: { board: ReactElement }) {
           offZ={-12}
         />
       </assembly.explosion.stage>
+      <assembly.explosion.stage
+        name="park-bolts"
+        prevStageRef="separate-spacers"
+      >
+        <assembly.explosion.move targetRef="remove-bolts" offX={24} />
+      </assembly.explosion.stage>
     </assembly.device>
   )
 }
