@@ -1,27 +1,32 @@
 import { useEffect, useState } from "react"
 import { loadVrml } from "src/utils/vrml"
-import type { Object3D } from "three"
-import { MTLLoader, OBJLoader } from "three-stdlib"
+import { Mesh, MeshStandardMaterial, type Object3D } from "three"
+import { MTLLoader, OBJLoader, STLLoader } from "three-stdlib"
 
-// Define the type for our cache
+type ModelType = "stl" | "obj" | "wrl"
+type ModelUrl = string
+
 interface CacheItem {
-  promise: Promise<any>
+  promise: Promise<Object3D | Error>
   result: Object3D | null
 }
 
+type ModelCache = Map<ModelUrl, CacheItem>
+
 declare global {
   interface Window {
-    TSCIRCUIT_OBJ_LOADER_CACHE: Map<string, CacheItem>
+    TSCIRCUIT_MODEL_LOADER_CACHE: Map<ModelType, ModelCache>
   }
 }
 
 // Ensure the global cache exists
-if (typeof window !== "undefined" && !window.TSCIRCUIT_OBJ_LOADER_CACHE) {
-  window.TSCIRCUIT_OBJ_LOADER_CACHE = new Map<string, CacheItem>()
+if (typeof window !== "undefined" && !window.TSCIRCUIT_MODEL_LOADER_CACHE) {
+  window.TSCIRCUIT_MODEL_LOADER_CACHE = new Map<ModelType, ModelCache>()
 }
 
-export function useGlobalObjLoader(
+export function useGlobalModelLoader(
   url: string | null,
+  modelType: ModelType,
 ): Object3D | null | Error {
   const [obj, setObj] = useState<Object3D | null | Error>(null)
 
@@ -29,13 +34,15 @@ export function useGlobalObjLoader(
     if (!url) return
 
     const cleanUrl = url.replace(/&cachebust_origin=$/, "")
-
-    const cache = window.TSCIRCUIT_OBJ_LOADER_CACHE
+    const cachesByModelType = window.TSCIRCUIT_MODEL_LOADER_CACHE
+    const cache =
+      cachesByModelType.get(modelType) ?? new Map<ModelUrl, CacheItem>()
+    cachesByModelType.set(modelType, cache)
     let hasUrlChanged = false
 
-    async function loadAndParseObj() {
+    async function loadAndParseModel() {
       try {
-        if (cleanUrl.endsWith(".wrl")) {
+        if (modelType === "wrl") {
           return await loadVrml(cleanUrl)
         }
 
@@ -44,6 +51,11 @@ export function useGlobalObjLoader(
           throw new Error(
             `Failed to fetch "${cleanUrl}": ${response.status} ${response.statusText}`,
           )
+        }
+        if (modelType === "stl") {
+          const geometry = new STLLoader().parse(await response.arrayBuffer())
+          const material = new MeshStandardMaterial({ color: 0x888888 })
+          return new Mesh(geometry, material)
         }
         const text = await response.text()
 
@@ -88,7 +100,7 @@ export function useGlobalObjLoader(
         })
       }
       // If it's not in the cache, create a new promise and cache it
-      const promise = loadAndParseObj().then((result) => {
+      const promise = loadAndParseModel().then((result) => {
         if (result instanceof Error) {
           // If the result is an Error, return it
           return result
@@ -112,7 +124,7 @@ export function useGlobalObjLoader(
     return () => {
       hasUrlChanged = true
     }
-  }, [url])
+  }, [url, modelType])
 
   return obj
 }

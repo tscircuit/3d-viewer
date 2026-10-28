@@ -554,12 +554,17 @@ export function processPlatedHolesForManifold(
         return
       }
 
-      const boardHoleOp = createHoleOpForPolygonPad({
+      let boardHoleOp = createHoleOpForPolygonPad({
         ph,
         depth: pcbThickness * 1.2,
         sizeDelta: 2 * M,
       })
       if (!boardHoleOp) return
+      if (ph.ccw_rotation) {
+        const rotatedOp = boardHoleOp.rotate([0, 0, ph.ccw_rotation])
+        manifoldInstancesForCleanup.push(rotatedOp)
+        boardHoleOp = rotatedOp
+      }
       const translatedBoardHole = boardHoleOp.translate([ph.x, ph.y, 0])
       manifoldInstancesForCleanup.push(translatedBoardHole)
       platedHoleBoardDrills.push(translatedBoardHole)
@@ -596,8 +601,14 @@ export function processPlatedHolesForManifold(
       const copperUnion = Manifold.union([mainFill, barrelOp])
       manifoldInstancesForCleanup.push(copperUnion)
 
-      const finalCopper = copperUnion.subtract(holeCutOp)
+      let finalCopper = copperUnion.subtract(holeCutOp)
       manifoldInstancesForCleanup.push(finalCopper)
+
+      if (ph.ccw_rotation) {
+        const rotatedOp = finalCopper.rotate([0, 0, ph.ccw_rotation])
+        manifoldInstancesForCleanup.push(rotatedOp)
+        finalCopper = rotatedOp
+      }
 
       const translatedCopper = finalCopper.translate([ph.x, ph.y, 0])
       manifoldInstancesForCleanup.push(translatedCopper)

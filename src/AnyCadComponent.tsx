@@ -166,8 +166,9 @@ export const AnyCadComponent = ({
     if (url) {
       components.push(
         <MixedStlModel
-          key={`${cad_component.cad_component_id}-mixed-${url}`}
+          key={`${cad_component.cad_component_id}-mixed-${meshModelType}-${url}`}
           url={url}
+          modelType={meshModelType}
           position={adjustedPosition}
           rotation={rotationOffset}
           modelOffset={modelTransform.modelPosition}
@@ -301,6 +302,8 @@ export const AnyCadComponent = ({
       />
     )
   }
+
+  if (!cad_component.pcb_component_id && !visibility.assembly) return null
 
   // The generated enclosure gets its own three-state display control. Other CAD
   // models retain the existing translucent/SMT/through-hole category toggles.

@@ -25,6 +25,7 @@ export default defineConfig({
     },
   },
   projects: [
+    { name: "sections", testMatch: "**/section.pw.ts" },
     { name: "calibration", testMatch: "**/*.calibration.pw.ts" },
     { name: "diagnostics", testMatch: "**/*.diagnostic.pw.ts" },
   ],

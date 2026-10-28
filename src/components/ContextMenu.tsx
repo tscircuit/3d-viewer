@@ -16,6 +16,7 @@ import { AppearanceMenu } from "./AppearanceMenu"
 import { CheckIcon, ChevronRightIcon, DotIcon } from "./Icons"
 
 interface ContextMenuProps {
+  hasAssembly?: boolean
   menuRef: React.RefObject<HTMLDivElement | null>
   menuPos: { x: number; y: number }
   engine: "jscad" | "manifold"
@@ -23,6 +24,7 @@ interface ContextMenuProps {
   foldPcbs?: boolean
   onFoldPcbsToggle?: () => void
   flexScene?: boolean
+  preRendered?: boolean
   autoRotate: boolean
   referenceObject?: ReferenceObjectType | null
   onEngineSwitch: (engine: "jscad" | "manifold") => void
@@ -35,6 +37,7 @@ interface ContextMenuProps {
   componentName?: string
   onHideComponent?: () => void
   onUnhideAllComponents?: () => void
+  onSectionView?: () => void
   onDownloadGltf: () => void
   onOpenKeyboardShortcuts: () => void
 }
@@ -118,6 +121,7 @@ const badgeStyles: React.CSSProperties = {
 }
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({
+  hasAssembly = false,
   menuRef,
   menuPos,
   engine,
@@ -126,6 +130,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   foldPcbs = false,
   onFoldPcbsToggle,
   flexScene = false,
+  preRendered = false,
   referenceObject = null,
   onEngineSwitch,
   onCameraPresetSelect,
@@ -135,12 +140,14 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   componentName,
   onHideComponent,
   onUnhideAllComponents,
+  onSectionView,
   onDownloadGltf,
   onOpenKeyboardShortcuts,
 }) => {
   const { cameraType, setCameraType } = useCameraController()
   const { gridEnabled, setGridEnabled } = useAppearance()
   const [cameraSubOpen, setCameraSubOpen] = useState(false)
+  const [advancedSubOpen, setAdvancedSubOpen] = useState(false)
   const [referenceObjectSubOpen, setReferenceObjectSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
@@ -454,7 +461,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             </DropdownMenu.Item>
 
             {/* Appearance Menu */}
-            <AppearanceMenu />
+            <AppearanceMenu
+              hasAssembly={hasAssembly}
+              showLayerControls={!preRendered}
+            />
 
             <DropdownMenu.Separator style={separatorStyles} />
 
@@ -478,42 +488,76 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
 
             <DropdownMenu.Separator style={separatorStyles} />
 
-            {/* Engine Switch */}
-            {!flexScene && (
-              <DropdownMenu.Item
-                style={{
-                  ...itemStyles,
-                  ...itemPaddingStyles,
-                  backgroundColor:
-                    hoveredItem === "engine" ? "#404040" : "transparent",
-                }}
-                onSelect={(e) => e.preventDefault()}
-                onPointerDown={(e) => {
-                  e.preventDefault()
-                  onEngineSwitch(engine === "jscad" ? "manifold" : "jscad")
-                }}
-                onMouseEnter={() => setHoveredItem("engine")}
-                onMouseLeave={() => setHoveredItem(null)}
-                onTouchStart={() => setHoveredItem("engine")}
-              >
-                <span
-                  style={{ flex: 1, display: "flex", alignItems: "center" }}
-                >
-                  Switch to {engine === "jscad" ? "Manifold" : "JSCAD"} Engine
-                </span>
-                <div
-                  style={{
-                    ...badgeStyles,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  {engine === "jscad" ? "experimental" : "default"}
-                </div>
-              </DropdownMenu.Item>
+            {(onSectionView || (!flexScene && !preRendered)) && (
+              <>
+                <DropdownMenu.Sub onOpenChange={setAdvancedSubOpen}>
+                  <DropdownMenu.SubTrigger
+                    style={{
+                      ...itemStyles,
+                      ...itemPaddingStyles,
+                      backgroundColor:
+                        advancedSubOpen || hoveredItem === "advanced"
+                          ? "#404040"
+                          : "transparent",
+                    }}
+                    onMouseEnter={() => setHoveredItem("advanced")}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    onTouchStart={() => setHoveredItem("advanced")}
+                  >
+                    <span style={{ flex: 1 }}>Advanced</span>
+                    <ChevronRightIcon isOpen={advancedSubOpen} />
+                  </DropdownMenu.SubTrigger>
+                  <DropdownMenu.Portal>
+                    <ViewportSubContent
+                      style={{ ...contentStyles, marginLeft: -2 }}
+                      collisionPadding={10}
+                      avoidCollisions={true}
+                    >
+                      {!flexScene && !preRendered && (
+                        <DropdownMenu.Item
+                          style={{
+                            ...itemStyles,
+                            backgroundColor:
+                              hoveredItem === "engine"
+                                ? "#404040"
+                                : "transparent",
+                          }}
+                          onSelect={() =>
+                            onEngineSwitch(
+                              engine === "jscad" ? "manifold" : "jscad",
+                            )
+                          }
+                          onMouseEnter={() => setHoveredItem("engine")}
+                          onMouseLeave={() => setHoveredItem(null)}
+                          onTouchStart={() => setHoveredItem("engine")}
+                        >
+                          Switch to {engine === "jscad" ? "Manifold" : "JSCAD"}{" "}
+                          Engine
+                        </DropdownMenu.Item>
+                      )}
+                      {onSectionView && (
+                        <DropdownMenu.Item
+                          style={{
+                            ...itemStyles,
+                            backgroundColor:
+                              hoveredItem === "section"
+                                ? "#404040"
+                                : "transparent",
+                          }}
+                          onSelect={onSectionView}
+                          onMouseEnter={() => setHoveredItem("section")}
+                          onMouseLeave={() => setHoveredItem(null)}
+                          onTouchStart={() => setHoveredItem("section")}
+                        >
+                          Section View…
+                        </DropdownMenu.Item>
+                      )}
+                    </ViewportSubContent>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Sub>
+                <DropdownMenu.Separator style={separatorStyles} />
+              </>
             )}
-
-            <DropdownMenu.Separator style={separatorStyles} />
 
             {/* Keyboard Shortcuts */}
             <DropdownMenu.Item

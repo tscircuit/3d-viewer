@@ -1,3 +1,5 @@
+import { SectionProvider, useSection } from "./sections/SectionContext"
+import { SectionPanel } from "./sections/SectionPanel"
 import { SchematicNavigationContext } from "./contexts/SchematicNavigationContext"
 import type { ThreeContextState } from "./react-three/ThreeContext"
 import {
@@ -31,6 +33,7 @@ import type { AnyCircuitElement } from "circuit-json"
 
 import { CadViewerJscad } from "./CadViewerJscad"
 import CadViewerManifold from "./CadViewerManifold"
+import { CadViewerGlb } from "./CadViewerGlb"
 import { ContextMenu } from "./components/ContextMenu"
 import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
 import { AppearanceProvider } from "./contexts/appearance-context"
@@ -62,17 +65,26 @@ export type CadViewerProps = Omit<
 > & {
   // Preserve support for raw JSON imports whose `type` fields widen to string.
   circuitJson?: any[]
+  /** Pre-rendered circuit-json-to-gltf GLB URL. Bypasses geometry/model generation. */
+  glbUrl?: string
+  /** In-memory alternative to glbUrl. Supply only one GLB source. */
+  glbData?: ArrayBuffer
   foldPcbs?: boolean
   /** Enable right-click navigation using the same identity as the PCB viewer. */
   onViewSchematicComponent?: (event: ViewSchematicComponentEvent) => void
 }
 
 const CadViewerInner = (props: CadViewerProps) => {
+  const section = useSection()
+  const glbSource = props.glbUrl ?? props.glbData
   const childrenCircuitJson = useConvertChildrenToCircuitJson(
-    props.circuitJson ? undefined : props.children,
+    props.circuitJson || glbSource !== undefined ? undefined : props.children,
   )
   const circuitJson: AnyCircuitElement[] =
     props.circuitJson ?? childrenCircuitJson
+  const hasAssembly = circuitJson.some(
+    (element) => element.type === "cad_component" && !element.pcb_component_id,
+  )
   const hasBends = circuitJson.some((element) => element.type === "pcb_bend")
   const hasFlexGeometry =
     hasBends || circuitJson.some((element) => element.type === "pcb_stiffener")
@@ -81,7 +93,9 @@ const CadViewerInner = (props: CadViewerProps) => {
   )
   const foldPcbs = foldPcbsOverride ?? props.foldPcbs
   const resolvedFoldPcbs = resolveFoldPcbs(circuitJson, foldPcbs)
-  const circuitKey = JSON.stringify(circuitJson)
+  const circuitJsonKey =
+    glbSource === undefined ? JSON.stringify(circuitJson) : undefined
+  const circuitKey = glbSource ?? circuitJsonKey!
   const { hiddenCadComponentIds, hideComponent, unhideAllComponents } =
     useHiddenCadComponents(circuitKey)
   const resolvedProps = {
@@ -293,7 +307,7 @@ const CadViewerInner = (props: CadViewerProps) => {
     window.localStorage.setItem("cadViewerCameraType", cameraType)
   }, [cameraType])
 
-  const viewerKey = props.circuitJson ? circuitKey : undefined
+  const viewerKey = props.circuitJson ? circuitJsonKey : undefined
   return (
     <div
       key={viewerKey}
@@ -310,7 +324,17 @@ const CadViewerInner = (props: CadViewerProps) => {
       }}
       {...contextMenuEventHandlers}
     >
-      {hasFlexGeometry ? (
+      {glbSource !== undefined ? (
+        <CadViewerGlb
+          source={glbSource}
+          hiddenCadComponentIds={hiddenCadComponentIds}
+          autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+          clickToInteractEnabled={props.clickToInteractEnabled}
+          onUserInteraction={handleUserInteraction}
+          onCameraControllerReady={handleCameraControllerReady}
+          referenceObject={referenceObject}
+        />
+      ) : hasFlexGeometry ? (
         <CadViewerManifold
           {...resolvedProps}
           foldPcbs={foldPcbs}
@@ -338,8 +362,10 @@ const CadViewerInner = (props: CadViewerProps) => {
           referenceObject={referenceObject}
         />
       )}
+      <SectionPanel />
       {menuVisible && (
         <ContextMenu
+          hasAssembly={hasAssembly}
           componentName={selectedCadComponent?.componentName}
           onHideComponent={
             selectedCadComponent
@@ -365,13 +391,27 @@ const CadViewerInner = (props: CadViewerProps) => {
                 }
               : undefined
           }
+          onSectionView={() => {
+            if (!section?.spec)
+              section?.setSpec({
+                axis: "x",
+                offset: section.bounds
+                  ? (section.bounds.min.x + section.bounds.max.x) / 2
+                  : 0,
+                flipped: false,
+              })
+            section?.setEditing(true)
+            setAutoRotate(false)
+            closeMenu()
+          }}
           menuRef={menuRef}
           menuPos={menuPos}
           engine={engine}
+          preRendered={glbSource !== undefined}
           flexScene={hasFlexGeometry}
           foldPcbs={resolvedFoldPcbs}
           onFoldPcbsToggle={
-            hasBends
+            hasBends && glbSource === undefined
               ? () => {
                   setFoldPcbs(!resolvedFoldPcbs)
                   setCameraPreset("Custom")
@@ -434,7 +474,9 @@ export const CadViewer = (props: CadViewerProps) => {
         <LayerVisibilityProvider>
           <AppearanceProvider>
             <ToastProvider>
-              <CadViewerInner {...props} />
+              <SectionProvider>
+                <CadViewerInner {...props} />
+              </SectionProvider>
             </ToastProvider>
           </AppearanceProvider>
         </LayerVisibilityProvider>

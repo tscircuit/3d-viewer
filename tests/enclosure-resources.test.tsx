@@ -1,10 +1,12 @@
 import { expect, spyOn, test } from "bun:test"
 import { createCanvas } from "@napi-rs/canvas"
 import type { AnyCircuitElement } from "circuit-json"
+import { cad_component, pcb_component } from "circuit-json"
 import { JSDOM } from "jsdom"
 import { act, StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import * as THREE from "three"
+import { AnyCadComponent } from "../src/AnyCadComponent"
 import {
   LayerVisibilityProvider,
   useLayerVisibility,
@@ -68,6 +70,106 @@ const plan = {
 }
 const hover = { addHoverable: () => {}, removeHoverable: () => {} }
 const noop = () => {}
+
+const standaloneCad = cad_component.parse({
+  type: "cad_component",
+  cad_component_id: "mechanical",
+  source_component_id: "motor",
+  position: { x: 0, y: 0, z: 0 },
+  model_jscad: plan,
+})
+const mountedCad = cad_component.parse({
+  ...standaloneCad,
+  cad_component_id: "mounted",
+  pcb_component_id: "pcb_component",
+})
+const assemblyCircuit = [
+  standaloneCad,
+  mountedCad,
+  pcb_component.parse({
+    type: "pcb_component",
+    pcb_component_id: "pcb_component",
+    source_component_id: "motor",
+    center: { x: 0, y: 0 },
+    width: 10,
+    height: 8,
+    layer: "top",
+    rotation: 0,
+  }),
+]
+
+function AssemblyModels({
+  onControls,
+}: {
+  onControls: (controls: ReturnType<typeof useLayerVisibility>) => void
+}) {
+  onControls(useLayerVisibility())
+  return (
+    <>
+      <AnyCadComponent
+        cad_component={standaloneCad}
+        circuitJson={assemblyCircuit}
+      />
+      <AnyCadComponent
+        cad_component={mountedCad}
+        circuitJson={assemblyCircuit}
+      />
+    </>
+  )
+}
+
+async function renderAssemblyModels({
+  root,
+  context,
+}: {
+  root: ReturnType<typeof createRoot>
+  context: ThreeContextState
+}) {
+  let controls: ReturnType<typeof useLayerVisibility> | undefined
+  await act(async () =>
+    root.render(
+      <ThreeContext.Provider value={context}>
+        <HoverContext.Provider value={hover}>
+          <LayerVisibilityProvider>
+            <AssemblyModels
+              onControls={(current) => {
+                controls = current
+              }}
+            />
+          </LayerVisibilityProvider>
+        </HoverContext.Provider>
+      </ThreeContext.Provider>,
+    ),
+  )
+  if (!controls) throw new Error("Missing assembly visibility controls")
+  return controls
+}
+
+test("assembly CAD is visible by default", async () => {
+  await withScene(async ({ root, rootObject, context }) => {
+    await renderAssemblyModels({ root, context })
+    expect(rootObject.children).toHaveLength(2)
+  })
+})
+
+test("hiding assembly keeps PCB-mounted CAD visible", async () => {
+  await withScene(async ({ root, rootObject, context }) => {
+    const controls = await renderAssemblyModels({ root, context })
+    await act(async () => controls.setLayerVisibility("assembly", false))
+    expect(
+      rootObject.children.map((child) => child.userData.cad_component_id),
+    ).toEqual(["mounted"])
+  })
+})
+
+test("resetting layer visibility restores assembly CAD", async () => {
+  await withScene(async ({ root, rootObject, context }) => {
+    const controls = await renderAssemblyModels({ root, context })
+    await act(async () => controls.setLayerVisibility("assembly", false))
+    await act(async () => controls.resetToDefaults())
+    expect(rootObject.children).toHaveLength(2)
+  })
+})
 
 function findMesh(root: THREE.Object3D) {
   let mesh:

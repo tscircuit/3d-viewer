@@ -637,7 +637,13 @@ export const platedHole = (
 
     const createPolygonPad = (thickness: number, zCenter: number) => {
       const safeThickness = Math.max(thickness, M)
-      const extruded = extrudeLinear({ height: safeThickness }, polygon2d)
+      let extruded = extrudeLinear({ height: safeThickness }, polygon2d)
+      if (plated_hole.ccw_rotation) {
+        extruded = rotate(
+          [0, 0, (plated_hole.ccw_rotation * Math.PI) / 180],
+          extruded,
+        )
+      }
       return translate(
         [plated_hole.x, plated_hole.y, zCenter - safeThickness / 2],
         extruded,
