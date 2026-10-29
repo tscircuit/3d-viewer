@@ -1,9 +1,10 @@
 import { mkdir, copyFile } from "node:fs/promises"
 import { resolve, join } from "node:path"
+import { createHash } from "node:crypto"
 
 /** Run in the board's own pinned dependency environment, keeping its saved
  * routing and ground-pour guards enabled. Do not compile this board using the
- * viewer's older development dependencies. See the fixture README. */
+ * viewer's current development dependencies. See the fixture README. */
 const source = process.argv[2]
 if (!source)
   throw new Error(
@@ -12,9 +13,7 @@ if (!source)
 const sourceDir = resolve(source)
 // Compile PCB geometry with the board's pinned renderer. Export instructions
 // from that same live TSX tree using the viewer's newer core/schema packages.
-const explosionCoreModule = process.argv[4]
-  ? resolve(process.argv[4])
-  : import.meta.resolve("@tscircuit/core")
+const explosionCoreModule = import.meta.resolve("@tscircuit/core")
 const schemaModule = import.meta.resolve("circuit-json")
 const outputDir = resolve(process.argv[3] ?? "work/rp2040-assembly")
 const buildDir = join(sourceDir, ".viewer-assembly")
@@ -62,3 +61,31 @@ if ((await proc.exited) !== 0)
   throw new Error(
     "Assembly export failed; keep the upstream board guards enabled",
   )
+
+const boardPackage = await Bun.file(join(sourceDir, "package.json")).json()
+const boardCore = await Bun.file(
+  join(sourceDir, "node_modules/@tscircuit/core/package.json"),
+).json()
+const exportCore = await Bun.file(
+  new URL("../node_modules/@tscircuit/core/package.json", import.meta.url),
+).json()
+const sha256 = async (path: string | URL) =>
+  createHash("sha256")
+    .update(await Bun.file(path).bytes())
+    .digest("hex")
+await Bun.write(
+  join(outputDir, "generation.json"),
+  `${JSON.stringify(
+    {
+      board: `${boardPackage.name}@${boardPackage.version}`,
+      boardRenderer: `@tscircuit/core@${boardCore.version}`,
+      explosionExporter: `@tscircuit/core@${exportCore.version}`,
+      assemblySourceSha256: await sha256(join(buildDir, "assembly.tsx")),
+      circuitJsonSha256: await sha256(
+        join(outputDir, "assembled.circuit.json"),
+      ),
+    },
+    null,
+    2,
+  )}\n`,
+)

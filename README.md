@@ -371,13 +371,14 @@ translation vectors. A movement may target an entire explosion stage: all of its
 members move together, preserving their earlier relative displacement. Overlapping
 targets move once per instruction; separate instructions accumulate.
 
-TSX children and settled circuits use the same JSON playback path:
+Generate the document from TSX with core, then pass it to the viewer:
 
 ```tsx
-import { assembly } from "@tscircuit/core"
+import { Circuit, assembly } from "@tscircuit/core"
 import { CadViewer } from "@tscircuit/3d-viewer"
 
-;<CadViewer>
+const circuit = new Circuit()
+circuit.add(
   <assembly.device name="case">
     <assembly.part name="lid" cadModel={{ jscad: { type: "cube", size: 8 } }} />
     <assembly.explosion.stage name="lift">
@@ -386,12 +387,17 @@ import { CadViewer } from "@tscircuit/3d-viewer"
     <assembly.explosion.stage name="park" prevStageRef="lift">
       <assembly.explosion.move targetRef="lift" offX="15mm" />
     </assembly.explosion.stage>
-  </assembly.device>
-</CadViewer>
+  </assembly.device>,
+)
+await circuit.renderUntilSettled()
+const assembledCircuitJson = circuit.getCircuitJson()
+
+;<CadViewer circuitJson={assembledCircuitJson} />
 ```
 
 For an existing circuit, `await circuit.renderUntilSettled()` and pass
 `<CadViewer circuit={circuit} />`. Replace the instance when the design changes.
+TSX children passed directly to `CadViewer` use the same JSON playback path.
 `circuitJson` takes precedence over `circuit` and TSX children. TSX renders
 asynchronously before display. Core emits the explosion program in its CAD render
 phases; invalid TSX references are reported as render errors. Inputs without an explosion program and
@@ -404,9 +410,8 @@ not supported. Displaying an explosion does not verify collision clearance.
 
 The schema is published in `circuit-json@0.0.539` following
 [circuit-json #937](https://github.com/tscircuit/circuit-json/pull/937).
-This draft still uses the preview of [core #4990](https://github.com/tscircuit/core/pull/4990).
-Replace that core preview with its published release and set the core peer minimum
-to that release before merging.
+Core's producer and evaluator are published in `@tscircuit/core@0.0.2234`
+following [core #4990](https://github.com/tscircuit/core/pull/4990).
 
 See **Assembly / Explosion / Staged Tsx** and **Assembly / RP2040 motor controller**
 in Storybook. The real board fixture has four serialized stages: lift the cover

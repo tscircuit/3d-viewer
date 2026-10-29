@@ -52,7 +52,7 @@
     "zod": "*",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "@tscircuit/core": ">=0.0.2229",
+    "@tscircuit/core": ">=0.0.2234",
     "@tscircuit/circuit-json-util": "*"
   },
   "devDependencies": {
@@ -67,9 +67,10 @@
     "@tscircuit/alphabet": "^0.0.25",
     "@tscircuit/circuit-json-util": "^0.0.119",
     "@tscircuit/copper-pour-solver": "^0.0.29",
-    "@tscircuit/core": "https://pkg.pr.new/@tscircuit/core@badf7102e",
+    "@tscircuit/core": "^0.0.2234",
     "@tscircuit/eval": "0.0.1435",
     "@tscircuit/flex-utils": "https://jscdn.tscircuit.com/@tscircuit/flex-utils/0.0.8.tgz",
+    "@tscircuit/footprinter": "^0.0.450",
     "@tscircuit/modelprinter": "^0.0.18",
     "@tscircuit/props": "0.0.714",
     "@tscircuit/solver-utils": "^0.0.4",
