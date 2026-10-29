@@ -63,17 +63,29 @@ test("exported explosion moves ten mechanical parts and keeps all PCB components
   expect(deltaZ("spacer1")).toBe(-12)
   expect(
     assembled.filter((e) => e.type === "cad_explosion_stage"),
-  ).toHaveLength(5)
+  ).toHaveLength(4)
   const moves = assembled.filter((e) => e.type === "cad_explosion_move")
-  expect(moves).toHaveLength(5)
-  expect(moves.at(-1)?.targets[0]?.type).toBe("cad_explosion_stage")
-  const beforePark = getCircuitJsonAssemblyExplosion(assembled, {
-    throughStageRef: "RP2040_NEMA17.park-bolts",
-    stageProgress: 0,
+  expect(moves).toHaveLength(4)
+  expect(
+    moves[0]?.targets.some((target) => target.type === "cad_explosion_stage"),
+  ).toBe(true)
+  const lifted = getCircuitJsonAssemblyExplosion(assembled, {
+    throughStageRef: "RP2040_NEMA17.lift-cover",
   })
-  for (const record of beforePark.circuitJson) {
+  for (const record of lifted.circuitJson) {
     if (record.type !== "cad_component") continue
+    const original = cad.find(
+      (c) => c.cad_component_id === record.cad_component_id,
+    )!
+    const name = sources.find(
+      (source) => source.source_component_id === record.source_component_id,
+    )?.name
+    const liftsWithCover = name === "cover" || /^bolt[1-4]$/.test(name ?? "")
+    expect(record.position.z - original.position.z).toBe(
+      liftsWithCover ? 24 : 0,
+    )
     const final = explodedPositions[record.cad_component_id]!
-    expect(final.z).toBe(record.position.z)
+    expect(final.x).toBe(original.position.x)
+    expect(final.y).toBe(original.position.y)
   }
 })

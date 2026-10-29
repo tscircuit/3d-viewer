@@ -409,7 +409,14 @@ Replace that core preview with its published release and set the core peer minim
 to that release before merging.
 
 See **Assembly / Explosion / Staged Tsx** and **Assembly / RP2040 motor controller**
-in Storybook. The real board fixture has five serialized stages, including a
-final whole-stage move that parks all four previously lifted bolts together.
+in Storybook. The real board fixture has four serialized stages: lift the cover
+with all four bolts, remove the bolts, separate the motor, then separate the
+spacers. The first move targets the entire bolt stage alongside the cover.
+
+The stage snapshots below pair the actual TSX with the exported Circuit JSON
+rendered through circuit-json-to-gltf, including halfway through bolt removal.
+
+![RP2040 assembly explosion stages with TSX](./docs/images/rp2040-explosion-stages.png)
+
 Run browser regressions with
 `bunx playwright test --config playwright.explosion.config.ts`.
