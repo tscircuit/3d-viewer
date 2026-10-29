@@ -1,0 +1,7 @@
+{
+  "board": "@tsci/imrishabh18.rp2040-motor-controller@1.0.48",
+  "boardRenderer": "@tscircuit/core@0.0.2199",
+  "explosionExporter": "@tscircuit/core@0.0.2234",
+  "assemblySourceSha256": "11dbbc99a72c8076244ccfa73720f0bb19b54f513500437798dc32d46e82c324",
+  "circuitJsonSha256": "b1428487f081c111fe98713d2e89cb47ff9e7dea5d5b35f7325f9395b9b7223e"
+}

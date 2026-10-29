@@ -38,6 +38,8 @@ interface ContextMenuProps {
   onHideComponent?: () => void
   onUnhideAllComponents?: () => void
   onSectionView?: () => void
+  onExplosionView?: () => void
+  explosionAvailable?: boolean
   onDownloadGltf: () => void
   onOpenKeyboardShortcuts: () => void
 }
@@ -141,6 +143,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onHideComponent,
   onUnhideAllComponents,
   onSectionView,
+  onExplosionView,
+  explosionAvailable = false,
   onDownloadGltf,
   onOpenKeyboardShortcuts,
 }) => {
@@ -488,7 +492,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
 
             <DropdownMenu.Separator style={separatorStyles} />
 
-            {(onSectionView || (!flexScene && !preRendered)) && (
+            {(onSectionView ||
+              onExplosionView ||
+              (!flexScene && !preRendered)) && (
               <>
                 <DropdownMenu.Sub onOpenChange={setAdvancedSubOpen}>
                   <DropdownMenu.SubTrigger
@@ -533,6 +539,29 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                         >
                           Switch to {engine === "jscad" ? "Manifold" : "JSCAD"}{" "}
                           Engine
+                        </DropdownMenu.Item>
+                      )}
+                      {onExplosionView && (
+                        <DropdownMenu.Item
+                          disabled={!explosionAvailable}
+                          title={
+                            explosionAvailable
+                              ? undefined
+                              : "This design has no explosion information"
+                          }
+                          style={{
+                            ...itemStyles,
+                            opacity: explosionAvailable ? 1 : 0.4,
+                            backgroundColor:
+                              hoveredItem === "explosion"
+                                ? "#404040"
+                                : "transparent",
+                          }}
+                          onSelect={onExplosionView}
+                          onMouseEnter={() => setHoveredItem("explosion")}
+                          onMouseLeave={() => setHoveredItem(null)}
+                        >
+                          Exploded view…
                         </DropdownMenu.Item>
                       )}
                       {onSectionView && (

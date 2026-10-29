@@ -342,3 +342,37 @@ test("enclosure resources are released on plan replacement and StrictMode replay
     materialDispose.mockRestore()
   }
 })
+
+test("authored printed-part color overrides vertex colors without rebuilding geometry", async () => {
+  await withScene(async ({ root, rootObject, context }) => {
+    const render = async (color?: string) => {
+      await act(async () =>
+        root.render(
+          <ThreeContext.Provider value={context}>
+            <HoverContext.Provider value={hover as any}>
+              <JscadModel
+                jscadPlan={plan}
+                color={color}
+                onHover={noop}
+                onUnhover={noop}
+                isHovered={false}
+              />
+            </HoverContext.Provider>
+          </ThreeContext.Provider>,
+        ),
+      )
+    }
+    await render("#3283b5")
+    let mesh!: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>
+    rootObject.traverse((object) => {
+      if ((object as THREE.Mesh).isMesh) mesh = object as typeof mesh
+    })
+    const geometry = mesh.geometry
+    expect(mesh.material.color.getHexString()).toBe("3283b5")
+    expect(mesh.material.vertexColors).toBe(false)
+    await render()
+    expect(mesh.geometry).toBe(geometry)
+    expect(mesh.material.color.getHexString()).toBe("ffffff")
+    expect(mesh.material.vertexColors).toBe(true)
+  })
+})

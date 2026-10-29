@@ -271,6 +271,7 @@ export const AnyCadComponent = ({
       <JscadModel
         key={cad_component.cad_component_id}
         jscadPlan={cad_component.model_jscad}
+        color={cad_component.color}
         positionOffset={adjustedPosition}
         rotationOffset={rotationOffset}
         modelOffset={modelTransform.modelPosition}
