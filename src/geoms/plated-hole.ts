@@ -1,23 +1,26 @@
-import type { PCBPlatedHole } from "circuit-json"
-import type { Geom3 } from "@jscad/modeling/src/geometries/types"
-import {
-  cuboid,
-  cylinder,
-  roundedRectangle,
-  polygon as jscadPolygon,
-} from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
+import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import {
   intersect,
   subtract,
   union,
 } from "@jscad/modeling/src/operations/booleans"
-import { scale } from "@jscad/modeling/src/operations/transforms"
-import { M, colors } from "./constants"
-import type { GeomContext } from "../GeomContext"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
-import { rotate, translate } from "@jscad/modeling/src/operations/transforms"
+import {
+  rotate,
+  scale,
+  translate,
+} from "@jscad/modeling/src/operations/transforms"
+import {
+  cuboid,
+  cylinder,
+  polygon as jscadPolygon,
+  roundedRectangle,
+} from "@jscad/modeling/src/primitives"
+import type { PCBPlatedHole } from "circuit-json"
+import type { GeomContext } from "../GeomContext"
 import { extractRectBorderRadius } from "../utils/rect-border-radius"
+import { colors, M } from "./constants"
 import { createHoleWithPolygonPadHoleGeom } from "./create-hole-with-polygon-pad"
 
 const PLATED_HOLE_DRILL_OVERREACH = 0.05
@@ -75,6 +78,7 @@ export const platedHole = (
     const outerHeight = plated_hole.outer_height || plated_hole.hole_height || 0
     const holeWidth = plated_hole.hole_width || 0
     const holeHeight = plated_hole.hole_height || 0
+    const rotationRadians = ((plated_hole.ccw_rotation || 0) * Math.PI) / 180
 
     // Create the outer copper body as an elliptical cylinder
     const copperBody = (() => {
@@ -87,7 +91,10 @@ export const platedHole = (
       })
       // Scale the circle to create an ellipse
       const scaled = scale([outerWidth / 2, outerHeight / 2, 1], circle)
-      return translate([plated_hole.x, plated_hole.y, 0], scaled)
+      const rotated = rotationRadians
+        ? rotate([0, 0, rotationRadians], scaled)
+        : scaled
+      return translate([plated_hole.x, plated_hole.y, 0], rotated)
     })()
 
     const copperSolid = maybeClip(copperBody, clipGeom)
@@ -105,7 +112,10 @@ export const platedHole = (
         [Math.max(holeWidth / 2, 0.01), Math.max(holeHeight / 2, 0.01), 1],
         circle,
       )
-      return translate([plated_hole.x, plated_hole.y, 0], scaled)
+      const rotated = rotationRadians
+        ? rotate([0, 0, rotationRadians], scaled)
+        : scaled
+      return translate([plated_hole.x, plated_hole.y, 0], rotated)
     })()
 
     return colorize(colors.copper, subtract(copperSolid, drill)) as Geom3
@@ -116,6 +126,8 @@ export const platedHole = (
     const padWidth = plated_hole.rect_pad_width || plated_hole.hole_diameter
     const padHeight = plated_hole.rect_pad_height || plated_hole.hole_diameter
     const rectBorderRadius = extractRectBorderRadius(plated_hole)
+    const rectRotationRadians =
+      (((plated_hole as any).rect_ccw_rotation || 0) * Math.PI) / 180
     // Create a solid copper shape that connects the top and bottom pads
     const copperSolid = maybeClip(
       union(
@@ -127,9 +139,12 @@ export const platedHole = (
             segments: RECT_PAD_SEGMENTS,
           })
           const extruded = extrudeLinear({ height: copperFillHeight }, rect2d)
+          const rotated = rectRotationRadians
+            ? rotate([0, 0, rectRotationRadians], extruded)
+            : extruded
           return translate(
             [plated_hole.x, plated_hole.y, -copperFillHeight / 2],
-            extruded,
+            rotated,
           )
         })(),
         // Plated barrel around hole (ensured connection with pads)
@@ -298,95 +313,120 @@ export const platedHole = (
     const padWidth = plated_hole.rect_pad_width || holeWidth + 0.2
     const padHeight = plated_hole.rect_pad_height || holeHeight + 0.2
     const rectBorderRadius = extractRectBorderRadius(plated_hole)
+    const rectRotationRadians =
+      (((plated_hole as any).rect_ccw_rotation || 0) * Math.PI) / 180
+    const holeRotationRadians =
+      ((((plated_hole as any).hole_ccw_rotation ??
+        (plated_hole as any).ccw_rotation) ||
+        0) *
+        Math.PI) /
+      180
+
+    const rotateHoleAroundCenter = (geom: Geom3) => {
+      if (!holeRotationRadians) return geom
+      const toOrigin = translate(
+        [-(plated_hole.x + holeOffsetX), -(plated_hole.y + holeOffsetY), 0],
+        geom,
+      )
+      const rotated = rotate([0, 0, holeRotationRadians], toOrigin)
+      return translate(
+        [plated_hole.x + holeOffsetX, plated_hole.y + holeOffsetY, 0],
+        rotated,
+      )
+    }
 
     const barrelMargin = 0.03
 
     // --- Barrel ---
-    const barrel = union(
-      cuboid({
-        center: [plated_hole.x + holeOffsetX, plated_hole.y + holeOffsetY, 0],
-        size: shouldRotate
-          ? [
-              holeHeight + 2 * barrelMargin,
-              rectLength + 2 * barrelMargin,
-              barrelHeight,
-            ]
-          : [
-              rectLength + 2 * barrelMargin,
-              holeHeight + 2 * barrelMargin,
-              barrelHeight,
-            ],
-      }),
-      cylinder({
-        center: shouldRotate
-          ? [
-              plated_hole.x + holeOffsetX,
-              plated_hole.y + holeOffsetY - rectLength / 2,
-              0,
-            ]
-          : [
-              plated_hole.x + holeOffsetX - rectLength / 2,
-              plated_hole.y + holeOffsetY,
-              0,
-            ],
-        radius: holeRadius + barrelMargin,
-        height: barrelHeight,
-      }),
-      cylinder({
-        center: shouldRotate
-          ? [
-              plated_hole.x + holeOffsetX,
-              plated_hole.y + holeOffsetY + rectLength / 2,
-              0,
-            ]
-          : [
-              plated_hole.x + holeOffsetX + rectLength / 2,
-              plated_hole.y + holeOffsetY,
-              0,
-            ],
-        radius: holeRadius + barrelMargin,
-        height: barrelHeight,
-      }),
+    const barrel = rotateHoleAroundCenter(
+      union(
+        cuboid({
+          center: [plated_hole.x + holeOffsetX, plated_hole.y + holeOffsetY, 0],
+          size: shouldRotate
+            ? [
+                holeHeight + 2 * barrelMargin,
+                rectLength + 2 * barrelMargin,
+                barrelHeight,
+              ]
+            : [
+                rectLength + 2 * barrelMargin,
+                holeHeight + 2 * barrelMargin,
+                barrelHeight,
+              ],
+        }),
+        cylinder({
+          center: shouldRotate
+            ? [
+                plated_hole.x + holeOffsetX,
+                plated_hole.y + holeOffsetY - rectLength / 2,
+                0,
+              ]
+            : [
+                plated_hole.x + holeOffsetX - rectLength / 2,
+                plated_hole.y + holeOffsetY,
+                0,
+              ],
+          radius: holeRadius + barrelMargin,
+          height: barrelHeight,
+        }),
+        cylinder({
+          center: shouldRotate
+            ? [
+                plated_hole.x + holeOffsetX,
+                plated_hole.y + holeOffsetY + rectLength / 2,
+                0,
+              ]
+            : [
+                plated_hole.x + holeOffsetX + rectLength / 2,
+                plated_hole.y + holeOffsetY,
+                0,
+              ],
+          radius: holeRadius + barrelMargin,
+          height: barrelHeight,
+        }),
+      ),
     )
 
     // --- Hole cutout ---
-    const holeCut = union(
-      cuboid({
-        center: [plated_hole.x + holeOffsetX, plated_hole.y + holeOffsetY, 0],
-        size: shouldRotate
-          ? [holeHeight, rectLength, throughDrillHeight]
-          : [rectLength, holeHeight, throughDrillHeight],
-      }),
-      cylinder({
-        center: shouldRotate
-          ? [
-              plated_hole.x + holeOffsetX,
-              plated_hole.y + holeOffsetY - rectLength / 2,
-              0,
-            ]
-          : [
-              plated_hole.x + holeOffsetX - rectLength / 2,
-              plated_hole.y + holeOffsetY,
-              0,
-            ],
-        radius: holeRadius,
-        height: throughDrillHeight,
-      }),
-      cylinder({
-        center: shouldRotate
-          ? [
-              plated_hole.x + holeOffsetX,
-              plated_hole.y + holeOffsetY + rectLength / 2,
-              0,
-            ]
-          : [
-              plated_hole.x + holeOffsetX + rectLength / 2,
-              plated_hole.y + holeOffsetY,
-              0,
-            ],
-        radius: holeRadius,
-        height: throughDrillHeight,
-      }),
+    const holeCut = rotateHoleAroundCenter(
+      union(
+        cuboid({
+          center: [plated_hole.x + holeOffsetX, plated_hole.y + holeOffsetY, 0],
+          size: shouldRotate
+            ? [holeHeight, rectLength, throughDrillHeight]
+            : [rectLength, holeHeight, throughDrillHeight],
+        }),
+        cylinder({
+          center: shouldRotate
+            ? [
+                plated_hole.x + holeOffsetX,
+                plated_hole.y + holeOffsetY - rectLength / 2,
+                0,
+              ]
+            : [
+                plated_hole.x + holeOffsetX - rectLength / 2,
+                plated_hole.y + holeOffsetY,
+                0,
+              ],
+          radius: holeRadius,
+          height: throughDrillHeight,
+        }),
+        cylinder({
+          center: shouldRotate
+            ? [
+                plated_hole.x + holeOffsetX,
+                plated_hole.y + holeOffsetY + rectLength / 2,
+                0,
+              ]
+            : [
+                plated_hole.x + holeOffsetX + rectLength / 2,
+                plated_hole.y + holeOffsetY,
+                0,
+              ],
+          radius: holeRadius,
+          height: throughDrillHeight,
+        }),
+      ),
     )
 
     // --- Pads and fill ---
@@ -397,52 +437,57 @@ export const platedHole = (
         segments: RECT_PAD_SEGMENTS,
       })
       const extruded = extrudeLinear({ height: copperFillHeight }, rect2d)
+      const rotated = rectRotationRadians
+        ? rotate([0, 0, rectRotationRadians], extruded)
+        : extruded
       return translate(
         [plated_hole.x, plated_hole.y, -copperFillHeight / 2],
-        extruded,
+        rotated,
       )
     })()
 
     const copperFillCut = subtract(copperFill, holeCut)
 
     // --- Barrel internal cut (keeps thin copper rim) ---
-    const barrelHoleCut = union(
-      cuboid({
-        center: [plated_hole.x + holeOffsetX, plated_hole.y + holeOffsetY, 0],
-        size: shouldRotate
-          ? [holeHeight - 2 * M, rectLength - 2 * M, throughDrillHeight]
-          : [rectLength - 2 * M, holeHeight - 2 * M, throughDrillHeight],
-      }),
-      cylinder({
-        center: shouldRotate
-          ? [
-              plated_hole.x + holeOffsetX,
-              plated_hole.y + holeOffsetY - rectLength / 2,
-              0,
-            ]
-          : [
-              plated_hole.x + holeOffsetX - rectLength / 2,
-              plated_hole.y + holeOffsetY,
-              0,
-            ],
-        radius: holeRadius - M,
-        height: throughDrillHeight,
-      }),
-      cylinder({
-        center: shouldRotate
-          ? [
-              plated_hole.x + holeOffsetX,
-              plated_hole.y + holeOffsetY + rectLength / 2,
-              0,
-            ]
-          : [
-              plated_hole.x + holeOffsetX + rectLength / 2,
-              plated_hole.y + holeOffsetY,
-              0,
-            ],
-        radius: holeRadius - M,
-        height: throughDrillHeight,
-      }),
+    const barrelHoleCut = rotateHoleAroundCenter(
+      union(
+        cuboid({
+          center: [plated_hole.x + holeOffsetX, plated_hole.y + holeOffsetY, 0],
+          size: shouldRotate
+            ? [holeHeight - 2 * M, rectLength - 2 * M, throughDrillHeight]
+            : [rectLength - 2 * M, holeHeight - 2 * M, throughDrillHeight],
+        }),
+        cylinder({
+          center: shouldRotate
+            ? [
+                plated_hole.x + holeOffsetX,
+                plated_hole.y + holeOffsetY - rectLength / 2,
+                0,
+              ]
+            : [
+                plated_hole.x + holeOffsetX - rectLength / 2,
+                plated_hole.y + holeOffsetY,
+                0,
+              ],
+          radius: holeRadius - M,
+          height: throughDrillHeight,
+        }),
+        cylinder({
+          center: shouldRotate
+            ? [
+                plated_hole.x + holeOffsetX,
+                plated_hole.y + holeOffsetY + rectLength / 2,
+                0,
+              ]
+            : [
+                plated_hole.x + holeOffsetX + rectLength / 2,
+                plated_hole.y + holeOffsetY,
+                0,
+              ],
+          radius: holeRadius - M,
+          height: throughDrillHeight,
+        }),
+      ),
     )
 
     const barrelWithHole = subtract(barrel, barrelHoleCut)

@@ -338,16 +338,27 @@ export function processPlatedHolesForManifold(
       const rectBorderRadius = extractRectBorderRadius(ph)
       const padThickness = PLATED_HOLE_PAD_THICKNESS
 
+      const holeRotation =
+        (ph as any).hole_ccw_rotation ?? (ph as any).ccw_rotation ?? 0
+      const rectRotation = (ph as any).rect_ccw_rotation || 0
+
       // Board Drill with hole offset
       const drillW = holeW + 2 * MANIFOLD_Z_OFFSET
       const drillH = holeH + 2 * MANIFOLD_Z_OFFSET
       const drillDepth = pcbThickness * 1.2
 
-      const boardPillDrillOp = createPillOp(
-        drillW,
-        drillH,
-        drillDepth,
-      ).translate([holeOffsetX, holeOffsetY, 0])
+      let boardPillDrillOp = createPillOp(drillW, drillH, drillDepth)
+      if (holeRotation) {
+        const rotatedDrill = boardPillDrillOp.rotate([0, 0, holeRotation])
+        manifoldInstancesForCleanup.push(rotatedDrill)
+        boardPillDrillOp = rotatedDrill
+      }
+      boardPillDrillOp = boardPillDrillOp.translate([
+        holeOffsetX,
+        holeOffsetY,
+        0,
+      ])
+      manifoldInstancesForCleanup.push(boardPillDrillOp)
 
       const translatedBoardPillDrill = boardPillDrillOp.translate([
         ph.x,
@@ -358,7 +369,7 @@ export function processPlatedHolesForManifold(
       platedHoleBoardDrills.push(translatedBoardPillDrill)
 
       // Create the main fill between pads (centered on the pad, not the hole)
-      const mainFill = createRoundedRectPrism({
+      let mainFill = createRoundedRectPrism({
         Manifold,
         width: padWidth,
         height: padHeight,
@@ -374,12 +385,24 @@ export function processPlatedHolesForManifold(
       })
       manifoldInstancesForCleanup.push(mainFill)
 
+      if (rectRotation) {
+        const rotatedMainFill = mainFill.rotate([0, 0, rectRotation])
+        manifoldInstancesForCleanup.push(rotatedMainFill)
+        mainFill = rotatedMainFill
+      }
+
       // Create the plated barrel at the offset position
-      const barrelPill = createPillOp(
+      let barrelPill = createPillOp(
         holeW,
         holeH,
         pcbThickness * 0.8, // Slightly shorter than board
-      ).translate([holeOffsetX, holeOffsetY, 0])
+      )
+      if (holeRotation) {
+        const rotatedBarrel = barrelPill.rotate([0, 0, holeRotation])
+        manifoldInstancesForCleanup.push(rotatedBarrel)
+        barrelPill = rotatedBarrel
+      }
+      barrelPill = barrelPill.translate([holeOffsetX, holeOffsetY, 0])
       manifoldInstancesForCleanup.push(barrelPill)
 
       // Combine all copper parts
@@ -387,11 +410,17 @@ export function processPlatedHolesForManifold(
       manifoldInstancesForCleanup.push(copperUnion)
 
       // Create hole for drilling at the offset position
-      const holeCutOp = createPillOp(
+      let holeCutOp = createPillOp(
         Math.max(holeW - 2 * PLATED_HOLE_LIP_HEIGHT, 0.01),
         Math.max(holeH - 2 * PLATED_HOLE_LIP_HEIGHT, 0.01),
         pcbThickness * 1.2, // Ensure it cuts through
-      ).translate([holeOffsetX, holeOffsetY, 0])
+      )
+      if (holeRotation) {
+        const rotatedHoleCut = holeCutOp.rotate([0, 0, holeRotation])
+        manifoldInstancesForCleanup.push(rotatedHoleCut)
+        holeCutOp = rotatedHoleCut
+      }
+      holeCutOp = holeCutOp.translate([holeOffsetX, holeOffsetY, 0])
       manifoldInstancesForCleanup.push(holeCutOp)
 
       // Final copper with hole
@@ -786,9 +815,10 @@ export function processPlatedHolesForManifold(
       const rectBorderRadius = extractRectBorderRadius(ph)
       const padThickness = PLATED_HOLE_PAD_THICKNESS
       const holeRadius = ph.hole_diameter / 2
+      const rectRotation = (ph as any).rect_ccw_rotation || 0
 
       // Create the main fill between pads (centered on the pad, not the hole)
-      const mainFill = createRoundedRectPrism({
+      let mainFill = createRoundedRectPrism({
         Manifold,
         width: padWidth!,
         height: padHeight!,
@@ -803,6 +833,12 @@ export function processPlatedHolesForManifold(
         borderRadius: rectBorderRadius,
       })
       manifoldInstancesForCleanup.push(mainFill)
+
+      if (rectRotation) {
+        const rotatedMainFill = mainFill.rotate([0, 0, rectRotation])
+        manifoldInstancesForCleanup.push(rotatedMainFill)
+        mainFill = rotatedMainFill
+      }
 
       // Create top and bottom pads (slightly thicker to ensure connection)
       // Create the plated barrel at the offset position
