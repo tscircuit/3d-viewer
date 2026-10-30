@@ -1,4 +1,3 @@
-import { useBoardTextureVisibility } from "./useBoardTextureVisibility"
 import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
 import type { ManifoldToplevel } from "manifold-3d"
@@ -21,6 +20,7 @@ import { processNonPlatedHolesForManifold } from "../utils/manifold/process-non-
 import { processPlatedHolesForManifold } from "../utils/manifold/process-plated-holes"
 import { processViasForManifold } from "../utils/manifold/process-vias"
 import { manifoldMeshToThreeGeometry } from "../utils/manifold-mesh-to-three-geometry"
+import { useBoardTextureVisibility } from "./useBoardTextureVisibility"
 
 export interface ManifoldGeoms {
   board?: {
@@ -254,7 +254,16 @@ export const useManifoldBoardBuilder = (
       allBoardDrills.push(...viaBoardDrills)
       currentGeoms.vias = viaCopperGeoms
 
-      // Batch subtract all hole drills from the board
+      const { cutoutOps } = processCutoutsForManifold(
+        Manifold,
+        CrossSection,
+        circuitJson,
+        currentPcbThickness,
+        manifoldInstancesForCleanup.current,
+      )
+      allBoardDrills.push(...cutoutOps)
+
+      // Batch subtract all hole drills and cutouts from the board in a single boolean operation
       if (allBoardDrills.length > 0) {
         holeUnion = Manifold.union(allBoardDrills)
         manifoldInstancesForCleanup.current.push(holeUnion)
@@ -287,22 +296,6 @@ export const useManifoldBoardBuilder = (
             },
           ]
         }
-      }
-
-      const { cutoutOps } = processCutoutsForManifold(
-        Manifold,
-        CrossSection,
-        circuitJson,
-        currentPcbThickness,
-        manifoldInstancesForCleanup.current,
-      )
-
-      if (cutoutOps.length > 0) {
-        const unionedCutouts = Manifold.union(cutoutOps)
-        manifoldInstancesForCleanup.current.push(unionedCutouts)
-        const nextBoardAfterCutouts = currentBoardOp.subtract(unionedCutouts)
-        manifoldInstancesForCleanup.current.push(nextBoardAfterCutouts)
-        currentBoardOp = nextBoardAfterCutouts
       }
 
       boardManifold = currentBoardOp // Final board manifold

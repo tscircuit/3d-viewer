@@ -1,8 +1,11 @@
-import { useState, useEffect, useRef } from "react"
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import type { AnyCircuitElement } from "circuit-json"
-import { createSimplifiedBoardGeom } from "../soup-to-3d"
+import { useEffect, useRef, useState } from "react"
 import { BoardGeomBuilder } from "../BoardGeomBuilder"
+import { createSimplifiedBoardGeom } from "../soup-to-3d"
+
+const STEP_BATCH_SIZE = 16
+const MAX_FRAME_BUDGET_MS = 12
 
 export const useBoardGeomBuilder = (
   circuitJson: AnyCircuitElement[] | undefined,
@@ -26,7 +29,7 @@ export const useBoardGeomBuilder = (
       return
     }
 
-    // Set initial simplified geometry
+    // Set initial simplified geometry (includes board outline + cutouts immediately)
     const simplifiedGeom = createSimplifiedBoardGeom(circuitJson)
     setBoardGeom(simplifiedGeom)
 
@@ -40,7 +43,18 @@ export const useBoardGeomBuilder = (
       try {
         let isDone = false
         while (!isDone && !isCancelled) {
-          isDone = builder.step(1) // Process one step
+          const frameStart =
+            typeof performance !== "undefined" ? performance.now() : Date.now()
+          while (!isDone && !isCancelled) {
+            isDone = builder.step(STEP_BATCH_SIZE)
+            const now =
+              typeof performance !== "undefined"
+                ? performance.now()
+                : Date.now()
+            if (now - frameStart >= MAX_FRAME_BUDGET_MS) {
+              break
+            }
+          }
           if (!isDone) {
             // Yield to the event loop to allow UI updates and prevent blocking
             await new Promise((resolve) => setTimeout(resolve, 0))
