@@ -1,11 +1,11 @@
-import { createIndependentFlexTails } from "../stories/fixtures/independent-flex-tails"
-import { transformCircuitJsonCadComponents } from "@tscircuit/flex-utils"
-import { resolveFoldPcbs } from "../src/utils/resolve-fold-pcbs"
 import { expect, test } from "bun:test"
-import * as THREE from "three"
-import { createFlexMeshes, meshToSurface } from "../src/utils/flex-meshes"
-import { getCadModelTransform } from "../src/utils/cad-model-transform"
+import { transformCircuitJsonCadComponents } from "@tscircuit/flex-utils"
 import type { AnyCircuitElement } from "circuit-json"
+import * as THREE from "three"
+import { getCadModelTransform } from "../src/utils/cad-model-transform"
+import { createFlexMeshes, meshToSurface } from "../src/utils/flex-meshes"
+import { resolveFoldPcbs } from "../src/utils/resolve-fold-pcbs"
+import { createIndependentFlexTails } from "../stories/fixtures/independent-flex-tails"
 
 const json = [
   {
@@ -365,4 +365,35 @@ test("outline precision restoration respects mesh transforms and interior vertic
   )
   expect(restored.triangles[0]!.vertices[2].y).toBeLessThan(edge * 2 - 0.019)
   expect(geometry.getAttribute("position").array).toEqual(original)
+})
+
+test("exact-edge rectangular flex bend restores Float32 board vertices without explicit outline", () => {
+  expect(Math.fround(4.3) - 4.3).toBeGreaterThan(1e-7)
+  const boardMesh = new THREE.Mesh(new THREE.BoxGeometry(12, 8.6, 0.12))
+  boardMesh.name = "board-geom"
+  const circuitJson: AnyCircuitElement[] = [
+    {
+      type: "pcb_board",
+      pcb_board_id: "board",
+      center: { x: 0, y: 0 },
+      width: 12,
+      height: 8.6,
+      thickness: 0.12,
+      num_layers: 2,
+      material: "flex",
+    },
+    {
+      type: "pcb_bend",
+      pcb_bend_id: "bend",
+      pcb_board_id: "board",
+      start: { x: 0, y: -4.3 },
+      end: { x: 0, y: 4.3 },
+      bend_radius: 1.21,
+      bend_angle: 180,
+      bend_side: "right",
+    },
+  ]
+  const output = createFlexMeshes([boardMesh], [], circuitJson, true)
+  expect(output.geometryMeshes).toHaveLength(1)
+  expect(output.bounds?.maxZ).toBeGreaterThan(2)
 })
