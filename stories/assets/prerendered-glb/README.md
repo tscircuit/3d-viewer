@@ -23,3 +23,16 @@ The previous fixture was the original published 7,365,672-byte GLB, downloaded
 from https://api.tscircuit.com/package_files/download?package_file_id=3ea38a93-dd1f-4c8c-b0b2-4cfda3050f47.
 It lacked component identity extras and has been replaced so this demo exercises
 hover interactions on the actual assembly.
+
+## BeaglePlay camera fixture
+
+`beagleplay.glb` is the full Altium-derived BeaglePlay scene from
+`ShiboSoftwareDev/customize-am62a-reference-design` PR #58, commit `2b69c99`.
+Its PCB center is (-290.27501, 274.23999) mm. Initial framing finds the board,
+but selecting Camera → Top Down incorrectly aims at (0, 0, 0).
+
+- Source: https://customize-am62a-reference-design-g8y48lnk1-shibos-projects.vercel.app/prebuilt-ti-evms/beagleplay/full-board.glb
+- SHA-256: `b5a9658c1932708543a4a1e1d290cb1e3dab6e4dc061c54011847df962b317e6`
+
+The Bugs/BeaglePlay GLB Camera Presets story uses the same bytes locally, so it
+does not depend on a running demo or fetch external component models.
