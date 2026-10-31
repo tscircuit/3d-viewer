@@ -1,4 +1,3 @@
-import type { AnyCircuitElement, PcbBoard } from "circuit-json"
 import {
   boundsOfTriangles,
   createPcbFold,
@@ -7,6 +6,7 @@ import {
   type SurfaceMesh,
   type Triangle,
 } from "@tscircuit/flex-utils"
+import type { AnyCircuitElement, PcbBoard } from "circuit-json"
 import * as THREE from "three"
 import { configureObjectShadows } from "./configure-object-shadows"
 
@@ -165,9 +165,32 @@ export function createFlexMeshes(
     throw new Error(
       "Flex rendering requires one board, matching board references, and no panel",
     )
+  const boardOutline =
+    board.outline && board.outline.length >= 3
+      ? board.outline
+      : board.width !== undefined && board.height !== undefined
+        ? [
+            {
+              x: board.center.x - board.width / 2,
+              y: board.center.y - board.height / 2,
+            },
+            {
+              x: board.center.x + board.width / 2,
+              y: board.center.y - board.height / 2,
+            },
+            {
+              x: board.center.x + board.width / 2,
+              y: board.center.y + board.height / 2,
+            },
+            {
+              x: board.center.x - board.width / 2,
+              y: board.center.y + board.height / 2,
+            },
+          ]
+        : undefined
   const fold = foldPcbs
     ? createPcbFold(bends, board.thickness ?? 1.6, {
-        outline: board.outline?.map((point) => ({
+        outline: boardOutline?.map((point) => ({
           x: point.x - board.center.x,
           y: point.y - board.center.y,
         })),
@@ -175,7 +198,7 @@ export function createFlexMeshes(
     : undefined
   const body = geometryMeshes.find((m) => m.name === "board-geom")
   const flatBody =
-    fold && body ? meshToSurface(body, board.center, board.outline) : undefined
+    fold && body ? meshToSurface(body, board.center, boardOutline) : undefined
   const geometry = fold
     ? geometryMeshes.map((mesh) =>
         replaceGeometry(
@@ -183,7 +206,7 @@ export function createFlexMeshes(
           foldSurfaceMesh(
             mesh === body && flatBody
               ? flatBody
-              : meshToSurface(mesh, board.center, board.outline),
+              : meshToSurface(mesh, board.center, boardOutline),
             fold,
           ),
           board,
