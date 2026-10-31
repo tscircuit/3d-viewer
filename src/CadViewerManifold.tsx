@@ -246,8 +246,12 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   }, [boardData])
 
   const initialCameraPosition = useMemo(() => {
-    return getInitialCameraPosition({ boardDimensions, boardCenter })
-  }, [boardDimensions, boardCenter])
+    return getInitialCameraPosition({
+      boardDimensions,
+      boardCenter,
+      cadComponents,
+    })
+  }, [boardDimensions, boardCenter, cadComponents])
 
   const cameraSessionScope = useMemo(() => {
     if (!boardData) return undefined

@@ -11,11 +11,11 @@ import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { useBoardGeomBuilder } from "./hooks/useBoardGeomBuilder"
 import { usePcbThickness } from "./hooks/usePcbThickness"
 import type { ReferenceObjectType } from "./reference-objects/reference-object"
+import { CadCable, getCadCables } from "./three-components/CadCable"
 import { Error3d } from "./three-components/Error3d"
 import { JscadBoardTextures } from "./three-components/JscadBoardTextures"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
-import { CadCable, getCadCables } from "./three-components/CadCable"
 import { getInitialCameraPosition } from "./utils/get-initial-camera-position"
 import { calculateOutlineBounds } from "./utils/outline-bounds"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
@@ -111,18 +111,26 @@ export const CadViewerJscad = forwardRef<
       })
     }, [internalCircuitJson, boardCenter, boardDimensions])
 
+    const cad_components = useMemo(
+      () =>
+        su(internalCircuitJson)
+          .cad_component.list()
+          .filter((cad) => !hiddenCadComponentIds?.has(cad.cad_component_id)),
+      [internalCircuitJson, hiddenCadComponentIds],
+    )
+
     const initialCameraPosition = useMemo(() => {
-      return getInitialCameraPosition({ boardDimensions, boardCenter })
-    }, [boardDimensions, boardCenter])
+      return getInitialCameraPosition({
+        boardDimensions,
+        boardCenter,
+        cadComponents: cad_components,
+      })
+    }, [boardDimensions, boardCenter, cad_components])
 
     const pcbThickness = usePcbThickness(internalCircuitJson)
 
     // Use the state `boardGeom` which starts simplified and gets updated
     const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
-
-    const cad_components = su(internalCircuitJson)
-      .cad_component.list()
-      .filter((cad) => !hiddenCadComponentIds?.has(cad.cad_component_id))
     const cadCables = getCadCables(internalCircuitJson)
 
     return (
