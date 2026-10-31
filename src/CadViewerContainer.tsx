@@ -1,11 +1,9 @@
-import { AssemblyExplosionScene } from "./assembly-explosion/AssemblyExplosionScene"
-import { useSection } from "./sections/SectionContext"
-import { SectionScene } from "./sections/SectionScene"
 import type * as React from "react"
 import { forwardRef, useEffect, useMemo, useState } from "react"
 import * as THREE from "three"
 import { zIndexMap } from "../lib/utils/z-index-map"
 import packageJson from "../package.json"
+import { AssemblyExplosionScene } from "./assembly-explosion/AssemblyExplosionScene"
 import { useAppearance } from "./contexts/appearance-context"
 import { useCameraController } from "./contexts/CameraControllerContext"
 import { SchematicNavigationScene } from "./contexts/SchematicNavigationContext"
@@ -21,6 +19,8 @@ import {
   getComparisonBounds,
   type ReferenceObjectType,
 } from "./reference-objects/reference-object"
+import { useSection } from "./sections/SectionContext"
+import { SectionScene } from "./sections/SectionScene"
 import { OrientationCubeCanvas } from "./three-components/OrientationCubeCanvas"
 import {
   FitCameraToComparison,
@@ -80,6 +80,11 @@ export const CadViewerContainer = forwardRef<
     const [isInteractionEnabled, setIsInteractionEnabled] = useState(
       !clickToInteractEnabled,
     )
+    const [hasUserInteracted, setHasUserInteracted] = useState(false)
+
+    useEffect(() => {
+      setHasUserInteracted(false)
+    }, [cameraSessionScope])
 
     const { mainCameraRef, handleControlsChange, controller } =
       useCameraController()
@@ -101,24 +106,63 @@ export const CadViewerContainer = forwardRef<
       return getComparisonBounds(referenceObject, boardDimensions, boardCenter)
     }, [referenceObject, boardDimensions, boardCenter])
 
+    const boardlessBounds = useMemo(() => {
+      if (
+        boardDimensions ||
+        boardCenter ||
+        comparisonBounds ||
+        !section?.bounds
+      ) {
+        return undefined
+      }
+      const { min, max } = section.bounds
+      if (
+        !Number.isFinite(min.x) ||
+        !Number.isFinite(min.y) ||
+        !Number.isFinite(min.z) ||
+        !Number.isFinite(max.x) ||
+        !Number.isFinite(max.y) ||
+        !Number.isFinite(max.z)
+      ) {
+        return undefined
+      }
+      return {
+        minX: min.x,
+        maxX: max.x,
+        minY: min.y,
+        maxY: max.y,
+        minZ: min.z,
+        maxZ: max.z,
+      }
+    }, [boardDimensions, boardCenter, comparisonBounds, section?.bounds])
+
     const gridSectionSize = useMemo(() => {
-      if (!boardDimensions) return 10
-      const width = boardDimensions.width ?? 0
-      const height = boardDimensions.height ?? 0
-      return Math.max(Math.max(width, height) * 1.5, 10)
-    }, [boardDimensions])
+      if (boardDimensions) {
+        const width = boardDimensions.width ?? 0
+        const height = boardDimensions.height ?? 0
+        return Math.max(Math.max(width, height) * 1.5, 10)
+      }
+      if (boardlessBounds) {
+        const width = boardlessBounds.maxX - boardlessBounds.minX
+        const height = boardlessBounds.maxY - boardlessBounds.minY
+        return Math.max(Math.max(width, height) * 1.5, 10)
+      }
+      return 10
+    }, [boardDimensions, boardlessBounds])
+
+    const activeBounds = comparisonBounds ?? boardlessBounds
 
     const orbitTarget = useMemo(() => {
-      if (comparisonBounds) {
+      if (activeBounds) {
         return [
-          (comparisonBounds.minX + comparisonBounds.maxX) / 2,
-          (comparisonBounds.minY + comparisonBounds.maxY) / 2,
-          (comparisonBounds.minZ + comparisonBounds.maxZ) / 2,
+          (activeBounds.minX + activeBounds.maxX) / 2,
+          (activeBounds.minY + activeBounds.maxY) / 2,
+          (activeBounds.minZ + activeBounds.maxZ) / 2,
         ] as [number, number, number]
       }
       if (!boardCenter) return undefined
       return [boardCenter.x, boardCenter.y, 0] as [number, number, number]
-    }, [boardCenter, comparisonBounds])
+    }, [boardCenter, activeBounds])
 
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -142,7 +186,10 @@ export const CadViewerContainer = forwardRef<
             <OrbitControls
               autoRotate={!autoRotateDisabled && !section?.spec}
               autoRotateSpeed={1}
-              onStart={onUserInteraction}
+              onStart={() => {
+                setHasUserInteracted(true)
+                onUserInteraction?.()
+              }}
               rotateSpeed={0.5}
               panSpeed={0.75}
               zoomSpeed={0.5}
@@ -170,6 +217,9 @@ export const CadViewerContainer = forwardRef<
           )}
           {comparisonBounds && (
             <FitCameraToComparison bounds={comparisonBounds} />
+          )}
+          {!comparisonBounds && boardlessBounds && !hasUserInteracted && (
+            <FitCameraToComparison bounds={boardlessBounds} />
           )}
           {gridEnabled && (
             <Grid
