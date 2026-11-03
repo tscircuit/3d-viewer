@@ -1,7 +1,9 @@
 import { createSectionExport } from "../sections/section-export"
 import { useCallback } from "react"
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js"
-import type * as THREE from "three"
+import * as THREE from "three"
+
+const METERS_PER_MILLIMETER = 0.001
 
 declare global {
   interface Window {
@@ -17,9 +19,12 @@ export const useGlobalDownloadGltf = () => {
     const sectionExport = section
       ? createSectionExport(root, section)
       : undefined
+    const exportRoot = new THREE.Group()
+    exportRoot.scale.setScalar(METERS_PER_MILLIMETER)
+    exportRoot.add(sectionExport?.root ?? root.clone(true))
     const exporter = new GLTFExporter()
     exporter.parse(
-      sectionExport?.root ?? root,
+      exportRoot,
       (gltf) => {
         sectionExport?.dispose()
         const blob = new Blob(
