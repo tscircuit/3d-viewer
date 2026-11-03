@@ -6,6 +6,7 @@ import * as THREE from "three"
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js"
 import { useExportGltfUrl, useSaveGltfAs } from "../src/hooks/exporter/gltf"
 import { useGlobalDownloadGltf } from "../src/hooks/useGlobalDownloadGltf"
+import { findModelObject } from "../src/utils/clone-model-for-export"
 
 const GLB_MAGIC = 0x46546c67
 const GLB_TOTAL_LENGTH_OFFSET = 8
@@ -130,6 +131,12 @@ const DownloadHolder = () => {
   return null
 }
 
+const DownloadHolderComponent = () => {
+  const download = useGlobalDownloadGltf()
+  useEffect(() => download({ objectId: "holder_cad", name: "U1" }), [download])
+  return null
+}
+
 const ExportHolder = () => {
   const [ref, url] = useExportGltfUrl()
   useEffect(() => {
@@ -175,6 +182,60 @@ test("Download GLTF exports the full gimbal holder without overflowing the call 
   expect(gltf.buffers[0].uri).toStartWith(
     "data:application/octet-stream;base64,",
   )
+})
+
+test("Download GLTF on a right-clicked model exports only that model in place", async () => {
+  const root = new THREE.Object3D()
+  root.position.z = 1
+  const component = new THREE.Group()
+  component.userData.cad_component_id = "holder_cad"
+  component.position.set(10, -5, 0)
+  component.add(holder)
+  const board = new THREE.Mesh(
+    new THREE.BoxGeometry(20, 20, 1.6),
+    new THREE.MeshStandardMaterial(),
+  )
+  root.add(board, component)
+  window.__TSCIRCUIT_THREE_OBJECT = root
+  await act(async () => {
+    reactRoot.render(<DownloadHolderComponent />)
+  })
+  await act(async () => {
+    await exportedBlob
+  })
+
+  const gltf = JSON.parse(await readExportedText(await exportedBlob))
+  expect(clickedDownload?.download).toBe("U1.gltf")
+  expect(gltf.meshes).toHaveLength(1)
+  expect(
+    gltf.accessors[gltf.meshes[0].primitives[0].attributes.POSITION].count,
+  ).toBe(30420)
+  const top = gltf.nodes[gltf.scenes[0].nodes[0]]
+  expect(top.name).toBe("U1")
+  expect(top.extras.cad_component_id).toBe("holder_cad")
+  expect(top.matrix.slice(12, 15)).toEqual([10, -5, 1])
+  // The scene graph is untouched by the export.
+  expect(holder.parent).toBe(component)
+  expect(component.name).toBe("")
+  board.geometry.dispose()
+  board.material.dispose()
+})
+
+test("only CAD components and cables count as downloadable models", () => {
+  const root = new THREE.Object3D()
+  const board = new THREE.Group()
+  board.userData.pcb_board_id = "board1"
+  const component = new THREE.Group()
+  component.userData.cad_component_id = "u1_cad"
+  const nested = new THREE.Group()
+  nested.userData.cad_component_id = "u1_cad"
+  component.add(nested)
+  const cable = new THREE.Group()
+  cable.userData = { cad_cable_id: "cable1", name: "W1" }
+  root.add(board, component, cable)
+  expect(findModelObject(root, "u1_cad")).toBe(component)
+  expect(findModelObject(root, "cable1")).toBe(cable)
+  expect(findModelObject(root, "board1")).toBeUndefined()
 })
 
 test("useExportGltfUrl exports the full gimbal holder as JSON", async () => {

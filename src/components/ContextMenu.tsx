@@ -41,6 +41,8 @@ interface ContextMenuProps {
   onSectionView?: () => void
   onExplosionView?: () => void
   explosionAvailable?: boolean
+  /** Name of the model Download GLTF exports instead of the whole scene. */
+  downloadModelName?: string
   onDownloadGltf: () => void
   onOpenKeyboardShortcuts: () => void
 }
@@ -147,6 +149,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onSectionView,
   onExplosionView,
   explosionAvailable = false,
+  downloadModelName,
   onDownloadGltf,
   onOpenKeyboardShortcuts,
 }) => {
@@ -503,9 +506,14 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               onMouseLeave={() => setHoveredItem(null)}
               onTouchStart={() => setHoveredItem("download")}
             >
-              <span style={{ display: "flex", alignItems: "center" }}>
+              <span style={{ flex: 1, display: "flex", alignItems: "center" }}>
                 Download GLTF
               </span>
+              {downloadModelName && (
+                <span style={{ opacity: 0.55, fontSize: 13 }}>
+                  {downloadModelName}
+                </span>
+              )}
             </DropdownMenu.Item>
 
             <DropdownMenu.Separator style={separatorStyles} />
