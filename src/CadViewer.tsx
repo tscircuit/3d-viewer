@@ -8,10 +8,11 @@ import {
 } from "./utils/pick-schematic-component"
 import { resolveFoldPcbs } from "./utils/resolve-fold-pcbs"
 import {
-  pickCadComponent,
-  type PickedCadComponent,
-} from "./utils/pick-cad-component"
-import { useHiddenCadComponents } from "./hooks/useHiddenCadComponents"
+  pickSceneObject,
+  type PickedSceneObject,
+} from "./utils/pick-scene-object"
+import { useObjectVisibility } from "./hooks/useObjectVisibility"
+import { hasHiddenObjects } from "./utils/object-visibility"
 import { configureRuntimeFont } from "./utils/configure-runtime-font"
 import { useCallback, useContext, useEffect, useRef, useState } from "react"
 import * as THREE from "three"
@@ -64,7 +65,7 @@ import {
 
 export type CadViewerProps = Omit<
   React.ComponentProps<typeof CadViewerJscad>,
-  "circuitJson" | "hiddenCadComponentIds"
+  "circuitJson" | "objectVisibility"
 > & {
   // Preserve support for raw JSON imports whose `type` fields widen to string.
   circuitJson?: any[]
@@ -107,13 +108,13 @@ const CadViewerInner = (props: CadViewerProps) => {
   const circuitJsonKey =
     glbSource === undefined ? JSON.stringify(circuitJson) : undefined
   const circuitKey = glbSource ?? circuitJsonKey!
-  const { hiddenCadComponentIds, hideComponent, unhideAllComponents } =
-    useHiddenCadComponents(circuitKey)
+  const { objectVisibility, hideObject, isolateObject, unhideAllObjects } =
+    useObjectVisibility(circuitKey)
   const resolvedProps = {
     ...props,
     circuitJson,
     children: undefined,
-    hiddenCadComponentIds,
+    objectVisibility,
   }
   const [engine, setEngine] = useState<"jscad" | "manifold">(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
@@ -145,12 +146,11 @@ const CadViewerInner = (props: CadViewerProps) => {
   const sceneRef = useContext(SchematicNavigationContext)!
   const [selectedComponent, setSelectedComponent] =
     useState<ViewSchematicComponentEvent>()
-  const [selectedCadComponent, setSelectedCadComponent] =
-    useState<PickedCadComponent>()
+  const [selectedObject, setSelectedObject] = useState<PickedSceneObject>()
   const handleMenuOpen = useCallback(
     (position: { x: number; y: number }) => {
-      setSelectedCadComponent(
-        pickCadComponent(sceneRef.current, position, circuitJson),
+      setSelectedObject(
+        pickSceneObject(sceneRef.current, position, circuitJson),
       )
       setSelectedComponent(
         props.onViewSchematicComponent
@@ -351,7 +351,7 @@ const CadViewerInner = (props: CadViewerProps) => {
         {glbSource !== undefined ? (
           <CadViewerGlb
             source={glbSource}
-            hiddenCadComponentIds={hiddenCadComponentIds}
+            objectVisibility={objectVisibility}
             autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
             clickToInteractEnabled={props.clickToInteractEnabled}
             onUserInteraction={handleUserInteraction}
@@ -390,19 +390,28 @@ const CadViewerInner = (props: CadViewerProps) => {
         {menuVisible && (
           <ContextMenu
             hasAssembly={hasAssembly}
-            componentName={selectedCadComponent?.componentName}
-            onHideComponent={
-              selectedCadComponent
+            objectName={selectedObject?.name}
+            onHideObject={
+              selectedObject
                 ? () => {
-                    hideComponent(selectedCadComponent.cad_component_id)
+                    hideObject(selectedObject.objectId)
                     closeMenu()
                   }
                 : undefined
             }
-            onUnhideAllComponents={
-              hiddenCadComponentIds.size > 0
+            onIsolateObject={
+              selectedObject &&
+              objectVisibility.isolatedId !== selectedObject.objectId
                 ? () => {
-                    unhideAllComponents()
+                    isolateObject(selectedObject.objectId)
+                    closeMenu()
+                  }
+                : undefined
+            }
+            onUnhideAll={
+              hasHiddenObjects(objectVisibility)
+                ? () => {
+                    unhideAllObjects()
                     closeMenu()
                   }
                 : undefined

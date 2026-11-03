@@ -1,7 +1,7 @@
 import { expect, spyOn, test } from "bun:test"
 import * as THREE from "three"
 import { disposeGlbScene, loadGlbScene } from "../src/utils/prerendered-glb"
-import { pickCadComponent } from "../src/utils/pick-cad-component"
+import { pickSceneObject } from "../src/utils/pick-scene-object"
 import { pickSchematicComponent } from "../src/utils/pick-schematic-component"
 
 const fixture = () =>
@@ -36,9 +36,9 @@ test("loads GLB bytes without model requests and retains names and per-instance 
     [15, "cad2"],
   ] as const) {
     scene.camera.position.set(x, 7, 30)
-    expect(pickCadComponent(scene, { x: 100, y: 100 }, [])).toEqual({
-      cad_component_id: id,
-      componentName: "U1",
+    expect(pickSceneObject(scene, { x: 100, y: 100 }, [])).toEqual({
+      objectId: id,
+      name: "U1",
     })
     expect(pickSchematicComponent(scene, { x: 100, y: 100 }, [])).toEqual({
       source_component_id: "source1",
@@ -57,7 +57,7 @@ test("loads GLB bytes without model requests and retains names and per-instance 
   expect(bounds.max.z).toBeCloseTo(6)
   cad1.visible = false
   scene.camera.position.set(5, 7, 30)
-  expect(pickCadComponent(scene, { x: 100, y: 100 }, [])).toBeUndefined()
+  expect(pickSceneObject(scene, { x: 100, y: 100 }, [])).toBeUndefined()
   disposeGlbScene(model)
 })
 

@@ -12,11 +12,16 @@ import { useBoardGeomBuilder } from "./hooks/useBoardGeomBuilder"
 import { usePcbThickness } from "./hooks/usePcbThickness"
 import type { ReferenceObjectType } from "./reference-objects/reference-object"
 import { Error3d } from "./three-components/Error3d"
+import { BoardGroup } from "./three-components/BoardGroup"
 import { JscadBoardTextures } from "./three-components/JscadBoardTextures"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
 import { CadCable, getCadCables } from "./three-components/CadCable"
 import { getInitialCameraPosition } from "./utils/get-initial-camera-position"
+import {
+  isObjectHidden,
+  type ObjectVisibility,
+} from "./utils/object-visibility"
 import { calculateOutlineBounds } from "./utils/outline-bounds"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 
@@ -33,7 +38,7 @@ interface Props {
   onCameraControllerReady?: (controller: CameraController | null) => void
   resolveStaticAsset?: (modelUrl: string) => string
   referenceObject?: ReferenceObjectType | null
-  hiddenCadComponentIds?: ReadonlySet<string>
+  objectVisibility?: ObjectVisibility
 }
 
 export const CadViewerJscad = forwardRef<
@@ -50,7 +55,7 @@ export const CadViewerJscad = forwardRef<
       onCameraControllerReady,
       resolveStaticAsset,
       referenceObject,
-      hiddenCadComponentIds,
+      objectVisibility,
     },
     ref,
   ) => {
@@ -120,10 +125,21 @@ export const CadViewerJscad = forwardRef<
     // Use the state `boardGeom` which starts simplified and gets updated
     const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
 
+    // Match JscadBoardTextures, which renders a panel in place of its boards.
+    const renderedBoardId = useMemo(() => {
+      const panel = internalCircuitJson.find((e) => e.type === "pcb_panel")
+      if (panel?.type === "pcb_panel") return panel.pcb_panel_id
+      return su(internalCircuitJson)
+        .pcb_board.list()
+        .find((board) => !board.pcb_panel_id)?.pcb_board_id
+    }, [internalCircuitJson])
+
     const cad_components = su(internalCircuitJson)
       .cad_component.list()
-      .filter((cad) => !hiddenCadComponentIds?.has(cad.cad_component_id))
-    const cadCables = getCadCables(internalCircuitJson)
+      .filter((cad) => !isObjectHidden(objectVisibility, cad.cad_component_id))
+    const cadCables = getCadCables(internalCircuitJson).filter(
+      (cable) => !isObjectHidden(objectVisibility, cable.cad_cable_id),
+    )
 
     return (
       <CadViewerContainer
@@ -138,20 +154,25 @@ export const CadViewerJscad = forwardRef<
         onUserInteraction={onUserInteraction}
         onCameraControllerReady={onCameraControllerReady}
       >
-        {boardStls.map(({ stlData, color, layerType }, index) => (
-          <VisibleSTLModel
-            key={`board-${index}`}
-            stlData={stlData}
-            color={color}
-            opacity={index === 0 ? (isFauxBoard ? 0.8 : 0.95) : 1}
-            layerType={layerType}
+        <BoardGroup
+          pcbBoardId={renderedBoardId}
+          hidden={isObjectHidden(objectVisibility, renderedBoardId)}
+        >
+          {boardStls.map(({ stlData, color, layerType }, index) => (
+            <VisibleSTLModel
+              key={`board-${index}`}
+              stlData={stlData}
+              color={color}
+              opacity={index === 0 ? (isFauxBoard ? 0.8 : 0.95) : 1}
+              layerType={layerType}
+            />
+          ))}
+          <JscadBoardTextures
+            circuitJson={internalCircuitJson}
+            pcbThickness={pcbThickness}
+            isFaux={isFauxBoard}
           />
-        ))}
-        <JscadBoardTextures
-          circuitJson={internalCircuitJson}
-          pcbThickness={pcbThickness}
-          isFaux={isFauxBoard}
-        />
+        </BoardGroup>
         {cad_components.map((cad_component) => (
           <ThreeErrorBoundary
             key={cad_component.cad_component_id}
