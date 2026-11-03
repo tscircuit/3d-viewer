@@ -47,16 +47,19 @@ export function GlbScene({
   }, [rootObject, model])
   useEffect(() => {
     setHover(undefined)
-    // Exported boards, vias and cables carry no component id. They have no
-    // identity to hide by, but isolating another object hides them.
-    const applyVisibility = (object: THREE.Object3D, inComponent: boolean) => {
-      const id = object.userData.cad_component_id
+    // Components carry cad_component_id; boards, their via plating and
+    // stiffeners carry pcb_board_id. Cables, and boards in older exports,
+    // carry neither: they have no identity to hide by, but isolating another
+    // object hides them.
+    const applyVisibility = (object: THREE.Object3D, inObject: boolean) => {
+      const id =
+        object.userData.cad_component_id ?? object.userData.pcb_board_id
       if (typeof id === "string")
         object.visible = !isObjectHidden(objectVisibility, id)
-      else if (!inComponent && object instanceof THREE.Mesh)
+      else if (!inObject && object instanceof THREE.Mesh)
         object.visible = !isObjectHidden(objectVisibility, undefined)
       for (const child of object.children)
-        applyVisibility(child, inComponent || typeof id === "string")
+        applyVisibility(child, inObject || typeof id === "string")
     }
     applyVisibility(model, false)
   }, [model, objectVisibility])

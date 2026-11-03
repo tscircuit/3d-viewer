@@ -3,12 +3,16 @@ import * as THREE from "three"
 import { GLTFLoader } from "three-stdlib"
 import { configureObjectShadows } from "./configure-object-shadows"
 
-/** Identity stored in glTF node extras.tscircuit, never full Circuit JSON. */
+/** Identity stored in glTF node extras.tscircuit, never full Circuit JSON.
+ * Component nodes carry cad/source/pcb component ids. Board, "Via Plating"
+ * and stiffener nodes carry the rendered pcb_board_id (a panel's
+ * pcb_panel_id), matching BoardGroup; older exports leave the board untagged. */
 export interface GlbComponentMetadata {
   cad_component_id?: string
   source_component_id?: string
   pcb_component_id?: string
   componentName?: string
+  pcb_board_id?: string
 }
 
 export function getGlbComponentMetadata(
@@ -22,6 +26,7 @@ export function getGlbComponentMetadata(
     "source_component_id",
     "pcb_component_id",
     "componentName",
+    "pcb_board_id",
   ] as const) {
     if (typeof metadata[key] === "string") result[key] = metadata[key]
   }
