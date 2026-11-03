@@ -9,6 +9,7 @@ import type { CameraController } from "./hooks/cameraAnimation"
 import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
 import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { useBoardGeomBuilder } from "./hooks/useBoardGeomBuilder"
+import { getVisibleCadComponents } from "./hooks/useHiddenCadComponents"
 import { usePcbThickness } from "./hooks/usePcbThickness"
 import type { ReferenceObjectType } from "./reference-objects/reference-object"
 import { Error3d } from "./three-components/Error3d"
@@ -27,6 +28,8 @@ interface Props {
   soup?: AnyCircuitElement[]
   circuitJson?: AnyCircuitElement[]
   autoRotateDisabled?: boolean
+  hideCadComponents?: boolean
+  cadComponentsDisabled?: boolean
   clickToInteractEnabled?: boolean
   cameraType?: "orthographic" | "perspective"
   onUserInteraction?: () => void
@@ -45,6 +48,8 @@ export const CadViewerJscad = forwardRef<
       circuitJson,
       children,
       autoRotateDisabled,
+      hideCadComponents,
+      cadComponentsDisabled,
       clickToInteractEnabled,
       onUserInteraction,
       onCameraControllerReady,
@@ -120,9 +125,12 @@ export const CadViewerJscad = forwardRef<
     // Use the state `boardGeom` which starts simplified and gets updated
     const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
 
-    const cad_components = su(internalCircuitJson)
-      .cad_component.list()
-      .filter((cad) => !hiddenCadComponentIds?.has(cad.cad_component_id))
+    const cad_components = getVisibleCadComponents({
+      circuitJson: internalCircuitJson,
+      hiddenCadComponentIds,
+      hideCadComponents,
+      cadComponentsDisabled,
+    })
     const cadCables = getCadCables(internalCircuitJson)
 
     return (
