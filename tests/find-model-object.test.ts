@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test"
 import * as THREE from "three"
-import { findModelObject } from "../src/utils/clone-model-for-export"
+import { findModelObject } from "../src/utils/find-model-object"
 
 test("only CAD components and cables count as downloadable models", () => {
   const root = new THREE.Object3D()

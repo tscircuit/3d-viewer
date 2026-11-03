@@ -13,7 +13,7 @@ import {
 } from "./utils/pick-scene-object"
 import { useObjectVisibility } from "./hooks/useObjectVisibility"
 import { hasHiddenObjects } from "./utils/object-visibility"
-import { findModelObject } from "./utils/clone-model-for-export"
+import { findModelObject } from "./utils/find-model-object"
 import { configureRuntimeFont } from "./utils/configure-runtime-font"
 import { useCallback, useContext, useEffect, useRef, useState } from "react"
 import * as THREE from "three"
