@@ -92,7 +92,7 @@ export const createCadCableObject = (cable: CadCableElement) => {
 
   const group = new THREE.Group()
   group.name = `cad-cable-${cable.cad_cable_id}`
-  group.userData = { cadCableId: cable.cad_cable_id, name: cable.name }
+  group.userData = { cad_cable_id: cable.cad_cable_id, name: cable.name }
 
   for (const cableMesh of cableMeshes) {
     let geometry = new THREE.BufferGeometry()

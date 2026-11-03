@@ -2,7 +2,11 @@ import { expect, test } from "bun:test"
 import { JSDOM } from "jsdom"
 import { useRef, useState } from "react"
 import { useContextMenu } from "../src/hooks/useContextMenu"
-import { useHiddenCadComponents } from "../src/hooks/useHiddenCadComponents"
+import { useObjectVisibility } from "../src/hooks/useObjectVisibility"
+import {
+  hasHiddenObjects,
+  isObjectHidden,
+} from "../src/utils/object-visibility"
 import { act } from "react"
 import { createRoot } from "react-dom/client"
 import * as THREE from "three"
@@ -10,7 +14,7 @@ import { AppearanceProvider } from "../src/contexts/appearance-context"
 import { CameraControllerProvider } from "../src/contexts/CameraControllerContext"
 import { LayerVisibilityProvider } from "../src/contexts/LayerVisibilityContext"
 
-test("component actions snapshot the right-click, close, and restore hidden models", async () => {
+test("component actions snapshot the right-click, close, and restore hidden or isolated models", async () => {
   const dom = new JSDOM('<div id="root"></div>', {
     url: "http://localhost",
   })
@@ -52,16 +56,18 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     const containerRef = useRef<HTMLDivElement>(null)
     const [position, setPosition] = useState({ x: 0, y: 0 })
     const menu = useContextMenu({ containerRef, onOpen: setPosition })
-    const { hiddenCadComponentIds, hideComponent, unhideAllComponents } =
-      useHiddenCadComponents(circuitKey)
+    const { objectVisibility, hideObject, isolateObject, unhideAllObjects } =
+      useObjectVisibility(circuitKey)
     const componentId = position.x === 80 ? "case" : "r1"
     const componentName = componentId === "case" ? "CASE" : "R1"
-    const canHide = position.x > 0 && !hiddenCadComponentIds.has(componentId)
+    const canHide =
+      position.x > 0 && !isObjectHidden(objectVisibility, componentId)
     return (
       <div
         ref={containerRef}
         data-viewer
-        data-hidden={Array.from(hiddenCadComponentIds).join(",")}
+        data-hidden={Array.from(objectVisibility.hiddenIds).join(",")}
+        data-isolated={objectVisibility.isolatedId ?? ""}
         {...menu.contextMenuEventHandlers}
       >
         {menu.menuVisible && (
@@ -76,19 +82,27 @@ test("component actions snapshot the right-click, close, and restore hidden mode
             onAutoRotateToggle={() => {}}
             onDownloadGltf={() => {}}
             onOpenKeyboardShortcuts={() => {}}
-            componentName={componentName}
-            onHideComponent={
+            objectName={componentName}
+            onHideObject={
               canHide
                 ? () => {
-                    hideComponent(componentId)
+                    hideObject(componentId)
                     menu.setMenuVisible(false)
                   }
                 : undefined
             }
-            onUnhideAllComponents={
-              hiddenCadComponentIds.size > 0
+            onIsolateObject={
+              canHide && objectVisibility.isolatedId !== componentId
                 ? () => {
-                    unhideAllComponents()
+                    isolateObject(componentId)
+                    menu.setMenuVisible(false)
+                  }
+                : undefined
+            }
+            onUnhideAll={
+              hasHiddenObjects(objectVisibility)
+                ? () => {
+                    unhideAllObjects()
                     menu.setMenuVisible(false)
                   }
                 : undefined
@@ -185,7 +199,7 @@ test("component actions snapshot the right-click, close, and restore hidden mode
       expect(document.querySelector('[role="menu"]')).toBeNull()
     }
     await rightClick()
-    expect(document.body.textContent).not.toContain("Unhide All Components")
+    expect(document.body.textContent).not.toContain("Unhide All")
     await select('Hide "CASE"', true)
     expect(viewer.getAttribute("data-hidden")).toBe("case")
     await rightClick(40, 40)
@@ -193,10 +207,27 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     expect(viewer.getAttribute("data-hidden")).toBe("case,r1")
     await rightClick(0, 0)
     expect(document.body.textContent).not.toContain('Hide "')
-    await select("Unhide All Components", true)
+    await select("Unhide All", true)
     expect(viewer.getAttribute("data-hidden")).toBe("")
     await rightClick()
-    expect(document.body.textContent).not.toContain("Unhide All Components")
+    expect(document.body.textContent).not.toContain("Unhide All")
+    await select('Isolate "CASE"')
+    expect(viewer.getAttribute("data-isolated")).toBe("case")
+    expect(viewer.getAttribute("data-hidden")).toBe("")
+    // Isolating CASE hides R1, so it can no longer be picked.
+    await rightClick(40, 40)
+    expect(document.body.textContent).not.toContain('Hide "')
+    expect(document.body.textContent).not.toContain('Isolate "')
+    await select("Unhide All")
+    expect(viewer.getAttribute("data-isolated")).toBe("")
+    await rightClick()
+    await select('Isolate "CASE"')
+    await rightClick()
+    expect(document.body.textContent).toContain('Hide "CASE"')
+    expect(document.body.textContent).not.toContain('Isolate "')
+    await select("Unhide All", true)
+    expect(viewer.getAttribute("data-isolated")).toBe("")
+    await rightClick()
     await select('Hide "CASE"')
     await act(async () => {
       reactRoot.render(
@@ -217,7 +248,7 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     expect(document.body.textContent).not.toContain("Show on schematic")
     expect(document.body.textContent).not.toContain('Hide "')
     // Hiding is independent of optional schematic navigation and remains on a rerender.
-    await select("Unhide All Components")
+    await select("Unhide All")
     expect(viewer.getAttribute("data-hidden")).toBe("")
     await rightClick()
     expect(document.body.textContent).not.toContain("Show on schematic")
@@ -234,7 +265,7 @@ test("component actions snapshot the right-click, close, and restore hidden mode
       )
     })
     await rightClick()
-    await select("Unhide All Components")
+    await select("Unhide All")
     await rightClick()
     await select('Hide "CASE"')
     await act(async () => {
@@ -250,7 +281,7 @@ test("component actions snapshot the right-click, close, and restore hidden mode
     })
     expect(viewer.getAttribute("data-hidden")).toBe("")
     await rightClick()
-    expect(document.body.textContent).not.toContain("Unhide All Components")
+    expect(document.body.textContent).not.toContain("Unhide All")
   } finally {
     await act(async () => reactRoot.unmount())
     await new Promise<void>((resolve) => dom.window.setTimeout(resolve, 0))

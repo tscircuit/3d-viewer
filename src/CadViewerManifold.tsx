@@ -17,10 +17,15 @@ import { CadCable, getCadCables } from "./three-components/CadCable"
 import { Error3d } from "./three-components/Error3d"
 import { FitCameraToComparison } from "./three-components/reference-object"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
+import { BoardGroup } from "./three-components/BoardGroup"
 import { createFlexMeshes } from "./utils/flex-meshes"
 import { getInitialCameraPosition } from "./utils/get-initial-camera-position"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
 import { loadManifold } from "./utils/manifold/load-manifold"
+import {
+  isObjectHidden,
+  type ObjectVisibility,
+} from "./utils/object-visibility"
 import { calculateOutlineBounds } from "./utils/outline-bounds"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
 import { resolveFoldPcbs } from "./utils/resolve-fold-pcbs"
@@ -131,7 +136,7 @@ type CadViewerManifoldProps = {
   onCameraControllerReady?: (controller: CameraController | null) => void
   resolveStaticAsset?: (modelUrl: string) => string
   referenceObject?: ReferenceObjectType | null
-  hiddenCadComponentIds?: ReadonlySet<string>
+  objectVisibility?: ObjectVisibility
 } & (
   | { circuitJson: AnyCircuitElement[]; children?: React.ReactNode }
   | { circuitJson?: never; children: React.ReactNode }
@@ -147,7 +152,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   onCameraControllerReady,
   resolveStaticAsset,
   referenceObject,
-  hiddenCadComponentIds,
+  objectVisibility,
 }) => {
   const childrenCircuitJson = useConvertChildrenToCircuitJson(children)
   const circuitJson = useMemo(() => {
@@ -225,12 +230,17 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
     () =>
       su(flex.posedJson)
         .cad_component.list()
-        .filter((cad) => !hiddenCadComponentIds?.has(cad.cad_component_id)),
-    [flex.posedJson, hiddenCadComponentIds],
+        .filter(
+          (cad) => !isObjectHidden(objectVisibility, cad.cad_component_id),
+        ),
+    [flex.posedJson, objectVisibility],
   )
   const cadCables = useMemo(
-    () => getCadCables(flex.posedJson),
-    [flex.posedJson],
+    () =>
+      getCadCables(flex.posedJson).filter(
+        (cable) => !isObjectHidden(objectVisibility, cable.cad_cable_id),
+      ),
+    [flex.posedJson, objectVisibility],
   )
 
   const boardDimensions = useMemo(() => {
@@ -306,10 +316,15 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
       onUserInteraction={onUserInteraction}
       onCameraControllerReady={onCameraControllerReady}
     >
-      <BoardMeshes
-        geometryMeshes={flex.geometryMeshes}
-        textureMeshes={flex.textureMeshes}
-      />
+      <BoardGroup
+        pcbBoardId={boardData?.pcb_board_id}
+        hidden={isObjectHidden(objectVisibility, boardData?.pcb_board_id)}
+      >
+        <BoardMeshes
+          geometryMeshes={flex.geometryMeshes}
+          textureMeshes={flex.textureMeshes}
+        />
+      </BoardGroup>
       {flex.bounds && <FitCameraToComparison bounds={flex.bounds} />}
       {cadComponents.map((cad_component: CadComponent) => (
         <ThreeErrorBoundary

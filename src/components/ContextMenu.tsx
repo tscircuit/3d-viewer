@@ -34,9 +34,10 @@ interface ContextMenuProps {
     referenceObject: ReferenceObjectType | null,
   ) => void
   onViewSchematicComponent?: () => void
-  componentName?: string
-  onHideComponent?: () => void
-  onUnhideAllComponents?: () => void
+  objectName?: string
+  onHideObject?: () => void
+  onIsolateObject?: () => void
+  onUnhideAll?: () => void
   onSectionView?: () => void
   onExplosionView?: () => void
   explosionAvailable?: boolean
@@ -139,9 +140,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onAutoRotateToggle,
   onReferenceObjectSelect = () => {},
   onViewSchematicComponent,
-  componentName,
-  onHideComponent,
-  onUnhideAllComponents,
+  objectName,
+  onHideObject,
+  onIsolateObject,
+  onUnhideAll,
   onSectionView,
   onExplosionView,
   explosionAvailable = false,
@@ -179,7 +181,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             sideOffset={0}
             align="start"
           >
-            {onHideComponent && (
+            {onHideObject && (
               <DropdownMenu.Item
                 style={{
                   ...itemStyles,
@@ -187,11 +189,26 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                   backgroundColor:
                     hoveredItem === "hide" ? "#404040" : "transparent",
                 }}
-                onSelect={onHideComponent}
+                onSelect={onHideObject}
                 onMouseEnter={() => setHoveredItem("hide")}
                 onMouseLeave={() => setHoveredItem(null)}
               >
-                {`Hide "${componentName}"`}
+                {`Hide "${objectName}"`}
+              </DropdownMenu.Item>
+            )}
+            {onIsolateObject && (
+              <DropdownMenu.Item
+                style={{
+                  ...itemStyles,
+                  ...itemPaddingStyles,
+                  backgroundColor:
+                    hoveredItem === "isolate" ? "#404040" : "transparent",
+                }}
+                onSelect={onIsolateObject}
+                onMouseEnter={() => setHoveredItem("isolate")}
+                onMouseLeave={() => setHoveredItem(null)}
+              >
+                {`Isolate "${objectName}"`}
               </DropdownMenu.Item>
             )}
             {onViewSchematicComponent && (
@@ -211,7 +228,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 </DropdownMenu.Item>
               </>
             )}
-            {onUnhideAllComponents && (
+            {onUnhideAll && (
               <DropdownMenu.Item
                 style={{
                   ...itemStyles,
@@ -219,16 +236,17 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                   backgroundColor:
                     hoveredItem === "unhide" ? "#404040" : "transparent",
                 }}
-                onSelect={onUnhideAllComponents}
+                onSelect={onUnhideAll}
                 onMouseEnter={() => setHoveredItem("unhide")}
                 onMouseLeave={() => setHoveredItem(null)}
               >
-                Unhide All Components
+                Unhide All
               </DropdownMenu.Item>
             )}
             {(onViewSchematicComponent ||
-              onHideComponent ||
-              onUnhideAllComponents) && (
+              onHideObject ||
+              onIsolateObject ||
+              onUnhideAll) && (
               <DropdownMenu.Separator style={separatorStyles} />
             )}
             {/* Camera controls */}

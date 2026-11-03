@@ -8,14 +8,18 @@ import { useThree } from "./react-three/ThreeContext"
 import { useHover } from "./react-three/HoverContext"
 import { Html } from "./react-three/Html"
 import { FitCameraToComparison } from "./three-components/reference-object"
+import {
+  isObjectHidden,
+  type ObjectVisibility,
+} from "./utils/object-visibility"
 import { getGlbComponentMetadata } from "./utils/prerendered-glb"
 
 export function GlbScene({
   model,
-  hiddenCadComponentIds,
+  objectVisibility,
 }: {
   model: THREE.Group
-  hiddenCadComponentIds?: ReadonlySet<string>
+  objectVisibility?: ObjectVisibility
 }) {
   const { rootObject } = useThree()
   const { addHoverable, removeHoverable } = useHover()
@@ -43,12 +47,19 @@ export function GlbScene({
   }, [rootObject, model])
   useEffect(() => {
     setHover(undefined)
-    model.traverse((object) => {
+    // Exported boards, vias and cables carry no component id. They have no
+    // identity to hide by, but isolating another object hides them.
+    const applyVisibility = (object: THREE.Object3D, inComponent: boolean) => {
       const id = object.userData.cad_component_id
       if (typeof id === "string")
-        object.visible = !hiddenCadComponentIds?.has(id)
-    })
-  }, [model, hiddenCadComponentIds])
+        object.visible = !isObjectHidden(objectVisibility, id)
+      else if (!inComponent && object instanceof THREE.Mesh)
+        object.visible = !isObjectHidden(objectVisibility, undefined)
+      for (const child of object.children)
+        applyVisibility(child, inComponent || typeof id === "string")
+    }
+    applyVisibility(model, false)
+  }, [model, objectVisibility])
   useEffect(() => {
     const meshes: THREE.Mesh[] = []
     model.traverse((mesh) => {
@@ -82,7 +93,7 @@ export function GlbScene({
     return () => {
       for (const mesh of meshes) removeHoverable(mesh)
     }
-  }, [model, hiddenCadComponentIds, addHoverable, removeHoverable])
+  }, [model, objectVisibility, addHoverable, removeHoverable])
   return (
     <>
       {bounds && <FitCameraToComparison bounds={bounds} />}
@@ -107,11 +118,11 @@ export function GlbScene({
 
 export function CadViewerGlb({
   source,
-  hiddenCadComponentIds,
+  objectVisibility,
   ...containerProps
 }: {
   source: string | ArrayBuffer
-  hiddenCadComponentIds?: ReadonlySet<string>
+  objectVisibility?: ObjectVisibility
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
   onUserInteraction?: () => void
@@ -142,10 +153,7 @@ export function CadViewerGlb({
   if (!result.model) return null
   return (
     <CadViewerContainer {...containerProps} {...framing}>
-      <GlbScene
-        model={result.model}
-        hiddenCadComponentIds={hiddenCadComponentIds}
-      />
+      <GlbScene model={result.model} objectVisibility={objectVisibility} />
     </CadViewerContainer>
   )
 }
