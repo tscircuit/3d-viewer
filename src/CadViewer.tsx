@@ -13,6 +13,7 @@ import {
 } from "./utils/pick-scene-object"
 import { useObjectVisibility } from "./hooks/useObjectVisibility"
 import { hasHiddenObjects } from "./utils/object-visibility"
+import { findModelObject } from "./utils/find-model-object"
 import { configureRuntimeFont } from "./utils/configure-runtime-font"
 import { useCallback, useContext, useEffect, useRef, useState } from "react"
 import * as THREE from "three"
@@ -147,10 +148,19 @@ const CadViewerInner = (props: CadViewerProps) => {
   const [selectedComponent, setSelectedComponent] =
     useState<ViewSchematicComponentEvent>()
   const [selectedObject, setSelectedObject] = useState<PickedSceneObject>()
+  // Download GLTF exports only a right-clicked model; the board or empty
+  // space still exports the whole scene.
+  const [selectedModel, setSelectedModel] = useState<PickedSceneObject>()
   const handleMenuOpen = useCallback(
     (position: { x: number; y: number }) => {
-      setSelectedObject(
-        pickSceneObject(sceneRef.current, position, circuitJson),
+      const picked = pickSceneObject(sceneRef.current, position, circuitJson)
+      setSelectedObject(picked)
+      setSelectedModel(
+        picked &&
+          sceneRef.current &&
+          findModelObject(sceneRef.current.rootObject, picked.objectId)
+          ? picked
+          : undefined,
       )
       setSelectedComponent(
         props.onViewSchematicComponent
@@ -484,8 +494,9 @@ const CadViewerInner = (props: CadViewerProps) => {
               setCameraPreset("Custom")
               closeMenu()
             }}
+            downloadModelName={selectedModel?.name}
             onDownloadGltf={() => {
-              downloadGltf()
+              downloadGltf(selectedModel, sceneRef.current?.rootObject)
               closeMenu()
             }}
             onOpenKeyboardShortcuts={() => {
