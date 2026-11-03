@@ -3,6 +3,7 @@ import { JSDOM } from "jsdom"
 import { act, useEffect } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import * as THREE from "three"
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js"
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js"
 import { useExportGltfUrl, useSaveGltfAs } from "../src/hooks/exporter/gltf"
 import { useGlobalDownloadGltf } from "../src/hooks/useGlobalDownloadGltf"
@@ -16,6 +17,7 @@ const replacedGlobals = [
   "Blob",
   "FileReader",
   "MouseEvent",
+  "ProgressEvent",
   "IS_REACT_ACT_ENVIRONMENT",
 ]
 
@@ -45,6 +47,7 @@ beforeEach(async () => {
     Blob: dom.window.Blob,
     FileReader: dom.window.FileReader,
     MouseEvent: dom.window.MouseEvent,
+    ProgressEvent: dom.window.ProgressEvent,
     IS_REACT_ACT_ENVIRONMENT: true,
   })
   // JSDOM omits Blob.arrayBuffer(), which browsers provide to the old exporter.
@@ -156,7 +159,7 @@ const SaveBinaryHolder = () => {
   return null
 }
 
-test("Download GLTF exports the full gimbal holder without overflowing the call stack", async () => {
+test("Download GLTF exports the full gimbal holder in meters", async () => {
   window.__TSCIRCUIT_THREE_OBJECT = holder
   await act(async () => {
     reactRoot.render(<DownloadHolder />)
@@ -165,7 +168,8 @@ test("Download GLTF exports the full gimbal holder without overflowing the call 
     await exportedBlob
   })
 
-  const gltf = JSON.parse(await readExportedText(await exportedBlob))
+  const gltfText = await readExportedText(await exportedBlob)
+  const gltf = JSON.parse(gltfText)
   const positions =
     gltf.accessors[gltf.meshes[0].primitives[0].attributes.POSITION]
   expect(clickedDownload?.download).toBe("scene.gltf")
@@ -175,6 +179,48 @@ test("Download GLTF exports the full gimbal holder without overflowing the call 
   expect(gltf.buffers[0].uri).toStartWith(
     "data:application/octet-stream;base64,",
   )
+  const loaded = await new GLTFLoader().parseAsync(gltfText, "")
+  const size = new THREE.Box3()
+    .setFromObject(loaded.scene)
+    .getSize(new THREE.Vector3())
+  expect(size.x).toBeCloseTo(0.161, 6)
+  expect(size.y).toBeCloseTo(0.144, 6)
+  expect(size.z).toBeCloseTo(0.084, 6)
+  expect(holder.scale.toArray()).toEqual([1, 1, 1])
+})
+
+test("Download GLTF converts nested placements without moving the live assembly", async () => {
+  const scene = new THREE.Group()
+  scene.position.set(84, -70, 12)
+  scene.rotation.z = Math.PI / 2
+  scene.scale.set(2, 3, 0.5)
+  const carrier = new THREE.Group()
+  carrier.position.set(10, 20, 30)
+  carrier.rotation.x = Math.PI / 4
+  scene.add(carrier)
+  carrier.add(holder)
+  scene.updateMatrixWorld(true)
+  const expectedBounds = new THREE.Box3().setFromObject(scene)
+  const originalSceneMatrix = scene.matrixWorld.clone()
+  const originalHolderMatrix = holder.matrixWorld.clone()
+  const originalGeometry = holder.geometry
+  window.__TSCIRCUIT_THREE_OBJECT = scene
+  await act(async () => reactRoot.render(<DownloadHolder />))
+  const loaded = await new GLTFLoader().parseAsync(
+    await readExportedText(await exportedBlob),
+    "",
+  )
+  const bounds = new THREE.Box3().setFromObject(loaded.scene)
+  expect(bounds.min.x).toBeCloseTo(expectedBounds.min.x / 1000, 6)
+  expect(bounds.min.y).toBeCloseTo(expectedBounds.min.y / 1000, 6)
+  expect(bounds.min.z).toBeCloseTo(expectedBounds.min.z / 1000, 6)
+  expect(bounds.max.x).toBeCloseTo(expectedBounds.max.x / 1000, 6)
+  expect(bounds.max.y).toBeCloseTo(expectedBounds.max.y / 1000, 6)
+  expect(bounds.max.z).toBeCloseTo(expectedBounds.max.z / 1000, 6)
+  expect(scene.matrixWorld).toEqual(originalSceneMatrix)
+  expect(holder.matrixWorld).toEqual(originalHolderMatrix)
+  expect(holder.parent).toBe(carrier)
+  expect(holder.geometry).toBe(originalGeometry)
 })
 
 test("useExportGltfUrl exports the full gimbal holder as JSON", async () => {
