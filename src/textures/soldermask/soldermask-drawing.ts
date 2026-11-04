@@ -35,6 +35,20 @@ type SoldermaskPalette = {
 export const getSoldermaskPalette = (
   boardData: PcbBoard,
 ): SoldermaskPalette => {
+  if (boardData.material === "flex" && boardData.coverlay_color !== undefined) {
+    const coverlayColors = {
+      yellow: { surface: "#cc9c33", coveredCopper: "#b58a2d" },
+      black: { surface: "#111111", coveredCopper: "#111111" },
+      white: { surface: "#ffffff", coveredCopper: "#ffffff" },
+    }
+    const colors = coverlayColors[boardData.coverlay_color]
+    return {
+      soldermask: colors.surface,
+      soldermaskOverCopper: colors.coveredCopper,
+      copper: toRgb(defaultColors.copper),
+      transparent: "rgba(0,0,0,0)",
+    }
+  }
   const legacySoldermask = toRgb(
     soldermaskColors[boardData.material] ?? defaultColors.fr4SolderMaskGreen,
   )

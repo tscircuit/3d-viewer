@@ -66,6 +66,7 @@ export const createSimplifiedBoardGeom = (
   const boardEdgeColor = getBoardEdgeColor({
     material: board?.material ?? "fr4",
     solder_mask_color: board?.solder_mask_color,
+    coverlay_color: board?.coverlay_color,
   })
 
   return [
