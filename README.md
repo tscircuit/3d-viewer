@@ -121,6 +121,7 @@ const svgString = await convert3dCircuitToSvg(circuitJson, options)
 ```
 
 The `convert3dCircuitToSvg` function accepts the following options:
+
 - `width`: Width of the output SVG (default: 800)
 - `height`: Height of the output SVG (default: 600)
 - `backgroundColor`: Background color in hex format (default: "#ffffff")
@@ -137,6 +138,7 @@ The `convert3dCircuitToSvg` function accepts the following options:
 Main component for rendering the 3D PCB viewer.
 
 Props:
+
 - `circuit-json`: (optional) An array of AnyCircuitElement objects representing the PCB layout.
 - `children`: (optional) React children elements describing the PCB layout (alternative to using `circuit-json`).
 - `resolveStaticAsset`: (optional) Function that receives each component model URL (`obj`, `wrl`, `stl`, `gltf`, `glb`, `step`) and returns the resolved URL to load.
@@ -146,12 +148,14 @@ Props:
 Defines the PCB board dimensions.
 
 Props:
+
 - `width`: Width of the board (e.g., "20mm").
 - `height`: Height of the board (e.g., "20mm").
 
 ### Component Elements
 
 Various component elements can be used as children of the `<board>` element:
+
 - `<resistor>`
 - `<capacitor>`
 - `<chip>`
@@ -305,7 +309,6 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 
 ### Section views
 
