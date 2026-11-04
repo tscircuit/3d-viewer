@@ -22,6 +22,7 @@ import {
   type ReferenceObjectType,
 } from "./reference-objects/reference-object"
 import { OrientationCubeCanvas } from "./three-components/OrientationCubeCanvas"
+import { EdgeOverlay } from "./three-components/EdgeOverlay"
 import {
   FitCameraToComparison,
   ReferenceObject,
@@ -138,6 +139,7 @@ export const CadViewerContainer = forwardRef<
           <AssemblyExplosionScene />
           <CameraAnimatorWithContext />
           <RotationTracker />
+          <EdgeOverlay />
           {isInteractionEnabled && (
             <OrbitControls
               autoRotate={!autoRotateDisabled && !section?.spec}

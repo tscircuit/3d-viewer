@@ -1,11 +1,17 @@
 import type React from "react"
 import { createContext, useContext, useEffect, useMemo, useState } from "react"
 
+export type EdgeMode = "off" | "visible" | "hidden"
+
 interface AppearanceContextType {
   darkBackgroundEnabled: boolean
   setDarkBackgroundEnabled: (enabled: boolean) => void
   gridEnabled: boolean
   setGridEnabled: (enabled: boolean) => void
+  edgeMode: EdgeMode
+  setEdgeMode: (mode: EdgeMode) => void
+  edgeWidth: number
+  setEdgeWidth: (width: number) => void
   lightingEnabled: boolean
   setLightingEnabled: (enabled: boolean) => void
 }
@@ -28,6 +34,8 @@ export const AppearanceProvider: React.FC<{ children: React.ReactNode }> = ({
   // aid and intentionally does not persist between new viewer sessions.
   const [darkBackgroundEnabled, setDarkBackgroundEnabled] = useState(false)
   const [gridEnabled, setGridEnabled] = useState(false)
+  const [edgeMode, setEdgeMode] = useState<EdgeMode>("off")
+  const [edgeWidth, setEdgeWidth] = useState(2)
   const [lightingEnabled, setLightingEnabled] = useState<boolean>(
     readStoredLightingEnabled,
   )
@@ -45,10 +53,14 @@ export const AppearanceProvider: React.FC<{ children: React.ReactNode }> = ({
       setDarkBackgroundEnabled,
       gridEnabled,
       setGridEnabled,
+      edgeMode,
+      setEdgeMode,
+      edgeWidth,
+      setEdgeWidth,
       lightingEnabled,
       setLightingEnabled,
     }),
-    [darkBackgroundEnabled, gridEnabled, lightingEnabled],
+    [darkBackgroundEnabled, gridEnabled, edgeMode, edgeWidth, lightingEnabled],
   )
 
   return (

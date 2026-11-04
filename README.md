@@ -73,6 +73,22 @@ const MyPCBViewer = () => {
 export default MyPCBViewer
 ```
 
+### Edge display
+
+Right-click the viewer and open **Appearance → Edges**:
+- **Off** keeps the default shaded view.
+- **Visible** adds solid boundary and crease edges.
+- **Visible and hidden** also shows faint dashed edges behind other geometry.
+
+Use **Appearance → Edge width** to choose a width from 1–5 screen pixels. These
+controls work with JSCAD, Manifold and pre-rendered GLB scenes. Edge display is
+local to each viewer and does not alter the model or exported GLTF. Smooth
+curved silhouettes are not added to the extracted boundary/crease edges.
+
+The **Appearance / Edges** Storybook examples include a lamp with a
+shade, internal collar and spokes. Run `bun run test:edges` for the browser
+regressions, including visual snapshots for all three model paths.
+
 ### Navigate to a schematic component
 
 Pass `onViewSchematicComponent` to enable **Show on schematic** when a user

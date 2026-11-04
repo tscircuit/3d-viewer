@@ -4,7 +4,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import type React from "react"
 import { useState } from "react"
 import { zIndexMap } from "../../lib/utils/z-index-map"
-import { useAppearance } from "../contexts/appearance-context"
+import { type EdgeMode, useAppearance } from "../contexts/appearance-context"
 import {
   nextEnclosureVisibility,
   useLayerVisibility,
@@ -74,12 +74,18 @@ export const AppearanceMenu = ({
 }) => {
   const { visibility, setLayerVisibility } = useLayerVisibility()
   const {
+    edgeMode,
+    setEdgeMode,
+    edgeWidth,
+    setEdgeWidth,
     darkBackgroundEnabled,
     setDarkBackgroundEnabled,
     lightingEnabled,
     setLightingEnabled,
   } = useAppearance()
   const [appearanceSubOpen, setAppearanceSubOpen] = useState(false)
+  const [edgesSubOpen, setEdgesSubOpen] = useState(false)
+  const [edgeWidthSubOpen, setEdgeWidthSubOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const assemblyStyles = { ...itemStyles }
   if (hoveredItem === "assembly") assemblyStyles.backgroundColor = "#404040"
@@ -168,6 +174,135 @@ export const AppearanceMenu = ({
                 Lighting
               </span>
             </DropdownMenu.Item>
+
+            <DropdownMenu.Separator style={separatorStyles} />
+
+            <DropdownMenu.Sub onOpenChange={setEdgesSubOpen}>
+              <DropdownMenu.SubTrigger
+                style={{
+                  ...itemStyles,
+                  ...itemPaddingStyles,
+                  backgroundColor:
+                    edgesSubOpen || hoveredItem === "edges"
+                      ? "#404040"
+                      : "transparent",
+                }}
+                onFocus={() => setHoveredItem("edges")}
+                onBlur={() => setHoveredItem(null)}
+                onMouseEnter={() => setHoveredItem("edges")}
+                onMouseLeave={() => setHoveredItem(null)}
+              >
+                <span style={{ flex: 1 }}>Edges</span>
+                <ChevronRightIcon isOpen={edgesSubOpen} />
+              </DropdownMenu.SubTrigger>
+              <DropdownMenu.Portal>
+                <ViewportSubContent
+                  style={contentStyles}
+                  collisionPadding={10}
+                  avoidCollisions={true}
+                >
+                  <DropdownMenu.RadioGroup
+                    value={edgeMode}
+                    onValueChange={(value) => setEdgeMode(value as EdgeMode)}
+                    aria-label="Edges"
+                  >
+                    {(
+                      [
+                        ["off", "Off"],
+                        ["visible", "Visible"],
+                        ["hidden", "Visible and hidden"],
+                      ] as const
+                    ).map(([mode, label]) => (
+                      <DropdownMenu.RadioItem
+                        key={mode}
+                        value={mode}
+                        style={{
+                          ...itemStyles,
+                          backgroundColor:
+                            hoveredItem === `edge-${mode}`
+                              ? "#404040"
+                              : "transparent",
+                        }}
+                        onSelect={(event) => event.preventDefault()}
+                        onFocus={() => setHoveredItem(`edge-${mode}`)}
+                        onBlur={() => setHoveredItem(null)}
+                        onMouseEnter={() => setHoveredItem(`edge-${mode}`)}
+                        onMouseLeave={() => setHoveredItem(null)}
+                      >
+                        <span style={iconContainerStyles}>
+                          <DropdownMenu.ItemIndicator>
+                            <CheckIcon />
+                          </DropdownMenu.ItemIndicator>
+                        </span>
+                        <span>{label}</span>
+                      </DropdownMenu.RadioItem>
+                    ))}
+                  </DropdownMenu.RadioGroup>
+                </ViewportSubContent>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Sub>
+
+            <DropdownMenu.Sub onOpenChange={setEdgeWidthSubOpen}>
+              <DropdownMenu.SubTrigger
+                style={{
+                  ...itemStyles,
+                  ...itemPaddingStyles,
+                  backgroundColor:
+                    edgeWidthSubOpen || hoveredItem === "edgeWidth"
+                      ? "#404040"
+                      : "transparent",
+                }}
+                onFocus={() => setHoveredItem("edgeWidth")}
+                onBlur={() => setHoveredItem(null)}
+                onMouseEnter={() => setHoveredItem("edgeWidth")}
+                onMouseLeave={() => setHoveredItem(null)}
+              >
+                <span style={{ flex: 1 }}>Edge width</span>
+                <span style={{ color: "#a3a3a3" }}>{edgeWidth} px</span>
+                <ChevronRightIcon isOpen={edgeWidthSubOpen} />
+              </DropdownMenu.SubTrigger>
+              <DropdownMenu.Portal>
+                <ViewportSubContent
+                  style={contentStyles}
+                  collisionPadding={10}
+                  avoidCollisions={true}
+                >
+                  <DropdownMenu.RadioGroup
+                    value={String(edgeWidth)}
+                    onValueChange={(value) => setEdgeWidth(Number(value))}
+                    aria-label="Edge width"
+                  >
+                    {[1, 2, 3, 4, 5].map((width) => (
+                      <DropdownMenu.RadioItem
+                        key={width}
+                        value={String(width)}
+                        style={{
+                          ...itemStyles,
+                          backgroundColor:
+                            hoveredItem === `edgeWidth-${width}`
+                              ? "#404040"
+                              : "transparent",
+                        }}
+                        onSelect={(event) => event.preventDefault()}
+                        onFocus={() => setHoveredItem(`edgeWidth-${width}`)}
+                        onBlur={() => setHoveredItem(null)}
+                        onMouseEnter={() =>
+                          setHoveredItem(`edgeWidth-${width}`)
+                        }
+                        onMouseLeave={() => setHoveredItem(null)}
+                      >
+                        <span style={iconContainerStyles}>
+                          <DropdownMenu.ItemIndicator>
+                            <CheckIcon />
+                          </DropdownMenu.ItemIndicator>
+                        </span>
+                        <span>{width} px</span>
+                      </DropdownMenu.RadioItem>
+                    ))}
+                  </DropdownMenu.RadioGroup>
+                </ViewportSubContent>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Sub>
 
             {showLayerControls && (
               <>
