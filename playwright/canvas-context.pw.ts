@@ -23,7 +23,6 @@ test("unmounting the 3D canvas releases its WebGL context", async ({
     ),
   ).toBe(false)
 
-  test.fail(true, "The detached canvas keeps its WebGL context")
   await expect
     .poll(() => oldContext.evaluate((context) => context?.isContextLost()), {
       timeout: 3000,
