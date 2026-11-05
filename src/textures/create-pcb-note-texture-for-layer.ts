@@ -8,12 +8,16 @@ const isPcbNoteElement = (
   element: AnyCircuitElement,
   layer: "top" | "bottom",
 ) => {
-  if (!("layer" in element) || element.layer !== layer) return false
   const elementType = element.type as string
+  if (
+    !elementType.startsWith("pcb_note_") ||
+    elementType === "pcb_note_dimension"
+  ) {
+    return false
+  }
 
-  return (
-    elementType.startsWith("pcb_note_") && elementType !== "pcb_note_dimension"
-  )
+  const elementLayer = ("layer" in element ? element.layer : undefined) ?? "top"
+  return elementLayer === layer
 }
 
 export function createPcbNoteTextureForLayer({
