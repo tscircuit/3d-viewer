@@ -161,6 +161,35 @@ test("synthesizes a bottom-layer fallback when the input is not bottom-adjusted"
   expect(transform.rotation[2]).toBeCloseTo(0)
 })
 
+test("falls back to pcbRotation when cad_component.rotation is omitted", () => {
+  const cadComponent = createCadComponent({
+    position: { x: 1, y: 2, z: 0.7 },
+    rotation: undefined,
+  })
+
+  const topTransform = getCadModelTransform(cadComponent, {
+    layer: "top",
+    pcbThickness: 1.4,
+    modelType: "glb",
+    pcbRotation: 90,
+  })
+
+  expect(topTransform.rotation[0]).toBeCloseTo(0)
+  expect(topTransform.rotation[1]).toBeCloseTo(0)
+  expect(topTransform.rotation[2]).toBeCloseTo(Math.PI / 2)
+
+  const bottomTransform = getCadModelTransform(cadComponent, {
+    layer: "bottom",
+    pcbThickness: 1.4,
+    modelType: "glb",
+    pcbRotation: 270,
+  })
+
+  expect(bottomTransform.rotation[0]).toBeCloseTo(Math.PI)
+  expect(bottomTransform.rotation[1]).toBeCloseTo(0)
+  expect(bottomTransform.rotation[2]).toBeCloseTo((270 * Math.PI) / 180)
+})
+
 test("keeps origin handling consistent between obj and gltf after loader conversion", () => {
   const objCadComponent = createCadComponent({
     model_obj_url: "https://example.com/model.obj",

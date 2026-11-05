@@ -86,9 +86,14 @@ function getAdjustedCadPosition(
 function getBaseCadRotation(
   cadComponent: CadComponent,
   layer: Layer,
+  pcbRotation?: number,
 ): [number, number, number] {
   if (!cadComponent.rotation) {
-    return layer === "bottom" ? [Math.PI, 0, 0] : [0, 0, 0]
+    const zRotation =
+      pcbRotation !== undefined && Number.isFinite(pcbRotation)
+        ? toRadians(pcbRotation)
+        : 0
+    return layer === "bottom" ? [Math.PI, 0, zRotation] : [0, 0, zRotation]
   }
 
   return [
@@ -138,6 +143,7 @@ export function getCadModelTransform(
     layer: Layer
     pcbThickness: number
     modelType: RenderedCadModelType
+    pcbRotation?: number
   },
 ): CadModelTransform {
   const position = getAdjustedCadPosition(
@@ -145,7 +151,11 @@ export function getCadModelTransform(
     options.layer,
     options.pcbThickness,
   )
-  const rotation = getBaseCadRotation(cadComponent, options.layer)
+  const rotation = getBaseCadRotation(
+    cadComponent,
+    options.layer,
+    options.pcbRotation,
+  )
   const loaderTransform = getCadLoaderTransformConfig(
     cadComponent,
     options.modelType,

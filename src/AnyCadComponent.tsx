@@ -130,8 +130,15 @@ export const AnyCadComponent = ({
         layer,
         pcbThickness,
         modelType: renderedModelType,
+        pcbRotation: pcbComponent?.rotation,
       }),
-    [cad_component, layer, pcbThickness, renderedModelType],
+    [
+      cad_component,
+      layer,
+      pcbComponent?.rotation,
+      pcbThickness,
+      renderedModelType,
+    ],
   )
 
   const rotationOffset = tuple(...modelTransform.rotation)
