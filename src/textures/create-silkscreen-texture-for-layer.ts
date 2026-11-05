@@ -1,6 +1,7 @@
 import type { AnyCircuitElement, PcbBoard } from "circuit-json"
 import * as THREE from "three"
 import { TRACE_TEXTURE_RESOLUTION } from "../geoms/constants"
+import { getSilkscreenColor } from "../utils/silkscreen-color"
 import { drawSilkscreenLayer } from "./silkscreen/silkscreen-drawing"
 import { getSoldermaskRenderBounds } from "./soldermask/soldermask-bounds"
 
@@ -19,7 +20,7 @@ export function createSilkscreenTextureForLayer({
   circuitJson,
   boardData,
   traceTextureResolution = TRACE_TEXTURE_RESOLUTION,
-  silkscreenColor = "rgb(255,255,255)",
+  silkscreenColor = getSilkscreenColor(boardData),
   soldermaskVisible = true,
 }: {
   layer: "top" | "bottom"

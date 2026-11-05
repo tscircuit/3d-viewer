@@ -10,6 +10,7 @@ import { colors as defaultColors } from "../geoms/constants"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
 import { createPadTextureForLayer } from "../utils/pad-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
+import { getSilkscreenColor } from "../utils/silkscreen-color"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
 import { createCopperPourTextureForLayer } from "./create-copper-pour-texture-for-layer"
 import { createCopperTextTextureForLayer } from "./create-copper-text-texture-for-layer"
@@ -250,7 +251,7 @@ export function createCombinedBoardTextures({
   visibility?: Partial<LayerVisibilityState>
 }): CombinedBoardTextures {
   const traceColor = toRgb(defaultColors.copper)
-  const silkscreenColor = "rgb(255,255,255)"
+  const silkscreenColor = getSilkscreenColor(boardData)
   const copperColor = toRgb(defaultColors.copper)
 
   const showBoardBody = visibility?.boardBody ?? true

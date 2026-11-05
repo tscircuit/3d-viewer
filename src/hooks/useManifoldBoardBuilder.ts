@@ -89,6 +89,7 @@ export const useManifoldBoardBuilder = (
         material: firstBoardInPanel?.material ?? "fr4",
         num_layers: firstBoardInPanel?.num_layers ?? 2,
         solder_mask_color: firstBoardInPanel?.solder_mask_color,
+        silkscreen_color: firstBoardInPanel?.silkscreen_color,
       } as PcbBoard
     }
 
