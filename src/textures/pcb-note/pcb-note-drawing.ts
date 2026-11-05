@@ -23,6 +23,7 @@ const normalizePcbNoteElement = (
   if (element.type === "pcb_note_line") {
     return {
       ...element,
+      layer: element.layer ?? "top",
       x1: coerceDimensionToMm(element.x1, 0),
       y1: coerceDimensionToMm(element.y1, 0),
       x2: coerceDimensionToMm(element.x2, 0),
@@ -34,6 +35,7 @@ const normalizePcbNoteElement = (
   if (element.type === "pcb_note_rect") {
     return {
       ...element,
+      layer: element.layer ?? "top",
       center: {
         x: coerceDimensionToMm(element.center.x, 0),
         y: coerceDimensionToMm(element.center.y, 0),
@@ -48,6 +50,7 @@ const normalizePcbNoteElement = (
   if (element.type === "pcb_note_text") {
     return {
       ...element,
+      layer: element.layer ?? "top",
       anchor_position: {
         x: coerceDimensionToMm(element.anchor_position.x, 0),
         y: coerceDimensionToMm(element.anchor_position.y, 0),
@@ -59,6 +62,7 @@ const normalizePcbNoteElement = (
   if (element.type === "pcb_note_path") {
     return {
       ...element,
+      layer: element.layer ?? "top",
       route: element.route.map((point) => ({
         ...point,
         x: coerceDimensionToMm(point.x, 0),
@@ -71,6 +75,7 @@ const normalizePcbNoteElement = (
   if (element.type === "pcb_note_dimension") {
     return {
       ...element,
+      layer: element.layer ?? "top",
       from: {
         x: coerceDimensionToMm(element.from.x, 0),
         y: coerceDimensionToMm(element.from.y, 0),
