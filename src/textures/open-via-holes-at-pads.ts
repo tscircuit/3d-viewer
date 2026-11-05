@@ -21,11 +21,14 @@ export function getViaHolesAtExposedPads(
   for (const layer of ["top", "bottom"] as const) {
     const pads = circuitJson.filter(
       (element) =>
-        ((element.type === "pcb_smtpad" && element.layer === layer) ||
+        (((element.type === "pcb_smtpad" && element.layer === layer) ||
           (element.type === "pcb_plated_hole" &&
             (!Array.isArray(element.layers) ||
               element.layers.includes(layer)))) &&
-        element.is_covered_with_solder_mask !== true,
+          element.is_covered_with_solder_mask !== true) ||
+        (element.type === "pcb_copper_pour" &&
+          element.layer === layer &&
+          element.covered_with_solder_mask === false),
     )
     if (!pads.length) continue
     const canvas = document.createElement("canvas")
@@ -55,6 +58,7 @@ export function getViaHolesAtExposedPads(
     drawer.drawElements(pads, {
       layers: [layer === "top" ? "top_copper" : "bottom_copper"],
       drawSoldermask: false,
+      copperPourOpacity: 1,
     })
     const pixels = ctx.getImageData(0, 0, width, height).data
     for (const via of vias) {

@@ -186,7 +186,10 @@ export const drawSoldermaskLayer = ({
       },
     })
     setDrawerBounds(cutoutDrawer, bounds)
-    cutoutDrawer.drawElements(uncoveredPours, { layers: [copperRenderLayer] })
+    cutoutDrawer.drawElements(uncoveredPours, {
+      layers: [copperRenderLayer],
+      copperPourOpacity: 1,
+    })
     ctx.restore()
   }
 }
