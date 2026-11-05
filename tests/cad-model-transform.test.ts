@@ -232,3 +232,65 @@ test("prefers jscad over step when both model definitions are present", () => {
 
   expect(getCadModelType(cadComponent)).toBe("jscad")
 })
+
+test("preserves custom positive z position on bottom-layer components with explicit rotation", () => {
+  const cadComponent = createCadComponent({
+    position: { x: 1, y: 2, z: 1.5 },
+    rotation: { x: 0, y: 180, z: 180 },
+  })
+
+  const transform = getCadModelTransform(cadComponent, {
+    layer: "bottom",
+    pcbThickness: 1.4,
+    modelType: "glb",
+  })
+
+  expect(transform.position).toEqual([1, 2, 1.5])
+})
+
+test("applies z_offset_from_surface for top and bottom layer components", () => {
+  const topComponent = {
+    ...createCadComponent({
+      position: { x: 0, y: 0, z: 0.7 },
+    }),
+    z_offset_from_surface: 2.5,
+  }
+  const bottomComponent = {
+    ...createCadComponent({
+      position: { x: 0, y: 0, z: -0.7 },
+      rotation: { x: 0, y: 180, z: 180 },
+    }),
+    z_offset_from_surface: 2.5,
+  }
+
+  const topTransform = getCadModelTransform(topComponent, {
+    layer: "top",
+    pcbThickness: 1.4,
+    modelType: "footprinter",
+  })
+  const bottomTransform = getCadModelTransform(bottomComponent, {
+    layer: "bottom",
+    pcbThickness: 1.4,
+    modelType: "footprinter",
+  })
+
+  expect(topTransform.position?.[2]).toBeCloseTo(3.2)
+  expect(bottomTransform.position?.[2]).toBeCloseTo(-3.2)
+})
+
+test("preserves z-up model_origin_position for footprinter models", () => {
+  const cadComponent = createCadComponent({
+    footprinter_string: "soic8",
+    position: { x: 0, y: 0, z: 0.7 },
+    model_origin_position: { x: 1, y: 2, z: -3 },
+  })
+
+  const transform = getCadModelTransform(cadComponent, {
+    layer: "top",
+    pcbThickness: 1.4,
+    modelType: "footprinter",
+  })
+
+  expect(transform.position).toEqual([0, 0, 0.7])
+  expect(transform.modelPosition).toEqual([-1, -2, 3])
+})

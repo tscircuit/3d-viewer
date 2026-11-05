@@ -3,8 +3,8 @@ import type {
   CadModelAxisDirection,
   CadModelFormat,
 } from "circuit-json"
-import type { CadModelType, RenderedCadModelType } from "./get-cad-model-type"
 import * as THREE from "three"
+import type { CadModelType, RenderedCadModelType } from "./get-cad-model-type"
 
 export interface CoordinateTransformConfig {
   axisMapping?: { x?: string; y?: string; z?: string }
@@ -211,10 +211,13 @@ export function getCadLoaderTransformConfig(
 ): CoordinateTransformConfig | undefined {
   return getDefaultModelTransform(cad, {
     usingGlbCoordinates:
-      modelType === "gltf" || modelType === "glb" || modelType === "jscad",
+      modelType === "gltf" ||
+      modelType === "glb" ||
+      modelType === "jscad" ||
+      modelType === "footprinter",
     usingObjFormat: modelType === "obj" || modelType === "wrl",
     usingStepFormat: modelType === "step",
-    hasFootprinterModel: modelType === "footprinter",
+    hasFootprinterModel: false,
   })
 }
 
