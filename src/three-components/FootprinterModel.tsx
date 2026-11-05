@@ -28,7 +28,7 @@ export const FootprinterModel = ({
   scale?: number
   isTranslucent?: boolean
 }) => {
-  const { rootObject } = useThree()
+  const { rootObject, scene } = useThree()
   const group = useMemo(() => {
     if (!footprint) return null
     const { geometries } = getJscadModelForFootprint(footprint, jscadModeling)
@@ -77,6 +77,7 @@ export const FootprinterModel = ({
     if (positionOffset) group.position.fromArray(positionOffset)
     if (rotationOffset) group.rotation.fromArray(rotationOffset)
     if (scale !== undefined) group.scale.setScalar(scale)
+    scene?.dispatchEvent({ type: "cad-scene-updated" } as any)
   }, [
     group,
     positionOffset?.[0],
@@ -86,6 +87,7 @@ export const FootprinterModel = ({
     rotationOffset?.[1],
     rotationOffset?.[2],
     scale,
+    scene,
   ])
 
   useEffect(() => {

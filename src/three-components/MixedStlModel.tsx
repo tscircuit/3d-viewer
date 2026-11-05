@@ -74,6 +74,7 @@ export function MixedStlModel({
         opacity: 0.25,
       }),
     )
+    fallbackMesh.userData.isFallback = true
     configureObjectShadows(fallbackMesh, {
       castShadow: false,
       receiveShadow: true,
