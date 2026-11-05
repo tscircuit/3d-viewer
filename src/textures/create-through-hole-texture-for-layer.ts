@@ -1,6 +1,7 @@
 import type { AnyCircuitElement, PcbBoard } from "circuit-json"
 import * as THREE from "three"
 import { TRACE_TEXTURE_RESOLUTION } from "../geoms/constants"
+import { getPcbVias } from "../utils/get-pcb-vias"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
 import { drawThroughHoleLayer } from "./through-hole/through-hole-drawing"
 
@@ -17,8 +18,10 @@ export function createThroughHoleTextureForLayer({
   copperColor?: string
   traceTextureResolution?: number
 }): THREE.CanvasTexture | null {
-  const elements = circuitJson.filter((element) => {
-    if (element.type === "pcb_via") return true
+  const viasOnLayer = getPcbVias(circuitJson).filter(
+    (via) => !Array.isArray(via.layers) || via.layers.includes(layer),
+  )
+  const platedHolesOnLayer = circuitJson.filter((element) => {
     if (element.type !== "pcb_plated_hole") return false
 
     const platedHole = element as any
@@ -26,6 +29,7 @@ export function createThroughHoleTextureForLayer({
       !Array.isArray(platedHole.layers) || platedHole.layers.includes(layer)
     )
   })
+  const elements: AnyCircuitElement[] = [...viasOnLayer, ...platedHolesOnLayer]
 
   if (elements.length === 0) return null
 

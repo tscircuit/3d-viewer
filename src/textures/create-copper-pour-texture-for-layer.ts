@@ -7,7 +7,6 @@ import type {
   PcbHole,
   PcbPlatedHole,
   PcbRenderLayer,
-  PcbVia,
 } from "circuit-json"
 import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import * as THREE from "three"
@@ -15,6 +14,7 @@ import {
   colors as defaultColors,
   TRACE_TEXTURE_RESOLUTION,
 } from "../geoms/constants"
+import { getPcbVias } from "../utils/get-pcb-vias"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
 
 const toRgb = (colorArr: number[]) => {
@@ -57,10 +57,9 @@ export function createCopperPourTextureForLayer({
     if (e.type !== "pcb_plated_hole") return false
     return !Array.isArray(e.layers) || e.layers.includes(layer)
   })
-  const viasOnLayer = circuitJson.filter((e): e is PcbVia => {
-    if (e.type !== "pcb_via") return false
-    return !Array.isArray(e.layers) || e.layers.includes(layer)
-  })
+  const viasOnLayer = getPcbVias(circuitJson).filter(
+    (e) => !Array.isArray(e.layers) || e.layers.includes(layer),
+  )
   const drillElements = [...holes, ...platedHolesOnLayer, ...viasOnLayer]
 
   const boardOutlineBounds = calculateOutlineBounds(boardData)
