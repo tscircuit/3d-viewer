@@ -42,10 +42,12 @@ export const CadComponentGroup = ({
   group.userData.pcb_component_id = cadComponent.pcb_component_id
   useEffect(() => {
     scene.rootObject.add(group)
+    scene.scene.dispatchEvent({ type: "cad-scene-updated" } as any)
     return () => {
       scene.rootObject.remove(group)
+      scene.scene.dispatchEvent({ type: "cad-scene-updated" } as any)
     }
-  }, [scene.rootObject, group])
+  }, [scene.rootObject, scene.scene, group])
   const context = useMemo(
     () => ({ ...scene, rootObject: group }),
     [scene, group],

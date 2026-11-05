@@ -63,3 +63,44 @@ export const fitCameraToBounds = (
 
   return { center, radius, distance }
 }
+
+export const getObjectBounds = (
+  rootObject: THREE.Object3D,
+): Bounds3d | undefined => {
+  rootObject.updateMatrixWorld(true)
+  const box = new THREE.Box3()
+  const meshBox = new THREE.Box3()
+
+  const visit = (object: THREE.Object3D) => {
+    if (!object.visible || object.userData?.isFallback) return
+    if (object instanceof THREE.Mesh) {
+      if (!object.geometry.boundingBox) {
+        object.geometry.computeBoundingBox()
+      }
+      if (
+        object.geometry.boundingBox &&
+        !object.geometry.boundingBox.isEmpty()
+      ) {
+        meshBox
+          .copy(object.geometry.boundingBox)
+          .applyMatrix4(object.matrixWorld)
+        box.union(meshBox)
+      }
+    }
+    for (const child of object.children) {
+      visit(child)
+    }
+  }
+
+  visit(rootObject)
+  if (box.isEmpty()) return undefined
+
+  return {
+    minX: box.min.x,
+    maxX: box.max.x,
+    minY: box.min.y,
+    maxY: box.max.y,
+    minZ: box.min.z,
+    maxZ: box.max.z,
+  }
+}
