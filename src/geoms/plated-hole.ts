@@ -1,23 +1,29 @@
-import type { PCBPlatedHole } from "circuit-json"
-import type { Geom3 } from "@jscad/modeling/src/geometries/types"
-import {
-  cuboid,
-  cylinder,
-  roundedRectangle,
-  polygon as jscadPolygon,
-} from "@jscad/modeling/src/primitives"
 import { colorize } from "@jscad/modeling/src/colors"
+import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import {
   intersect,
   subtract,
   union,
 } from "@jscad/modeling/src/operations/booleans"
-import { scale } from "@jscad/modeling/src/operations/transforms"
-import { M, colors } from "./constants"
-import type { GeomContext } from "../GeomContext"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
-import { rotate, translate } from "@jscad/modeling/src/operations/transforms"
-import { extractRectBorderRadius } from "../utils/rect-border-radius"
+import {
+  rotate,
+  scale,
+  translate,
+} from "@jscad/modeling/src/operations/transforms"
+import {
+  cuboid,
+  cylinder,
+  polygon as jscadPolygon,
+  roundedRectangle,
+} from "@jscad/modeling/src/primitives"
+import type { PCBPlatedHole } from "circuit-json"
+import type { GeomContext } from "../GeomContext"
+import {
+  clampRectBorderRadius,
+  extractRectBorderRadius,
+} from "../utils/rect-border-radius"
+import { colors, M } from "./constants"
 import { createHoleWithPolygonPadHoleGeom } from "./create-hole-with-polygon-pad"
 
 const PLATED_HOLE_DRILL_OVERREACH = 0.05
@@ -75,6 +81,7 @@ export const platedHole = (
     const outerHeight = plated_hole.outer_height || plated_hole.hole_height || 0
     const holeWidth = plated_hole.hole_width || 0
     const holeHeight = plated_hole.hole_height || 0
+    const rotationRadians = ((plated_hole.ccw_rotation || 0) * Math.PI) / 180
 
     // Create the outer copper body as an elliptical cylinder
     const copperBody = (() => {
@@ -87,7 +94,10 @@ export const platedHole = (
       })
       // Scale the circle to create an ellipse
       const scaled = scale([outerWidth / 2, outerHeight / 2, 1], circle)
-      return translate([plated_hole.x, plated_hole.y, 0], scaled)
+      const rotated = rotationRadians
+        ? rotate([0, 0, rotationRadians], scaled)
+        : scaled
+      return translate([plated_hole.x, plated_hole.y, 0], rotated)
     })()
 
     const copperSolid = maybeClip(copperBody, clipGeom)
@@ -105,7 +115,10 @@ export const platedHole = (
         [Math.max(holeWidth / 2, 0.01), Math.max(holeHeight / 2, 0.01), 1],
         circle,
       )
-      return translate([plated_hole.x, plated_hole.y, 0], scaled)
+      const rotated = rotationRadians
+        ? rotate([0, 0, rotationRadians], scaled)
+        : scaled
+      return translate([plated_hole.x, plated_hole.y, 0], rotated)
     })()
 
     return colorize(colors.copper, subtract(copperSolid, drill)) as Geom3
@@ -115,7 +128,13 @@ export const platedHole = (
     const holeOffsetY = plated_hole.hole_offset_y || 0
     const padWidth = plated_hole.rect_pad_width || plated_hole.hole_diameter
     const padHeight = plated_hole.rect_pad_height || plated_hole.hole_diameter
-    const rectBorderRadius = extractRectBorderRadius(plated_hole)
+    const rectBorderRadius = clampRectBorderRadius(
+      padWidth,
+      padHeight,
+      extractRectBorderRadius(plated_hole),
+    )
+    const rectRotationRadians =
+      ((plated_hole.rect_ccw_rotation || 0) * Math.PI) / 180
     // Create a solid copper shape that connects the top and bottom pads
     const copperSolid = maybeClip(
       union(
@@ -123,10 +142,16 @@ export const platedHole = (
         (() => {
           const rect2d = roundedRectangle({
             size: [padWidth, padHeight],
-            roundRadius: rectBorderRadius || 0,
+            roundRadius: rectBorderRadius,
             segments: RECT_PAD_SEGMENTS,
           })
-          const extruded = extrudeLinear({ height: copperFillHeight }, rect2d)
+          let extruded: Geom3 = extrudeLinear(
+            { height: copperFillHeight },
+            rect2d,
+          )
+          if (rectRotationRadians) {
+            extruded = rotate([0, 0, rectRotationRadians], extruded)
+          }
           return translate(
             [plated_hole.x, plated_hole.y, -copperFillHeight / 2],
             extruded,
@@ -297,7 +322,16 @@ export const platedHole = (
 
     const padWidth = plated_hole.rect_pad_width || holeWidth + 0.2
     const padHeight = plated_hole.rect_pad_height || holeHeight + 0.2
-    const rectBorderRadius = extractRectBorderRadius(plated_hole)
+    const rectBorderRadius = clampRectBorderRadius(
+      padWidth,
+      padHeight,
+      extractRectBorderRadius(plated_hole),
+    )
+    const rectRotationRadians =
+      (((plated_hole as { rect_ccw_rotation?: number }).rect_ccw_rotation ||
+        0) *
+        Math.PI) /
+      180
 
     const barrelMargin = 0.03
 
@@ -393,10 +427,13 @@ export const platedHole = (
     const copperFill = (() => {
       const rect2d = roundedRectangle({
         size: [padWidth, padHeight],
-        roundRadius: rectBorderRadius || 0,
+        roundRadius: rectBorderRadius,
         segments: RECT_PAD_SEGMENTS,
       })
-      const extruded = extrudeLinear({ height: copperFillHeight }, rect2d)
+      let extruded: Geom3 = extrudeLinear({ height: copperFillHeight }, rect2d)
+      if (rectRotationRadians) {
+        extruded = rotate([0, 0, rectRotationRadians], extruded)
+      }
       return translate(
         [plated_hole.x, plated_hole.y, -copperFillHeight / 2],
         extruded,
@@ -476,8 +513,11 @@ export const platedHole = (
 
     const padWidth = plated_hole.rect_pad_width || holeWidth + 0.2
     const padHeight = plated_hole.rect_pad_height || holeHeight + 0.2
-    const rectBorderRadius = extractRectBorderRadius(plated_hole)
-
+    const rectBorderRadius = clampRectBorderRadius(
+      padWidth,
+      padHeight,
+      extractRectBorderRadius(plated_hole),
+    )
     const barrelMargin = 0.03
 
     // Apply rotations
@@ -572,7 +612,7 @@ export const platedHole = (
       (() => {
         const rect2d = roundedRectangle({
           size: [padWidth, padHeight],
-          roundRadius: rectBorderRadius || 0,
+          roundRadius: rectBorderRadius,
           segments: RECT_PAD_SEGMENTS,
         })
         const extruded = extrudeLinear({ height: copperFillHeight }, rect2d)

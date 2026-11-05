@@ -358,7 +358,7 @@ export function processPlatedHolesForManifold(
       platedHoleBoardDrills.push(translatedBoardPillDrill)
 
       // Create the main fill between pads (centered on the pad, not the hole)
-      const mainFill = createRoundedRectPrism({
+      let mainFill = createRoundedRectPrism({
         Manifold,
         width: padWidth,
         height: padHeight,
@@ -373,6 +373,14 @@ export function processPlatedHolesForManifold(
         borderRadius: rectBorderRadius,
       })
       manifoldInstancesForCleanup.push(mainFill)
+
+      const pillRectRotation = (ph as { rect_ccw_rotation?: number })
+        .rect_ccw_rotation
+      if (pillRectRotation) {
+        const rotatedMainFill = mainFill.rotate([0, 0, pillRectRotation])
+        manifoldInstancesForCleanup.push(rotatedMainFill)
+        mainFill = rotatedMainFill
+      }
 
       // Create the plated barrel at the offset position
       const barrelPill = createPillOp(
@@ -788,7 +796,7 @@ export function processPlatedHolesForManifold(
       const holeRadius = ph.hole_diameter / 2
 
       // Create the main fill between pads (centered on the pad, not the hole)
-      const mainFill = createRoundedRectPrism({
+      let mainFill = createRoundedRectPrism({
         Manifold,
         width: padWidth!,
         height: padHeight!,
@@ -803,6 +811,12 @@ export function processPlatedHolesForManifold(
         borderRadius: rectBorderRadius,
       })
       manifoldInstancesForCleanup.push(mainFill)
+
+      if (ph.rect_ccw_rotation) {
+        const rotatedMainFill = mainFill.rotate([0, 0, ph.rect_ccw_rotation])
+        manifoldInstancesForCleanup.push(rotatedMainFill)
+        mainFill = rotatedMainFill
+      }
 
       // Create top and bottom pads (slightly thicker to ensure connection)
       // Create the plated barrel at the offset position
