@@ -4,6 +4,7 @@ import type { ManifoldToplevel } from "manifold-3d"
 import { SMOOTH_CIRCLE_SEGMENTS } from "../../geoms/constants"
 import { createCircleHoleDrill } from "../hole-geoms"
 import { createRoundedRectPrism } from "../pad-geoms"
+import { extractRectBorderRadius } from "../rect-border-radius"
 
 export interface ProcessNonPlatedHolesResult {
   nonPlatedHoleBoardDrills: any[]
@@ -31,8 +32,22 @@ export function processNonPlatedHolesForManifold(
     return pillOp
   }
 
-  const createRectOp = (width: number, height: number, depth: number) => {
-    const rectOp = Manifold.cube([width, height, depth], true)
+  const createRectOp = (
+    width: number,
+    height: number,
+    depth: number,
+    borderRadius?: number | null,
+  ) => {
+    const rectOp =
+      typeof borderRadius === "number" && borderRadius > 0
+        ? createRoundedRectPrism({
+            Manifold,
+            width,
+            height,
+            thickness: depth,
+            borderRadius,
+          })
+        : Manifold.cube([width, height, depth], true)
     manifoldInstancesForCleanup.push(rectOp)
     return rectOp
   }
@@ -73,8 +88,17 @@ export function processNonPlatedHolesForManifold(
 
     if (holeShape === "pill" || holeShape === "rotated_pill") {
       holeOp = createPillOp(holeW, holeH, drillDepth)
-    } else if (holeShape === "rect") {
-      holeOp = createRectOp(holeW, holeH, drillDepth)
+    } else if (
+      holeShape === "rect" ||
+      holeShape === "square" ||
+      (holeShape as string) === "rotated_rect"
+    ) {
+      holeOp = createRectOp(
+        holeW,
+        holeH,
+        drillDepth,
+        extractRectBorderRadius(hole),
+      )
     } else if (holeShape === "oval") {
       let points = createEllipsePoints(holeW, holeH, SMOOTH_CIRCLE_SEGMENTS)
       // Ensure correct winding order
