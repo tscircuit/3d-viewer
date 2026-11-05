@@ -9,6 +9,16 @@ import { useThree } from "src/react-three/ThreeContext"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
 import { configureObjectShadows } from "src/utils/configure-object-shadows"
 
+const FOOTPRINT_WITHOUT_3D_MODEL_REGEX =
+  /^(solderjumper|fiducial|pad|smtpad|smdpads|platedhole)(\d|_|$)/i
+
+export const isFootprintWithout3dModel = (
+  footprint?: string | null,
+): boolean => {
+  if (!footprint) return true
+  return FOOTPRINT_WITHOUT_3D_MODEL_REGEX.test(footprint.trim())
+}
+
 export const FootprinterModel = ({
   positionOffset,
   footprint,
@@ -30,8 +40,22 @@ export const FootprinterModel = ({
 }) => {
   const { rootObject } = useThree()
   const group = useMemo(() => {
-    if (!footprint) return null
-    const { geometries } = getJscadModelForFootprint(footprint, jscadModeling)
+    if (isFootprintWithout3dModel(footprint)) return null
+    let geometries: any[] = []
+    try {
+      geometries =
+        getJscadModelForFootprint(footprint, jscadModeling)?.geometries ?? []
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        /Invalid footprint function,\s*got\s*"(solderjumper|fiducial|pad|smtpad|smdpads|platedhole)"/i.test(
+          error.message,
+        )
+      ) {
+        return null
+      }
+      throw error
+    }
 
     const group = new THREE.Group()
 
@@ -60,6 +84,8 @@ export const FootprinterModel = ({
       })
       group.add(mesh)
     }
+
+    if (group.children.length === 0) return null
 
     return group
   }, [footprint, isTranslucent])
