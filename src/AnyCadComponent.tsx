@@ -1,9 +1,8 @@
-import { CadComponentGroup } from "./contexts/SchematicNavigationContext"
-import { getCadPcbContext } from "./utils/get-cad-pcb-context"
 import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
+import { CadComponentGroup } from "./contexts/SchematicNavigationContext"
 import { usePcbThickness } from "./hooks/usePcbThickness"
 import { Html } from "./react-three/Html"
 import { FootprinterModel } from "./three-components/FootprinterModel"
@@ -11,6 +10,7 @@ import { GltfModel } from "./three-components/GltfModel"
 import { JscadModel } from "./three-components/JscadModel"
 import { MixedStlModel } from "./three-components/MixedStlModel"
 import { StepModel } from "./three-components/StepModel"
+import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import {
   getCadLoaderTransformConfig,
   getCadLoaderTransformMatrix,
@@ -21,10 +21,10 @@ import {
   getCadModelType,
   getRenderedCadModelType,
 } from "./utils/get-cad-model-type"
+import { getCadPcbContext } from "./utils/get-cad-pcb-context"
 import { isLegacyFdmEnclosure } from "./utils/is-legacy-fdm-enclosure"
 import { resolveModelUrl } from "./utils/resolve-model-url"
 import { tuple } from "./utils/tuple"
-import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 
 const ModelLoadErrorReporter = ({
   error,
@@ -293,8 +293,15 @@ export const AnyCadComponent = ({
       <FootprinterModel
         positionOffset={adjustedPosition}
         rotationOffset={rotationOffset}
+        modelOffset={modelTransform.modelPosition}
+        modelRotation={modelTransform.modelRotation}
+        sourceCoordinateTransform={getCadLoaderTransformMatrix(
+          getCadLoaderTransformConfig(cad_component, "footprinter"),
+        )}
         footprint={cad_component.footprinter_string}
         scale={modelTransform.scale}
+        modelSize={modelTransform.size}
+        modelFitMode={modelTransform.fitMode}
         onHover={handleHover}
         onUnhover={handleUnhover}
         isHovered={isHovered}

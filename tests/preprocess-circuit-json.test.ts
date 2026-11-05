@@ -39,3 +39,19 @@ test("respects existing cad component z offsets when adding faux board", () => {
   const board = result.find((element) => element.type === "pcb_board")!
   expect(updatedComponent.position?.z).toBeCloseTo(1 + board.thickness / 2)
 })
+
+test("places bottom-layer cad components with explicit rotation on bottom of faux board", () => {
+  const bottomCadComponent: CadComponent = {
+    ...createCadComponent(-2),
+    layer: "bottom",
+    rotation: { x: 0, y: 180, z: 180 },
+  }
+  const result = addFauxBoardIfNeeded([bottomCadComponent])
+
+  const updatedComponent = result.find(
+    (element) => element.type === "cad_component",
+  ) as CadComponent
+
+  const board = result.find((element) => element.type === "pcb_board")!
+  expect(updatedComponent.position?.z).toBeCloseTo(-2 - board.thickness / 2)
+})
