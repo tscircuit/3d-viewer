@@ -10,6 +10,26 @@ import {
 import * as THREE from "three"
 import { configureObjectShadows } from "./configure-object-shadows"
 
+function getBoardOutline(board: PcbBoard): PcbBoard["outline"] {
+  if (board.outline && board.outline.length > 0) return board.outline
+  if (
+    typeof board.width === "number" &&
+    board.width > 0 &&
+    typeof board.height === "number" &&
+    board.height > 0
+  ) {
+    const halfWidth = board.width / 2
+    const halfHeight = board.height / 2
+    return [
+      { x: board.center.x - halfWidth, y: board.center.y - halfHeight },
+      { x: board.center.x + halfWidth, y: board.center.y - halfHeight },
+      { x: board.center.x + halfWidth, y: board.center.y + halfHeight },
+      { x: board.center.x - halfWidth, y: board.center.y + halfHeight },
+    ]
+  }
+  return undefined
+}
+
 function restoreOutlinePrecision(
   point: THREE.Vector3,
   outline: NonNullable<PcbBoard["outline"]>,
@@ -173,9 +193,10 @@ export function createFlexMeshes(
         })),
       })
     : undefined
+  const outline = getBoardOutline(board)
   const body = geometryMeshes.find((m) => m.name === "board-geom")
   const flatBody =
-    fold && body ? meshToSurface(body, board.center, board.outline) : undefined
+    fold && body ? meshToSurface(body, board.center, outline) : undefined
   const geometry = fold
     ? geometryMeshes.map((mesh) =>
         replaceGeometry(
@@ -183,7 +204,7 @@ export function createFlexMeshes(
           foldSurfaceMesh(
             mesh === body && flatBody
               ? flatBody
-              : meshToSurface(mesh, board.center, board.outline),
+              : meshToSurface(mesh, board.center, outline),
             fold,
           ),
           board,
