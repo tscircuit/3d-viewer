@@ -1,4 +1,5 @@
 import React, { StrictMode, useEffect } from "react"
+import type { AnyCircuitElement } from "circuit-json"
 import { createRoot } from "react-dom/client"
 import * as THREE from "three"
 import { CadViewer } from "../../src/CadViewer"
@@ -67,7 +68,7 @@ function Probe() {
 const params = new URLSearchParams(location.search)
 const engine = params.get("engine")
 if (engine) localStorage.setItem("cadViewerEngine", engine)
-const board = [
+const board: AnyCircuitElement[] = [
   {
     type: "pcb_board",
     pcb_board_id: "b",
@@ -76,14 +77,36 @@ const board = [
     height: 20,
     thickness: 1.6,
     num_layers: 2,
+    material: "fr4",
   },
 ]
+const circuitJson = params.has("boardless") ? [] : board
+if (params.has("component")) {
+  circuitJson.push({
+    type: "cad_component",
+    cad_component_id: "test-component",
+    source_component_id: "test-source",
+    anchor_alignment: "center",
+    model_object_fit: "contain_within_bounds",
+    position: { x: 0, y: 0, z: 0.8 },
+    model_glb_url: "component-test.glb",
+  })
+}
+if (params.has("via")) {
+  circuitJson.push({
+    type: "pcb_trace",
+    pcb_trace_id: "test-trace",
+    route: [
+      { route_type: "via", x: 5, y: 0, from_layer: "top", to_layer: "bottom" },
+    ],
+  })
+}
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <div style={{ width: "100vw", height: "100vh", background: "#151515" }}>
       {engine ? (
         <CadViewer
-          circuitJson={engine === "glb" ? undefined : board}
+          circuitJson={engine === "glb" ? undefined : circuitJson}
           glbUrl={engine === "glb" ? "section-test.glb" : undefined}
           autoRotateDisabled
         />
