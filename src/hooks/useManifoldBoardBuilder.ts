@@ -51,6 +51,7 @@ interface UseManifoldBoardBuilderResult {
   isLoading: boolean
   boardData: PcbBoard | null
   isFauxBoard: boolean
+  requiresManifold: boolean
 }
 
 export const useManifoldBoardBuilder = (
@@ -104,24 +105,41 @@ export const useManifoldBoardBuilder = (
     return boards.length > 0 && boards[0]!.pcb_board_id === "faux-board"
   }, [circuitJson])
 
+  const boardGeometryType = useMemo(() => {
+    if (!boardData) return "none"
+
+    const { width, height, outline, thickness } = boardData
+    if (!width && !height && (outline?.length ?? 0) < 3) return "empty"
+
+    const hasBoxDimensions = [width, height, thickness || 1.4].every(
+      (size) => size !== undefined && Number.isFinite(size) && size > 0,
+    )
+    if (outline?.length || !hasBoxDimensions) return "manifold"
+
+    const hasBoardFeatures = circuitJson.some(
+      (element) =>
+        element.type === "pcb_hole" ||
+        element.type === "pcb_plated_hole" ||
+        element.type === "pcb_via" ||
+        element.type === "pcb_cutout" ||
+        element.type === "pcb_bend" ||
+        element.type === "pcb_stiffener" ||
+        // Older Circuit JSON can encode vias directly in the trace route.
+        (element.type === "pcb_trace" &&
+          (!Array.isArray(element.route) ||
+            element.route.some((point) => point.route_type === "via"))),
+    )
+    return hasBoardFeatures ? "manifold" : "box"
+  }, [circuitJson, boardData])
+
   const traceTextureResolution = useMemo(() => {
     if (!boardData) return TRACE_TEXTURE_RESOLUTION
     return getLayerTextureResolution(boardData, TRACE_TEXTURE_RESOLUTION)
   }, [boardData])
 
   useEffect(() => {
-    if (!manifoldJSModule || !boardData) {
-      setGeoms(null)
-      setPcbThickness(null)
-      setIsLoading(false)
-      return
-    }
-
-    if (
-      (boardData.width === 0 || !boardData.width) &&
-      (boardData.height === 0 || !boardData.height) &&
-      (!boardData.outline || boardData.outline.length < 3)
-    ) {
+    setError(null)
+    if (boardData && boardGeometryType === "empty") {
       // This is an empty board, manifold can't handle it, but we can just
       // render nothing for the board and show the components.
       setGeoms({ platedHoles: [], vias: [] })
@@ -130,8 +148,37 @@ export const useManifoldBoardBuilder = (
       return
     }
 
+    const currentPcbThickness = boardData?.thickness || 1.4
+    if (boardData && boardGeometryType === "box") {
+      const geometry = new THREE.BoxGeometry(
+        boardData.width,
+        boardData.height,
+        currentPcbThickness,
+      ).translate(boardData.center.x, boardData.center.y, 0)
+      geometry.clearGroups()
+      setGeoms({
+        board: {
+          geometry,
+          color: getBoardEdgeColor(boardData),
+          material: boardData.material,
+          isFaux: isFauxBoard,
+        },
+        platedHoles: [],
+        vias: [],
+      })
+      setPcbThickness(currentPcbThickness)
+      setIsLoading(false)
+      return
+    }
+
+    if (!manifoldJSModule || !boardData) {
+      setGeoms(null)
+      setPcbThickness(null)
+      setIsLoading(false)
+      return
+    }
+
     setIsLoading(true)
-    setError(null) // Clear previous errors
     const Manifold = manifoldJSModule.Manifold
     const CrossSection = manifoldJSModule.CrossSection
 
@@ -156,7 +203,6 @@ export const useManifoldBoardBuilder = (
     let boardManifold: any = null
     const currentGeoms: ManifoldGeoms = {}
     try {
-      const currentPcbThickness = boardData.thickness || 1.4
       setPcbThickness(currentPcbThickness)
 
       const { boardOp: initialBoardOp, outlineCrossSection } =
@@ -341,7 +387,7 @@ export const useManifoldBoardBuilder = (
       manifoldInstancesForCleanup.current = []
       // boardManifold is part of manifoldInstancesForCleanup if it was assigned
     }
-  }, [manifoldJSModule, circuitJson, boardData])
+  }, [manifoldJSModule, circuitJson, boardData, boardGeometryType, isFauxBoard])
 
   const textures = useMemo(() => {
     if (!boardData || !traceTextureResolution) return null
@@ -361,5 +407,6 @@ export const useManifoldBoardBuilder = (
     isLoading,
     boardData,
     isFauxBoard,
+    requiresManifold: boardGeometryType === "manifold",
   }
 }
