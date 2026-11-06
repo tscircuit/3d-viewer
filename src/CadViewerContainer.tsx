@@ -1,3 +1,4 @@
+import { AssemblyExplosionScene } from "./assembly-explosion/AssemblyExplosionScene"
 import { useSection } from "./sections/SectionContext"
 import { SectionScene } from "./sections/SectionScene"
 import type * as React from "react"
@@ -134,6 +135,7 @@ export const CadViewerContainer = forwardRef<
         >
           <SectionScene />
           <SchematicNavigationScene />
+          <AssemblyExplosionScene />
           <CameraAnimatorWithContext />
           <RotationTracker />
           {isInteractionEnabled && (

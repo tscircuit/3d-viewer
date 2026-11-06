@@ -34,10 +34,15 @@ interface ContextMenuProps {
     referenceObject: ReferenceObjectType | null,
   ) => void
   onViewSchematicComponent?: () => void
-  componentName?: string
-  onHideComponent?: () => void
-  onUnhideAllComponents?: () => void
+  objectName?: string
+  onHideObject?: () => void
+  onIsolateObject?: () => void
+  onUnhideAll?: () => void
   onSectionView?: () => void
+  onExplosionView?: () => void
+  explosionAvailable?: boolean
+  /** Name of the model Download GLTF exports instead of the whole scene. */
+  downloadModelName?: string
   onDownloadGltf: () => void
   onOpenKeyboardShortcuts: () => void
 }
@@ -137,10 +142,14 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onAutoRotateToggle,
   onReferenceObjectSelect = () => {},
   onViewSchematicComponent,
-  componentName,
-  onHideComponent,
-  onUnhideAllComponents,
+  objectName,
+  onHideObject,
+  onIsolateObject,
+  onUnhideAll,
   onSectionView,
+  onExplosionView,
+  explosionAvailable = false,
+  downloadModelName,
   onDownloadGltf,
   onOpenKeyboardShortcuts,
 }) => {
@@ -175,7 +184,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             sideOffset={0}
             align="start"
           >
-            {onHideComponent && (
+            {onHideObject && (
               <DropdownMenu.Item
                 style={{
                   ...itemStyles,
@@ -183,11 +192,26 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                   backgroundColor:
                     hoveredItem === "hide" ? "#404040" : "transparent",
                 }}
-                onSelect={onHideComponent}
+                onSelect={onHideObject}
                 onMouseEnter={() => setHoveredItem("hide")}
                 onMouseLeave={() => setHoveredItem(null)}
               >
-                {`Hide "${componentName}"`}
+                {`Hide "${objectName}"`}
+              </DropdownMenu.Item>
+            )}
+            {onIsolateObject && (
+              <DropdownMenu.Item
+                style={{
+                  ...itemStyles,
+                  ...itemPaddingStyles,
+                  backgroundColor:
+                    hoveredItem === "isolate" ? "#404040" : "transparent",
+                }}
+                onSelect={onIsolateObject}
+                onMouseEnter={() => setHoveredItem("isolate")}
+                onMouseLeave={() => setHoveredItem(null)}
+              >
+                {`Isolate "${objectName}"`}
               </DropdownMenu.Item>
             )}
             {onViewSchematicComponent && (
@@ -207,7 +231,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 </DropdownMenu.Item>
               </>
             )}
-            {onUnhideAllComponents && (
+            {onUnhideAll && (
               <DropdownMenu.Item
                 style={{
                   ...itemStyles,
@@ -215,16 +239,17 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                   backgroundColor:
                     hoveredItem === "unhide" ? "#404040" : "transparent",
                 }}
-                onSelect={onUnhideAllComponents}
+                onSelect={onUnhideAll}
                 onMouseEnter={() => setHoveredItem("unhide")}
                 onMouseLeave={() => setHoveredItem(null)}
               >
-                Unhide All Components
+                Unhide All
               </DropdownMenu.Item>
             )}
             {(onViewSchematicComponent ||
-              onHideComponent ||
-              onUnhideAllComponents) && (
+              onHideObject ||
+              onIsolateObject ||
+              onUnhideAll) && (
               <DropdownMenu.Separator style={separatorStyles} />
             )}
             {/* Camera controls */}
@@ -481,14 +506,21 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               onMouseLeave={() => setHoveredItem(null)}
               onTouchStart={() => setHoveredItem("download")}
             >
-              <span style={{ display: "flex", alignItems: "center" }}>
+              <span style={{ flex: 1, display: "flex", alignItems: "center" }}>
                 Download GLTF
               </span>
+              {downloadModelName && (
+                <span style={{ opacity: 0.55, fontSize: 13 }}>
+                  {downloadModelName}
+                </span>
+              )}
             </DropdownMenu.Item>
 
             <DropdownMenu.Separator style={separatorStyles} />
 
-            {(onSectionView || (!flexScene && !preRendered)) && (
+            {(onSectionView ||
+              onExplosionView ||
+              (!flexScene && !preRendered)) && (
               <>
                 <DropdownMenu.Sub onOpenChange={setAdvancedSubOpen}>
                   <DropdownMenu.SubTrigger
@@ -533,6 +565,29 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                         >
                           Switch to {engine === "jscad" ? "Manifold" : "JSCAD"}{" "}
                           Engine
+                        </DropdownMenu.Item>
+                      )}
+                      {onExplosionView && (
+                        <DropdownMenu.Item
+                          disabled={!explosionAvailable}
+                          title={
+                            explosionAvailable
+                              ? undefined
+                              : "This design has no explosion information"
+                          }
+                          style={{
+                            ...itemStyles,
+                            opacity: explosionAvailable ? 1 : 0.4,
+                            backgroundColor:
+                              hoveredItem === "explosion"
+                                ? "#404040"
+                                : "transparent",
+                          }}
+                          onSelect={onExplosionView}
+                          onMouseEnter={() => setHoveredItem("explosion")}
+                          onMouseLeave={() => setHoveredItem(null)}
+                        >
+                          Exploded view…
                         </DropdownMenu.Item>
                       )}
                       {onSectionView && (

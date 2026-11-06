@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test"
 import type { AnyCircuitElement } from "circuit-json"
 import * as THREE from "three"
-import { pickCadComponent } from "../src/utils/pick-cad-component"
+import { pickSceneObject } from "../src/utils/pick-scene-object"
 
 const circuitJson = [
   {
@@ -47,13 +47,13 @@ const setup = () => {
 }
 
 test("picks mechanical CAD without a PCB component using its source name", () => {
-  expect(pickCadComponent(setup(), position, circuitJson)).toEqual({
-    cad_component_id: "case_cad",
-    componentName: "CASE",
+  expect(pickSceneObject(setup(), position, circuitJson)).toEqual({
+    objectId: "case_cad",
+    name: "CASE",
   })
-  expect(pickCadComponent(setup(), position, circuitJson.slice(1))).toEqual({
-    cad_component_id: "case_cad",
-    componentName: "case_cad",
+  expect(pickSceneObject(setup(), position, circuitJson.slice(1))).toEqual({
+    objectId: "case_cad",
+    name: "case_cad",
   })
 })
 
@@ -67,31 +67,26 @@ test("picks individual CAD IDs even when models share a source component", () =>
       cad_component_id: "case_lid",
     },
   ] as AnyCircuitElement[]
-  expect(pickCadComponent(scene, position, json)?.cad_component_id).toBe(
-    "case_lid",
-  )
+  expect(pickSceneObject(scene, position, json)?.objectId).toBe("case_lid")
 })
 
 test("uses transformed geometry and perspective or orthographic cameras", () => {
   const scene = setup()
   scene.group.position.x = 4
-  expect(pickCadComponent(scene, position, circuitJson)).toBeUndefined()
+  expect(pickSceneObject(scene, position, circuitJson)).toBeUndefined()
   scene.camera.position.x = 4
-  expect(pickCadComponent(scene, position, circuitJson)?.componentName).toBe(
-    "CASE",
-  )
+  expect(pickSceneObject(scene, position, circuitJson)?.name).toBe("CASE")
   const camera = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.1, 100)
   camera.position.set(4, 0, 10)
   expect(
-    pickCadComponent({ ...scene, camera }, position, circuitJson)
-      ?.componentName,
+    pickSceneObject({ ...scene, camera }, position, circuitJson)?.name,
   ).toBe("CASE")
 })
 
 test("skips hidden ancestors, respects occlusion, and rejects empty/background picks", () => {
   const scene = setup()
   scene.group.visible = false
-  expect(pickCadComponent(scene, position, circuitJson)).toBeUndefined()
+  expect(pickSceneObject(scene, position, circuitJson)).toBeUndefined()
   scene.group.visible = true
   const board = new THREE.Mesh(
     new THREE.BoxGeometry(10, 10, 1),
@@ -99,15 +94,31 @@ test("skips hidden ancestors, respects occlusion, and rejects empty/background p
   )
   board.position.z = 3
   scene.rootObject.add(board)
-  expect(pickCadComponent(scene, position, circuitJson)).toBeUndefined()
+  expect(pickSceneObject(scene, position, circuitJson)).toBeUndefined()
   board.visible = false
-  expect(pickCadComponent(scene, position, circuitJson)?.componentName).toBe(
-    "CASE",
-  )
-  expect(pickCadComponent(null, position, circuitJson)).toBeUndefined()
-  expect(pickCadComponent(scene, { x: 0, y: 0 }, circuitJson)).toBeUndefined()
+  expect(pickSceneObject(scene, position, circuitJson)?.name).toBe("CASE")
+  expect(pickSceneObject(null, position, circuitJson)).toBeUndefined()
+  expect(pickSceneObject(scene, { x: 0, y: 0 }, circuitJson)).toBeUndefined()
+  expect(pickSceneObject(scene, { x: 101, y: 51 }, circuitJson)).toBeUndefined()
+  expect(pickSceneObject(scene, position, [])).toBeUndefined()
+})
+
+test("picks the board group as one object, and cables by name", () => {
+  const scene = setup()
+  scene.group.userData = { pcb_board_id: "board1" }
+  expect(pickSceneObject(scene, position, [])).toEqual({
+    objectId: "board1",
+    name: "Board",
+  })
+  scene.group.userData.pcb_board_id = "panel1"
   expect(
-    pickCadComponent(scene, { x: 101, y: 51 }, circuitJson),
-  ).toBeUndefined()
-  expect(pickCadComponent(scene, position, [])).toBeUndefined()
+    pickSceneObject(scene, position, [
+      { type: "pcb_panel", pcb_panel_id: "panel1" } as AnyCircuitElement,
+    ])?.name,
+  ).toBe("Panel")
+  scene.group.userData = { cad_cable_id: "cable1", name: "J1-J2" }
+  expect(pickSceneObject(scene, position, [])).toEqual({
+    objectId: "cable1",
+    name: "J1-J2",
+  })
 })

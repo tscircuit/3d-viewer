@@ -3,19 +3,29 @@ import type * as THREE from "three"
 import { pickVisibleMesh } from "./pick-visible-mesh"
 import { getGlbComponentMetadata } from "./prerendered-glb"
 
-export interface PickedCadComponent {
-  cad_component_id: string
-  componentName: string
+export interface PickedSceneObject {
+  /** cad_component_id, cad_cable_id, or the rendered pcb_board_id/pcb_panel_id */
+  objectId: string
+  name: string
 }
 
-export const pickCadComponent = (
+const getBoardName = (id: string, circuitJson: AnyCircuitElement[]) =>
+  circuitJson.some((e) => e.type === "pcb_panel" && e.pcb_panel_id === id)
+    ? "Panel"
+    : "Board"
+
+export const pickSceneObject = (
   scene: Parameters<typeof pickVisibleMesh>[0],
   position: { x: number; y: number },
   circuitJson: AnyCircuitElement[],
-): PickedCadComponent | undefined => {
+): PickedSceneObject | undefined => {
   let object: THREE.Object3D | null = pickVisibleMesh(scene, position) ?? null
   while (object) {
-    const cadComponentId = object.userData.cad_component_id
+    const {
+      cad_component_id: cadComponentId,
+      pcb_board_id: pcbBoardId,
+      cad_cable_id: cadCableId,
+    } = object.userData
     if (cadComponentId) {
       const cad = circuitJson.find(
         (e) =>
@@ -25,8 +35,8 @@ export const pickCadComponent = (
         const metadata = getGlbComponentMetadata(object)
         if (metadata && metadata.cad_component_id === cadComponentId)
           return {
-            cad_component_id: cadComponentId,
-            componentName: metadata.componentName ?? cadComponentId,
+            objectId: cadComponentId,
+            name: metadata.componentName ?? cadComponentId,
           }
         return
       }
@@ -36,13 +46,20 @@ export const pickCadComponent = (
           e.source_component_id === cad.source_component_id,
       )
       return {
-        cad_component_id: cad.cad_component_id,
-        componentName:
+        objectId: cad.cad_component_id,
+        name:
           source?.type === "source_component"
             ? source.name
             : cad.cad_component_id,
       }
     }
+    if (pcbBoardId)
+      return {
+        objectId: pcbBoardId,
+        name: getBoardName(pcbBoardId, circuitJson),
+      }
+    if (cadCableId)
+      return { objectId: cadCableId, name: object.userData.name ?? cadCableId }
     object = object.parent
   }
 }

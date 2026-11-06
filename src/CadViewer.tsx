@@ -8,10 +8,12 @@ import {
 } from "./utils/pick-schematic-component"
 import { resolveFoldPcbs } from "./utils/resolve-fold-pcbs"
 import {
-  pickCadComponent,
-  type PickedCadComponent,
-} from "./utils/pick-cad-component"
-import { useHiddenCadComponents } from "./hooks/useHiddenCadComponents"
+  pickSceneObject,
+  type PickedSceneObject,
+} from "./utils/pick-scene-object"
+import { useObjectVisibility } from "./hooks/useObjectVisibility"
+import { hasHiddenObjects } from "./utils/object-visibility"
+import { findModelObject } from "./utils/find-model-object"
 import { configureRuntimeFont } from "./utils/configure-runtime-font"
 import { useCallback, useContext, useEffect, useRef, useState } from "react"
 import * as THREE from "three"
@@ -28,7 +30,10 @@ const readStoredCameraType = (): "perspective" | "orthographic" | undefined => {
     : undefined
 }
 
-import { useConvertChildrenToCircuitJson } from "./hooks/use-convert-children-to-soup"
+import type { RootCircuit } from "@tscircuit/core"
+import { useAssemblyExplosion } from "./assembly-explosion/use-assembly-explosion"
+import { AssemblyExplosionContext } from "./assembly-explosion/AssemblyExplosionScene"
+import { AssemblyExplosionControl } from "./assembly-explosion/AssemblyExplosionControl"
 import type { AnyCircuitElement } from "circuit-json"
 
 import { CadViewerJscad } from "./CadViewerJscad"
@@ -61,10 +66,12 @@ import {
 
 export type CadViewerProps = Omit<
   React.ComponentProps<typeof CadViewerJscad>,
-  "circuitJson" | "hiddenCadComponentIds"
+  "circuitJson" | "objectVisibility"
 > & {
   // Preserve support for raw JSON imports whose `type` fields widen to string.
   circuitJson?: any[]
+  /** Settled circuit retaining authored assembly.explosion stages. */
+  circuit?: RootCircuit
   /** Pre-rendered circuit-json-to-gltf GLB URL. Bypasses geometry/model generation. */
   glbUrl?: string
   /** In-memory alternative to glbUrl. Supply only one GLB source. */
@@ -77,11 +84,17 @@ export type CadViewerProps = Omit<
 const CadViewerInner = (props: CadViewerProps) => {
   const section = useSection()
   const glbSource = props.glbUrl ?? props.glbData
-  const childrenCircuitJson = useConvertChildrenToCircuitJson(
+  const explosion = useAssemblyExplosion(
     props.circuitJson || glbSource !== undefined ? undefined : props.children,
+    props.circuitJson || glbSource !== undefined ? undefined : props.circuit,
+    glbSource === undefined ? props.circuitJson : undefined,
   )
   const circuitJson: AnyCircuitElement[] =
-    props.circuitJson ?? childrenCircuitJson
+    props.circuitJson ?? explosion.assembled
+  const [explosionPanelSource, setExplosionPanelSource] = useState<
+    AnyCircuitElement[] | null
+  >(null)
+  const explosionPanelOpen = explosionPanelSource === circuitJson
   const hasAssembly = circuitJson.some(
     (element) => element.type === "cad_component" && !element.pcb_component_id,
   )
@@ -96,13 +109,13 @@ const CadViewerInner = (props: CadViewerProps) => {
   const circuitJsonKey =
     glbSource === undefined ? JSON.stringify(circuitJson) : undefined
   const circuitKey = glbSource ?? circuitJsonKey!
-  const { hiddenCadComponentIds, hideComponent, unhideAllComponents } =
-    useHiddenCadComponents(circuitKey)
+  const { objectVisibility, hideObject, isolateObject, unhideAllObjects } =
+    useObjectVisibility(circuitKey)
   const resolvedProps = {
     ...props,
     circuitJson,
     children: undefined,
-    hiddenCadComponentIds,
+    objectVisibility,
   }
   const [engine, setEngine] = useState<"jscad" | "manifold">(() => {
     const stored = window.localStorage.getItem("cadViewerEngine")
@@ -134,12 +147,20 @@ const CadViewerInner = (props: CadViewerProps) => {
   const sceneRef = useContext(SchematicNavigationContext)!
   const [selectedComponent, setSelectedComponent] =
     useState<ViewSchematicComponentEvent>()
-  const [selectedCadComponent, setSelectedCadComponent] =
-    useState<PickedCadComponent>()
+  const [selectedObject, setSelectedObject] = useState<PickedSceneObject>()
+  // Download GLTF exports only a right-clicked model; the board or empty
+  // space still exports the whole scene.
+  const [selectedModel, setSelectedModel] = useState<PickedSceneObject>()
   const handleMenuOpen = useCallback(
     (position: { x: number; y: number }) => {
-      setSelectedCadComponent(
-        pickCadComponent(sceneRef.current, position, circuitJson),
+      const picked = pickSceneObject(sceneRef.current, position, circuitJson)
+      setSelectedObject(picked)
+      setSelectedModel(
+        picked &&
+          sceneRef.current &&
+          findModelObject(sceneRef.current.rootObject, picked.objectId)
+          ? picked
+          : undefined,
       )
       setSelectedComponent(
         props.onViewSchematicComponent
@@ -309,155 +330,187 @@ const CadViewerInner = (props: CadViewerProps) => {
 
   const viewerKey = props.circuitJson ? circuitJsonKey : undefined
   return (
-    <div
-      key={viewerKey}
-      ref={containerRef}
-      style={{
-        width: "100%",
-        height: "100%",
-        position: "relative",
-        userSelect: "none",
-        MozUserSelect: "none",
-        msUserSelect: "none",
-        WebkitUserSelect: "none",
-        WebkitTouchCallout: "none",
-      }}
-      {...contextMenuEventHandlers}
-    >
-      {glbSource !== undefined ? (
-        <CadViewerGlb
-          source={glbSource}
-          hiddenCadComponentIds={hiddenCadComponentIds}
-          autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
-          clickToInteractEnabled={props.clickToInteractEnabled}
-          onUserInteraction={handleUserInteraction}
-          onCameraControllerReady={handleCameraControllerReady}
-          referenceObject={referenceObject}
+    <AssemblyExplosionContext.Provider value={explosion}>
+      <div
+        key={viewerKey}
+        ref={containerRef}
+        style={{
+          width: "100%",
+          height: "100%",
+          position: "relative",
+          userSelect: "none",
+          MozUserSelect: "none",
+          msUserSelect: "none",
+          WebkitUserSelect: "none",
+          WebkitTouchCallout: "none",
+        }}
+        {...contextMenuEventHandlers}
+      >
+        {explosionPanelOpen && (
+          <AssemblyExplosionControl
+            stages={explosion.stages}
+            amount={explosion.amount}
+            onChange={explosion.setAmount}
+            error={explosion.error}
+            onClose={() => {
+              explosion.setAmount(0)
+              setExplosionPanelSource(null)
+            }}
+          />
+        )}
+        {glbSource !== undefined ? (
+          <CadViewerGlb
+            source={glbSource}
+            objectVisibility={objectVisibility}
+            autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+            clickToInteractEnabled={props.clickToInteractEnabled}
+            onUserInteraction={handleUserInteraction}
+            onCameraControllerReady={handleCameraControllerReady}
+            referenceObject={referenceObject}
+          />
+        ) : hasFlexGeometry ? (
+          <CadViewerManifold
+            {...resolvedProps}
+            foldPcbs={foldPcbs}
+            autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+            onUserInteraction={handleUserInteraction}
+            onCameraControllerReady={handleCameraControllerReady}
+            referenceObject={referenceObject}
+          />
+        ) : engine === "jscad" ? (
+          <CadViewerJscad
+            {...resolvedProps}
+            autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+            cameraType={cameraType}
+            onUserInteraction={handleUserInteraction}
+            onCameraControllerReady={handleCameraControllerReady}
+            referenceObject={referenceObject}
+          />
+        ) : (
+          <CadViewerManifold
+            {...resolvedProps}
+            autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+            cameraType={cameraType}
+            onUserInteraction={handleUserInteraction}
+            onCameraControllerReady={handleCameraControllerReady}
+            referenceObject={referenceObject}
+          />
+        )}
+        <SectionPanel />
+        {menuVisible && (
+          <ContextMenu
+            hasAssembly={hasAssembly}
+            objectName={selectedObject?.name}
+            onHideObject={
+              selectedObject
+                ? () => {
+                    hideObject(selectedObject.objectId)
+                    closeMenu()
+                  }
+                : undefined
+            }
+            onIsolateObject={
+              selectedObject &&
+              objectVisibility.isolatedId !== selectedObject.objectId
+                ? () => {
+                    isolateObject(selectedObject.objectId)
+                    closeMenu()
+                  }
+                : undefined
+            }
+            onUnhideAll={
+              hasHiddenObjects(objectVisibility)
+                ? () => {
+                    unhideAllObjects()
+                    closeMenu()
+                  }
+                : undefined
+            }
+            onViewSchematicComponent={
+              selectedComponent && props.onViewSchematicComponent
+                ? () => {
+                    props.onViewSchematicComponent?.(selectedComponent)
+                    closeMenu()
+                  }
+                : undefined
+            }
+            explosionAvailable={
+              explosion.stages.length > 0 || !!explosion.error
+            }
+            onExplosionView={() => {
+              setExplosionPanelSource(circuitJson)
+              setAutoRotate(false)
+              closeMenu()
+            }}
+            onSectionView={() => {
+              if (!section?.spec)
+                section?.setSpec({
+                  axis: "x",
+                  offset: section.bounds
+                    ? (section.bounds.min.x + section.bounds.max.x) / 2
+                    : 0,
+                  flipped: false,
+                })
+              section?.setEditing(true)
+              setAutoRotate(false)
+              closeMenu()
+            }}
+            menuRef={menuRef}
+            menuPos={menuPos}
+            engine={engine}
+            preRendered={glbSource !== undefined}
+            flexScene={hasFlexGeometry}
+            foldPcbs={resolvedFoldPcbs}
+            onFoldPcbsToggle={
+              hasBends && glbSource === undefined
+                ? () => {
+                    setFoldPcbs(!resolvedFoldPcbs)
+                    setCameraPreset("Custom")
+                    closeMenu()
+                  }
+                : undefined
+            }
+            cameraPreset={cameraPreset}
+            autoRotate={autoRotate}
+            referenceObject={referenceObject}
+            onEngineSwitch={(newEngine) => {
+              setEngine(newEngine)
+              closeMenu()
+            }}
+            onCameraPresetSelect={handleCameraPresetSelect}
+            onAutoRotateToggle={() => {
+              toggleAutoRotate()
+              closeMenu()
+            }}
+            onReferenceObjectSelect={(nextReferenceObject) => {
+              setReferenceObject((currentReferenceObject) =>
+                toggleReferenceObject(
+                  currentReferenceObject,
+                  nextReferenceObject,
+                ),
+              )
+              setAutoRotate(false)
+              setAutoRotateUserToggled(true)
+              setCameraPreset("Custom")
+              closeMenu()
+            }}
+            downloadModelName={selectedModel?.name}
+            onDownloadGltf={() => {
+              downloadGltf(selectedModel, sceneRef.current?.rootObject)
+              closeMenu()
+            }}
+            onOpenKeyboardShortcuts={() => {
+              setIsKeyboardShortcutsDialogOpen(true)
+              closeMenu()
+            }}
+          />
+        )}
+        <KeyboardShortcutsDialog
+          open={isKeyboardShortcutsDialogOpen}
+          onClose={() => setIsKeyboardShortcutsDialogOpen(false)}
         />
-      ) : hasFlexGeometry ? (
-        <CadViewerManifold
-          {...resolvedProps}
-          foldPcbs={foldPcbs}
-          autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
-          onUserInteraction={handleUserInteraction}
-          onCameraControllerReady={handleCameraControllerReady}
-          referenceObject={referenceObject}
-        />
-      ) : engine === "jscad" ? (
-        <CadViewerJscad
-          {...resolvedProps}
-          autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
-          cameraType={cameraType}
-          onUserInteraction={handleUserInteraction}
-          onCameraControllerReady={handleCameraControllerReady}
-          referenceObject={referenceObject}
-        />
-      ) : (
-        <CadViewerManifold
-          {...resolvedProps}
-          autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
-          cameraType={cameraType}
-          onUserInteraction={handleUserInteraction}
-          onCameraControllerReady={handleCameraControllerReady}
-          referenceObject={referenceObject}
-        />
-      )}
-      <SectionPanel />
-      {menuVisible && (
-        <ContextMenu
-          hasAssembly={hasAssembly}
-          componentName={selectedCadComponent?.componentName}
-          onHideComponent={
-            selectedCadComponent
-              ? () => {
-                  hideComponent(selectedCadComponent.cad_component_id)
-                  closeMenu()
-                }
-              : undefined
-          }
-          onUnhideAllComponents={
-            hiddenCadComponentIds.size > 0
-              ? () => {
-                  unhideAllComponents()
-                  closeMenu()
-                }
-              : undefined
-          }
-          onViewSchematicComponent={
-            selectedComponent && props.onViewSchematicComponent
-              ? () => {
-                  props.onViewSchematicComponent?.(selectedComponent)
-                  closeMenu()
-                }
-              : undefined
-          }
-          onSectionView={() => {
-            if (!section?.spec)
-              section?.setSpec({
-                axis: "x",
-                offset: section.bounds
-                  ? (section.bounds.min.x + section.bounds.max.x) / 2
-                  : 0,
-                flipped: false,
-              })
-            section?.setEditing(true)
-            setAutoRotate(false)
-            closeMenu()
-          }}
-          menuRef={menuRef}
-          menuPos={menuPos}
-          engine={engine}
-          preRendered={glbSource !== undefined}
-          flexScene={hasFlexGeometry}
-          foldPcbs={resolvedFoldPcbs}
-          onFoldPcbsToggle={
-            hasBends && glbSource === undefined
-              ? () => {
-                  setFoldPcbs(!resolvedFoldPcbs)
-                  setCameraPreset("Custom")
-                  closeMenu()
-                }
-              : undefined
-          }
-          cameraPreset={cameraPreset}
-          autoRotate={autoRotate}
-          referenceObject={referenceObject}
-          onEngineSwitch={(newEngine) => {
-            setEngine(newEngine)
-            closeMenu()
-          }}
-          onCameraPresetSelect={handleCameraPresetSelect}
-          onAutoRotateToggle={() => {
-            toggleAutoRotate()
-            closeMenu()
-          }}
-          onReferenceObjectSelect={(nextReferenceObject) => {
-            setReferenceObject((currentReferenceObject) =>
-              toggleReferenceObject(
-                currentReferenceObject,
-                nextReferenceObject,
-              ),
-            )
-            setAutoRotate(false)
-            setAutoRotateUserToggled(true)
-            setCameraPreset("Custom")
-            closeMenu()
-          }}
-          onDownloadGltf={() => {
-            downloadGltf()
-            closeMenu()
-          }}
-          onOpenKeyboardShortcuts={() => {
-            setIsKeyboardShortcutsDialogOpen(true)
-            closeMenu()
-          }}
-        />
-      )}
-      <KeyboardShortcutsDialog
-        open={isKeyboardShortcutsDialogOpen}
-        onClose={() => setIsKeyboardShortcutsDialogOpen(false)}
-      />
-    </div>
+      </div>
+    </AssemblyExplosionContext.Provider>
   )
 }
 

@@ -109,14 +109,14 @@ export const CameraControllerProvider: React.FC<
 
   const getPresetConfig = useCallback(
     (preset: CameraPreset): CameraAnimationConfig | null => {
-      const targetVector = [
-        defaultTarget.x,
-        defaultTarget.y,
-        defaultTarget.z,
-      ] as const
-
       const camera = mainCameraRef.current
       const controls = controlsRef.current
+      const presetTarget = controls?.target ?? defaultTarget
+      const targetVector = [
+        presetTarget.x,
+        presetTarget.y,
+        presetTarget.z,
+      ] as const
 
       let distance = baseDistance
       if (camera && controls) {
@@ -128,9 +128,9 @@ export const CameraControllerProvider: React.FC<
           const angledOffset = distance / Math.sqrt(2)
           return {
             position: [
-              defaultTarget.x,
-              defaultTarget.y - angledOffset,
-              defaultTarget.z + angledOffset,
+              presetTarget.x,
+              presetTarget.y - angledOffset,
+              presetTarget.z + angledOffset,
             ],
             target: targetVector,
             up: [0, 0, 1],
@@ -139,9 +139,9 @@ export const CameraControllerProvider: React.FC<
         case "Top Down":
           return {
             position: [
-              defaultTarget.x,
-              defaultTarget.y,
-              defaultTarget.z + distance,
+              presetTarget.x,
+              presetTarget.y,
+              presetTarget.z + distance,
             ],
             target: targetVector,
             up: [0, 0, 1],
@@ -149,9 +149,9 @@ export const CameraControllerProvider: React.FC<
         case "Top Left Corner":
           return {
             position: [
-              defaultTarget.x - distance * 0.6,
-              defaultTarget.y - distance * 0.6,
-              defaultTarget.z + distance * 0.6,
+              presetTarget.x - distance * 0.6,
+              presetTarget.y - distance * 0.6,
+              presetTarget.z + distance * 0.6,
             ],
             target: targetVector,
             up: [0, 0, 1],
@@ -159,9 +159,9 @@ export const CameraControllerProvider: React.FC<
         case "Top Right Corner":
           return {
             position: [
-              defaultTarget.x + distance * 0.6,
-              defaultTarget.y - distance * 0.6,
-              defaultTarget.z + distance * 0.6,
+              presetTarget.x + distance * 0.6,
+              presetTarget.y - distance * 0.6,
+              presetTarget.z + distance * 0.6,
             ],
             target: targetVector,
             up: [0, 0, 1],
@@ -169,9 +169,9 @@ export const CameraControllerProvider: React.FC<
         case "Left Sideview":
           return {
             position: [
-              defaultTarget.x - distance,
-              defaultTarget.y,
-              defaultTarget.z,
+              presetTarget.x - distance,
+              presetTarget.y,
+              presetTarget.z,
             ],
             target: targetVector,
             up: [0, 0, 1],
@@ -179,9 +179,9 @@ export const CameraControllerProvider: React.FC<
         case "Right Sideview":
           return {
             position: [
-              defaultTarget.x + distance,
-              defaultTarget.y,
-              defaultTarget.z,
+              presetTarget.x + distance,
+              presetTarget.y,
+              presetTarget.z,
             ],
             target: targetVector,
             up: [0, 0, 1],
@@ -189,9 +189,9 @@ export const CameraControllerProvider: React.FC<
         case "Front":
           return {
             position: [
-              defaultTarget.x,
-              defaultTarget.y - distance,
-              defaultTarget.z,
+              presetTarget.x,
+              presetTarget.y - distance,
+              presetTarget.z,
             ],
             target: targetVector,
             up: [0, 0, 1],

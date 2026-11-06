@@ -19,7 +19,7 @@ import {
 import { SectionScene } from "../src/sections/SectionScene"
 import { createSectionExport } from "../src/sections/section-export"
 import { sectionPlane } from "../src/sections/section-geometry"
-import { pickCadComponent } from "../src/utils/pick-cad-component"
+import { pickSceneObject } from "../src/utils/pick-scene-object"
 
 // Uses the actual URL loader and GLB scene attachment, with only WebGL replaced.
 test("URL-loaded GLBs support transformed section caps, export, hiding, and source replacement", async () => {
@@ -98,7 +98,10 @@ test("URL-loaded GLBs support transformed section caps, export, hiding, and sour
     const result = useGlbModel(source)
     loaded = result?.model
     return result?.model ? (
-      <GlbScene model={result.model} hiddenCadComponentIds={hidden} />
+      <GlbScene
+        model={result.model}
+        objectVisibility={hidden && { hiddenIds: hidden }}
+      />
     ) : null
   }
   function Probe() {
@@ -190,9 +193,9 @@ test("URL-loaded GLBs support transformed section caps, export, hiding, and sour
     camera.position.set(15, 7, 30)
     camera.lookAt(15, 7, 0)
     camera.updateMatrixWorld()
-    expect(
-      pickCadComponent(context, { x: 100, y: 100 }, [])?.cad_component_id,
-    ).toBe("cad2")
+    expect(pickSceneObject(context, { x: 100, y: 100 }, [])?.objectId).toBe(
+      "cad2",
+    )
     await render("https://example.test/first.glb", new Set(["cad1"]))
     await step()
     await step()

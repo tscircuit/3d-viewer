@@ -70,16 +70,9 @@ export const JscadModel = ({
 
   useEffect(() => {
     if (!mesh) return
-    // An explicit CAD color overrides the geometry, rather than tinting it.
-    // Keep vertex colors intact so removing the override restores the plan.
-    mesh.material.color.set(color ?? 0xffffff)
-    mesh.material.vertexColors = color === undefined
-    mesh.material.needsUpdate = true
-  }, [mesh, color])
-
-  useEffect(() => {
-    if (!mesh) return
     const material = mesh.material
+    material.color.set(color ?? "#ffffff")
+    material.vertexColors = color === undefined
     material.transparent = isTranslucent
     material.opacity = isTranslucent ? 0.5 : 1
     material.depthWrite = !isTranslucent
@@ -89,7 +82,7 @@ export const JscadModel = ({
       castShadow: !isTranslucent,
       receiveShadow: true,
     })
-  }, [mesh, isTranslucent])
+  }, [mesh, isTranslucent, color])
 
   const material = mesh?.material
   const { boardTransformGroup } = useCadModelTransformGraph({
