@@ -24,12 +24,13 @@ test("replacing GLBs aborts pending requests, disposes old resources, and clears
       finishRequest = resolve
     })
   }) as typeof fetch)
-  let latest: ReturnType<typeof useGlbModel>
+  const renderState: { current?: ReturnType<typeof useGlbModel> } = {}
   const states: Array<ReturnType<typeof useGlbModel>> = []
   const Harness = ({ source }: { source: string | ArrayBuffer }) => {
-    latest = useGlbModel(source)
+    const latest = useGlbModel(source)
+    renderState.current = latest
     states.push(latest)
-    return <div>{latest?.error ?? (latest?.model ? "ready" : "loading")}</div>
+    return <div>{latest.error ?? (latest.isLoading ? "loading" : "ready")}</div>
   }
   const container = dom.window.document.getElementById("root")!
   const root = createRoot(container)
@@ -46,28 +47,34 @@ test("replacing GLBs aborts pending requests, disposes old resources, and clears
     })
     expect(signals[0]!.aborted).toBe(true)
     expect(container.textContent).toBe("ready")
-    const firstModel = latest!.model!
+    const firstModel = renderState.current!.model!
     const mesh = firstModel.getObjectByProperty("type", "Mesh") as THREE.Mesh
     const disposed = spyOn(mesh.geometry, "dispose")
-    // A -> invalid -> A must load a new scene, never reuse disposed A.
+    // Keep A displayed after a failed replacement and while loading A again.
     await act(async () => {
       root.render(<Harness source={new ArrayBuffer(10)} />)
     })
-    expect(disposed).toHaveBeenCalledTimes(1)
-    expect(latest?.error).toBeDefined()
+    expect(disposed).not.toHaveBeenCalled()
+    expect(renderState.current?.model).toBe(firstModel)
+    expect(renderState.current?.error).toBeDefined()
     states.length = 0
     await act(async () => {
       root.render(<Harness source={bytes} />)
     })
-    expect(states[0]).toBeUndefined()
+    expect(states[0]).toEqual({
+      model: firstModel,
+      isLoading: true,
+      error: undefined,
+    })
+    expect(disposed).toHaveBeenCalledTimes(1)
     expect(container.textContent).toBe("ready")
-    expect(latest!.model).not.toBe(firstModel)
-    const replacement = latest!.model!
+    expect(renderState.current!.model).not.toBe(firstModel)
+    const replacement = renderState.current!.model!
     // A stale network response must not replace the current scene.
     await act(async () => {
       finishRequest!(new Response(bytes))
     })
-    expect(latest!.model).toBe(replacement)
+    expect(renderState.current!.model).toBe(replacement)
     const replacementMesh = replacement.getObjectByProperty(
       "type",
       "Mesh",

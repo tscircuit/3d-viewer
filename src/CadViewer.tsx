@@ -72,7 +72,10 @@ export type CadViewerProps = Omit<
   circuitJson?: any[]
   /** Settled circuit retaining authored assembly.explosion stages. */
   circuit?: RootCircuit
-  /** Pre-rendered circuit-json-to-gltf GLB URL. Bypasses geometry/model generation. */
+  /**
+   * Pre-rendered circuit-json-to-gltf GLB URL. Bypasses geometry/model generation.
+   * Changing the GLB preserves the camera. Change the viewer key to frame a different board.
+   */
   glbUrl?: string
   /** In-memory alternative to glbUrl. Supply only one GLB source. */
   glbData?: ArrayBuffer
