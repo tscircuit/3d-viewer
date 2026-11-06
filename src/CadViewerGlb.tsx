@@ -1,4 +1,9 @@
-import { useEffect, useMemo, useState } from "react"
+import {
+  type ComponentProps,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from "react"
 import { useGlbModel } from "./hooks/useGlbModel"
 import * as THREE from "three"
 import { CadViewerContainer } from "./CadViewerContainer"
@@ -27,19 +32,7 @@ export function GlbScene({
     name: string
     position: [number, number, number]
   }>()
-  const bounds = useMemo(() => {
-    const box = new THREE.Box3().setFromObject(model)
-    if (box.isEmpty()) return
-    return {
-      minX: box.min.x,
-      maxX: box.max.x,
-      minY: box.min.y,
-      maxY: box.max.y,
-      minZ: box.min.z,
-      maxZ: box.max.z,
-    }
-  }, [model])
-  useEffect(() => {
+  useLayoutEffect(() => {
     rootObject.add(model)
     return () => {
       rootObject.remove(model)
@@ -96,7 +89,6 @@ export function GlbScene({
   }, [model, objectVisibility, addHoverable, removeHoverable])
   return (
     <>
-      {bounds && <FitCameraToComparison bounds={bounds} />}
       {hover && (
         <Html
           position={hover.position}
@@ -129,31 +121,75 @@ export function CadViewerGlb({
   onCameraControllerReady?: (controller: CameraController | null) => void
   referenceObject?: ReferenceObjectType | null
 }) {
-  const result = useGlbModel(source)
+  const { model, isLoading, error } = useGlbModel(source)
+  const message = error
+    ? `Unable to load 3D view: ${error}`
+    : "Loading 3D view..."
+  const role = error ? "alert" : "status"
+  if (!model) return <div role={role}>{message}</div>
 
-  const framing = useMemo(() => {
-    if (!result?.model) return undefined
-    const bounds = new THREE.Box3().setFromObject(result.model)
-    if (bounds.isEmpty()) return undefined
-    return {
-      boardDimensions: {
-        width: bounds.max.x - bounds.min.x,
-        height: bounds.max.y - bounds.min.y,
-      },
-      boardCenter: {
-        x: (bounds.min.x + bounds.max.x) / 2,
-        y: (bounds.min.y + bounds.max.y) / 2,
-      },
-    }
-  }, [result, source])
-
-  if (!result) return <div role="status">Loading 3D view...</div>
-  if (result.error)
-    return <div role="alert">Unable to load 3D view: {result.error}</div>
-  if (!result.model) return null
   return (
-    <CadViewerContainer {...containerProps} {...framing}>
-      <GlbScene model={result.model} objectVisibility={objectVisibility} />
+    <>
+      <GlbViewport
+        model={model}
+        objectVisibility={objectVisibility}
+        {...containerProps}
+      />
+      {(isLoading || error) && (
+        <div role={role} style={{ position: "absolute", top: 12, left: 12 }}>
+          {message}
+        </div>
+      )}
+    </>
+  )
+}
+
+function GlbViewport({
+  model,
+  objectVisibility,
+  ...containerProps
+}: Omit<ComponentProps<typeof CadViewerContainer>, "children"> & {
+  model: THREE.Group
+  objectVisibility?: ObjectVisibility
+}) {
+  const [framing, setFraming] = useState(() => getGlbFraming(model))
+  useEffect(() => {
+    if (framing) return
+    const nextFraming = getGlbFraming(model)
+    if (nextFraming) setFraming(nextFraming)
+  }, [framing, model])
+
+  return (
+    <CadViewerContainer
+      {...containerProps}
+      boardDimensions={framing?.boardDimensions}
+      boardCenter={framing?.boardCenter}
+    >
+      {framing && <FitCameraToComparison bounds={framing.bounds} />}
+      <GlbScene model={model} objectVisibility={objectVisibility} />
     </CadViewerContainer>
   )
+}
+
+function getGlbFraming(model: THREE.Group) {
+  const box = new THREE.Box3().setFromObject(model)
+  if (box.isEmpty()) return undefined
+  return {
+    bounds: {
+      minX: box.min.x,
+      maxX: box.max.x,
+      minY: box.min.y,
+      maxY: box.max.y,
+      minZ: box.min.z,
+      maxZ: box.max.z,
+    },
+    boardDimensions: {
+      width: box.max.x - box.min.x,
+      height: box.max.y - box.min.y,
+    },
+    boardCenter: {
+      x: (box.min.x + box.max.x) / 2,
+      y: (box.min.y + box.max.y) / 2,
+    },
+  }
 }
