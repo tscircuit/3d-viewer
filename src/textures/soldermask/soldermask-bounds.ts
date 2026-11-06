@@ -1,16 +1,23 @@
 import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
 import { calculateOutlineBounds } from "../../utils/outline-bounds"
+import {
+  findBoardsInPanel,
+  getNormalizedPanelCenter,
+} from "../../utils/resolve-panel-board-data"
 
-const boundsFromPanel = (panel: PcbPanel) => ({
-  minX: panel.center.x - panel.width / 2,
-  maxX: panel.center.x + panel.width / 2,
-  minY: panel.center.y - panel.height / 2,
-  maxY: panel.center.y + panel.height / 2,
-  width: panel.width,
-  height: panel.height,
-  centerX: panel.center.x,
-  centerY: panel.center.y,
-})
+const boundsFromPanel = (panel: PcbPanel, boardsInPanel: PcbBoard[]) => {
+  const center = getNormalizedPanelCenter(panel, boardsInPanel)
+  return {
+    minX: center.x - panel.width / 2,
+    maxX: center.x + panel.width / 2,
+    minY: center.y - panel.height / 2,
+    maxY: center.y + panel.height / 2,
+    width: panel.width,
+    height: panel.height,
+    centerX: center.x,
+    centerY: center.y,
+  }
+}
 
 const mergeBounds = (
   a: ReturnType<typeof calculateOutlineBounds>,
@@ -48,7 +55,10 @@ export const getSoldermaskRenderBounds = (
     panels[0]
 
   if (activePanel && activePanel.width > 0 && activePanel.height > 0) {
-    return boundsFromPanel(activePanel)
+    return boundsFromPanel(
+      activePanel,
+      findBoardsInPanel(boards, activePanel.pcb_panel_id),
+    )
   }
 
   const boardsForBounds = boards.length > 1 ? boards : [boardData]

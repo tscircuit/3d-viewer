@@ -1,6 +1,6 @@
 import { useBoardTextureVisibility } from "./useBoardTextureVisibility"
 import { su } from "@tscircuit/circuit-json-util"
-import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
+import type { AnyCircuitElement, PcbBoard } from "circuit-json"
 import type { ManifoldToplevel } from "manifold-3d"
 import { useEffect, useMemo, useRef, useState } from "react"
 import type { LayerVisibilityState } from "src/contexts/LayerVisibilityContext"
@@ -21,6 +21,7 @@ import { processNonPlatedHolesForManifold } from "../utils/manifold/process-non-
 import { processPlatedHolesForManifold } from "../utils/manifold/process-plated-holes"
 import { processViasForManifold } from "../utils/manifold/process-vias"
 import { manifoldMeshToThreeGeometry } from "../utils/manifold-mesh-to-three-geometry"
+import { resolveViewerBoardData } from "../utils/resolve-panel-board-data"
 
 export interface ManifoldGeoms {
   board?: {
@@ -66,36 +67,10 @@ export const useManifoldBoardBuilder = (
 
   const manifoldInstancesForCleanup = useRef<any[]>([])
 
-  const boardData = useMemo(() => {
-    // Check for panel first
-    const panels = circuitJson.filter(
-      (e) => e.type === "pcb_panel",
-    ) as PcbPanel[]
-    const boards = su(circuitJson).pcb_board.list()
-
-    if (panels.length > 0) {
-      // Use the panel as the board
-      const panel = panels[0]!
-      const firstBoardInPanel = boards.find(
-        (b) => b.pcb_panel_id === panel.pcb_panel_id,
-      )
-      return {
-        type: "pcb_board",
-        pcb_board_id: panel.pcb_panel_id,
-        center: panel.center,
-        width: panel.width,
-        height: panel.height,
-        thickness: firstBoardInPanel?.thickness ?? 1.4,
-        material: firstBoardInPanel?.material ?? "fr4",
-        num_layers: firstBoardInPanel?.num_layers ?? 2,
-        solder_mask_color: firstBoardInPanel?.solder_mask_color,
-      } as PcbBoard
-    }
-
-    // Skip boards that are inside a panel - only render the panel outline
-    const boardsNotInPanel = boards.filter((b) => !b.pcb_panel_id)
-    return boardsNotInPanel.length > 0 ? boardsNotInPanel[0]! : null
-  }, [circuitJson])
+  const boardData = useMemo(
+    () => resolveViewerBoardData(circuitJson),
+    [circuitJson],
+  )
 
   const isFauxBoard = useMemo(() => {
     const boards = su(circuitJson).pcb_board.list()
