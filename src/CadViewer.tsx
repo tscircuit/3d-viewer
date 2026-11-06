@@ -537,3 +537,6 @@ export const CadViewer = (props: CadViewerProps) => {
     </SchematicNavigationContext.Provider>
   )
 }
+
+export type Pcb3DProps = CadViewerProps
+export const Pcb3D = CadViewer
