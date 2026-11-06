@@ -22,7 +22,6 @@ import type {
   PcbBoard,
   PcbCutout,
   PcbHole,
-  PcbPanel,
   PcbPlatedHole,
   PcbVia,
 } from "circuit-json"
@@ -41,6 +40,7 @@ import {
   clampRectBorderRadius,
   extractRectBorderRadius,
 } from "./utils/rect-border-radius"
+import { resolveViewerBoardData } from "./utils/resolve-panel-board-data"
 
 const PAD_ROUNDED_SEGMENTS = 64
 const BOARD_CLIP_Z_MARGIN = 1
@@ -97,35 +97,7 @@ export class BoardGeomBuilder {
   ) {
     this.onCompleteCallback = onComplete
 
-    // Extract elements - check for panel first, then board
-    const panels = circuitJson.filter(
-      (e) => e.type === "pcb_panel",
-    ) as PcbPanel[]
-    const boards = su(circuitJson).pcb_board.list()
-
-    // If we have a panel, use it as the board outline
-    if (panels.length > 0) {
-      const panel = panels[0]!
-      const firstBoardInPanel = boards.find(
-        (b) => b.pcb_panel_id === panel.pcb_panel_id,
-      )
-      // Create a board-like object from the panel
-      this.board = {
-        type: "pcb_board",
-        pcb_board_id: panel.pcb_panel_id,
-        center: panel.center,
-        width: panel.width,
-        height: panel.height,
-        thickness: firstBoardInPanel?.thickness ?? 1.4,
-        material: firstBoardInPanel?.material ?? "fr4",
-        num_layers: firstBoardInPanel?.num_layers ?? 2,
-        solder_mask_color: firstBoardInPanel?.solder_mask_color,
-      } as PcbBoard
-    } else {
-      // Skip boards that are inside a panel - only render the panel outline
-      const boardsNotInPanel = boards.filter((b) => !b.pcb_panel_id)
-      this.board = boardsNotInPanel[0]!
-    }
+    this.board = resolveViewerBoardData(circuitJson)!
 
     this.plated_holes = su(circuitJson).pcb_plated_hole.list()
     this.holes = su(circuitJson).pcb_hole.list()

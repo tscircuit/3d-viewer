@@ -8,7 +8,12 @@ import { createCadCableObject, getCadCables } from "./three-components/CadCable"
 import { createBoardMaterial } from "./utils/create-board-material"
 import { createGeometryFromPolygons } from "./utils/create-geometry-from-polygons"
 import { getBoardEdgeColor } from "./utils/get-board-edge-color"
+import { normalizePanelCircuitJson } from "./utils/preprocess-circuit-json"
 import { renderComponent } from "./utils/render-component"
+import {
+  findBoardsInPanel,
+  resolveViewerBoardData,
+} from "./utils/resolve-panel-board-data"
 
 interface CircuitToSvgOptions {
   width?: number
@@ -88,13 +93,15 @@ export async function convertCircuitJsonTo3dSvg(
   pointLight.position.set(-10, -10, 10)
   scene.add(pointLight)
 
+  const normalizedCircuitJson = normalizePanelCircuitJson(circuitJson)
+
   // Add components
-  const components = su(circuitJson).cad_component.list()
+  const components = su(normalizedCircuitJson).cad_component.list()
   for (const component of components) {
     await renderComponent(component, scene)
   }
 
-  for (const cable of getCadCables(circuitJson)) {
+  for (const cable of getCadCables(normalizedCircuitJson)) {
     try {
       scene.add(createCadCableObject(cable))
     } catch (error) {
@@ -102,17 +109,15 @@ export async function convertCircuitJsonTo3dSvg(
     }
   }
 
-  const boards = su(circuitJson).pcb_board.list()
-  const firstPanel = circuitJson.find(
+  const boards = su(normalizedCircuitJson).pcb_board.list()
+  const firstPanel = normalizedCircuitJson.find(
     (circuitElement): circuitElement is PcbPanel =>
       circuitElement.type === "pcb_panel",
   )
-  const boardData = firstPanel
-    ? boards.find((board) => board.pcb_panel_id === firstPanel.pcb_panel_id)
-    : boards.find((board) => !board.pcb_panel_id)
+  const boardData = resolveViewerBoardData(normalizedCircuitJson)
 
   // Add board geometry after components
-  const boardGeom = createSimplifiedBoardGeom(circuitJson)
+  const boardGeom = createSimplifiedBoardGeom(normalizedCircuitJson)
   if (boardGeom) {
     const edgeColor = getBoardEdgeColor({
       material: boardData?.material ?? "fr4",
@@ -131,6 +136,51 @@ export async function convertCircuitJsonTo3dSvg(
       })
       const mesh = new THREE.Mesh(geometry, material)
       scene.add(mesh)
+    }
+
+    if (firstPanel) {
+      const childBoards = findBoardsInPanel(boards, firstPanel.pcb_panel_id)
+      const pcbThickness = childBoards[0]?.thickness ?? 1.2
+      const z = pcbThickness / 2 + 0.02
+      const outlineMaterial = new THREE.LineBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.65,
+      })
+
+      for (const childBoard of childBoards) {
+        const outlinePoints =
+          childBoard.outline && childBoard.outline.length >= 3
+            ? childBoard.outline
+            : childBoard.width && childBoard.height
+              ? [
+                  {
+                    x: childBoard.center.x - childBoard.width / 2,
+                    y: childBoard.center.y - childBoard.height / 2,
+                  },
+                  {
+                    x: childBoard.center.x + childBoard.width / 2,
+                    y: childBoard.center.y - childBoard.height / 2,
+                  },
+                  {
+                    x: childBoard.center.x + childBoard.width / 2,
+                    y: childBoard.center.y + childBoard.height / 2,
+                  },
+                  {
+                    x: childBoard.center.x - childBoard.width / 2,
+                    y: childBoard.center.y + childBoard.height / 2,
+                  },
+                ]
+              : []
+
+        if (outlinePoints.length >= 3) {
+          const vertices = outlinePoints.map(
+            (pt) => new THREE.Vector3(pt.x, pt.y, z),
+          )
+          const lineGeom = new THREE.BufferGeometry().setFromPoints(vertices)
+          scene.add(new THREE.LineLoop(lineGeom, outlineMaterial))
+        }
+      }
     }
   }
 
