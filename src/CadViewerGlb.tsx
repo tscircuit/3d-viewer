@@ -119,6 +119,7 @@ export function CadViewerGlb({
   source: string | ArrayBuffer
   objectVisibility?: ObjectVisibility
   autoRotateDisabled?: boolean
+  gizmoCubeDisabled?: boolean
   clickToInteractEnabled?: boolean
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
