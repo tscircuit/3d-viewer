@@ -47,6 +47,7 @@ export const RotationTracker = () => {
 
 interface Props {
   autoRotateDisabled?: boolean
+  gizmoCubeDisabled?: boolean
   initialCameraPosition?: readonly [number, number, number] | undefined
   clickToInteractEnabled?: boolean
   boardDimensions?: { width?: number; height?: number }
@@ -66,6 +67,7 @@ export const CadViewerContainer = forwardRef<
       children,
       initialCameraPosition = [5, -5, 5],
       autoRotateDisabled,
+      gizmoCubeDisabled,
       clickToInteractEnabled = false,
       boardDimensions,
       boardCenter,
@@ -122,7 +124,7 @@ export const CadViewerContainer = forwardRef<
 
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
-        <OrientationCubeCanvas />
+        {!gizmoCubeDisabled && <OrientationCubeCanvas />}
         <Canvas
           key={cameraSessionScope}
           ref={ref}
