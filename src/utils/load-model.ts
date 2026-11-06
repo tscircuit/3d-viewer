@@ -4,7 +4,37 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js"
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js"
 import { loadVrml } from "./vrml"
 
+// Global model cache to prevent duplicate loads and browser lag
+declare global {
+  interface Window {
+    TSCIRCUIT_MODEL_CACHE: Map<string, Promise<THREE.Object3D | null>>
+  }
+}
+
+if (typeof window !== "undefined" && !window.TSCIRCUIT_MODEL_CACHE) {
+  window.TSCIRCUIT_MODEL_CACHE = new Map()
+}
+
 export async function load3DModel(url: string): Promise<THREE.Object3D | null> {
+  if (typeof window !== "undefined") {
+    const cache = window.TSCIRCUIT_MODEL_CACHE
+    if (cache.has(url)) {
+      const cached = await cache.get(url)
+      // Clone so each usage gets its own independent scene graph node
+      return cached ? (cached.clone() as THREE.Object3D) : null
+    }
+  }
+
+  const loadPromise = loadModel(url)
+
+  if (typeof window !== "undefined") {
+    window.TSCIRCUIT_MODEL_CACHE.set(url, loadPromise)
+  }
+
+  return loadPromise
+}
+
+async function loadModel(url: string): Promise<THREE.Object3D | null> {
   if (url.endsWith(".stl")) {
     const loader = new STLLoader()
     const geometry = await loader.loadAsync(url)
