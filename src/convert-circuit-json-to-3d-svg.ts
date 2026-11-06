@@ -17,6 +17,8 @@ interface CircuitToSvgOptions {
   backgroundColor?: string
   padding?: number
   zoom?: number
+  hideCadComponents?: boolean
+  cadComponentsDisabled?: boolean
   camera?: {
     position: {
       x: number
@@ -89,9 +91,11 @@ export async function convertCircuitJsonTo3dSvg(
   scene.add(pointLight)
 
   // Add components
-  const components = su(circuitJson).cad_component.list()
-  for (const component of components) {
-    await renderComponent(component, scene)
+  if (!options.hideCadComponents && !options.cadComponentsDisabled) {
+    const components = su(circuitJson).cad_component.list()
+    for (const component of components) {
+      await renderComponent(component, scene)
+    }
   }
 
   for (const cable of getCadCables(circuitJson)) {
