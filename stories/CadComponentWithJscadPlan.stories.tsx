@@ -3,7 +3,7 @@ import { CadViewer } from "src/CadViewer"
 export const Default = () => (
   <CadViewer>
     <board width="10mm" height="10mm">
-      <bug
+      <chip
         footprint="soic8"
         name="U1"
         cadModel={{
