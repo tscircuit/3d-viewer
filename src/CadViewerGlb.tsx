@@ -152,28 +152,13 @@ function GlbViewport({
   model: THREE.Group
   objectVisibility?: ObjectVisibility
 }) {
-  const [framing] = useState(() => {
-    const box = new THREE.Box3().setFromObject(model)
-    if (box.isEmpty()) return undefined
-    return {
-      bounds: {
-        minX: box.min.x,
-        maxX: box.max.x,
-        minY: box.min.y,
-        maxY: box.max.y,
-        minZ: box.min.z,
-        maxZ: box.max.z,
-      },
-      boardDimensions: {
-        width: box.max.x - box.min.x,
-        height: box.max.y - box.min.y,
-      },
-      boardCenter: {
-        x: (box.min.x + box.max.x) / 2,
-        y: (box.min.y + box.max.y) / 2,
-      },
-    }
-  })
+  const [framing, setFraming] = useState(() => getGlbFraming(model))
+  useEffect(() => {
+    if (framing) return
+    const nextFraming = getGlbFraming(model)
+    if (nextFraming) setFraming(nextFraming)
+  }, [framing, model])
+
   return (
     <CadViewerContainer
       {...containerProps}
@@ -184,4 +169,27 @@ function GlbViewport({
       <GlbScene model={model} objectVisibility={objectVisibility} />
     </CadViewerContainer>
   )
+}
+
+function getGlbFraming(model: THREE.Group) {
+  const box = new THREE.Box3().setFromObject(model)
+  if (box.isEmpty()) return undefined
+  return {
+    bounds: {
+      minX: box.min.x,
+      maxX: box.max.x,
+      minY: box.min.y,
+      maxY: box.max.y,
+      minZ: box.min.z,
+      maxZ: box.max.z,
+    },
+    boardDimensions: {
+      width: box.max.x - box.min.x,
+      height: box.max.y - box.min.y,
+    },
+    boardCenter: {
+      x: (box.min.x + box.max.x) / 2,
+      y: (box.min.y + box.max.y) / 2,
+    },
+  }
 }
