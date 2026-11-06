@@ -1,14 +1,12 @@
-import jscad from "@jscad/modeling"
-import type { AnyCircuitElement } from "circuit-json"
+import type { CadComponent } from "circuit-json"
 import {
   convertCSGToThreeGeom,
   getJscadModelForFootprint,
 } from "jscad-electronics/vanilla"
-import { executeJscadOperations } from "jscad-planner"
 import * as THREE from "three"
 import * as jscadModeling from "@jscad/modeling"
+import { resolveJscadGeometries } from "../three-components/JscadModel"
 import { load3DModel } from "./load-model"
-import type { CadComponent } from "circuit-json"
 
 export async function renderComponent(
   component: CadComponent,
@@ -45,18 +43,43 @@ export async function renderComponent(
 
   // Handle JSCAD models
   if (component.model_jscad) {
-    const jscadObject = executeJscadOperations(
-      jscad as any,
-      component.model_jscad,
-    )
-    if (jscadObject && (jscadObject.polygons || jscadObject.sides)) {
-      const threeGeom = convertCSGToThreeGeom(jscadObject)
-      const material = new THREE.MeshStandardMaterial({
-        color: 0x888888,
-        metalness: 0.5,
-        roughness: 0.5,
-        side: THREE.DoubleSide,
-      })
+    const entries = resolveJscadGeometries(component.model_jscad as any)
+    for (const entry of entries) {
+      let geomToConvert = entry.geom
+      const hasVertexColor =
+        entry.color !== undefined || Array.isArray(entry.geom.color)
+      if (entry.color !== undefined && !Array.isArray(entry.geom.color)) {
+        if (Array.isArray(entry.color)) {
+          geomToConvert = {
+            ...entry.geom,
+            color: entry.color.slice(0, 3),
+          }
+        } else {
+          const threeColor = new THREE.Color(entry.color)
+          threeColor.convertLinearToSRGB()
+          geomToConvert = {
+            ...entry.geom,
+            color: [threeColor.r, threeColor.g, threeColor.b],
+          }
+        }
+      }
+
+      const threeGeom = convertCSGToThreeGeom(geomToConvert)
+      const material = new THREE.MeshStandardMaterial(
+        hasVertexColor
+          ? {
+              vertexColors: true,
+              metalness: 0.2,
+              roughness: 0.8,
+              side: THREE.DoubleSide,
+            }
+          : {
+              color: 0x888888,
+              metalness: 0.5,
+              roughness: 0.5,
+              side: THREE.DoubleSide,
+            },
+      )
       const mesh = new THREE.Mesh(threeGeom, material)
 
       if (component.position) {
@@ -80,19 +103,30 @@ export async function renderComponent(
 
   // Handle footprints
   if (component.footprinter_string) {
-    const { geometries } = getJscadModelForFootprint(
-      component.footprinter_string,
-      jscadModeling,
+    const normalizedFootprint = component.footprinter_string.replace(
+      /^pin-header(?=_|\d|\b)/i,
+      "pinheader",
     )
+    let modelResult: { geometries?: any[] } | null = null
+    try {
+      modelResult = getJscadModelForFootprint(
+        normalizedFootprint,
+        jscadModeling,
+      )
+    } catch {
+      modelResult = null
+    }
+    const geometries = modelResult?.geometries ?? []
 
     // Process each operation from the footprinter
     for (const geomInfo of geometries.flat(Infinity) as any[]) {
-      const geom = geomInfo.geom
+      if (!geomInfo) continue
+      const geom = geomInfo.geom ?? geomInfo
       if (!geom || (!geom.polygons && !geom.sides)) {
         continue
       }
 
-      const color = new THREE.Color(geomInfo.color)
+      const color = new THREE.Color(geomInfo.color ?? [0.6, 0.6, 0.6])
       color.convertLinearToSRGB()
       const geomWithColor = { ...geom, color: [color.r, color.g, color.b] }
 
