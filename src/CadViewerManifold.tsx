@@ -130,6 +130,8 @@ export const BoardMeshes = ({
 type CadViewerManifoldProps = {
   foldPcbs?: boolean
   autoRotateDisabled?: boolean
+  hideCadComponents?: boolean
+  cadComponentsDisabled?: boolean
   clickToInteractEnabled?: boolean
   cameraType?: "orthographic" | "perspective"
   onUserInteraction?: () => void
@@ -146,6 +148,8 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   circuitJson: circuitJsonProp,
   foldPcbs,
   autoRotateDisabled,
+  hideCadComponents,
+  cadComponentsDisabled,
   clickToInteractEnabled,
   onUserInteraction,
   children,
@@ -228,12 +232,19 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   ])
   const cadComponents = useMemo(
     () =>
-      su(flex.posedJson)
-        .cad_component.list()
-        .filter(
-          (cad) => !isObjectHidden(objectVisibility, cad.cad_component_id),
-        ),
-    [flex.posedJson, objectVisibility],
+      hideCadComponents || cadComponentsDisabled
+        ? []
+        : su(flex.posedJson)
+            .cad_component.list()
+            .filter(
+              (cad) => !isObjectHidden(objectVisibility, cad.cad_component_id),
+            ),
+    [
+      flex.posedJson,
+      objectVisibility,
+      hideCadComponents,
+      cadComponentsDisabled,
+    ],
   )
   const cadCables = useMemo(
     () =>
