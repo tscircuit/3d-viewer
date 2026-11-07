@@ -1,4 +1,10 @@
-export { CadViewer, type CadViewerProps } from "./CadViewer.tsx"
+export {
+  CadViewer,
+  Pcb3D,
+  type CadViewerProps,
+  type Pcb3DProps,
+} from "./CadViewer.tsx"
+
 export * from "./convert-circuit-json-to-3d-svg.ts"
 export * from "./hooks/index.ts"
 export * from "./utils/jsdom-shim.ts"
