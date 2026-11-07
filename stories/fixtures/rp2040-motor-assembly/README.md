@@ -1,6 +1,6 @@
 # Real RP2040 / NEMA17 explosion fixture
 
-Source board: [imrishabh18/rp2040-motor-controller v1.0.48](https://tscircuit.com/imrishabh18/rp2040-motor-controller), release `bc93e130-7357-4352-a45f-c9cf65563446`.
+Source board: our RP2040 motor-controller design, published as [imrishabh18/rp2040-motor-controller v1.0.48](https://tscircuit.com/imrishabh18/rp2040-motor-controller), release `bc93e130-7357-4352-a45f-c9cf65563446`.
 
 `assembly.tsx` is the custom assembly. It contains a NEMA17, four hollow nylon spacers, four M3x35 socket-head bolts, a vented PETG cover with mounting posts, and four authored explosion stages. The original board TSX is passed as `board={<Board />}`. The export uses its original routed copper, imported component footprints/models and ground-pour guards.
 
@@ -31,5 +31,3 @@ The test `rp2040-explosion-tsx-export.test.tsx` checks those hashes and renders 
 5. **Full-board compilation/import still has limitations.** Compiling the original board directly with core 0.0.2234 still trips its ground-pour guard. Importing its standalone JSON through `<subcircuit circuitJson>` fails because core has no inflator for `simple_fuse`. The pinned TSX build and explicit compatibility exporter preserve the real fuse and all routed copper without bypassing either limitation.
 
 The board stays at z=0. Motor rear face is z=-10; spacers span -10..-0.8; cover posts span 0.8..19; lid spans 19..21; bolt head undersides are z=21. Hole centers are (±15.5, ±15.5) mm. The nominal screws engage the modeled rear face by 4 mm. NEMA frame size does not guarantee a physical motor's rear thread pattern, encoder/magnet clearance or screw length. No cable or encoder magnet is claimed in this fixture, and core does not check swept collision clearance.
-
-The PCB perimeter derives from PD-Stepper; its upstream GPL-3.0 license is included as `PD-Stepper-LICENSE`. Original source attribution and mechanical caveats are retained in the source bundle.
