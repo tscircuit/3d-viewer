@@ -7,44 +7,116 @@ export const mechanicalParts = manifest.parts.filter(
     part.group !== "clearance" && !("viewerOnly" in part && part.viewerOnly),
 )
 
-// These are the model author's offsets, in mm, not a collision-checked
-// disassembly procedure. Zero-offset accessories remain in their original pose.
-export const explosionStages = [
-  { name: "access-panels", groups: ["door", "storage"] },
-  { name: "case-screws", groups: ["case-fasteners"] },
-  {
-    name: "rear-housing",
-    groups: ["rear", "battery", "rear-fasteners"],
-    ids: ["battery-clip-m1", "battery-clip-1"],
-  },
-  { name: "internal-fasteners", groups: ["fasteners", "speaker-fasteners"] },
-  { name: "front-housing", groups: ["front", "inserts"] },
-  {
-    name: "display",
-    groups: ["display"],
-    ids: ["lcd-slide-keeper-lower", "lcd-slide-keeper-upper"],
-  },
-  { name: "controls", groups: ["buttons", "joysticks", "cables"] },
-  { name: "speaker-module", groups: ["speaker"], ids: ["speaker-retainer"] },
-].map((stage) => ({
-  name: stage.name,
-  parts: mechanicalParts.filter(
-    (part) => stage.groups.includes(part.group) || stage.ids?.includes(part.id),
-  ),
-}))
+type Offset = [number, number, number]
+const namesFor = (parts: typeof mechanicalParts) =>
+  parts.map((p) => p.id.replaceAll("-", "_"))
+const select = (match: (part: (typeof mechanicalParts)[number]) => boolean) =>
+  mechanicalParts.filter(match)
 
-// Core plays moves within a stage in order. Parts sharing a translation must
-// use one move so paired meshes (LCD, joysticks, fasteners) travel together.
-function movesForStage(parts: typeof mechanicalParts) {
-  const groups = new Map<string, { offset: number[]; names: string[] }>()
-  for (const part of parts) {
-    const key = part.explode.join(",")
-    const group = groups.get(key) ?? { offset: part.explode, names: [] }
-    group.names.push(part.id.replaceAll("-", "_"))
-    groups.set(key, group)
+const userParts = select(
+  (p) =>
+    p.group === "door" ||
+    p.group === "storage" ||
+    /^aa-\d$/.test(p.id) ||
+    p.id === "usb-c-cable",
+)
+const rearParts = select(
+  (p) =>
+    ["rear", "rear-fasteners", "case-fasteners"].includes(p.group) ||
+    p.id === "aa-holder" ||
+    p.id.startsWith("battery-clip"),
+)
+const frontParts = mechanicalParts.filter(
+  (p) => !userParts.includes(p) && !rearParts.includes(p),
+)
+export const removalGroups = [
+  { name: "user-items", parts: userParts, parking: [-220, -240, 0] as Offset },
+  { name: "rear-housing", parts: rearParts, parking: [-220, 180, 0] as Offset },
+  {
+    name: "front-assembly",
+    parts: frontParts,
+    parking: [-220, 0, 0] as Offset,
+  },
+]
+const move = (parts: typeof mechanicalParts, offset: Offset) => ({
+  names: namesFor(parts),
+  offset,
+})
+function removalMoves(group: (typeof removalGroups)[number]) {
+  if (group.name === "user-items") {
+    const door = select((p) => p.id === "battery-door")
+    const cell = (i: number) => select((p) => p.id === `aa-${i}`)
+    const sd = select((p) => p.id === "micro-sd-card")
+    return [
+      move(door, [0, 0, -45]),
+      move(door, [0, -100, 0]),
+      move(cell(1), [0, 0, -55]),
+      move(cell(1), [-60, 0, 0]),
+      move(cell(2), [0, 0, -55]),
+      move(cell(2), [60, 0, 0]),
+      move(cell(0), [0, 3, 0]),
+      move(cell(0), [0, 0, -55]),
+      move(cell(3), [0, -3, 0]),
+      move(cell(3), [0, 0, -55]),
+      move(sd, [0, -60, 0]),
+      move(sd, [90, 0, 0]),
+      move(
+        select((p) => p.id === "usb-c-cable"),
+        [0, 70, 0],
+      ),
+    ]
   }
-  return [...groups.values()]
+  if (group.name === "rear-housing")
+    return [
+      move(
+        group.parts.filter((p) => p.group === "case-fasteners"),
+        [0, 0, -140],
+      ),
+      move(
+        group.parts.filter((p) => p.group === "case-fasteners"),
+        [0, -100, 0],
+      ),
+      move(
+        group.parts.filter((p) => p.group !== "case-fasteners"),
+        [0, 0, -65],
+      ),
+    ]
+  if (group.name === "front-assembly") {
+    const hardware = group.parts.filter((p) =>
+      /^front-pcb-(screw|washer)/.test(p.id),
+    )
+    return [
+      move(hardware, [0, 0, -45]),
+      move(hardware, [0, -100, 0]),
+      move(
+        group.parts.filter((p) => !hardware.includes(p)),
+        [0, 0, 65],
+      ),
+    ]
+  }
+  return [move(group.parts, [0, 0, -45])]
 }
+
+// Route along one axis at a time so a diagonal does not cut through the
+// remaining assembly or previously parked groups. Attached front modules
+// travel with the shell rather than having the shell slide through them.
+export const explosionStages = removalGroups.flatMap((group) => [
+  {
+    name: `remove-${group.name}`,
+    parts: group.parts,
+    moves: removalMoves(group),
+  },
+  {
+    name: `park-${group.name}-left`,
+    parts: group.parts,
+    moves: [
+      move(group.parts, [group.parking[0], 0, 0]),
+      ...(group.parking[1]
+        ? [move(group.parts, [0, group.parking[1], 0])]
+        : []),
+    ],
+  },
+])
 
 /** Drop-in mechanical enclosure with native explosion stages. */
 export function GameBoyEnclosure() {
@@ -83,9 +155,9 @@ export function GameBoyEnclosure() {
           name={stage.name}
           prevStageRef={index ? explosionStages[index - 1]!.name : undefined}
         >
-          {movesForStage(stage.parts).map((move) => (
+          {stage.moves.map((move, moveIndex) => (
             <assembly.explosion.move
-              key={move.names.join(",")}
+              key={moveIndex}
               targetRefs={move.names}
               offX={move.offset[0]}
               offY={move.offset[1]}

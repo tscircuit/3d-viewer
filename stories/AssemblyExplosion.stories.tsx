@@ -21,8 +21,8 @@ import type { CameraController } from "../src/hooks/cameraAnimation"
 const gameboyAdvance = JSON.parse(gameboyAdvanceJson) as AnyCircuitElement[]
 const frameGameboyAdvance = (controller: CameraController | null) =>
   controller?.animateTo({
-    position: [145, -180, 160],
-    target: [0, 0, 0],
+    position: [-110, -70.01, 600],
+    target: [-110, -70, 0],
     durationMs: 0,
   })
 

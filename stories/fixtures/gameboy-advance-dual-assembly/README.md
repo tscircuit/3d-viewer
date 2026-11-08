@@ -14,12 +14,44 @@ the source package, replace `mechanical/enclosure.tsx` with this file (keep its
 adjacent `manifest.json` and `cad-models.ts`). This viewer PR does not publish a
 new registry package release.
 
-Eight stages separate access panels, case screws, rear housing, internal
-fasteners, front housing, display, controls, and speaker. All 56 moving parts
-use the existing manifest's `explode` vectors. The volume wheel, USB cable,
-and all PCB-mounted electronics remain fixed. Joystick flex models move rigidly.
-This is an exploded visualization, not a collision-validated assembly procedure;
-the source project's existing mechanical fit and fabrication review holds apply.
+Six stages form three remove/park pairs: user accessories (battery door, four AA
+cells, SD card, USB cable), rear housing, and the complete front assembly.
+The front assembly retains its LCD, joysticks, controls, and speaker so the shell
+does not pass through its attached modules. The PCB-mounted electronics stay fixed.
+
+Each group clears the assembly before moving left together. Parking moves follow
+separate X and Y segments rather than diagonal shortcuts. The overhead camera
+shows the main assembly on the right and parked groups on the left, like a
+workbench. Reverse playback brings the groups back in assembly order.
+
+### Clearance validation and remaining extraction collisions
+
+`rendered-bounds.json` captures the actual rendered meshes in circuit coordinates.
+The unit test checks the entire swept bounding box of every parking segment
+against all other rendered parts. Those continuous checks pass.
+
+`clearance-report.json` records a triangle-mesh audit using python-fcl at a maximum
+0.25 mm travel interval. It found 66 initial contacts in the source model and **two
+remaining extraction collisions**: battery door/rear shell and front shell/power
+switch. There are no additional collisions in the checked motions. This is not a
+collision-free assembly procedure: sampling cannot prove continuous clearance,
+and the translation-only engine cannot simulate tilting the door or shell to
+release interlocking features. The source project's fit/fabrication holds remain.
+
+To reproduce the mesh audit, first serve the Playwright fixture with
+`bunx vite --config playwright/vite.config.ts`, then:
+
+```sh
+node scripts/export-gameboy-clearance-meshes.mjs /tmp/gba-meshes
+python -m venv /tmp/gba-clearance-venv
+/tmp/gba-clearance-venv/bin/pip install numpy python-fcl
+/tmp/gba-clearance-venv/bin/python scripts/check-gameboy-clearance.py /tmp/gba-meshes stories/fixtures/gameboy-advance-dual-assembly/assembled.circuit.json /tmp/gba-clearance-report.json
+```
+
+Set `CHROMIUM_PATH` when using a system Chromium. The mesh audit intentionally
+exits nonzero while the two extraction collisions remain. Meshes are temporary
+verification artifacts; the audit includes every rendered mechanical part and
+PCB/component mesh, but cannot check source components without rendered geometry.
 
 `build.tsx` renders the native enclosure to obtain the explosion program, matches
 its mechanical CAD targets to the published records by source name, and appends

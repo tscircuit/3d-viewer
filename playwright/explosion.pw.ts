@@ -397,18 +397,18 @@ test("Game Boy Advance dual RP2350 loads its enclosure and explodes without movi
     .getByRole("menuitem", { name: "Exploded view…", exact: true })
     .click()
   const slider = page.getByRole("slider", { name: "Assembly explosion" })
-  await expect(slider).toHaveAttribute("max", "8")
-  await slider.fill("0.25")
+  await expect(slider).toHaveAttribute("max", "6")
+  await slider.fill("2")
   await expect
     .poll(async () => (await positions()).cad_component_124)
-    .toEqual([0, -12.5, -34])
-  await slider.fill("8")
+    .toEqual([-220, -340, -45])
+  await slider.fill("6")
   await expect
     .poll(async () => (await positions()).cad_component_178)
-    .toEqual([0, 0, 40])
+    .toEqual([-220, 0, 65])
   await expect
     .poll(async () => (await positions()).cad_component_179)
-    .toEqual([0, 0, -32])
+    .toEqual([-220, 180, -65])
   const exploded = await positions()
   for (const [id, position] of Object.entries(original)) {
     const number = Number(id.split("_").at(-1))
