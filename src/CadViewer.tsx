@@ -17,6 +17,8 @@ import { hasHiddenObjects } from "./utils/object-visibility"
 import { findModelObject } from "./utils/find-model-object"
 import { configureRuntimeFont } from "./utils/configure-runtime-font"
 import {
+  lazy,
+  Suspense,
   useCallback,
   useContext,
   useEffect,
@@ -45,7 +47,6 @@ import { AssemblyExplosionControl } from "./assembly-explosion/AssemblyExplosion
 import type { AnyCircuitElement } from "circuit-json"
 
 import { CadViewerJscad } from "./CadViewerJscad"
-import CadViewerManifold from "./CadViewerManifold"
 import { CadViewerGlb } from "./CadViewerGlb"
 import { ContextMenu } from "./components/ContextMenu"
 import { KeyboardShortcutsDialog } from "./components/KeyboardShortcutsDialog"
@@ -71,6 +72,9 @@ import {
   type ReferenceObjectType,
   toggleReferenceObject,
 } from "./reference-objects/reference-object"
+
+// Keep the geometry renderer out of the GLB viewer's initial module graph.
+const CadViewerManifold = lazy(() => import("./CadViewerManifold"))
 
 export type CadViewerProps = Omit<
   React.ComponentProps<typeof CadViewerJscad>,
@@ -101,7 +105,7 @@ const CadViewerInner = (props: CadViewerProps) => {
     props.circuitJson || glbSource !== undefined ? undefined : props.children,
     props.circuitJson || glbSource !== undefined ? undefined : props.circuit,
     glbSource === undefined ? props.circuitJson : undefined,
-    props.assemblyExplosionRotations,
+    glbSource === undefined ? props.assemblyExplosionRotations : undefined,
   )
   const circuitJson: AnyCircuitElement[] =
     props.circuitJson ?? explosion.assembled
@@ -386,33 +390,37 @@ const CadViewerInner = (props: CadViewerProps) => {
             onCameraControllerReady={handleCameraControllerReady}
             referenceObject={referenceObject}
           />
-        ) : hasFlexGeometry ? (
-          <CadViewerManifold
-            {...resolvedProps}
-            foldPcbs={foldPcbs}
-            autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
-            onUserInteraction={handleUserInteraction}
-            onCameraControllerReady={handleCameraControllerReady}
-            referenceObject={referenceObject}
-          />
-        ) : engine === "jscad" ? (
-          <CadViewerJscad
-            {...resolvedProps}
-            autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
-            cameraType={cameraType}
-            onUserInteraction={handleUserInteraction}
-            onCameraControllerReady={handleCameraControllerReady}
-            referenceObject={referenceObject}
-          />
         ) : (
-          <CadViewerManifold
-            {...resolvedProps}
-            autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
-            cameraType={cameraType}
-            onUserInteraction={handleUserInteraction}
-            onCameraControllerReady={handleCameraControllerReady}
-            referenceObject={referenceObject}
-          />
+          <Suspense fallback={<div role="status">Loading 3D renderer...</div>}>
+            {hasFlexGeometry ? (
+              <CadViewerManifold
+                {...resolvedProps}
+                foldPcbs={foldPcbs}
+                autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+                onUserInteraction={handleUserInteraction}
+                onCameraControllerReady={handleCameraControllerReady}
+                referenceObject={referenceObject}
+              />
+            ) : engine === "jscad" ? (
+              <CadViewerJscad
+                {...resolvedProps}
+                autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+                cameraType={cameraType}
+                onUserInteraction={handleUserInteraction}
+                onCameraControllerReady={handleCameraControllerReady}
+                referenceObject={referenceObject}
+              />
+            ) : (
+              <CadViewerManifold
+                {...resolvedProps}
+                autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+                cameraType={cameraType}
+                onUserInteraction={handleUserInteraction}
+                onCameraControllerReady={handleCameraControllerReady}
+                referenceObject={referenceObject}
+              />
+            )}
+          </Suspense>
         )}
         <SectionPanel />
         {menuVisible && (

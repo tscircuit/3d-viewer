@@ -40,7 +40,7 @@
     "@jscad/regl-renderer": "^2.6.12",
     "@jscad/stl-serializer": "^2.1.20",
     "@tscircuit/cableprinter": "^0.0.6",
-    "circuit-json": "^0.0.539",
+    "circuit-json": "^0.0.548",
     "circuit-to-canvas": "^0.0.139",
     "jscad-electronics": "^0.0.213",
     "react-hot-toast": "^2.6.0",
@@ -101,7 +101,7 @@
     "node": "24.x"
   },
   "overrides": {
-    "circuit-json": "^0.0.539",
+    "circuit-json": "^0.0.548",
     "@tscircuit/props": "0.0.714"
   }
 }

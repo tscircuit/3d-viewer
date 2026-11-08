@@ -1,4 +1,8 @@
 import { expect, test } from "bun:test"
+import { JSDOM } from "jsdom"
+import { act, createElement } from "react"
+import { createRoot } from "react-dom/client"
+import { useAssemblyExplosion } from "../src/assembly-explosion/use-assembly-explosion"
 import * as THREE from "three"
 import type { AnyCircuitElement } from "circuit-json"
 import { createExplosionEvaluator } from "../src/assembly-explosion/create-explosion-evaluator"
@@ -122,4 +126,52 @@ test("invalid or duplicate rotation cues fail before playback", () => {
       { ...rotations[0]!, angleDegrees: NaN },
     ]),
   ).toThrow("finite")
+})
+
+test("the lazy assembly hook preserves rotations and reevaluates changes to rotation cues", async () => {
+  const dom = new JSDOM('<div id="root"></div>')
+  const previous = {
+    window: globalThis.window,
+    document: globalThis.document,
+    IS_REACT_ACT_ENVIRONMENT: (globalThis as any).IS_REACT_ACT_ENVIRONMENT,
+  }
+  Object.assign(globalThis, {
+    window: dom.window,
+    document: dom.window.document,
+    IS_REACT_ACT_ENVIRONMENT: true,
+  })
+  let state!: ReturnType<typeof useAssemblyExplosion>
+  function Harness({ cues }: { cues: readonly AssemblyExplosionRotation[] }) {
+    state = useAssemblyExplosion(undefined, undefined, fixture, cues)
+    return null
+  }
+  const root = createRoot(document.getElementById("root")!)
+  try {
+    await act(async () =>
+      root.render(createElement(Harness, { cues: rotations })),
+    )
+    for (let attempt = 0; attempt < 50 && !state.stages.length; attempt++)
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10))
+      })
+    expect(state.stages).toEqual(["lift", "flip", "move-button"])
+    await act(async () => state.setAmount(2))
+    const lidPosition = () =>
+      new THREE.Vector3(2, 0, 0)
+        .applyMatrix4(state.view!.assemblyTransforms!.get("lid")!)
+        .toArray()
+    close(lidPosition(), [-2, 0, 10])
+    await act(async () =>
+      root.render(
+        createElement(Harness, {
+          cues: [{ ...rotations[0]!, angleDegrees: 90 }],
+        }),
+      ),
+    )
+    close(lidPosition(), [0, 0, 8])
+  } finally {
+    await act(async () => root.unmount())
+    Object.assign(globalThis, previous)
+    dom.window.close()
+  }
 })

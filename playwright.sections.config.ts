@@ -9,6 +9,7 @@ export default defineConfig({
   projects: [
     { name: "sections", testMatch: "**/section.pw.ts" },
     { name: "canvas-context", testMatch: "**/canvas-context.pw.ts" },
+    { name: "renderer-loading", testMatch: "**/renderer-loading.pw.ts" },
   ],
   webServer: {
     command: "bunx vite --config playwright/vite.config.ts",
