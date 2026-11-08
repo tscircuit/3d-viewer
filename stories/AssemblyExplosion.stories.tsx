@@ -15,3 +15,21 @@ export default { title: "Assembly/Explosion", component: StagedTsx }
 export const Flex17AdjustableSpur = () => (
   <CadViewer autoRotateDisabled circuitJson={flex17 as AnyCircuitElement[]} />
 )
+
+import gameboyAdvanceJson from "./fixtures/gameboy-advance-dual-assembly/assembled.circuit.json?raw"
+import type { CameraController } from "../src/hooks/cameraAnimation"
+const gameboyAdvance = JSON.parse(gameboyAdvanceJson) as AnyCircuitElement[]
+const frameGameboyAdvance = (controller: CameraController | null) =>
+  controller?.animateTo({
+    position: [145, -180, 160],
+    target: [0, 0, 0],
+    durationMs: 0,
+  })
+
+export const GameboyAdvanceDualRp2350 = () => (
+  <CadViewer
+    circuitJson={gameboyAdvance}
+    autoRotateDisabled
+    onCameraControllerReady={frameGameboyAdvance}
+  />
+)

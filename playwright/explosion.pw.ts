@@ -260,3 +260,87 @@ test("FLEX17 sample exposes its authored explosion stages", async ({
   }
   await expect(page.getByRole("alert")).toHaveCount(0)
 })
+
+test("Game Boy Advance dual RP2350 loads its enclosure and explodes without moving the PCB", async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(120_000)
+  await page.goto("gameboy-advance-explosion.html")
+  const positions = () =>
+    page.evaluate(() => {
+      const result: Record<string, number[]> = {}
+      window.__TSCIRCUIT_THREE_OBJECT?.traverse((object) => {
+        if (object.userData.cad_component_id)
+          result[object.userData.cad_component_id] = object.position.toArray()
+      })
+      return result
+    })
+  await expect
+    .poll(async () => Object.keys(await positions()).length, {
+      timeout: 60_000,
+    })
+    .toBe(285)
+  // Wait for actual enclosure meshes, not just their empty scene groups.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          let loaded = 0
+          window.__TSCIRCUIT_THREE_OBJECT?.traverse((object) => {
+            const id = object.userData.cad_component_id
+            if (
+              !id ||
+              Number(id.split("_").at(-1)) < 124 ||
+              Number(id.split("_").at(-1)) > 181
+            )
+              return
+            let hasMesh = false
+            object.traverse((child: any) => {
+              if (child.isMesh) hasMesh = true
+            })
+            if (hasMesh) loaded++
+          })
+          return loaded
+        }),
+      { timeout: 90_000 },
+    )
+    .toBe(58)
+  const original = await positions()
+  await page
+    .locator("canvas")
+    .last()
+    .click({ button: "right", position: { x: 400, y: 350 } })
+  await page.getByRole("menuitem", { name: "Advanced", exact: true }).hover()
+  await page
+    .getByRole("menuitem", { name: "Exploded view…", exact: true })
+    .click()
+  const slider = page.getByRole("slider", { name: "Assembly explosion" })
+  await expect(slider).toHaveAttribute("max", "8")
+  await slider.fill("0.25")
+  await expect
+    .poll(async () => (await positions()).cad_component_124)
+    .toEqual([0, -12.5, -34])
+  await slider.fill("8")
+  await expect
+    .poll(async () => (await positions()).cad_component_178)
+    .toEqual([0, 0, 40])
+  await expect
+    .poll(async () => (await positions()).cad_component_179)
+    .toEqual([0, 0, -32])
+  const exploded = await positions()
+  for (const [id, position] of Object.entries(original)) {
+    const number = Number(id.split("_").at(-1))
+    if (number < 124 || number > 181) expect(exploded[id]).toEqual(position)
+  }
+  await testInfo.attach("gameboy-advance-exploded", {
+    body: await page.screenshot(),
+    contentType: "image/png",
+  })
+  await page.getByRole("button", { name: "Reset", exact: true }).click()
+  await expect.poll(positions).toEqual(original)
+  await testInfo.attach("gameboy-advance-assembled", {
+    body: await page.screenshot(),
+    contentType: "image/png",
+  })
+  await expect(page.getByRole("alert")).toHaveCount(0)
+})
