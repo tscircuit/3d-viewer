@@ -1,4 +1,4 @@
-import { useId } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import { zIndexMap } from "../../lib/utils/z-index-map"
 
 export function AssemblyExplosionControl({
@@ -15,6 +15,34 @@ export function AssemblyExplosionControl({
   onClose?: () => void
 }) {
   const id = useId()
+  const [playing, setPlaying] = useState(false)
+  const [stageDuration, setStageDuration] = useState(2)
+  const playback = useRef({ amount, onChange })
+  playback.current = { amount, onChange }
+
+  useEffect(() => {
+    if (!playing || error || !stages.length) return
+    let frame: number
+    let previous = performance.now()
+    const tick = (now: number) => {
+      const next = Math.min(
+        stages.length,
+        playback.current.amount + (now - previous) / (stageDuration * 1000),
+      )
+      previous = now
+      playback.current.amount = next
+      playback.current.onChange(next)
+      if (next >= stages.length) setPlaying(false)
+      else frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [playing, stageDuration, stages.length, error])
+
+  const seek = (value: number) => {
+    setPlaying(false)
+    onChange(value)
+  }
   if (!stages.length && !error) return null
   const stage = amount === 0 ? "Assembled" : stages[Math.ceil(amount) - 1]
   return (
@@ -38,7 +66,10 @@ export function AssemblyExplosionControl({
         <button
           type="button"
           aria-label="Close exploded view"
-          onClick={onClose}
+          onClick={() => {
+            setPlaying(false)
+            onClose()
+          }}
           style={{ float: "right", marginLeft: 12 }}
         >
           ×
@@ -59,15 +90,66 @@ export function AssemblyExplosionControl({
               max={stages.length}
               step={0.01}
               value={amount}
-              onChange={(event) => onChange(Number(event.target.value))}
+              onChange={(event) => seek(Number(event.target.value))}
             />
             <button
               type="button"
-              onClick={() => onChange(0)}
-              disabled={amount === 0}
+              onClick={() => seek(0)}
+              disabled={amount === 0 && !playing}
             >
               Reset
             </button>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              alignItems: "center",
+              marginTop: 8,
+              flexWrap: "wrap",
+            }}
+          >
+            <button
+              type="button"
+              aria-label="Previous explosion stage"
+              disabled={amount === 0}
+              onClick={() => seek(Math.max(0, Math.ceil(amount) - 1))}
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!playing && amount >= stages.length) onChange(0)
+                setPlaying(!playing)
+              }}
+            >
+              {playing ? "Pause" : amount >= stages.length ? "Replay" : "Play"}
+            </button>
+            <button
+              type="button"
+              aria-label="Next explosion stage"
+              disabled={amount >= stages.length}
+              onClick={() =>
+                seek(Math.min(stages.length, Math.floor(amount) + 1))
+              }
+            >
+              Next
+            </button>
+            <label htmlFor={`${id}-duration`}>Seconds per stage</label>
+            <input
+              id={`${id}-duration`}
+              type="number"
+              min={0.1}
+              step={0.1}
+              value={stageDuration}
+              style={{ width: 60 }}
+              onChange={(event) => {
+                const value = Number(event.target.value)
+                if (Number.isFinite(value) && value >= 0.1)
+                  setStageDuration(value)
+              }}
+            />
           </div>
         </>
       )}

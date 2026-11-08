@@ -15,7 +15,14 @@ import { useObjectVisibility } from "./hooks/useObjectVisibility"
 import { hasHiddenObjects } from "./utils/object-visibility"
 import { findModelObject } from "./utils/find-model-object"
 import { configureRuntimeFont } from "./utils/configure-runtime-font"
-import { useCallback, useContext, useEffect, useRef, useState } from "react"
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import * as THREE from "three"
 
 // Constants for camera initialization - defined once, reused across renders
@@ -109,8 +116,10 @@ const CadViewerInner = (props: CadViewerProps) => {
   )
   const foldPcbs = foldPcbsOverride ?? props.foldPcbs
   const resolvedFoldPcbs = resolveFoldPcbs(circuitJson, foldPcbs)
-  const circuitJsonKey =
-    glbSource === undefined ? JSON.stringify(circuitJson) : undefined
+  const circuitJsonKey = useMemo(
+    () => (glbSource === undefined ? JSON.stringify(circuitJson) : undefined),
+    [glbSource, circuitJson],
+  )
   const circuitKey = glbSource ?? circuitJsonKey!
   const { objectVisibility, hideObject, isolateObject, unhideAllObjects } =
     useObjectVisibility(circuitKey)

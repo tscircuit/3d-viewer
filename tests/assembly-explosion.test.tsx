@@ -189,3 +189,21 @@ test("viewer scrubs stages, resets on input changes, plays serialized JSON progr
     dom.window.close()
   }
 })
+
+test("FLEX17 sample includes playable serialized stages", async () => {
+  const sample = await Bun.file(
+    new URL("../stories/fixtures/flex17-spur.json", import.meta.url),
+  ).json()
+  const json = sample as Parameters<typeof getCircuitJsonAssemblyExplosion>[0]
+  const { stages } = getCircuitJsonAssemblyExplosion(json)
+  expect(stages.length).toBeGreaterThan(10)
+  const exploded = getCircuitJsonAssemblyExplosion(json, {
+    throughStageRef: stages[stages.length - 1],
+    stageProgress: 1,
+  })
+  expect(
+    [...getAssemblyOffsets(json, exploded).values()].some(
+      (v) => v.length() > 0,
+    ),
+  ).toBe(true)
+})
