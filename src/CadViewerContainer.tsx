@@ -81,6 +81,7 @@ export const CadViewerContainer = forwardRef<
   ) => {
     const section = useSection()
     const userInteractedRef = useRef(false)
+    const cameraConfiguredRef = useRef(false)
     const [isInteractionEnabled, setIsInteractionEnabled] = useState(
       !clickToInteractEnabled,
     )
@@ -95,11 +96,27 @@ export const CadViewerContainer = forwardRef<
       handleControlsChange: handleSessionControlsChange,
     } = useCameraSession({ cameraSessionScope })
 
+    const exposedController = useMemo<CameraController | null>(() => {
+      if (!controller || !fitCameraToModels) return controller
+      // An embedding app's explicit view takes priority over initial framing,
+      // including when its models finish loading after the camera command.
+      return {
+        animateTo: (config) => {
+          cameraConfiguredRef.current = true
+          controller.animateTo(config)
+        },
+        animateToPreset: (preset) => {
+          if (preset !== "Custom") cameraConfiguredRef.current = true
+          controller.animateToPreset(preset)
+        },
+      }
+    }, [controller, fitCameraToModels])
+
     useEffect(() => {
       if (onCameraControllerReady) {
-        onCameraControllerReady(controller)
+        onCameraControllerReady(exposedController)
       }
-    }, [controller, onCameraControllerReady])
+    }, [exposedController, onCameraControllerReady])
 
     const comparisonBounds = useMemo(() => {
       if (!referenceObject) return undefined
@@ -198,6 +215,7 @@ export const CadViewerContainer = forwardRef<
               enabled={!referenceObject}
               restoredCameraRef={restoredCameraRef}
               userInteractedRef={userInteractedRef}
+              cameraConfiguredRef={cameraConfiguredRef}
             />
           )}
         </Canvas>

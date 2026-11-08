@@ -8,10 +8,12 @@ import { fitCameraToBounds } from "../reference-objects/fit-camera-to-bounds"
 export function FitCameraToModels({
   restoredCameraRef,
   userInteractedRef,
+  cameraConfiguredRef,
   enabled,
 }: {
   restoredCameraRef: RefObject<THREE.Camera | null>
   userInteractedRef: RefObject<boolean>
+  cameraConfiguredRef?: RefObject<boolean>
   enabled: boolean
 }) {
   const { camera, rootObject } = useThree()
@@ -27,7 +29,7 @@ export function FitCameraToModels({
   )
 
   useFrame(() => {
-    if (restoredCameraRef.current === camera) {
+    if (restoredCameraRef.current === camera || cameraConfiguredRef?.current) {
       framing.finished = true
       return
     }
@@ -102,6 +104,7 @@ export function FitCameraToModels({
     enabled,
     restoredCameraRef,
     userInteractedRef,
+    cameraConfiguredRef,
   ])
 
   return null
