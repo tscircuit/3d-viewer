@@ -18,11 +18,13 @@ import { Lights } from "./react-three/Lights"
 import { OrbitControls } from "./react-three/OrbitControls"
 import { useFrame, useThree } from "./react-three/ThreeContext"
 import {
+  type Bounds3d,
   getComparisonBounds,
   type ReferenceObjectType,
 } from "./reference-objects/reference-object"
 import { OrientationCubeCanvas } from "./three-components/OrientationCubeCanvas"
 import {
+  FitCameraToBoardlessScene,
   FitCameraToComparison,
   ReferenceObject,
 } from "./three-components/reference-object"
@@ -96,17 +98,41 @@ export const CadViewerContainer = forwardRef<
       }
     }, [controller, onCameraControllerReady])
 
+    const [boardlessBounds, setBoardlessBounds] = useState<Bounds3d>()
+
+    const effectiveBoardDimensions = useMemo(() => {
+      if (boardDimensions) return boardDimensions
+      if (!boardlessBounds) return undefined
+      return {
+        width: boardlessBounds.maxX - boardlessBounds.minX,
+        height: boardlessBounds.maxY - boardlessBounds.minY,
+      }
+    }, [boardDimensions, boardlessBounds])
+
+    const effectiveBoardCenter = useMemo(() => {
+      if (boardCenter) return boardCenter
+      if (!boardlessBounds) return undefined
+      return {
+        x: (boardlessBounds.minX + boardlessBounds.maxX) / 2,
+        y: (boardlessBounds.minY + boardlessBounds.maxY) / 2,
+      }
+    }, [boardCenter, boardlessBounds])
+
     const comparisonBounds = useMemo(() => {
       if (!referenceObject) return undefined
-      return getComparisonBounds(referenceObject, boardDimensions, boardCenter)
-    }, [referenceObject, boardDimensions, boardCenter])
+      return getComparisonBounds(
+        referenceObject,
+        effectiveBoardDimensions,
+        effectiveBoardCenter,
+      )
+    }, [referenceObject, effectiveBoardDimensions, effectiveBoardCenter])
 
     const gridSectionSize = useMemo(() => {
-      if (!boardDimensions) return 10
-      const width = boardDimensions.width ?? 0
-      const height = boardDimensions.height ?? 0
+      if (!effectiveBoardDimensions) return 10
+      const width = effectiveBoardDimensions.width ?? 0
+      const height = effectiveBoardDimensions.height ?? 0
       return Math.max(Math.max(width, height) * 1.5, 10)
-    }, [boardDimensions])
+    }, [effectiveBoardDimensions])
 
     const orbitTarget = useMemo(() => {
       if (comparisonBounds) {
@@ -116,9 +142,18 @@ export const CadViewerContainer = forwardRef<
           (comparisonBounds.minZ + comparisonBounds.maxZ) / 2,
         ] as [number, number, number]
       }
-      if (!boardCenter) return undefined
-      return [boardCenter.x, boardCenter.y, 0] as [number, number, number]
-    }, [boardCenter, comparisonBounds])
+      if (boardCenter) {
+        return [boardCenter.x, boardCenter.y, 0] as [number, number, number]
+      }
+      if (boardlessBounds) {
+        return [
+          (boardlessBounds.minX + boardlessBounds.maxX) / 2,
+          (boardlessBounds.minY + boardlessBounds.maxY) / 2,
+          (boardlessBounds.minZ + boardlessBounds.maxZ) / 2,
+        ] as [number, number, number]
+      }
+      return undefined
+    }, [boardCenter, boardlessBounds, comparisonBounds])
 
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -156,16 +191,16 @@ export const CadViewerContainer = forwardRef<
             />
           )}
           <Lights
-            boardDimensions={boardDimensions}
-            boardCenter={boardCenter}
+            boardDimensions={effectiveBoardDimensions}
+            boardCenter={effectiveBoardCenter}
             darkBackgroundEnabled={darkBackgroundEnabled}
             shadowsEnabled={lightingEnabled}
           />
           {referenceObject && (
             <ReferenceObject
               type={referenceObject}
-              boardDimensions={boardDimensions}
-              boardCenter={boardCenter}
+              boardDimensions={effectiveBoardDimensions}
+              boardCenter={effectiveBoardCenter}
             />
           )}
           {comparisonBounds && (
@@ -180,6 +215,9 @@ export const CadViewerContainer = forwardRef<
             />
           )}
           {children}
+          {!boardDimensions && !boardCenter && !comparisonBounds && (
+            <FitCameraToBoardlessScene onBoundsChange={setBoardlessBounds} />
+          )}
         </Canvas>
         <div
           style={{

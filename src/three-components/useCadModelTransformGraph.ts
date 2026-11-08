@@ -30,7 +30,7 @@ export const useCadModelTransformGraph = ({
   modelFitMode = "contain_within_bounds",
   scale,
 }: UseCadModelTransformGraphOptions) => {
-  const { rootObject } = useThree()
+  const { rootObject, scene } = useThree()
   const boardTransformGroup = useMemo(() => new THREE.Group(), [])
   const fitTransformGroup = useMemo(() => new THREE.Group(), [])
   const modelTransformGroup = useMemo(() => new THREE.Group(), [])
@@ -122,6 +122,9 @@ export const useCadModelTransformGraph = ({
       modelFitMode,
     )
     fitTransformGroup.scale.set(fitScale[0], fitScale[1], fitScale[2])
+    if (!model.userData?.isFallback) {
+      scene?.dispatchEvent({ type: "cad-scene-updated" } as any)
+    }
   }, [
     boardTransformGroup,
     fitTransformGroup,
@@ -135,6 +138,7 @@ export const useCadModelTransformGraph = ({
     position,
     rotation,
     scale,
+    scene,
   ])
 
   return { boardTransformGroup }
