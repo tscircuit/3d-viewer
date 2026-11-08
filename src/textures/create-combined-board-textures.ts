@@ -250,7 +250,19 @@ export function createCombinedBoardTextures({
   visibility?: Partial<LayerVisibilityState>
 }): CombinedBoardTextures {
   const traceColor = toRgb(defaultColors.copper)
-  const silkscreenColor = "rgb(255,255,255)"
+  const requestedSilkscreenColor =
+    boardData.silkscreen_color &&
+    boardData.silkscreen_color !== "not_specified"
+      ? (() => {
+          try {
+            const c = new THREE.Color(boardData.silkscreen_color)
+            return `rgb(${Math.round(c.r * 255)},${Math.round(c.g * 255)},${Math.round(c.b * 255)})`
+          } catch {
+            return null
+          }
+        })()
+      : null
+  const silkscreenColor = requestedSilkscreenColor ?? "rgb(255,255,255)"
   const copperColor = toRgb(defaultColors.copper)
 
   const showBoardBody = visibility?.boardBody ?? true
