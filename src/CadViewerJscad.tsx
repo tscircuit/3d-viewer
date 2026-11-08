@@ -150,6 +150,7 @@ export const CadViewerJscad = forwardRef<
         boardDimensions={boardDimensions}
         boardCenter={boardCenter}
         cameraSessionScope={cameraSessionScope}
+        fitCameraToModels={!boardDimensions}
         referenceObject={referenceObject}
         onUserInteraction={onUserInteraction}
         onCameraControllerReady={onCameraControllerReady}

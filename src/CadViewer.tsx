@@ -1,3 +1,4 @@
+import type { AssemblyExplosionRotation } from "./assembly-explosion/rotation-playback"
 import { SectionProvider, useSection } from "./sections/SectionContext"
 import { SectionPanel } from "./sections/SectionPanel"
 import { SchematicNavigationContext } from "./contexts/SchematicNavigationContext"
@@ -83,6 +84,8 @@ export type CadViewerProps = Omit<
   circuitJson?: any[]
   /** Settled circuit retaining authored assembly.explosion stages. */
   circuit?: RootCircuit
+  /** Optional rotations for authored explosion moves; pivots are in circuit-world mm. */
+  assemblyExplosionRotations?: readonly AssemblyExplosionRotation[]
   /**
    * Pre-rendered circuit-json-to-gltf GLB URL. Bypasses geometry/model generation.
    * Changing the GLB preserves the camera. Change the viewer key to frame a different board.
@@ -102,6 +105,7 @@ const CadViewerInner = (props: CadViewerProps) => {
     props.circuitJson || glbSource !== undefined ? undefined : props.children,
     props.circuitJson || glbSource !== undefined ? undefined : props.circuit,
     glbSource === undefined ? props.circuitJson : undefined,
+    glbSource === undefined ? props.assemblyExplosionRotations : undefined,
   )
   const circuitJson: AnyCircuitElement[] =
     props.circuitJson ?? explosion.assembled
@@ -367,6 +371,8 @@ const CadViewerInner = (props: CadViewerProps) => {
             stages={explosion.stages}
             amount={explosion.amount}
             onChange={explosion.setAmount}
+            showGuidelines={explosion.showGuidelines}
+            onShowGuidelinesChange={explosion.setShowGuidelines}
             error={explosion.error}
             onClose={() => {
               explosion.setAmount(0)

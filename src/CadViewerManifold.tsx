@@ -312,6 +312,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
       boardDimensions={boardDimensions}
       boardCenter={boardCenter}
       cameraSessionScope={cameraSessionScope}
+      fitCameraToModels={!boardData}
       referenceObject={referenceObject}
       onUserInteraction={onUserInteraction}
       onCameraControllerReady={onCameraControllerReady}

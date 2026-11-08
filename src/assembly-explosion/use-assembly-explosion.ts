@@ -1,4 +1,5 @@
 import type { RootCircuit } from "@tscircuit/core"
+import type { AssemblyExplosionRotation } from "./rotation-playback"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import type { AnyCircuitElement } from "circuit-json"
 
@@ -11,7 +12,9 @@ export function useAssemblyExplosion(
   children?: ReactNode,
   circuit?: RootCircuit,
   circuitJson?: AnyCircuitElement[],
+  rotations?: readonly AssemblyExplosionRotation[],
 ) {
+  const [showGuidelines, setShowGuidelines] = useState(true)
   const [rendered, setRendered] = useState<{
     children: ReactNode
     circuit?: RootCircuit
@@ -54,11 +57,13 @@ export function useAssemblyExplosion(
     }
   }, [current, circuitJson])
   const assembled = source.assembled
-  const hasProgram = assembled.some(
-    (element) =>
-      element.type === "cad_explosion_stage" ||
-      element.type === "cad_explosion_move",
-  )
+  const hasProgram =
+    Boolean(rotations?.length) ||
+    assembled.some(
+      (element) =>
+        element.type === "cad_explosion_stage" ||
+        element.type === "cad_explosion_move",
+    )
   const [createEvaluator, setCreateEvaluator] =
     useState<typeof createExplosionEvaluator>()
   const [evaluatorError, setEvaluatorError] = useState<Error>()
@@ -89,7 +94,7 @@ export function useAssemblyExplosion(
       }
     }
     try {
-      const evaluate = createEvaluator(assembled)
+      const evaluate = createEvaluator(assembled, rotations)
       return { stages: evaluate().stages, evaluate }
     } catch (error) {
       return {
@@ -97,7 +102,7 @@ export function useAssemblyExplosion(
         error: error instanceof Error ? error : new Error(String(error)),
       }
     }
-  }, [assembled, hasProgram, createEvaluator, evaluatorError])
+  }, [assembled, rotations, hasProgram, createEvaluator, evaluatorError])
   // Store the source with the position so replacing a circuit resets immediately.
   const [selection, setSelection] = useState({ source: assembled, amount: 0 })
   const amount = selection.source === assembled ? selection.amount : 0
@@ -114,6 +119,8 @@ export function useAssemblyExplosion(
     })
   }, [assembled, authored, amount])
   return {
+    showGuidelines,
+    setShowGuidelines,
     assembled,
     view,
     stages: authored.stages,

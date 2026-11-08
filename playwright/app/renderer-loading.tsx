@@ -46,6 +46,18 @@ function Fixture() {
             circuitJson={circuitJson}
             glbUrl={source === "url" ? "renderer-test.glb" : undefined}
             glbData={source === "bytes" ? bytes : undefined}
+            assemblyExplosionRotations={
+              source === "json"
+                ? undefined
+                : [
+                    {
+                      stageName: "unused",
+                      axis: "z",
+                      angleDegrees: 90,
+                      pivot: [0, 0, 0],
+                    },
+                  ]
+            }
             autoRotateDisabled
           />
         )}
