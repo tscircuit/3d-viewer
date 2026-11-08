@@ -1,5 +1,5 @@
 import { su } from "@tscircuit/circuit-json-util"
-import type { AnyCircuitElement } from "circuit-json"
+import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
 import type * as React from "react"
 import { forwardRef, useMemo } from "react"
 import type * as THREE from "three"
@@ -79,42 +79,53 @@ export const CadViewerJscad = forwardRef<
       }
     }, [internalCircuitJson])
 
-    const boardDimensions = useMemo(() => {
+    const primarySurface = useMemo<PcbPanel | PcbBoard | undefined>(() => {
       if (!internalCircuitJson) return undefined
+      const panel = internalCircuitJson.find(
+        (e): e is PcbPanel => e.type === "pcb_panel",
+      )
+      if (panel) return panel
       try {
-        const board = su(internalCircuitJson).pcb_board.list()[0]
-        if (!board) return undefined
-        const bounds = calculateOutlineBounds(board)
+        return su(internalCircuitJson).pcb_board.list()[0]
+      } catch (e) {
+        console.error(e)
+        return undefined
+      }
+    }, [internalCircuitJson])
+
+    const boardDimensions = useMemo(() => {
+      if (!primarySurface) return undefined
+      try {
+        const bounds = calculateOutlineBounds(primarySurface)
         return { width: bounds.width, height: bounds.height }
       } catch (e) {
         console.error(e)
         return undefined
       }
-    }, [internalCircuitJson])
+    }, [primarySurface])
 
     const boardCenter = useMemo(() => {
-      if (!internalCircuitJson) return undefined
+      if (!primarySurface) return undefined
       try {
-        const board = su(internalCircuitJson).pcb_board.list()[0]
-        if (!board) return undefined
-        const bounds = calculateOutlineBounds(board)
+        const bounds = calculateOutlineBounds(primarySurface)
         return { x: bounds.centerX, y: bounds.centerY }
       } catch (e) {
         console.error(e)
         return undefined
       }
-    }, [internalCircuitJson])
+    }, [primarySurface])
 
     const cameraSessionScope = useMemo(() => {
-      if (!internalCircuitJson) return undefined
-      const board = su(internalCircuitJson).pcb_board.list()[0]
-      if (!board) return undefined
+      if (!primarySurface) return undefined
       return JSON.stringify({
-        pcbBoardId: board.pcb_board_id,
+        pcbBoardId:
+          primarySurface.type === "pcb_panel"
+            ? primarySurface.pcb_panel_id
+            : primarySurface.pcb_board_id,
         center: boardCenter,
         dimensions: boardDimensions,
       })
-    }, [internalCircuitJson, boardCenter, boardDimensions])
+    }, [primarySurface, boardCenter, boardDimensions])
 
     const initialCameraPosition = useMemo(() => {
       return getInitialCameraPosition({ boardDimensions, boardCenter })
