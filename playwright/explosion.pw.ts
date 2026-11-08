@@ -258,5 +258,87 @@ test("FLEX17 sample exposes its authored explosion stages", async ({
       )
       .toBeLessThan(0.001)
   }
+  const guidelines = page.getByRole("checkbox", { name: "Show guidelines" })
+  await expect(guidelines).toBeChecked()
+  const guidesVisible = () =>
+    page.evaluate(() => {
+      let visible = false
+      window.__TSCIRCUIT_THREE_OBJECT?.traverse((object) => {
+        if (object.userData.assemblyExplosionGuides) visible = object.visible
+      })
+      return visible
+    })
+  await guidelines.uncheck()
+  await expect.poll(guidesVisible).toBe(false)
+  await slider.fill("1.5")
+  await page
+    .getByRole("button", { name: "Play In Reverse", exact: true })
+    .click()
+  await expect
+    .poll(async () => Number(await slider.inputValue()))
+    .toBeLessThan(1.5)
+  await page.getByRole("button", { name: "Pause", exact: true }).click()
+  await expect.poll(guidesVisible).toBe(false)
+  const pausedAmount = await slider.inputValue()
+  await guidelines.check()
+  await expect.poll(guidesVisible).toBe(true)
+  await expect(slider).toHaveValue(pausedAmount)
   await expect(page.getByRole("alert")).toHaveCount(0)
+})
+
+test("reverse playback uses stage timing, switches direction, pauses and stops assembled", async ({
+  page,
+}) => {
+  await page.goto("explosion.html")
+  await page
+    .locator("canvas")
+    .last()
+    .click({ button: "right", position: { x: 400, y: 350 } })
+  await page.getByRole("menuitem", { name: "Advanced", exact: true }).hover()
+  await page
+    .getByRole("menuitem", { name: "Exploded view…", exact: true })
+    .click()
+  const slider = page.getByRole("slider", { name: "Assembly explosion" })
+  const reverse = page.getByRole("button", {
+    name: "Play In Reverse",
+    exact: true,
+  })
+  await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") })
+  await page.clock.pauseAt(new Date("2026-01-01T00:01:00Z"))
+  // At assembled, start at the fully exploded end of the timeline.
+  await reverse.click()
+  await expect(slider).toHaveValue("3")
+  await page.clock.runFor(1000)
+  expect(Number(await slider.inputValue())).toBeCloseTo(2.5, 1)
+  await page.getByRole("button", { name: "Pause", exact: true }).click()
+  const paused = await slider.inputValue()
+  await page.clock.runFor(500)
+  await expect(slider).toHaveValue(paused)
+  // Resume in reverse at a configurable speed, without jumping to the end.
+  await page.getByRole("spinbutton", { name: "Seconds per stage" }).fill("0.5")
+  await reverse.click()
+  await page.clock.runFor(500)
+  expect(Number(await slider.inputValue())).toBeCloseTo(1.5, 1)
+  await page.clock.runFor(1000)
+  await expect(slider).toHaveValue("0")
+  await expect(reverse).toHaveAttribute("aria-pressed", "false")
+  await expect(
+    page.getByRole("button", { name: "Play", exact: true }),
+  ).toBeVisible()
+  // Change direction during forward playback without resetting the position.
+  await slider.fill("1")
+  await page.getByRole("button", { name: "Play", exact: true }).click()
+  await page.clock.runFor(250)
+  const forward = Number(await slider.inputValue())
+  await reverse.click()
+  await page.clock.runFor(250)
+  expect(Number(await slider.inputValue())).toBeLessThan(forward)
+  expect(Number(await slider.inputValue())).toBeCloseTo(1, 1)
+  await slider.fill("2")
+  await page.clock.runFor(500)
+  await expect(slider).toHaveValue("2")
+  await reverse.click()
+  await page.getByRole("button", { name: "Reset", exact: true }).click()
+  await page.clock.runFor(500)
+  await expect(slider).toHaveValue("0")
 })
