@@ -16,6 +16,7 @@ export function AssemblyExplosionControl({
 }) {
   const id = useId()
   const [playing, setPlaying] = useState(false)
+  const [direction, setDirection] = useState<1 | -1>(1)
   const [stageDuration, setStageDuration] = useState(2)
   const playback = useRef({ amount, onChange })
   playback.current = { amount, onChange }
@@ -27,17 +28,21 @@ export function AssemblyExplosionControl({
     const tick = (now: number) => {
       const next = Math.min(
         stages.length,
-        playback.current.amount + (now - previous) / (stageDuration * 1000),
+        Math.max(
+          0,
+          playback.current.amount +
+            (direction * (now - previous)) / (stageDuration * 1000),
+        ),
       )
       previous = now
       playback.current.amount = next
       playback.current.onChange(next)
-      if (next >= stages.length) setPlaying(false)
+      if (direction === 1 ? next >= stages.length : next <= 0) setPlaying(false)
       else frame = requestAnimationFrame(tick)
     }
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
-  }, [playing, stageDuration, stages.length, error])
+  }, [playing, direction, stageDuration, stages.length, error])
 
   const seek = (value: number) => {
     setPlaying(false)
@@ -120,11 +125,25 @@ export function AssemblyExplosionControl({
             <button
               type="button"
               onClick={() => {
-                if (!playing && amount >= stages.length) onChange(0)
+                if (!playing) {
+                  setDirection(1)
+                  if (amount >= stages.length) onChange(0)
+                }
                 setPlaying(!playing)
               }}
             >
               {playing ? "Pause" : amount >= stages.length ? "Replay" : "Play"}
+            </button>
+            <button
+              type="button"
+              aria-pressed={playing && direction === -1}
+              onClick={() => {
+                if (amount <= 0) onChange(stages.length)
+                setDirection(-1)
+                setPlaying(true)
+              }}
+            >
+              Play In Reverse
             </button>
             <button
               type="button"
