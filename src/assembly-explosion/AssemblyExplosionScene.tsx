@@ -3,10 +3,16 @@ import type { AssemblyExplosionView } from "@tscircuit/core"
 import type { AnyCircuitElement } from "circuit-json"
 import * as THREE from "three"
 import { useFrame, useThree } from "../react-three/ThreeContext"
+import { useCameraController } from "../contexts/CameraControllerContext"
+import {
+  fitExplosionCamera,
+  getVisibleSolidBounds,
+} from "./fit-explosion-camera"
 
 export const AssemblyExplosionContext = createContext<{
   assembled: AnyCircuitElement[]
   view?: AssemblyExplosionView
+  fitRequested?: { current: boolean }
 } | null>(null)
 
 export function getAssemblyOffsets(
@@ -64,7 +70,8 @@ export function applyAssemblyOffsets(
 
 export function AssemblyExplosionScene() {
   const state = useContext(AssemblyExplosionContext)
-  const { rootObject } = useThree()
+  const { rootObject, camera } = useThree()
+  const { controlsRef, controller } = useCameraController()
   const bases = useMemo(
     () => new Map<THREE.Object3D, THREE.Vector3>(),
     [rootObject],
@@ -78,7 +85,31 @@ export function AssemblyExplosionScene() {
       applyAssemblyOffsets(rootObject, offsets, bases)
       if (!state?.view) bases.clear()
     }
-  }, [rootObject, state?.view, offsets, bases])
+    if (state?.fitRequested?.current) {
+      const bounds = getVisibleSolidBounds(rootObject)
+      const center =
+        bounds && fitExplosionCamera(camera, bounds, controlsRef.current)
+      if (center) {
+        state.fitRequested.current = false
+        // Replace an in-flight camera preset so it cannot undo this explicit fit.
+        controller?.animateTo({
+          position: camera.position.toArray(),
+          target: center.toArray(),
+          up: camera.up.toArray(),
+          durationMs: 0,
+        })
+      }
+    }
+  }, [
+    rootObject,
+    camera,
+    state?.view,
+    state?.fitRequested,
+    offsets,
+    bases,
+    controlsRef,
+    controller,
+  ])
   useEffect(
     () => () => {
       for (const [object, base] of bases) object.position.copy(base)

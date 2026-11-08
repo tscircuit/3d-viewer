@@ -7,12 +7,14 @@ export function AssemblyExplosionControl({
   onChange,
   error,
   onClose,
+  onFit,
 }: {
   stages: string[]
   amount: number
   onChange: (amount: number) => void
   error?: Error
   onClose?: () => void
+  onFit?: () => void
 }) {
   const id = useId()
   if (!stages.length && !error) return null
@@ -61,6 +63,11 @@ export function AssemblyExplosionControl({
               value={amount}
               onChange={(event) => onChange(Number(event.target.value))}
             />
+            {onFit && (
+              <button type="button" onClick={onFit}>
+                Fit explosion
+              </button>
+            )}
             <button
               type="button"
               onClick={() => onChange(0)}

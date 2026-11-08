@@ -15,7 +15,14 @@ import { useObjectVisibility } from "./hooks/useObjectVisibility"
 import { hasHiddenObjects } from "./utils/object-visibility"
 import { findModelObject } from "./utils/find-model-object"
 import { configureRuntimeFont } from "./utils/configure-runtime-font"
-import { useCallback, useContext, useEffect, useRef, useState } from "react"
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import * as THREE from "three"
 
 // Constants for camera initialization - defined once, reused across renders
@@ -98,6 +105,11 @@ const CadViewerInner = (props: CadViewerProps) => {
     AnyCircuitElement[] | null
   >(null)
   const explosionPanelOpen = explosionPanelSource === circuitJson
+  // The request survives a loading renderer, but belongs only to this circuit.
+  const explosionFitRequested = useMemo(
+    () => ({ current: false }),
+    [circuitJson],
+  )
   const hasAssembly = circuitJson.some(
     (element) => element.type === "cad_component" && !element.pcb_component_id,
   )
@@ -333,7 +345,9 @@ const CadViewerInner = (props: CadViewerProps) => {
 
   const viewerKey = props.circuitJson ? circuitJsonKey : undefined
   return (
-    <AssemblyExplosionContext.Provider value={explosion}>
+    <AssemblyExplosionContext.Provider
+      value={{ ...explosion, fitRequested: explosionFitRequested }}
+    >
       <div
         key={viewerKey}
         ref={containerRef}
@@ -354,6 +368,11 @@ const CadViewerInner = (props: CadViewerProps) => {
             stages={explosion.stages}
             amount={explosion.amount}
             onChange={explosion.setAmount}
+            onFit={() => {
+              setAutoRotate(false)
+              setCameraPreset("Custom")
+              explosionFitRequested.current = true
+            }}
             error={explosion.error}
             onClose={() => {
               explosion.setAmount(0)
