@@ -213,7 +213,14 @@ test("click-to-interact attaches controls without losing the fitted view", async
     .toBe(0)
   const before = await page.evaluate(() => window.__cameraTest.snapshot()!)
   await page.getByRole("button", { name: "Click to Interact" }).click()
-  await page.waitForTimeout(300)
+  // Controls receive the fitted target in the render loop. A busy software
+  // renderer can take longer than a fixed delay to produce the next frame.
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      }),
+  )
   const after = await page.evaluate(() => window.__cameraTest.snapshot()!)
   expectSameVector(after.position, before.position)
   expectSameVector(after.quaternion, before.quaternion)
