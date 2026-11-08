@@ -363,6 +363,8 @@ const CadViewerInner = (props: CadViewerProps) => {
             stages={explosion.stages}
             amount={explosion.amount}
             onChange={explosion.setAmount}
+            showGuidelines={explosion.showGuidelines}
+            onShowGuidelinesChange={explosion.setShowGuidelines}
             error={explosion.error}
             onClose={() => {
               explosion.setAmount(0)

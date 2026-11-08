@@ -258,6 +258,31 @@ test("FLEX17 sample exposes its authored explosion stages", async ({
       )
       .toBeLessThan(0.001)
   }
+  const guidelines = page.getByRole("checkbox", { name: "Show guidelines" })
+  await expect(guidelines).toBeChecked()
+  const guidesVisible = () =>
+    page.evaluate(() => {
+      let visible = false
+      window.__TSCIRCUIT_THREE_OBJECT?.traverse((object) => {
+        if (object.userData.assemblyExplosionGuides) visible = object.visible
+      })
+      return visible
+    })
+  await guidelines.uncheck()
+  await expect.poll(guidesVisible).toBe(false)
+  await slider.fill("1.5")
+  await page
+    .getByRole("button", { name: "Play In Reverse", exact: true })
+    .click()
+  await expect
+    .poll(async () => Number(await slider.inputValue()))
+    .toBeLessThan(1.5)
+  await page.getByRole("button", { name: "Pause", exact: true }).click()
+  await expect.poll(guidesVisible).toBe(false)
+  const pausedAmount = await slider.inputValue()
+  await guidelines.check()
+  await expect.poll(guidesVisible).toBe(true)
+  await expect(slider).toHaveValue(pausedAmount)
   await expect(page.getByRole("alert")).toHaveCount(0)
 })
 

@@ -12,6 +12,7 @@ export function useAssemblyExplosion(
   circuit?: RootCircuit,
   circuitJson?: AnyCircuitElement[],
 ) {
+  const [showGuidelines, setShowGuidelines] = useState(true)
   const [rendered, setRendered] = useState<{
     children: ReactNode
     circuit?: RootCircuit
@@ -79,6 +80,8 @@ export function useAssemblyExplosion(
     })
   }, [assembled, authored, amount])
   return {
+    showGuidelines,
+    setShowGuidelines,
     assembled,
     view,
     stages: authored.stages,

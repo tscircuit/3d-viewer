@@ -8,6 +8,7 @@ import { useFrame, useThree } from "../react-three/ThreeContext"
 export const AssemblyExplosionContext = createContext<{
   assembled: AnyCircuitElement[]
   view?: AssemblyExplosionView
+  showGuidelines?: boolean
 } | null>(null)
 
 export function getAssemblyOffsets(
@@ -99,9 +100,10 @@ export function AssemblyExplosionScene() {
       applyAssemblyOffsets(rootObject, offsets, bases)
       if (!state?.view) bases.clear()
     }
-    const points = state?.view
-      ? getAssemblyGuidePoints(rootObject, state.view)
-      : []
+    const points =
+      state?.view && state.showGuidelines !== false
+        ? getAssemblyGuidePoints(rootObject, state.view)
+        : []
     guides.visible = points.length > 0
     if (!points.length) return
     let positions = guides.geometry.getAttribute("position") as
@@ -134,7 +136,7 @@ export function AssemblyExplosionScene() {
     distances.needsUpdate = true
     guides.geometry.setDrawRange(0, points.length)
     guides.geometry.computeBoundingSphere()
-  }, [rootObject, state?.view, offsets, bases, guides])
+  }, [rootObject, state?.view, state?.showGuidelines, offsets, bases, guides])
   useEffect(
     () => () => {
       for (const [object, base] of bases) object.position.copy(base)

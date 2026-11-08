@@ -7,12 +7,16 @@ export function AssemblyExplosionControl({
   onChange,
   error,
   onClose,
+  showGuidelines = true,
+  onShowGuidelinesChange,
 }: {
   stages: string[]
   amount: number
   onChange: (amount: number) => void
   error?: Error
   onClose?: () => void
+  showGuidelines?: boolean
+  onShowGuidelinesChange?: (visible: boolean) => void
 }) {
   const id = useId()
   const [playing, setPlaying] = useState(false)
@@ -85,6 +89,25 @@ export function AssemblyExplosionControl({
       ) : (
         <>
           <label htmlFor={id}>Assembly explosion: {stage}</label>
+          {onShowGuidelinesChange && (
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                marginTop: 8,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={showGuidelines}
+                onChange={(event) =>
+                  onShowGuidelinesChange(event.target.checked)
+                }
+              />
+              Show guidelines
+            </label>
+          )}
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <input
               id={id}
