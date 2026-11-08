@@ -1,4 +1,7 @@
-import { getCircuitJsonAssemblyExplosion } from "@tscircuit/core"
+import {
+  getCircuitJsonAssemblyExplosion,
+  type AssemblyExplosionView,
+} from "@tscircuit/core"
 import type { AnyCircuitElement } from "circuit-json"
 
 /**
@@ -24,6 +27,8 @@ export function createExplosionEvaluator(assembled: AnyCircuitElement[]) {
           position: element.position,
           rotation: element.rotation,
           layer: element.layer,
+          anchor_alignment: element.anchor_alignment,
+          model_object_fit: element.model_object_fit,
         })
         break
       case "cad_reference_surface":
@@ -35,7 +40,9 @@ export function createExplosionEvaluator(assembled: AnyCircuitElement[]) {
         break
     }
   }
-  return (options?: Parameters<typeof getCircuitJsonAssemblyExplosion>[1]) => {
+  return (
+    options?: Parameters<typeof getCircuitJsonAssemblyExplosion>[1],
+  ): AssemblyExplosionView => {
     const view = getCircuitJsonAssemblyExplosion(motion, options)
     const positions = new Map<string, { x: number; y: number; z: number }>()
     const centers = new Map<string, { x: number; y: number; z: number }>()
