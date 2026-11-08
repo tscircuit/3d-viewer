@@ -1,8 +1,8 @@
-import { Circuit, type RootCircuit } from "@tscircuit/core"
+import type { RootCircuit } from "@tscircuit/core"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import type { AnyCircuitElement } from "circuit-json"
 
-import { createExplosionEvaluator } from "./create-explosion-evaluator"
+import type { createExplosionEvaluator } from "./create-explosion-evaluator"
 
 const EMPTY: AnyCircuitElement[] = []
 
@@ -20,9 +20,11 @@ export function useAssemblyExplosion(
   useEffect(() => {
     if (!children || circuit) return
     let cancelled = false
-    const next = new Circuit()
     const render = async () => {
       try {
+        const { Circuit } = await import("@tscircuit/core")
+        if (cancelled) return
+        const next = new Circuit()
         next.add(children as Parameters<RootCircuit["add"]>[0])
         await next.renderUntilSettled()
         if (!cancelled) setRendered({ children, circuit: next })
@@ -52,9 +54,42 @@ export function useAssemblyExplosion(
     }
   }, [current, circuitJson])
   const assembled = source.assembled
+  const hasProgram = assembled.some(
+    (element) =>
+      element.type === "cad_explosion_stage" ||
+      element.type === "cad_explosion_move",
+  )
+  const [createEvaluator, setCreateEvaluator] =
+    useState<typeof createExplosionEvaluator>()
+  const [evaluatorError, setEvaluatorError] = useState<Error>()
+  useEffect(() => {
+    if (!hasProgram) return
+    let cancelled = false
+    setEvaluatorError(undefined)
+    import("./create-explosion-evaluator")
+      .then((module) => {
+        if (!cancelled)
+          setCreateEvaluator(() => module.createExplosionEvaluator)
+      })
+      .catch((error) => {
+        if (!cancelled)
+          setEvaluatorError(
+            error instanceof Error ? error : new Error(String(error)),
+          )
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [hasProgram])
   const authored = useMemo(() => {
+    if (!hasProgram || !createEvaluator) {
+      return {
+        stages: [] as string[],
+        error: hasProgram ? evaluatorError : undefined,
+      }
+    }
     try {
-      const evaluate = createExplosionEvaluator(assembled)
+      const evaluate = createEvaluator(assembled)
       return { stages: evaluate().stages, evaluate }
     } catch (error) {
       return {
@@ -62,7 +97,7 @@ export function useAssemblyExplosion(
         error: error instanceof Error ? error : new Error(String(error)),
       }
     }
-  }, [assembled])
+  }, [assembled, hasProgram, createEvaluator, evaluatorError])
   // Store the source with the position so replacing a circuit resets immediately.
   const [selection, setSelection] = useState({ source: assembled, amount: 0 })
   const amount = selection.source === assembled ? selection.amount : 0
