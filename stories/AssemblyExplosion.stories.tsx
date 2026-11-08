@@ -18,17 +18,19 @@ export const Flex17AdjustableSpur = () => (
 
 import gameboyAdvanceJson from "./fixtures/gameboy-advance-dual-assembly/assembled.circuit.json?raw"
 import type { CameraController } from "../src/hooks/cameraAnimation"
+import { gameboyExplosionRotations } from "./fixtures/gameboy-advance-dual-assembly/rotations"
 const gameboyAdvance = JSON.parse(gameboyAdvanceJson) as AnyCircuitElement[]
 const frameGameboyAdvance = (controller: CameraController | null) =>
   controller?.animateTo({
-    position: [-110, -70.01, 600],
-    target: [-110, -70, 0],
+    position: [-215, -70.01, 650],
+    target: [-215, -70, 0],
     durationMs: 0,
   })
 
 export const GameboyAdvanceDualRp2350 = () => (
   <CadViewer
     circuitJson={gameboyAdvance}
+    assemblyExplosionRotations={gameboyExplosionRotations}
     autoRotateDisabled
     onCameraControllerReady={frameGameboyAdvance}
   />

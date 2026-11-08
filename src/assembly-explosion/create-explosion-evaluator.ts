@@ -1,7 +1,9 @@
 import {
-  getCircuitJsonAssemblyExplosion,
-  type AssemblyExplosionView,
-} from "@tscircuit/core"
+  createRotationPlayback,
+  type AssemblyExplosionRotation,
+  type RigidExplosionView,
+} from "./rotation-playback"
+import { getCircuitJsonAssemblyExplosion } from "@tscircuit/core"
 import type { AnyCircuitElement } from "circuit-json"
 
 /**
@@ -9,7 +11,13 @@ import type { AnyCircuitElement } from "circuit-json"
  * input: playback only needs identities, positions, and the authored program.
  * Reattach immutable model data by reference for consumers of the full view.
  */
-export function createExplosionEvaluator(assembled: AnyCircuitElement[]) {
+export function createExplosionEvaluator(
+  assembled: AnyCircuitElement[],
+  rotations: readonly AssemblyExplosionRotation[] = [],
+) {
+  const rotate = rotations.length
+    ? createRotationPlayback(assembled, rotations)
+    : undefined
   const motion: AnyCircuitElement[] = []
   const visible = assembled.filter(
     (element) =>
@@ -42,7 +50,7 @@ export function createExplosionEvaluator(assembled: AnyCircuitElement[]) {
   }
   return (
     options?: Parameters<typeof getCircuitJsonAssemblyExplosion>[1],
-  ): AssemblyExplosionView => {
+  ): RigidExplosionView => {
     const view = getCircuitJsonAssemblyExplosion(motion, options)
     const positions = new Map<string, { x: number; y: number; z: number }>()
     const centers = new Map<string, { x: number; y: number; z: number }>()
@@ -52,7 +60,7 @@ export function createExplosionEvaluator(assembled: AnyCircuitElement[]) {
       if (element.type === "cad_reference_surface")
         centers.set(element.cad_reference_surface_id, element.center)
     }
-    return {
+    const result = {
       ...view,
       circuitJson: visible.map((element) => {
         if (element.type === "cad_component")
@@ -68,5 +76,6 @@ export function createExplosionEvaluator(assembled: AnyCircuitElement[]) {
         return element
       }),
     }
+    return rotate ? rotate(result, options) : result
   }
 }

@@ -1,5 +1,17 @@
 {
   "sampleSpacingMm": 0.25,
+  "rotations": [
+    {
+      "stageName": "EnclosureR43.flip-front-cover",
+      "axis": "x",
+      "angleDegrees": 180,
+      "pivot": [
+        -220,
+        0,
+        73
+      ]
+    }
+  ],
   "initialContacts": [
     [
       "lcd_body",
@@ -283,6 +295,6 @@
     }
   ],
   "sourceReleaseId": "f18f9b16-dac9-4c8d-9be5-0829dc6eb3c0",
-  "assembledSha256": "c6b1641347b2f34b2af1b994f27f7bc27817f2b377508d844b8a93ec93eac5e8",
+  "assembledSha256": "9c4025e309fe48a4c845d3a9b5e03d8fd423bd4b9786cf5118306d7a95b62a90",
   "method": "Rendered triangle meshes checked with python-fcl at at most 0.25 mm travel intervals. Existing assembled contacts allowed only until first separation. Sampling is not a proof of continuous collision freedom."
 }

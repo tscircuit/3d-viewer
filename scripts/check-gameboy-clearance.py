@@ -7,11 +7,12 @@ import fcl
 import numpy as np
 from pathlib import Path
 
-if len(sys.argv) != 4:
+if len(sys.argv) not in (4, 5):
     sys.exit(
-        "Usage: python scripts/check-gameboy-clearance.py <mesh-directory> <circuit.json> <report.json>"
+        "Usage: python scripts/check-gameboy-clearance.py <mesh-directory> <circuit.json> <report.json> [rotations.json]"
     )
-mesh_directory, circuit_path, report_path = sys.argv[1:]
+mesh_directory, circuit_path, report_path = sys.argv[1:4]
+rotations = json.load(open(sys.argv[4])) if len(sys.argv) == 5 else []
 geometry = {
     p.stem: p
     for p in Path(mesh_directory).glob("*.json")
@@ -45,7 +46,7 @@ for id, path in geometry.items():
     model.addSubModel(v, f)
     model.endModel()
     objects[id] = fcl.CollisionObject(model)
-    offsets[id] = np.zeros(3)
+    offsets[id] = np.eye(4)
 del geometry
 print("loaded", len(objects), flush=True)
 Path(mesh_directory, "rendered-bounds.json").write_text(
@@ -91,6 +92,31 @@ for a in keys:
         if interval(bounds[a], bounds[b], np.zeros(3)) and collide(a, b):
             baseline.add(pair)
 print("initial mesh contacts", len(baseline), flush=True)
+
+
+def transformed_bounds(id, matrix):
+    corners = np.array(
+        [
+            [x, y, z, 1]
+            for x in bounds[id][:, 0]
+            for y in bounds[id][:, 1]
+            for z in bounds[id][:, 2]
+        ]
+    )
+    points = (matrix @ corners.T).T[:, :3]
+    return np.array([points.min(axis=0), points.max(axis=0)])
+
+
+def place(id, matrix):
+    objects[id].setTransform(fcl.Transform(matrix[:3, :3], matrix[:3, 3]))
+
+
+def translation(vector):
+    m = np.eye(4)
+    m[:3, 3] = vector
+    return m
+
+
 failures = []
 for stage in [e for e in circuit if e["type"] == "cad_explosion_stage"]:
     for move in [
@@ -101,22 +127,66 @@ for stage in [e for e in circuit if e["type"] == "cad_explosion_stage"]:
     ]:
         targets = [t["cad_component_id"] for t in move["targets"]]
         delta = np.array([move["translation"][k] for k in "xyz"])
+        cue = next(
+            (
+                r
+                for r in rotations
+                if r["stageName"] == stage["name"]
+                and r.get("moveIndex", 0) == move["order"]
+            ),
+            None,
+        )
+
+        def step(t):
+            m = translation(delta * t)
+            if cue:
+                axis = "xyz".index(cue["axis"])
+                angle = math.radians(cue["angleDegrees"]) * t
+                c, sn = math.cos(angle), math.sin(angle)
+                r = np.eye(4)
+                i, j = (axis + 1) % 3, (axis + 2) % 3
+                r[i, i] = r[j, j] = c
+                r[i, j], r[j, i] = -sn, sn
+                pivot = np.array(cue["pivot"])
+                m = translation(pivot) @ r @ translation(-pivot) @ m
+            return m
+
         for a in targets:
             if a not in objects:
                 raise RuntimeError("Missing geometry " + a)
+            before = offsets[a]
+            box = transformed_bounds(a, before)
+            if cue:
+                pivot = np.array(cue["pivot"])
+                radius = np.linalg.norm(
+                    np.maximum(abs(box[0] - pivot), abs(box[1] - pivot))
+                ) + np.linalg.norm(delta)
+                swept = np.array([pivot - radius, pivot + radius])
+                travel = radius * abs(
+                    math.radians(cue["angleDegrees"])
+                ) + np.linalg.norm(delta)
             for b in keys:
                 if b in targets:
                     continue
-                hit = interval(bounds[a] + offsets[a], bounds[b] + offsets[b], delta)
+                obstacle = transformed_bounds(b, offsets[b])
+                hit = (
+                    interval(swept, obstacle, np.zeros(3))
+                    if cue
+                    else interval(box, obstacle, delta)
+                )
                 if hit is None:
                     continue
                 pair = tuple(sorted([a, b]))
                 allowed = pair in baseline and collide(a, b)
-                lo, hi = hit
-                # Maximum 0.25 mm travel between mesh collision probes, including endpoints.
-                count = max(1, math.ceil(np.linalg.norm(delta) * (hi - lo) / 0.25))
+                lo, hi = (0.0, 1.0) if cue else hit
+                count = max(
+                    1,
+                    math.ceil(
+                        (travel if cue else np.linalg.norm(delta)) * (hi - lo) / 0.25
+                    ),
+                )
                 for t in np.linspace(lo, hi, count + 1):
-                    objects[a].setTranslation(offsets[a] + delta * t)
+                    place(a, step(t) @ before)
                     contact = collide(a, b)
                     if not contact:
                         allowed = False
@@ -131,13 +201,15 @@ for stage in [e for e in circuit if e["type"] == "cad_explosion_stage"]:
                             )
                         )
                         break
-                objects[a].setTranslation(offsets[a])
+                place(a, before)
         for a in targets:
-            offsets[a] += delta
-            objects[a].setTranslation(offsets[a])
+            offsets[a] = step(1) @ offsets[a]
+            place(a, offsets[a])
     print(stage["name"], "new collisions", len(failures), flush=True)
+
 report = {
     "sampleSpacingMm": 0.25,
+    "rotations": rotations,
     "initialContacts": [[names.get(k, k) for k in p] for p in sorted(baseline)],
     "newCollisions": failures,
     "sourceReleaseId": "f18f9b16-dac9-4c8d-9be5-0829dc6eb3c0",

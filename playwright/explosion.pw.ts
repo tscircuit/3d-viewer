@@ -387,6 +387,16 @@ test("Game Boy Advance dual RP2350 loads its enclosure and explodes without movi
       { timeout: 90_000 },
     )
     .toBe(58)
+  const rotations = () =>
+    page.evaluate(() => {
+      const result: Record<string, number[]> = {}
+      window.__TSCIRCUIT_THREE_OBJECT?.traverse((object) => {
+        if (object.userData.cad_component_id)
+          result[object.userData.cad_component_id] = object.quaternion.toArray()
+      })
+      return result
+    })
+  const originalRotations = await rotations()
   const original = await positions()
   await page
     .locator("canvas")
@@ -397,7 +407,7 @@ test("Game Boy Advance dual RP2350 loads its enclosure and explodes without movi
     .getByRole("menuitem", { name: "Exploded view…", exact: true })
     .click()
   const slider = page.getByRole("slider", { name: "Assembly explosion" })
-  await expect(slider).toHaveAttribute("max", "6")
+  await expect(slider).toHaveAttribute("max", "13")
   await slider.fill("2")
   await expect
     .poll(async () => (await positions()).cad_component_124)
@@ -409,6 +419,29 @@ test("Game Boy Advance dual RP2350 loads its enclosure and explodes without movi
   await expect
     .poll(async () => (await positions()).cad_component_179)
     .toEqual([-220, 180, -65])
+  await slider.fill("6.5")
+  await expect
+    .poll(async () => Math.abs((await rotations()).cad_component_178![0]!))
+    .toBeCloseTo(Math.SQRT1_2, 3)
+  await slider.fill("7")
+  await expect
+    .poll(async () => Math.abs((await rotations()).cad_component_178![0]!))
+    .toBeCloseTo(1, 3)
+  await testInfo.attach("gameboy-front-inside-up", {
+    body: await page.screenshot(),
+    contentType: "image/png",
+  })
+  await slider.fill("13")
+  await expect
+    .poll(async () => (await positions()).cad_component_165)
+    .toEqual([-420, 160, 146])
+  await expect
+    .poll(async () => (await positions()).cad_component_139)
+    .toEqual([-420, -160, 146])
+  // Seeking backward restores the original orientation, not just translation.
+  await slider.fill("6")
+  await expect.poll(rotations).toEqual(originalRotations)
+  await slider.fill("13")
   const exploded = await positions()
   for (const [id, position] of Object.entries(original)) {
     const number = Number(id.split("_").at(-1))
@@ -420,6 +453,7 @@ test("Game Boy Advance dual RP2350 loads its enclosure and explodes without movi
   })
   await page.getByRole("button", { name: "Reset", exact: true }).click()
   await expect.poll(positions).toEqual(original)
+  await expect.poll(rotations).toEqual(originalRotations)
   await testInfo.attach("gameboy-advance-assembled", {
     body: await page.screenshot(),
     contentType: "image/png",

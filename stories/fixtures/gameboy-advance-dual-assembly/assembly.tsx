@@ -118,6 +118,70 @@ export const explosionStages = removalGroups.flatMap((group) => [
   },
 ])
 
+const frontCover = frontParts.filter(
+  (p) => !/^front-pcb-(screw|washer)/.test(p.id),
+)
+export const analogStickParts = select(
+  (p) =>
+    ["joysticks", "cables"].includes(p.group) ||
+    /^(left|right)-ear-screw/.test(p.id),
+)
+export const buttonParts = select((p) => p.group === "buttons")
+const analogScrews = analogStickParts.filter((p) => p.id.includes("ear-screw"))
+const speakerParts = select(
+  (p) =>
+    ["speaker", "speaker-fasteners"].includes(p.group) ||
+    p.id === "speaker-retainer",
+)
+explosionStages.push(
+  // A zero-translation move reserves a full stage for the viewer's rotation cue.
+  {
+    name: "flip-front-cover",
+    parts: frontCover,
+    moves: [move(frontCover, [0, 0, 0])],
+  },
+  {
+    name: "remove-analog-sticks",
+    parts: analogStickParts,
+    moves: [
+      move(analogScrews, [0, 0, 90]),
+      move(analogScrews, [0, -65, 0]),
+      move(
+        analogStickParts.filter((p) => !analogScrews.includes(p)),
+        [0, 0, 65],
+      ),
+    ],
+  },
+  {
+    name: "park-analog-sticks-left",
+    parts: analogStickParts,
+    moves: [
+      move(analogStickParts, [-200, 0, 0]),
+      move(analogStickParts, [0, 160, 0]),
+    ],
+  },
+  {
+    name: "remove-speaker",
+    parts: speakerParts,
+    moves: [move(speakerParts, [0, 0, 65])],
+  },
+  {
+    name: "park-speaker-left",
+    parts: speakerParts,
+    moves: [move(speakerParts, [-200, 0, 0])],
+  },
+  {
+    name: "remove-buttons",
+    parts: buttonParts,
+    moves: [move(buttonParts, [0, 0, 65])],
+  },
+  {
+    name: "park-buttons-left",
+    parts: buttonParts,
+    moves: [move(buttonParts, [0, -160, 0]), move(buttonParts, [-200, 0, 0])],
+  },
+)
+
 /** Drop-in mechanical enclosure with native explosion stages. */
 export function GameBoyEnclosure() {
   return (

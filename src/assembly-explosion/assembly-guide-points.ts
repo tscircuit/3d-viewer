@@ -1,11 +1,44 @@
-import type { AssemblyExplosionView } from "@tscircuit/core"
+import type { RigidExplosionView } from "./rotation-playback"
 import * as THREE from "three"
 
 /** Translate authored paths from CAD origins to the rendered model centers. */
 export function getAssemblyGuidePoints(
   root: THREE.Object3D,
-  view: AssemblyExplosionView,
+  view: RigidExplosionView,
 ) {
+  if (view.motionGuides && view.assemblyTransforms) {
+    root.updateWorldMatrix(true, true)
+    const rootInverse = root.matrixWorld.clone().invert()
+    const centers = new Map<string, THREE.Vector3>()
+    root.traverse((group) => {
+      const id = group.userData.cad_component_id
+      const pose = view.assemblyTransforms!.get(id)
+      if (!pose) return
+      const inverse = pose.clone().invert().multiply(rootInverse)
+      const box = new THREE.Box3()
+      group.traverse((object) => {
+        if (!(object instanceof THREE.Mesh)) return
+        if (!object.geometry.boundingBox) object.geometry.computeBoundingBox()
+        if (object.geometry.boundingBox)
+          box.union(
+            object.geometry.boundingBox
+              .clone()
+              .applyMatrix4(inverse.clone().multiply(object.matrixWorld)),
+          )
+      })
+      if (!box.isEmpty()) centers.set(id, box.getCenter(new THREE.Vector3()))
+    })
+    return view.motionGuides.flatMap((guide) => {
+      const center = centers.get(guide.targetId)
+      if (!center) return []
+      return guide.matrices
+        .slice(1)
+        .flatMap((matrix, i) => [
+          center.clone().applyMatrix4(guide.matrices[i]!),
+          center.clone().applyMatrix4(matrix),
+        ])
+    })
+  }
   const targets = new Set(view.lines.map((line) => line.targetRef))
   const positions = new Map(
     view.circuitJson.flatMap((element) =>

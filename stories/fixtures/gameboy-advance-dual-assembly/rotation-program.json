@@ -1,0 +1,12 @@
+[
+  {
+    "stageName": "EnclosureR43.flip-front-cover",
+    "axis": "x",
+    "angleDegrees": 180,
+    "pivot": [
+      -220,
+      0,
+      73
+    ]
+  }
+]

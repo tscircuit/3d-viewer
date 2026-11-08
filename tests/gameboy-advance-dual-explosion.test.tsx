@@ -1,3 +1,6 @@
+import * as THREE from "three"
+import { createExplosionEvaluator } from "../src/assembly-explosion/create-explosion-evaluator"
+import { gameboyExplosionRotations } from "../stories/fixtures/gameboy-advance-dual-assembly/rotations"
 import { expect, test } from "bun:test"
 import { createHash } from "node:crypto"
 import { getCircuitJsonAssemblyExplosion } from "@tscircuit/core"
@@ -30,6 +33,7 @@ test("GBA dual fixture preserves the pinned release and reproduces its native TS
     ),
   ).json()
   expect(audit.assembledSha256).toBe(generation.assembledSha256)
+  expect(hash(audit.rotations)).toBe(generation.rotationsSha256)
   const ids = assembled
     .map((e) => (e as unknown as Record<string, unknown>)[`${e.type}_id`])
     .filter(Boolean)
@@ -146,13 +150,13 @@ test("user items leave first and each complete group parks left before the next 
   expect(removalGroups[1]!.name).toBe("rear-housing")
   expect(removalGroups[2]!.name).toBe("front-assembly")
   const stages = json.filter((e) => e.type === "cad_explosion_stage")
-  expect(stages.map((s) => s.name)).toEqual(
+  expect(stages.slice(0, 6).map((s) => s.name)).toEqual(
     removalGroups.flatMap((g) => [
       `EnclosureR43.remove-${g.name}`,
       `EnclosureR43.park-${g.name}-left`,
     ]),
   )
-  for (let i = 0; i < stages.length; i += 2) {
+  for (let i = 0; i < 6; i += 2) {
     const removal = stages[i]!
     const parking = stages[i + 1]!
     expect([...parking.cad_component_ids].sort()).toEqual(
@@ -186,7 +190,7 @@ test("user items leave first and each complete group parks left before the next 
   }
 })
 
-test("every parking segment has continuous bounding-box clearance from other rendered parts", async () => {
+test("parking segments and the full cover flip have continuous bounds clearance from other rendered parts", async () => {
   const json = await load()
   const bounds = (await Bun.file(
     new URL(
@@ -194,7 +198,9 @@ test("every parking segment has continuous bounding-box clearance from other ren
       import.meta.url,
     ),
   ).json()) as Record<string, [number[], number[]]>
-  const offsets = new Map(Object.keys(bounds).map((id) => [id, [0, 0, 0]]))
+  const offsets = new Map(
+    Object.keys(bounds).map((id) => [id, new THREE.Matrix4()]),
+  )
   const stages = new Map(
     json
       .filter((e) => e.type === "cad_explosion_stage")
@@ -219,8 +225,14 @@ test("every parking segment has continuous bounding-box clearance from other ren
     }
     return leave > enter
   }
-  const translated = (id: string) =>
-    bounds[id]!.map((p) => p.map((v, axis) => v + offsets.get(id)![axis]!))
+  const translated = (id: string) => {
+    const b = bounds[id]!
+    const box = new THREE.Box3(
+      new THREE.Vector3(...(b[0] as [number, number, number])),
+      new THREE.Vector3(...(b[1] as [number, number, number])),
+    ).applyMatrix4(offsets.get(id)!)
+    return [box.min.toArray(), box.max.toArray()]
+  }
   for (const move of json.filter((e) => e.type === "cad_explosion_move")) {
     const targets = move.targets.map((t) => {
       if (t.type !== "cad_component")
@@ -239,10 +251,114 @@ test("every parking segment has continuous bounding-box clearance from other ren
           ).toBe(false)
         }
     }
+    const cue = gameboyExplosionRotations.find(
+      (r) =>
+        r.stageName === stages.get(move.cad_explosion_stage_id) &&
+        (r.moveIndex ?? 0) === move.order,
+    )
+    if (cue) {
+      const axis = { x: 0, y: 1, z: 2 }[cue.axis]
+      const other = [0, 1, 2].filter((i) => i !== axis)
+      for (const target of targets) {
+        const b = translated(target)
+        const radius = Math.hypot(
+          ...other.map((i) =>
+            Math.max(
+              Math.abs(b[0]![i]! - cue.pivot[i]!),
+              Math.abs(b[1]![i]! - cue.pivot[i]!),
+            ),
+          ),
+        )
+        const swept = b.map((p) => p.slice())
+        for (const i of other) {
+          swept[0]![i] = cue.pivot[i]! - radius
+          swept[1]![i] = cue.pivot[i]! + radius
+        }
+        for (const obstacle of Object.keys(bounds)) {
+          if (targets.includes(obstacle)) continue
+          expect(
+            intersects(swept, translated(obstacle), [0, 0, 0]),
+            `flip sweep: ${target} vs ${obstacle}`,
+          ).toBe(false)
+        }
+      }
+    }
+    const step = new THREE.Matrix4().makeTranslation(
+      ...(delta as [number, number, number]),
+    )
+    if (cue) {
+      const p = cue.pivot
+      step
+        .premultiply(new THREE.Matrix4().makeTranslation(-p[0], -p[1], -p[2]))
+        .premultiply(
+          new THREE.Matrix4().makeRotationAxis(
+            new THREE.Vector3(
+              cue.axis === "x" ? 1 : 0,
+              cue.axis === "y" ? 1 : 0,
+              cue.axis === "z" ? 1 : 0,
+            ),
+            THREE.MathUtils.degToRad(cue.angleDegrees),
+          ),
+        )
+        .premultiply(new THREE.Matrix4().makeTranslation(...p))
+    }
     for (const id of targets)
-      offsets.set(
-        id,
-        offsets.get(id)!.map((v, axis) => v + delta[axis]!),
-      )
+      offsets.set(id, step.clone().multiply(offsets.get(id)!))
   }
+})
+
+test("GBA cover flips inside-up, then analog sticks and buttons separate while PCB geometry stays fixed", async () => {
+  const json = await load()
+  expect(hash(gameboyExplosionRotations)).toBe(generation.rotationsSha256)
+  const evaluate = createExplosionEvaluator(json, gameboyExplosionRotations)
+  const flip = evaluate({ throughStageRef: "EnclosureR43.flip-front-cover" })
+  const matrix = flip.assemblyTransforms!.get("cad_component_178")!
+  expect(new THREE.Vector3(0, 0, 1).transformDirection(matrix).z).toBeCloseTo(
+    -1,
+  )
+  const final = evaluate()
+  const sourceNames = new Map(
+    json
+      .filter((e) => e.type === "source_component")
+      .map((e) => [e.source_component_id, e.name]),
+  )
+  const cad = json.filter((e) => e.type === "cad_component")
+  for (const part of cad.filter((e) => e.pcb_component_id)) {
+    expect(
+      final.circuitJson.find(
+        (e) =>
+          e.type === "cad_component" &&
+          e.cad_component_id === part.cad_component_id,
+      ),
+    ).toEqual(part)
+  }
+  for (const name of [
+    "left_joystick",
+    "right_joystick",
+    "left_joystick_flex",
+    "right_joystick_flex",
+    "button_a",
+    "button_start",
+    "dpad",
+  ]) {
+    const part = cad.find(
+      (e) => sourceNames.get(e.source_component_id!) === name,
+    )!
+    const before = flip.assemblyTransforms!.get(part.cad_component_id)!
+    const after = final.assemblyTransforms!.get(part.cad_component_id)!
+    const delta = new THREE.Vector3()
+      .setFromMatrixPosition(after)
+      .sub(new THREE.Vector3().setFromMatrixPosition(before))
+    expect(delta.x).toBeCloseTo(-200)
+    expect(delta.z).toBeCloseTo(65)
+  }
+  const earlier = evaluate({
+    throughStageRef: "EnclosureR43.flip-front-cover",
+    stageProgress: 0,
+  })
+  expect(
+    new THREE.Vector3(0, 0, 1).transformDirection(
+      earlier.assemblyTransforms!.get("cad_component_178")!,
+    ).z,
+  ).toBeCloseTo(1)
 })

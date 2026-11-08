@@ -1,3 +1,4 @@
+import { gameboyExplosionRotations } from "../stories/fixtures/gameboy-advance-dual-assembly/rotations"
 import { createHash } from "node:crypto"
 import {
   buildGameboyAssembly,
@@ -20,6 +21,10 @@ await Bun.write(
   JSON.stringify(assembled) + "\n",
 )
 await Bun.write(
+  new URL("rotation-program.json", directory),
+  JSON.stringify(gameboyExplosionRotations, null, 2) + "\n",
+)
+await Bun.write(
   new URL("generation.json", directory),
   JSON.stringify(
     {
@@ -29,6 +34,7 @@ await Bun.write(
       originalRecordCount: original.length,
       originalSha256: hash(JSON.stringify(original)),
       assembledSha256: hash(JSON.stringify(assembled)),
+      rotationsSha256: hash(JSON.stringify(gameboyExplosionRotations)),
     },
     null,
     2,

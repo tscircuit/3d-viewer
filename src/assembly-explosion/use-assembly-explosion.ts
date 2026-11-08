@@ -1,3 +1,4 @@
+import type { AssemblyExplosionRotation } from "./rotation-playback"
 import { Circuit, type RootCircuit } from "@tscircuit/core"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import type { AnyCircuitElement } from "circuit-json"
@@ -11,6 +12,7 @@ export function useAssemblyExplosion(
   children?: ReactNode,
   circuit?: RootCircuit,
   circuitJson?: AnyCircuitElement[],
+  rotations?: readonly AssemblyExplosionRotation[],
 ) {
   const [showGuidelines, setShowGuidelines] = useState(true)
   const [rendered, setRendered] = useState<{
@@ -55,7 +57,7 @@ export function useAssemblyExplosion(
   const assembled = source.assembled
   const authored = useMemo(() => {
     try {
-      const evaluate = createExplosionEvaluator(assembled)
+      const evaluate = createExplosionEvaluator(assembled, rotations)
       return { stages: evaluate().stages, evaluate }
     } catch (error) {
       return {
@@ -63,7 +65,7 @@ export function useAssemblyExplosion(
         error: error instanceof Error ? error : new Error(String(error)),
       }
     }
-  }, [assembled])
+  }, [assembled, rotations])
   // Store the source with the position so replacing a circuit resets immediately.
   const [selection, setSelection] = useState({ source: assembled, amount: 0 })
   const amount = selection.source === assembled ? selection.amount : 0
