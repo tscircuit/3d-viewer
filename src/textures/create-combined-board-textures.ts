@@ -251,12 +251,11 @@ export function createCombinedBoardTextures({
 }): CombinedBoardTextures {
   const traceColor = toRgb(defaultColors.copper)
   const requestedSilkscreenColor =
-    boardData.silkscreen_color &&
-    boardData.silkscreen_color !== "not_specified"
+    boardData.silkscreen_color && boardData.silkscreen_color !== "not_specified"
       ? (() => {
           try {
             const c = new THREE.Color(boardData.silkscreen_color)
-            return `rgb(${Math.round(c.r * 255)},${Math.round(c.g * 255)},${Math.round(c.b * 255)})`
+            return toRgb([c.r, c.g, c.b])
           } catch {
             return null
           }
