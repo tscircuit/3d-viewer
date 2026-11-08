@@ -342,3 +342,121 @@ test("reverse playback uses stage timing, switches direction, pauses and stops a
   await page.clock.runFor(500)
   await expect(slider).toHaveValue("0")
 })
+
+test("Game Boy Advance dual RP2350 loads its enclosure and explodes without moving the PCB", async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(120_000)
+  await page.goto("gameboy-advance-explosion.html")
+  const positions = () =>
+    page.evaluate(() => {
+      const result: Record<string, number[]> = {}
+      window.__TSCIRCUIT_THREE_OBJECT?.traverse((object) => {
+        if (object.userData.cad_component_id)
+          result[object.userData.cad_component_id] = object.position.toArray()
+      })
+      return result
+    })
+  await expect
+    .poll(async () => Object.keys(await positions()).length, {
+      timeout: 60_000,
+    })
+    .toBe(285)
+  // Wait for actual enclosure meshes, not just their empty scene groups.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          let loaded = 0
+          window.__TSCIRCUIT_THREE_OBJECT?.traverse((object) => {
+            const id = object.userData.cad_component_id
+            if (
+              !id ||
+              Number(id.split("_").at(-1)) < 124 ||
+              Number(id.split("_").at(-1)) > 181
+            )
+              return
+            let hasMesh = false
+            object.traverse((child: any) => {
+              if (child.isMesh) hasMesh = true
+            })
+            if (hasMesh) loaded++
+          })
+          return loaded
+        }),
+      { timeout: 90_000 },
+    )
+    .toBe(58)
+  const rotations = () =>
+    page.evaluate(() => {
+      const result: Record<string, number[]> = {}
+      window.__TSCIRCUIT_THREE_OBJECT?.traverse((object) => {
+        if (object.userData.cad_component_id)
+          result[object.userData.cad_component_id] = object.quaternion.toArray()
+      })
+      return result
+    })
+  const originalRotations = await rotations()
+  const original = await positions()
+  await page
+    .locator("canvas")
+    .last()
+    .click({ button: "right", position: { x: 400, y: 350 } })
+  await page.getByRole("menuitem", { name: "Advanced", exact: true }).hover()
+  await page
+    .getByRole("menuitem", { name: "Exploded view…", exact: true })
+    .click()
+  const slider = page.getByRole("slider", { name: "Assembly explosion" })
+  await expect(slider).toHaveAttribute("max", "13")
+  await slider.fill("2")
+  await expect
+    .poll(async () => (await positions()).cad_component_124)
+    .toEqual([-220, -340, -45])
+  await slider.fill("6")
+  await expect
+    .poll(async () => (await positions()).cad_component_178)
+    .toEqual([-220, 0, 65])
+  await expect
+    .poll(async () => (await positions()).cad_component_179)
+    .toEqual([-220, 180, -65])
+  await slider.fill("6.5")
+  await expect
+    .poll(async () => Math.abs((await rotations()).cad_component_178![0]!))
+    .toBeCloseTo(Math.SQRT1_2, 3)
+  await slider.fill("7")
+  await expect
+    .poll(async () => Math.abs((await rotations()).cad_component_178![0]!))
+    .toBeCloseTo(1, 3)
+  await testInfo.attach("gameboy-front-inside-up", {
+    body: await page.screenshot(),
+    contentType: "image/png",
+  })
+  await slider.fill("13")
+  await expect
+    .poll(async () => (await positions()).cad_component_165)
+    .toEqual([-420, 160, 146])
+  await expect
+    .poll(async () => (await positions()).cad_component_139)
+    .toEqual([-420, -160, 146])
+  // Seeking backward restores the original orientation, not just translation.
+  await slider.fill("6")
+  await expect.poll(rotations).toEqual(originalRotations)
+  await slider.fill("13")
+  const exploded = await positions()
+  for (const [id, position] of Object.entries(original)) {
+    const number = Number(id.split("_").at(-1))
+    if (number < 124 || number > 181) expect(exploded[id]).toEqual(position)
+  }
+  await testInfo.attach("gameboy-advance-exploded", {
+    body: await page.screenshot(),
+    contentType: "image/png",
+  })
+  await page.getByRole("button", { name: "Reset", exact: true }).click()
+  await expect.poll(positions).toEqual(original)
+  await expect.poll(rotations).toEqual(originalRotations)
+  await testInfo.attach("gameboy-advance-assembled", {
+    body: await page.screenshot(),
+    contentType: "image/png",
+  })
+  await expect(page.getByRole("alert")).toHaveCount(0)
+})

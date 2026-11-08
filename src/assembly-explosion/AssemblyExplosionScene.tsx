@@ -1,3 +1,4 @@
+import type { RigidExplosionView } from "./rotation-playback"
 import { createContext, useContext, useEffect, useMemo } from "react"
 import type { AssemblyExplosionView } from "@tscircuit/core"
 import type { AnyCircuitElement } from "circuit-json"
@@ -7,7 +8,7 @@ import { useFrame, useThree } from "../react-three/ThreeContext"
 
 export const AssemblyExplosionContext = createContext<{
   assembled: AnyCircuitElement[]
-  view?: AssemblyExplosionView
+  view?: RigidExplosionView
   showGuidelines?: boolean
 } | null>(null)
 
@@ -64,16 +65,56 @@ export function applyAssemblyOffsets(
   root.updateMatrixWorld(true)
 }
 
+/** Apply absolute poses, so scrubbing, reverse playback and Reset never accumulate drift. */
+export function applyAssemblyTransforms(
+  root: THREE.Object3D,
+  transforms: Map<string, THREE.Matrix4>,
+  bases: Map<THREE.Object3D, THREE.Matrix4>,
+) {
+  const restore = (object: THREE.Object3D, matrix: THREE.Matrix4) => {
+    object.matrix.copy(matrix)
+    matrix.decompose(object.position, object.quaternion, object.scale)
+  }
+  root.traverse((object) => {
+    const id = object.userData.cad_component_id
+    if (typeof id !== "string") return
+    if (!bases.has(object)) {
+      if (object.matrixAutoUpdate) object.updateMatrix()
+      bases.set(object, object.matrix.clone())
+    }
+    const base = bases.get(object)!
+    const pose = transforms.get(id)
+    restore(object, pose ? pose.clone().multiply(base) : base)
+  })
+  for (const [object, base] of bases)
+    if (!object.parent) {
+      restore(object, base)
+      bases.delete(object)
+    }
+  root.updateMatrixWorld(true)
+}
+
 export function AssemblyExplosionScene() {
   const state = useContext(AssemblyExplosionContext)
   const { rootObject } = useThree()
   const bases = useMemo(
-    () => new Map<THREE.Object3D, THREE.Vector3>(),
+    () => new Map<THREE.Object3D, THREE.Matrix4>(),
     [rootObject],
   )
   const offsets = useMemo(
     () => getAssemblyOffsets(state?.assembled ?? [], state?.view),
     [state?.assembled, state?.view],
+  )
+  const transforms = useMemo(
+    () =>
+      state?.view?.assemblyTransforms ??
+      new Map(
+        [...offsets].map(([id, offset]) => [
+          id,
+          new THREE.Matrix4().makeTranslation(offset.x, offset.y, offset.z),
+        ]),
+      ),
+    [state?.view, offsets],
   )
   const guides = useMemo(() => {
     const lines = new THREE.LineSegments(
@@ -97,7 +138,7 @@ export function AssemblyExplosionScene() {
   }, [rootObject, guides])
   useFrame(() => {
     if (state?.view || bases.size) {
-      applyAssemblyOffsets(rootObject, offsets, bases)
+      applyAssemblyTransforms(rootObject, transforms, bases)
       if (!state?.view) bases.clear()
     }
     const points =
@@ -136,10 +177,20 @@ export function AssemblyExplosionScene() {
     distances.needsUpdate = true
     guides.geometry.setDrawRange(0, points.length)
     guides.geometry.computeBoundingSphere()
-  }, [rootObject, state?.view, state?.showGuidelines, offsets, bases, guides])
+  }, [
+    rootObject,
+    state?.view,
+    state?.showGuidelines,
+    transforms,
+    bases,
+    guides,
+  ])
   useEffect(
     () => () => {
-      for (const [object, base] of bases) object.position.copy(base)
+      for (const [object, base] of bases) {
+        object.matrix.copy(base)
+        base.decompose(object.position, object.quaternion, object.scale)
+      }
       bases.clear()
     },
     [bases],
