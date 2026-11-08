@@ -191,9 +191,9 @@ test("viewer scrubs stages, resets on input changes, plays serialized JSON progr
 })
 
 test("FLEX17 sample includes playable serialized stages", async () => {
-  const { default: sample } = await import(
-    "../stories/fixtures/flex17-spur.json"
-  )
+  const sample = await Bun.file(
+    new URL("../stories/fixtures/flex17-spur.json", import.meta.url),
+  ).json()
   const json = sample as Parameters<typeof getCircuitJsonAssemblyExplosion>[0]
   const { stages } = getCircuitJsonAssemblyExplosion(json)
   expect(stages.length).toBeGreaterThan(10)

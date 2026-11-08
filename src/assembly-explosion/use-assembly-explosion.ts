@@ -1,10 +1,8 @@
-import {
-  Circuit,
-  getCircuitJsonAssemblyExplosion,
-  type RootCircuit,
-} from "@tscircuit/core"
+import { Circuit, type RootCircuit } from "@tscircuit/core"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import type { AnyCircuitElement } from "circuit-json"
+
+import { createExplosionEvaluator } from "./create-explosion-evaluator"
 
 const EMPTY: AnyCircuitElement[] = []
 
@@ -56,7 +54,8 @@ export function useAssemblyExplosion(
   const assembled = source.assembled
   const authored = useMemo(() => {
     try {
-      return { stages: getCircuitJsonAssemblyExplosion(assembled).stages }
+      const evaluate = createExplosionEvaluator(assembled)
+      return { stages: evaluate().stages, evaluate }
     } catch (error) {
       return {
         stages: [] as string[],
@@ -68,12 +67,13 @@ export function useAssemblyExplosion(
   const [selection, setSelection] = useState({ source: assembled, amount: 0 })
   const amount = selection.source === assembled ? selection.amount : 0
   const view = useMemo(() => {
-    if (!authored.stages.length || amount === 0) return undefined
+    if (!authored.evaluate || !authored.stages.length || amount === 0)
+      return undefined
     const stageIndex = Math.min(
       Math.ceil(amount) - 1,
       authored.stages.length - 1,
     )
-    return getCircuitJsonAssemblyExplosion(assembled, {
+    return authored.evaluate({
       throughStageRef: authored.stages[stageIndex],
       stageProgress: amount - stageIndex,
     })
