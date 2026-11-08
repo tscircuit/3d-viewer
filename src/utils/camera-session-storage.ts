@@ -15,6 +15,7 @@ type StoredCameraSession = {
   quaternion: number[]
   up: number[]
   fov: number
+  orthographicZoom?: number
   target: number[]
 }
 
@@ -40,6 +41,8 @@ export function saveCameraSession({
       quaternion: camera.quaternion.toArray(),
       up: camera.up.toArray(),
       fov: camera instanceof THREE.PerspectiveCamera ? camera.fov : 50,
+      orthographicZoom:
+        camera instanceof THREE.OrthographicCamera ? camera.zoom : undefined,
       target: controls.target.toArray(),
     }
     sessionStorage.setItem(
@@ -75,6 +78,12 @@ export function loadCameraSession({
 
     if (camera instanceof THREE.PerspectiveCamera) {
       camera.fov = storedCameraSession.fov
+      camera.updateProjectionMatrix()
+    } else if (
+      camera instanceof THREE.OrthographicCamera &&
+      storedCameraSession.orthographicZoom !== undefined
+    ) {
+      camera.zoom = storedCameraSession.orthographicZoom
       camera.updateProjectionMatrix()
     }
 

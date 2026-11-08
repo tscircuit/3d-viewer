@@ -15,6 +15,7 @@ export const useCameraSession = ({
 } = {}) => {
   const { controlsRef } = useCameraController()
   const cameraRef = useRef<THREE.Camera | null>(null)
+  const restoredCameraRef = useRef<THREE.Camera | null>(null)
   const restoredCameraSessionScopeRef = useRef<
     string | undefined | typeof CAMERA_SESSION_NOT_RESTORED
   >(CAMERA_SESSION_NOT_RESTORED)
@@ -36,12 +37,14 @@ export const useCameraSession = ({
         restoredCameraSessionScopeRef.current !== cameraSessionScope &&
         controlsRef.current
       ) {
+        restoredCameraRef.current = null
         const restored = loadCameraFromSession(camera, {
           controls: controlsRef.current,
           cameraSessionScope,
         })
         restoredCameraSessionScopeRef.current = cameraSessionScope
         if (restored) {
+          restoredCameraRef.current = camera
           return
         }
       }
@@ -54,12 +57,14 @@ export const useCameraSession = ({
 
     // Attempt one-time restore on first controls change
     if (restoredCameraSessionScopeRef.current !== cameraSessionScope) {
+      restoredCameraRef.current = null
       const restored = loadCameraFromSession(cameraRef.current, {
         controls: controlsRef.current,
         cameraSessionScope,
       })
       restoredCameraSessionScopeRef.current = cameraSessionScope
       if (restored) {
+        restoredCameraRef.current = cameraRef.current
         return
       }
     }
@@ -79,6 +84,7 @@ export const useCameraSession = ({
   }, [cameraSessionScope, controlsRef])
 
   return {
+    restoredCameraRef,
     handleCameraCreated,
     handleControlsChange,
   }
