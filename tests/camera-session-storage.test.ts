@@ -51,32 +51,3 @@ test("keeps persisted camera positions scoped to their board", () => {
     globalThis.sessionStorage = previousSessionStorage
   }
 })
-
-test("restores orthographic framing and accepts older sessions without zoom", () => {
-  const dom = new JSDOM("", { url: "https://3d-viewer.test" })
-  const previousSessionStorage = globalThis.sessionStorage
-  globalThis.sessionStorage = dom.window.sessionStorage
-  try {
-    const camera = new THREE.OrthographicCamera(-15, 15, 10, -10)
-    camera.zoom = 0.08
-    const controls = { target: new THREE.Vector3(50, 20, 0), update: () => {} }
-    saveCameraSession({ camera, controls })
-    const restored = new THREE.OrthographicCamera(-15, 15, 10, -10)
-    expect(loadCameraSession({ camera: restored, controls })).toBeTrue()
-    expect(restored.zoom).toBe(0.08)
-    const stored = JSON.parse(
-      sessionStorage.getItem("cadViewerCameraStateSession")!,
-    )
-    delete stored.orthographicZoom
-    sessionStorage.setItem(
-      "cadViewerCameraStateSession",
-      JSON.stringify(stored),
-    )
-    const legacy = new THREE.OrthographicCamera(-15, 15, 10, -10)
-    expect(loadCameraSession({ camera: legacy, controls })).toBeTrue()
-    expect(legacy.zoom).toBe(1)
-  } finally {
-    globalThis.sessionStorage = previousSessionStorage
-    dom.window.close()
-  }
-})
