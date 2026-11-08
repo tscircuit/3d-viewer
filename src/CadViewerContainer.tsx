@@ -2,7 +2,7 @@ import { AssemblyExplosionScene } from "./assembly-explosion/AssemblyExplosionSc
 import { useSection } from "./sections/SectionContext"
 import { SectionScene } from "./sections/SectionScene"
 import type * as React from "react"
-import { forwardRef, useEffect, useMemo, useState } from "react"
+import { forwardRef, useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three"
 import { zIndexMap } from "../lib/utils/z-index-map"
 import packageJson from "../package.json"
@@ -22,6 +22,7 @@ import {
   type ReferenceObjectType,
 } from "./reference-objects/reference-object"
 import { OrientationCubeCanvas } from "./three-components/OrientationCubeCanvas"
+import { FitCameraToModels } from "./three-components/FitCameraToModels"
 import {
   FitCameraToComparison,
   ReferenceObject,
@@ -52,6 +53,7 @@ interface Props {
   boardDimensions?: { width?: number; height?: number }
   boardCenter?: { x: number; y: number }
   cameraSessionScope?: string
+  fitCameraToModels?: boolean
   referenceObject?: ReferenceObjectType | null
   onUserInteraction?: () => void
   onCameraControllerReady?: (controller: CameraController | null) => void
@@ -70,6 +72,7 @@ export const CadViewerContainer = forwardRef<
       boardDimensions,
       boardCenter,
       cameraSessionScope,
+      fitCameraToModels = false,
       referenceObject,
       onUserInteraction,
       onCameraControllerReady,
@@ -77,6 +80,7 @@ export const CadViewerContainer = forwardRef<
     ref,
   ) => {
     const section = useSection()
+    const userInteractedRef = useRef(false)
     const [isInteractionEnabled, setIsInteractionEnabled] = useState(
       !clickToInteractEnabled,
     )
@@ -87,6 +91,7 @@ export const CadViewerContainer = forwardRef<
       useAppearance()
     const {
       handleCameraCreated,
+      restoredCameraRef,
       handleControlsChange: handleSessionControlsChange,
     } = useCameraSession({ cameraSessionScope })
 
@@ -121,7 +126,15 @@ export const CadViewerContainer = forwardRef<
     }, [boardCenter, comparisonBounds])
 
     return (
-      <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <div
+        style={{ position: "relative", width: "100%", height: "100%" }}
+        onPointerDownCapture={() => {
+          userInteractedRef.current = true
+        }}
+        onWheelCapture={() => {
+          userInteractedRef.current = true
+        }}
+      >
         <OrientationCubeCanvas />
         <Canvas
           key={cameraSessionScope}
@@ -180,6 +193,13 @@ export const CadViewerContainer = forwardRef<
             />
           )}
           {children}
+          {fitCameraToModels && (
+            <FitCameraToModels
+              enabled={!referenceObject}
+              restoredCameraRef={restoredCameraRef}
+              userInteractedRef={userInteractedRef}
+            />
+          )}
         </Canvas>
         <div
           style={{

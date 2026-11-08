@@ -34,6 +34,7 @@
     "test:renderer-comparisons:serve": "bun run prepare:renderer-comparisons && vite --config playwright/vite.config.ts",
     "test:renderer-calibration": "playwright test --project=calibration",
     "test:renderer-comparisons": "bun scripts/run-renderer-comparisons.ts",
+    "test:camera": "playwright test --config playwright.camera.config.ts",
     "test:sections": "playwright test --config playwright.sections.config.ts"
   },
   "dependencies": {
