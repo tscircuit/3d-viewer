@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo } from "react"
 import type { AssemblyExplosionView } from "@tscircuit/core"
 import type { AnyCircuitElement } from "circuit-json"
 import * as THREE from "three"
+import { getAssemblyGuidePoints } from "./assembly-guide-points"
 import { useFrame, useThree } from "../react-three/ThreeContext"
 
 export const AssemblyExplosionContext = createContext<{
@@ -73,12 +74,67 @@ export function AssemblyExplosionScene() {
     () => getAssemblyOffsets(state?.assembled ?? [], state?.view),
     [state?.assembled, state?.view],
   )
+  const guides = useMemo(() => {
+    const lines = new THREE.LineSegments(
+      new THREE.BufferGeometry(),
+      new THREE.LineDashedMaterial({
+        color: 0x6688aa,
+        dashSize: 1,
+        gapSize: 0.5,
+      }),
+    )
+    lines.userData.assemblyExplosionGuides = true
+    return lines
+  }, [rootObject])
+  useEffect(() => {
+    rootObject.add(guides)
+    return () => {
+      rootObject.remove(guides)
+      guides.geometry.dispose()
+      guides.material.dispose()
+    }
+  }, [rootObject, guides])
   useFrame(() => {
     if (state?.view || bases.size) {
       applyAssemblyOffsets(rootObject, offsets, bases)
       if (!state?.view) bases.clear()
     }
-  }, [rootObject, state?.view, offsets, bases])
+    const points = state?.view
+      ? getAssemblyGuidePoints(rootObject, state.view)
+      : []
+    guides.visible = points.length > 0
+    if (!points.length) return
+    let positions = guides.geometry.getAttribute("position") as
+      | THREE.BufferAttribute
+      | undefined
+    if (!positions || positions.count < points.length) {
+      guides.geometry.dispose()
+      guides.geometry = new THREE.BufferGeometry()
+      positions = new THREE.Float32BufferAttribute(
+        new Float32Array(points.length * 3),
+        3,
+      )
+      guides.geometry.setAttribute("position", positions)
+      guides.geometry.setAttribute(
+        "lineDistance",
+        new THREE.Float32BufferAttribute(new Float32Array(points.length), 1),
+      )
+    }
+    const distances = guides.geometry.getAttribute(
+      "lineDistance",
+    ) as THREE.BufferAttribute
+    let distance = 0
+    for (let i = 0; i < points.length; i++) {
+      const point = points[i]!
+      positions.setXYZ(i, point.x, point.y, point.z)
+      if (i % 2) distance += point.distanceTo(points[i - 1]!)
+      distances.setX(i, distance)
+    }
+    positions.needsUpdate = true
+    distances.needsUpdate = true
+    guides.geometry.setDrawRange(0, points.length)
+    guides.geometry.computeBoundingSphere()
+  }, [rootObject, state?.view, offsets, bases, guides])
   useEffect(
     () => () => {
       for (const [object, base] of bases) object.position.copy(base)
@@ -86,27 +142,5 @@ export function AssemblyExplosionScene() {
     },
     [bases],
   )
-  useEffect(() => {
-    if (!state?.view?.lines.length) return
-    const points = state.view.lines
-      .flatMap((line) =>
-        line.points.slice(1).flatMap((point, i) => [line.points[i]!, point]),
-      )
-      .map((p) => new THREE.Vector3(p.x, p.y, p.z))
-    const geometry = new THREE.BufferGeometry().setFromPoints(points)
-    const material = new THREE.LineDashedMaterial({
-      color: 0x6688aa,
-      dashSize: 1,
-      gapSize: 0.5,
-    })
-    const guides = new THREE.LineSegments(geometry, material)
-    guides.computeLineDistances()
-    rootObject.add(guides)
-    return () => {
-      rootObject.remove(guides)
-      geometry.dispose()
-      material.dispose()
-    }
-  }, [rootObject, state?.view])
   return null
 }
