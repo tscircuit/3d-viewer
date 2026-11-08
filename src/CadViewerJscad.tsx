@@ -95,6 +95,9 @@ export const CadViewerJscad = forwardRef<
 
     const boardDimensions = useMemo(() => {
       if (!primarySurface) return undefined
+      if (primarySurface.type === "pcb_panel") {
+        return { width: primarySurface.width, height: primarySurface.height }
+      }
       try {
         const bounds = calculateOutlineBounds(primarySurface)
         return { width: bounds.width, height: bounds.height }
@@ -106,6 +109,9 @@ export const CadViewerJscad = forwardRef<
 
     const boardCenter = useMemo(() => {
       if (!primarySurface) return undefined
+      if (primarySurface.type === "pcb_panel") {
+        return { x: primarySurface.center.x, y: primarySurface.center.y }
+      }
       try {
         const bounds = calculateOutlineBounds(primarySurface)
         return { x: bounds.centerX, y: bounds.centerY }
