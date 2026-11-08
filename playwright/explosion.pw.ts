@@ -210,5 +210,53 @@ test("FLEX17 sample exposes its authored explosion stages", async ({
   await page.getByRole("button", { name: "Next explosion stage" }).click()
   await expect(slider).toHaveValue("1")
   await expect(slider).toHaveAttribute("aria-valuetext", /remove_lid_screws/)
+  // FLEX17 parts have baked geometry offsets and share a CAD origin. The
+  // final guide endpoint must follow an actual moving model, not that origin.
+  for (const amount of [1, 1.5, 6, 18]) {
+    await slider.fill(String(amount))
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const root = window.__TSCIRCUIT_THREE_OBJECT
+          if (!root) return Infinity
+          let guides: any
+          root.traverse((object) => {
+            if (object.userData.assemblyExplosionGuides) guides = object
+          })
+          const attribute = guides?.geometry.getAttribute("position")
+          const count = guides?.geometry.drawRange.count
+          if (!guides?.visible || !attribute || !Number.isFinite(count))
+            return Infinity
+          const endpoint = root.position
+            .clone()
+            .fromBufferAttribute(attribute, count - 1)
+          const inverse = root.matrixWorld.clone().invert()
+          let nearest = Infinity
+          root.traverse((group) => {
+            if (
+              !group.userData.cad_component_id ||
+              group.position.length() === 0
+            )
+              return
+            let bounds: any
+            group.traverse((object: any) => {
+              if (!object.isMesh || !object.geometry.boundingBox) return
+              const box = object.geometry.boundingBox
+                .clone()
+                .applyMatrix4(inverse.clone().multiply(object.matrixWorld))
+              if (!bounds) bounds = box
+              else bounds.union(box)
+            })
+            if (bounds && !bounds.isEmpty())
+              nearest = Math.min(
+                nearest,
+                endpoint.distanceTo(bounds.getCenter(root.position.clone())),
+              )
+          })
+          return nearest
+        }),
+      )
+      .toBeLessThan(0.001)
+  }
   await expect(page.getByRole("alert")).toHaveCount(0)
 })
