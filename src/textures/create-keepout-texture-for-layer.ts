@@ -9,7 +9,13 @@ const isKeepoutOnLayer = (
   layer: "top" | "bottom",
 ): element is PCBKeepout => {
   if (element.type !== "pcb_keepout") return false
-  if (!("layers" in element) || !Array.isArray(element.layers)) return true
+  if (
+    !("layers" in element) ||
+    !Array.isArray(element.layers) ||
+    element.layers.length === 0
+  ) {
+    return true
+  }
   return element.layers.includes(layer)
 }
 
