@@ -283,6 +283,20 @@ test("FLEX17 sample exposes its authored explosion stages", async ({
   await guidelines.check()
   await expect.poll(guidesVisible).toBe(true)
   await expect(slider).toHaveValue(pausedAmount)
+  await expect(
+    page.getByRole("button", { name: "Fit explosion", exact: true }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole("checkbox", { name: "Fit on stage change", exact: true }),
+  ).toBeVisible()
+  await slider.fill("7")
+  await expect(slider).toHaveAttribute(
+    "aria-valuetext",
+    /squeeze_snap_axle_remove_bearing_1/,
+  )
+  await expect(page.getByTestId("explosion-contact-diagnostics")).toContainText(
+    "Unverified contact diagnostic",
+  )
   await expect(page.getByRole("alert")).toHaveCount(0)
 })
 
