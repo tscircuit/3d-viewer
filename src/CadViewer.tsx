@@ -385,6 +385,7 @@ const CadViewerInner = (props: CadViewerProps) => {
             source={glbSource}
             objectVisibility={objectVisibility}
             autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
+            gizmoCubeDisabled={props.gizmoCubeDisabled}
             clickToInteractEnabled={props.clickToInteractEnabled}
             onUserInteraction={handleUserInteraction}
             onCameraControllerReady={handleCameraControllerReady}

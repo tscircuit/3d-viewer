@@ -130,6 +130,7 @@ export const BoardMeshes = ({
 type CadViewerManifoldProps = {
   foldPcbs?: boolean
   autoRotateDisabled?: boolean
+  gizmoCubeDisabled?: boolean
   clickToInteractEnabled?: boolean
   cameraType?: "orthographic" | "perspective"
   onUserInteraction?: () => void
@@ -146,6 +147,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   circuitJson: circuitJsonProp,
   foldPcbs,
   autoRotateDisabled,
+  gizmoCubeDisabled,
   clickToInteractEnabled,
   onUserInteraction,
   children,
@@ -308,6 +310,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
     <CadViewerContainer
       initialCameraPosition={initialCameraPosition}
       autoRotateDisabled={autoRotateDisabled}
+      gizmoCubeDisabled={gizmoCubeDisabled}
       clickToInteractEnabled={clickToInteractEnabled}
       boardDimensions={boardDimensions}
       boardCenter={boardCenter}
