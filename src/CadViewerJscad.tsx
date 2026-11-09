@@ -24,6 +24,7 @@ import {
 } from "./utils/object-visibility"
 import { calculateOutlineBounds } from "./utils/outline-bounds"
 import { addFauxBoardIfNeeded } from "./utils/preprocess-circuit-json"
+import { resolveViewerBoardData } from "./utils/resolve-panel-board-data"
 
 interface Props {
   /**
@@ -69,52 +70,45 @@ export const CadViewerJscad = forwardRef<
     // Use the new hook to manage board geometry building
     const boardGeom = useBoardGeomBuilder(internalCircuitJson)
 
+    const viewerBoard = useMemo(
+      () => resolveViewerBoardData(internalCircuitJson),
+      [internalCircuitJson],
+    )
+
     const isFauxBoard = useMemo(() => {
-      if (!internalCircuitJson) return false
-      try {
-        const board = su(internalCircuitJson).pcb_board.list()[0]
-        return !!board && board.pcb_board_id === "faux-board"
-      } catch (e) {
-        return false
-      }
-    }, [internalCircuitJson])
+      return viewerBoard?.pcb_board_id === "faux-board"
+    }, [viewerBoard])
 
     const boardDimensions = useMemo(() => {
-      if (!internalCircuitJson) return undefined
+      if (!viewerBoard) return undefined
       try {
-        const board = su(internalCircuitJson).pcb_board.list()[0]
-        if (!board) return undefined
-        const bounds = calculateOutlineBounds(board)
+        const bounds = calculateOutlineBounds(viewerBoard)
         return { width: bounds.width, height: bounds.height }
       } catch (e) {
         console.error(e)
         return undefined
       }
-    }, [internalCircuitJson])
+    }, [viewerBoard])
 
     const boardCenter = useMemo(() => {
-      if (!internalCircuitJson) return undefined
+      if (!viewerBoard) return undefined
       try {
-        const board = su(internalCircuitJson).pcb_board.list()[0]
-        if (!board) return undefined
-        const bounds = calculateOutlineBounds(board)
+        const bounds = calculateOutlineBounds(viewerBoard)
         return { x: bounds.centerX, y: bounds.centerY }
       } catch (e) {
         console.error(e)
         return undefined
       }
-    }, [internalCircuitJson])
+    }, [viewerBoard])
 
     const cameraSessionScope = useMemo(() => {
-      if (!internalCircuitJson) return undefined
-      const board = su(internalCircuitJson).pcb_board.list()[0]
-      if (!board) return undefined
+      if (!viewerBoard) return undefined
       return JSON.stringify({
-        pcbBoardId: board.pcb_board_id,
+        pcbBoardId: viewerBoard.pcb_board_id,
         center: boardCenter,
         dimensions: boardDimensions,
       })
-    }, [internalCircuitJson, boardCenter, boardDimensions])
+    }, [viewerBoard, boardCenter, boardDimensions])
 
     const initialCameraPosition = useMemo(() => {
       return getInitialCameraPosition({ boardDimensions, boardCenter })

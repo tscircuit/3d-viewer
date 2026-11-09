@@ -5,6 +5,10 @@ import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
 import { createBoardGeomWithOutline } from "../geoms/create-board-with-outline"
 import { getBoardEdgeColor } from "../utils/get-board-edge-color"
+import {
+  findBoardsInPanel,
+  getNormalizedPanelCenter,
+} from "../utils/resolve-panel-board-data"
 
 /**
  * Creates a simplified board geometry (just the board shape, no components/holes).
@@ -25,9 +29,14 @@ export const createSimplifiedBoardGeom = (
 
   if (panels.length > 0) {
     // Use the panel as the board
-    boardOrPanel = panels[0]!
-    board = boards.find((b) => b.pcb_panel_id === boardOrPanel!.pcb_panel_id)
+    const panel = panels[0]!
+    const boardsInPanel = findBoardsInPanel(boards, panel.pcb_panel_id)
+    board = boardsInPanel[0]
     pcbThickness = board?.thickness ?? 1.2
+    boardOrPanel = {
+      ...panel,
+      center: getNormalizedPanelCenter(panel, boardsInPanel),
+    }
   } else {
     // Skip boards that are inside a panel - only render the panel outline
     const boardsNotInPanel = boards.filter(

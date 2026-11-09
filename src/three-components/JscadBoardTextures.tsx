@@ -1,5 +1,4 @@
-import { su } from "@tscircuit/circuit-json-util"
-import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
+import type { AnyCircuitElement } from "circuit-json"
 import { useEffect, useMemo } from "react"
 import { createCombinedBoardTextures } from "src/textures"
 import * as THREE from "three"
@@ -15,6 +14,7 @@ import { configureObjectShadows } from "../utils/configure-object-shadows"
 import { createBoardReliefTextures } from "../utils/create-board-relief-textures"
 import { getLayerTextureResolution } from "../utils/layer-texture-resolution"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
+import { resolveViewerBoardData } from "../utils/resolve-panel-board-data"
 
 interface JscadBoardTexturesProps {
   circuitJson: AnyCircuitElement[]
@@ -31,38 +31,10 @@ export function JscadBoardTextures({
   const { visibility } = useLayerVisibility()
   const textureVisibility = useBoardTextureVisibility(visibility)
 
-  const boardData = useMemo(() => {
-    // Check for panel first
-    const panels = circuitJson.filter(
-      (e): e is PcbPanel => e.type === "pcb_panel",
-    )
-    const boards = su(circuitJson).pcb_board.list()
-
-    if (panels.length > 0) {
-      // Use the panel as the board for texture sizing
-      const panel = panels[0]!
-      const firstBoardInPanel = boards.find(
-        (b) => b.pcb_panel_id === panel.pcb_panel_id,
-      )
-      return {
-        type: "pcb_board",
-        pcb_board_id: panel.pcb_panel_id,
-        center: panel.center,
-        width: panel.width,
-        height: panel.height,
-        thickness: firstBoardInPanel?.thickness ?? 1.4,
-        material: firstBoardInPanel?.material ?? "fr4",
-        num_layers: firstBoardInPanel?.num_layers ?? 2,
-        solder_mask_color: firstBoardInPanel?.solder_mask_color,
-      } as PcbBoard
-    }
-
-    // Skip boards that are inside a panel to avoid rendering them individually
-    const boardsNotInPanel = boards.filter(
-      (b): b is PcbBoard => !b.pcb_panel_id,
-    )
-    return boardsNotInPanel.length > 0 ? boardsNotInPanel[0]! : null
-  }, [circuitJson])
+  const boardData = useMemo(
+    () => resolveViewerBoardData(circuitJson),
+    [circuitJson],
+  )
 
   const traceTextureResolution = useMemo(() => {
     if (!boardData) return TRACE_TEXTURE_RESOLUTION
