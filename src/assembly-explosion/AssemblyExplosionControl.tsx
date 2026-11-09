@@ -1,5 +1,11 @@
 import { type CSSProperties, useEffect, useRef, useState } from "react"
 import { zIndexMap } from "../../lib/utils/z-index-map"
+import type { ExplosionStageMetadata } from "./use-assembly-explosion"
+
+function getDiscreteStageIndex(amount: number, stageCount: number): number {
+  if (!Number.isFinite(amount) || amount <= 0 || stageCount <= 0) return 0
+  return Math.min(stageCount, Math.ceil(amount))
+}
 
 const rowStyle: CSSProperties = {
   display: "flex",
@@ -29,6 +35,19 @@ const disabledButtonStyle: CSSProperties = {
   ...buttonStyle,
   opacity: 0.4,
   cursor: "default",
+}
+const textButtonStyle: CSSProperties = {
+  flex: "none",
+  height: 24,
+  margin: 0,
+  padding: "0 6px",
+  border: "1px solid #656565",
+  borderRadius: 4,
+  background: "#1c1c1c",
+  color: "inherit",
+  font: "inherit",
+  fontSize: 12,
+  cursor: "pointer",
 }
 
 const iconPaths = {
@@ -61,26 +80,53 @@ function Icon({ name }: { name: keyof typeof iconPaths }) {
 
 export function AssemblyExplosionControl({
   stages,
+  stageMetadata,
   amount,
   onChange,
   error,
   onClose,
   showGuidelines = true,
   onShowGuidelinesChange,
+  onFit,
+  fitOnStageChange = false,
+  onFitOnStageChange,
 }: {
   stages: string[]
+  stageMetadata?: Record<string, ExplosionStageMetadata>
   amount: number
   onChange: (amount: number) => void
   error?: Error
   onClose?: () => void
   showGuidelines?: boolean
   onShowGuidelinesChange?: (visible: boolean) => void
+  onFit?: () => void
+  fitOnStageChange?: boolean
+  onFitOnStageChange?: (enabled: boolean) => void
 }) {
   const [playing, setPlaying] = useState(false)
   const [direction, setDirection] = useState<1 | -1>(1)
   const [stageDuration, setStageDuration] = useState(2)
-  const playback = useRef({ amount, onChange })
-  playback.current = { amount, onChange }
+  const previousStageRef = useRef(getDiscreteStageIndex(amount, stages.length))
+  const playback = useRef({
+    amount,
+    onChange,
+    onFit,
+    fitOnStageChange,
+  })
+  playback.current = {
+    amount,
+    onChange,
+    onFit,
+    fitOnStageChange,
+  }
+
+  useEffect(() => {
+    const nextStage = getDiscreteStageIndex(amount, stages.length)
+    if (nextStage !== previousStageRef.current) {
+      previousStageRef.current = nextStage
+      if (fitOnStageChange) onFit?.()
+    }
+  }, [amount, stages.length, fitOnStageChange, onFit])
 
   useEffect(() => {
     if (!playing || error || !stages.length) return
@@ -96,8 +142,14 @@ export function AssemblyExplosionControl({
         ),
       )
       previous = now
+      const nextStage = getDiscreteStageIndex(next, stages.length)
+      const stageChanged = nextStage !== previousStageRef.current
+      previousStageRef.current = nextStage
       playback.current.amount = next
       playback.current.onChange(next)
+      if (stageChanged && playback.current.fitOnStageChange) {
+        playback.current.onFit?.()
+      }
       if (direction === 1 ? next >= stages.length : next <= 0) setPlaying(false)
       else frame = requestAnimationFrame(tick)
     }
@@ -105,16 +157,31 @@ export function AssemblyExplosionControl({
     return () => cancelAnimationFrame(frame)
   }, [playing, direction, stageDuration, stages.length, error])
 
-  const seek = (value: number) => {
+  const seek = (value: number, explicitStageStep = false) => {
+    const clamped = Number.isFinite(value)
+      ? Math.max(0, Math.min(stages.length, value))
+      : 0
+    const nextStage = getDiscreteStageIndex(clamped, stages.length)
+    const stageChanged = nextStage !== previousStageRef.current
+    previousStageRef.current = nextStage
     setPlaying(false)
-    onChange(value)
+    onChange(clamped)
+    if (fitOnStageChange && (stageChanged || explicitStageStep)) {
+      onFit?.()
+    }
   }
   if (!stages.length && !error) return null
   const atStart = amount === 0
   const atEnd = amount >= stages.length
   const reversing = playing && direction === -1
   const resetDisabled = atStart && !playing
-  const stage = atStart ? "Assembled" : stages[Math.ceil(amount) - 1]
+  const stageId = atStart ? undefined : stages[Math.ceil(amount) - 1]
+  const currentMeta = stageId ? stageMetadata?.[stageId] : undefined
+  const stage = atStart
+    ? "Assembled"
+    : currentMeta?.displayName?.trim() || stageId
+  const instructions = currentMeta?.instructions?.trim() || undefined
+  const diagnostics = currentMeta?.diagnostics ?? []
   const playLabel = playing ? "Pause" : atEnd ? "Replay" : "Play"
   return (
     <section
@@ -195,7 +262,7 @@ export function AssemblyExplosionControl({
               padding: 0,
               cursor: "pointer",
             }}
-            onChange={(event) => seek(Number(event.target.value))}
+            onChange={(event) => seek(Number(event.target.value), false)}
           />
           <div
             style={{
@@ -215,7 +282,7 @@ export function AssemblyExplosionControl({
                 aria-label="Previous explosion stage"
                 title="Previous stage"
                 disabled={atStart}
-                onClick={() => seek(Math.max(0, Math.ceil(amount) - 1))}
+                onClick={() => seek(Math.max(0, Math.ceil(amount) - 1), true)}
               >
                 <Icon name="previous" />
               </button>
@@ -230,7 +297,11 @@ export function AssemblyExplosionControl({
                 aria-pressed={reversing}
                 title="Play in reverse"
                 onClick={() => {
-                  if (amount <= 0) onChange(stages.length)
+                  if (amount <= 0) {
+                    previousStageRef.current = stages.length
+                    onChange(stages.length)
+                    if (fitOnStageChange) onFit?.()
+                  }
                   setDirection(-1)
                   setPlaying(true)
                 }}
@@ -245,7 +316,11 @@ export function AssemblyExplosionControl({
                 onClick={() => {
                   if (!playing) {
                     setDirection(1)
-                    if (amount >= stages.length) onChange(0)
+                    if (amount >= stages.length) {
+                      previousStageRef.current = 0
+                      onChange(0)
+                      if (fitOnStageChange) onFit?.()
+                    }
                   }
                   setPlaying(!playing)
                 }}
@@ -259,7 +334,7 @@ export function AssemblyExplosionControl({
                 title="Next stage"
                 disabled={atEnd}
                 onClick={() =>
-                  seek(Math.min(stages.length, Math.floor(amount) + 1))
+                  seek(Math.min(stages.length, Math.floor(amount) + 1), true)
                 }
               >
                 <Icon name="next" />
@@ -269,7 +344,7 @@ export function AssemblyExplosionControl({
                 style={resetDisabled ? disabledButtonStyle : buttonStyle}
                 aria-label="Reset"
                 title="Reset to assembled"
-                onClick={() => seek(0)}
+                onClick={() => seek(0, true)}
                 disabled={resetDisabled}
               >
                 <Icon name="reset" />
@@ -278,6 +353,27 @@ export function AssemblyExplosionControl({
             <div
               style={{ ...rowStyle, flexWrap: "wrap", gap: 8, fontSize: 12 }}
             >
+              {onFit && (
+                <button type="button" style={textButtonStyle} onClick={onFit}>
+                  Fit explosion
+                </button>
+              )}
+              {onFitOnStageChange && (
+                <label style={labelStyle}>
+                  <input
+                    type="checkbox"
+                    style={{ margin: 0, cursor: "pointer" }}
+                    aria-label="Fit on stage change"
+                    checked={fitOnStageChange}
+                    onChange={(event) => {
+                      const enabled = event.target.checked
+                      onFitOnStageChange(enabled)
+                      if (enabled) onFit?.()
+                    }}
+                  />
+                  Fit on stage change
+                </label>
+              )}
               {onShowGuidelinesChange && (
                 <label style={labelStyle}>
                   <input
@@ -321,6 +417,37 @@ export function AssemblyExplosionControl({
               </label>
             </div>
           </div>
+          {instructions && (
+            <div
+              data-testid="explosion-stage-instructions"
+              style={{ marginTop: 6, whiteSpace: "pre-wrap", fontSize: 12 }}
+            >
+              {instructions}
+            </div>
+          )}
+          {diagnostics.length > 0 && (
+            <div
+              data-testid="explosion-contact-diagnostics"
+              style={{
+                marginTop: 6,
+                padding: "4px 6px",
+                borderRadius: 4,
+                background: "#3a2a14",
+                color: "#ffd591",
+                fontSize: 12,
+              }}
+            >
+              {diagnostics.map((diagnostic, index) => (
+                <div key={index}>
+                  {diagnostic.kind === "annotated_unverified_contact"
+                    ? `Unverified deformation contact (not physically validated): ${diagnostic.message}${diagnostic.rationale ? ` — ${diagnostic.rationale}` : ""}`
+                    : diagnostic.kind === "incomplete_check"
+                      ? `Incomplete clearance verification: ${diagnostic.message}`
+                      : `Unverified contact diagnostic: ${diagnostic.message}`}
+                </div>
+              ))}
+            </div>
+          )}
         </>
       )}
     </section>

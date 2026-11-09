@@ -5,11 +5,17 @@ import type { AnyCircuitElement } from "circuit-json"
 import * as THREE from "three"
 import { getAssemblyGuidePoints } from "./assembly-guide-points"
 import { useFrame, useThree } from "../react-three/ThreeContext"
+import { useCameraController } from "../contexts/CameraControllerContext"
+import {
+  fitExplosionCamera,
+  getVisibleSolidBounds,
+} from "./fit-explosion-camera"
 
 export const AssemblyExplosionContext = createContext<{
   assembled: AnyCircuitElement[]
   view?: RigidExplosionView
   showGuidelines?: boolean
+  fitRequested?: { current: boolean }
 } | null>(null)
 
 export function getAssemblyOffsets(
@@ -96,7 +102,8 @@ export function applyAssemblyTransforms(
 
 export function AssemblyExplosionScene() {
   const state = useContext(AssemblyExplosionContext)
-  const { rootObject } = useThree()
+  const { rootObject, camera } = useThree()
+  const { controlsRef, controller } = useCameraController()
   const bases = useMemo(
     () => new Map<THREE.Object3D, THREE.Matrix4>(),
     [rootObject],
@@ -141,6 +148,21 @@ export function AssemblyExplosionScene() {
       applyAssemblyTransforms(rootObject, transforms, bases)
       if (!state?.view) bases.clear()
     }
+    if (state?.fitRequested?.current) {
+      const bounds = getVisibleSolidBounds(rootObject)
+      const center =
+        bounds && fitExplosionCamera(camera, bounds, controlsRef.current)
+      if (center) {
+        state.fitRequested.current = false
+        // Replace an in-flight camera preset so it cannot undo this explicit fit.
+        controller?.animateTo({
+          position: camera.position.toArray(),
+          target: center.toArray(),
+          up: camera.up.toArray(),
+          durationMs: 0,
+        })
+      }
+    }
     const points =
       state?.view && state.showGuidelines !== false
         ? getAssemblyGuidePoints(rootObject, state.view)
@@ -179,11 +201,15 @@ export function AssemblyExplosionScene() {
     guides.geometry.computeBoundingSphere()
   }, [
     rootObject,
+    camera,
     state?.view,
     state?.showGuidelines,
+    state?.fitRequested,
     transforms,
     bases,
     guides,
+    controlsRef,
+    controller,
   ])
   useEffect(
     () => () => {

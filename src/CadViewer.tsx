@@ -113,6 +113,15 @@ const CadViewerInner = (props: CadViewerProps) => {
     AnyCircuitElement[] | null
   >(null)
   const explosionPanelOpen = explosionPanelSource === circuitJson
+  const [explosionAutoFitSource, setExplosionAutoFitSource] = useState<
+    AnyCircuitElement[] | null
+  >(null)
+  const explosionFitOnStageChange = explosionAutoFitSource === circuitJson
+  // The request survives a loading renderer, but belongs only to this circuit.
+  const explosionFitRequested = useMemo(
+    () => ({ current: false }),
+    [circuitJson],
+  )
   const hasAssembly = circuitJson.some(
     (element) => element.type === "cad_component" && !element.pcb_component_id,
   )
@@ -223,8 +232,10 @@ const CadViewerInner = (props: CadViewerProps) => {
     // and not just clicking on the preset menu
     if (!menuVisible) {
       setCameraPreset("Custom")
+      setExplosionAutoFitSource(null)
+      explosionFitRequested.current = false
     }
-  }, [menuVisible])
+  }, [menuVisible, explosionFitRequested])
 
   const toggleAutoRotate = useCallback(() => {
     setAutoRotate((prev) => !prev)
@@ -350,7 +361,9 @@ const CadViewerInner = (props: CadViewerProps) => {
 
   const viewerKey = props.circuitJson ? circuitJsonKey : undefined
   return (
-    <AssemblyExplosionContext.Provider value={explosion}>
+    <AssemblyExplosionContext.Provider
+      value={{ ...explosion, fitRequested: explosionFitRequested }}
+    >
       <div
         key={viewerKey}
         ref={containerRef}
@@ -369,13 +382,25 @@ const CadViewerInner = (props: CadViewerProps) => {
         {explosionPanelOpen && (
           <AssemblyExplosionControl
             stages={explosion.stages}
+            stageMetadata={explosion.stageMetadata}
             amount={explosion.amount}
             onChange={explosion.setAmount}
             showGuidelines={explosion.showGuidelines}
             onShowGuidelinesChange={explosion.setShowGuidelines}
+            onFit={() => {
+              setAutoRotate(false)
+              setCameraPreset("Custom")
+              explosionFitRequested.current = true
+            }}
+            fitOnStageChange={explosionFitOnStageChange}
+            onFitOnStageChange={(enabled) => {
+              setExplosionAutoFitSource(enabled ? circuitJson : null)
+            }}
             error={explosion.error}
             onClose={() => {
               explosion.setAmount(0)
+              setExplosionAutoFitSource(null)
+              explosionFitRequested.current = false
               setExplosionPanelSource(null)
             }}
           />
