@@ -32,6 +32,8 @@ interface Props {
   soup?: AnyCircuitElement[]
   circuitJson?: AnyCircuitElement[]
   autoRotateDisabled?: boolean
+  hideCadComponents?: boolean
+  cadComponentsDisabled?: boolean
   clickToInteractEnabled?: boolean
   cameraType?: "orthographic" | "perspective"
   onUserInteraction?: () => void
@@ -50,6 +52,8 @@ export const CadViewerJscad = forwardRef<
       circuitJson,
       children,
       autoRotateDisabled,
+      hideCadComponents,
+      cadComponentsDisabled,
       clickToInteractEnabled,
       onUserInteraction,
       onCameraControllerReady,
@@ -134,9 +138,14 @@ export const CadViewerJscad = forwardRef<
         .find((board) => !board.pcb_panel_id)?.pcb_board_id
     }, [internalCircuitJson])
 
-    const cad_components = su(internalCircuitJson)
-      .cad_component.list()
-      .filter((cad) => !isObjectHidden(objectVisibility, cad.cad_component_id))
+    const cad_components =
+      hideCadComponents || cadComponentsDisabled
+        ? []
+        : su(internalCircuitJson)
+            .cad_component.list()
+            .filter(
+              (cad) => !isObjectHidden(objectVisibility, cad.cad_component_id),
+            )
     const cadCables = getCadCables(internalCircuitJson).filter(
       (cable) => !isObjectHidden(objectVisibility, cable.cad_cable_id),
     )

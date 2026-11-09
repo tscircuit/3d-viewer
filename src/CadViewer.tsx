@@ -171,9 +171,14 @@ const CadViewerInner = (props: CadViewerProps) => {
   // Download GLTF exports only a right-clicked model; the board or empty
   // space still exports the whole scene.
   const [selectedModel, setSelectedModel] = useState<PickedSceneObject>()
+  const shouldHideAllCadComponents = Boolean(
+    props.hideCadComponents || props.cadComponentsDisabled,
+  )
   const handleMenuOpen = useCallback(
     (position: { x: number; y: number }) => {
-      const picked = pickSceneObject(sceneRef.current, position, circuitJson)
+      const picked = shouldHideAllCadComponents
+        ? undefined
+        : pickSceneObject(sceneRef.current, position, circuitJson)
       setSelectedObject(picked)
       setSelectedModel(
         picked &&
@@ -183,12 +188,17 @@ const CadViewerInner = (props: CadViewerProps) => {
           : undefined,
       )
       setSelectedComponent(
-        props.onViewSchematicComponent
+        props.onViewSchematicComponent && !shouldHideAllCadComponents
           ? pickSchematicComponent(sceneRef.current, position, circuitJson)
           : undefined,
       )
     },
-    [sceneRef, circuitJson, props.onViewSchematicComponent],
+    [
+      sceneRef,
+      circuitJson,
+      shouldHideAllCadComponents,
+      props.onViewSchematicComponent,
+    ],
   )
 
   const {
