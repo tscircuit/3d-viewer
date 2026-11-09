@@ -1,26 +1,26 @@
-import jscad from "@jscad/modeling"
-import type { AnyCircuitElement } from "circuit-json"
+import jscad, * as jscadModeling from "@jscad/modeling"
+import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import {
   convertCSGToThreeGeom,
   getJscadModelForFootprint,
 } from "jscad-electronics/vanilla"
 import { executeJscadOperations } from "jscad-planner"
 import * as THREE from "three"
-import * as jscadModeling from "@jscad/modeling"
 import { load3DModel } from "./load-model"
-import type { CadComponent } from "circuit-json"
+import { resolveModelUrl } from "./resolve-model-url"
 
 export async function renderComponent(
   component: CadComponent,
   scene: THREE.Scene,
 ) {
   // Handle STL/OBJ models first
-  const url =
+  const url = resolveModelUrl(
     component.model_obj_url ??
-    component.model_wrl_url ??
-    component.model_stl_url ??
-    component.model_glb_url ??
-    component.model_gltf_url
+      component.model_wrl_url ??
+      component.model_stl_url ??
+      component.model_glb_url ??
+      component.model_gltf_url,
+  )
   if (url) {
     const model = await load3DModel(url)
     if (model) {
