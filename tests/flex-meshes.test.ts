@@ -366,3 +366,56 @@ test("outline precision restoration respects mesh transforms and interior vertic
   expect(restored.triangles[0]!.vertices[2].y).toBeLessThan(edge * 2 - 0.019)
   expect(geometry.getAttribute("position").array).toEqual(original)
 })
+
+test("exact-edge rectangular flex bend folds after Float32 boundary rounding", () => {
+  const center = { x: 10, y: 3 }
+  const width = 12
+  const height = 8.6
+  const halfHeight = height / 2
+  expect(Math.fround(halfHeight)).toBeGreaterThan(halfHeight + 1e-7)
+
+  const rectangularJson: AnyCircuitElement[] = [
+    {
+      type: "pcb_board",
+      pcb_board_id: "rect-board",
+      center,
+      thickness: 0.15,
+      num_layers: 2,
+      material: "flex",
+      width,
+      height,
+    },
+    {
+      type: "pcb_bend",
+      pcb_bend_id: "rect-bend",
+      pcb_board_id: "rect-board",
+      start: { x: 0, y: -halfHeight },
+      end: { x: 0, y: halfHeight },
+      bend_radius: 1.5,
+      bend_angle: 90,
+      bend_side: "right",
+    },
+  ]
+
+  const board = new THREE.Mesh(
+    new THREE.BoxGeometry(width, height, 0.15),
+    new THREE.MeshStandardMaterial(),
+  )
+  board.name = "board-geom"
+  board.position.set(center.x, center.y, 0)
+
+  const plane = new THREE.Mesh(
+    new THREE.PlaneGeometry(width, height),
+    new THREE.MeshPhysicalMaterial(),
+  )
+  plane.name = "top-board-texture-plane"
+  plane.position.set(center.x, center.y, 0.08)
+
+  const output = createFlexMeshes([board], [plane], rectangularJson, true)
+  expect(output.bounds?.maxZ).toBeCloseTo(1.5 + 6 - (1.5 * Math.PI) / 4, 5)
+  expect(output.bounds?.minY).toBeCloseTo(center.y - halfHeight, 5)
+  expect(output.bounds?.maxY).toBeCloseTo(center.y + halfHeight, 5)
+  expect(
+    output.textureMeshes[0]!.geometry.getAttribute("position").count,
+  ).toBeGreaterThan(6)
+})
