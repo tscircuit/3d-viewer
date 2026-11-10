@@ -6,8 +6,8 @@ import { LayerVisibilityProvider } from "src/contexts/LayerVisibilityContext"
 import { ToastProvider } from "src/contexts/ToastContext"
 import { Vector3 } from "three"
 
-// Found on Done Dot's red status lens: cad_component.color is ignored,
-// while the same color embedded in the JSCAD geometry renders correctly.
+// Regression for Done Dot's red status lens: the CAD color prop must work
+// without also embedding the same color in the JSCAD geometry.
 const circuit = new Circuit()
 circuit.add(
   <assembly.device name="printed-part-color-repro">
@@ -33,10 +33,10 @@ const cameraTarget = new Vector3(0, 0, 0)
 
 export const SameRedColor = () => (
   <div style={{ width: 1000, fontFamily: "sans-serif" }}>
-    <h2>Printed part color is ignored (JSCAD)</h2>
+    <h2>Printed part color (JSCAD)</h2>
     <p>
-      Both cylinders should be red. Left: printedpart color prop (renders gray).
-      Right: JSCAD colorize with the same red (renders red).
+      Both cylinders should be red. Left: printedpart color prop only. Right:
+      printedpart color prop plus JSCAD colorize with the same red.
     </p>
     <div style={{ height: 640 }}>
       <CameraControllerProvider defaultTarget={cameraTarget}>
