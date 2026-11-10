@@ -6,6 +6,173 @@ import type { AnyCircuitElement } from "circuit-json"
 import type { createExplosionEvaluator } from "./create-explosion-evaluator"
 
 const EMPTY: AnyCircuitElement[] = []
+let cachedCreateEvaluator: typeof createExplosionEvaluator | undefined
+
+export interface ExplosionStageDiagnostic {
+  kind: "annotated_unverified_contact" | "collision_error" | "incomplete_check"
+  message: string
+  rationale?: string
+  operation?: string
+  sweptIntersectionVolumeMm3?: number
+}
+
+export interface ExplosionStageMetadata {
+  displayName?: string
+  instructions?: string
+  diagnostics?: ExplosionStageDiagnostic[]
+}
+
+function nonBlankString(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : undefined
+}
+
+export function extractExplosionStageMetadata(
+  assembled: AnyCircuitElement[],
+  circuit?: RootCircuit,
+): Record<string, ExplosionStageMetadata> {
+  const metadata: Record<string, ExplosionStageMetadata> = {}
+  const stageIdToName = new Map<string, string>()
+
+  const ensureStage = (stageName: string): ExplosionStageMetadata => {
+    if (!metadata[stageName]) metadata[stageName] = {}
+    return metadata[stageName]!
+  }
+
+  for (const element of assembled) {
+    if (element.type !== "cad_explosion_stage") continue
+    const stageRecord = element as AnyCircuitElement & {
+      cad_explosion_stage_id: string
+      name: string
+      display_name?: unknown
+      displayName?: unknown
+      instructions?: unknown
+    }
+    stageIdToName.set(stageRecord.cad_explosion_stage_id, stageRecord.name)
+    const displayName =
+      nonBlankString(stageRecord.display_name) ??
+      nonBlankString(stageRecord.displayName)
+    const instructions = nonBlankString(stageRecord.instructions)
+    if (displayName || instructions) {
+      const target = ensureStage(stageRecord.name)
+      if (displayName) target.displayName = displayName
+      if (instructions) target.instructions = instructions
+    }
+  }
+
+  // Fallback to authored TSX component props when Circuit JSON schema has not
+  // yet serialized displayName/instructions onto cad_explosion_stage records.
+  if (circuit) {
+    const components = (circuit as unknown as { components?: any[] }).components
+    const visit = (nodes?: any[]) => {
+      if (!Array.isArray(nodes)) return
+      for (const node of nodes) {
+        if (node?.componentName === "AssemblyExplosionStage") {
+          const props = node.props ?? node._parsedProps ?? {}
+          const rawName = nonBlankString(props.name)
+          const displayName =
+            nonBlankString(props.displayName) ??
+            nonBlankString(props.display_name)
+          const instructions = nonBlankString(props.instructions)
+          if (rawName && (displayName || instructions)) {
+            const matchedStageNames = [...stageIdToName.values()].filter(
+              (stageName) =>
+                stageName === rawName || stageName.endsWith(`.${rawName}`),
+            )
+            const targets = matchedStageNames.length
+              ? matchedStageNames
+              : [rawName]
+            for (const stageName of targets) {
+              const target = ensureStage(stageName)
+              if (displayName && !target.displayName)
+                target.displayName = displayName
+              if (instructions && !target.instructions)
+                target.instructions = instructions
+            }
+          }
+        }
+        visit(node?.children)
+      }
+    }
+    visit(components)
+  }
+
+  const resolveStageName = (
+    record: Record<string, unknown>,
+  ): string | undefined => {
+    const stageId = nonBlankString(record.cad_explosion_stage_id)
+    if (stageId && stageIdToName.has(stageId)) return stageIdToName.get(stageId)
+    const directStage =
+      nonBlankString(record.stage_name) ??
+      nonBlankString(record.stageRef) ??
+      nonBlankString(record.stage_ref)
+    if (directStage) return directStage
+    const message = nonBlankString(record.message)
+    const match = message?.match(/Explosion stage "([^"]+)"/)
+    return match?.[1]
+  }
+
+  for (const element of assembled) {
+    const record = element as unknown as Record<string, unknown>
+    if (record.type === "cad_explosion_collision_error") {
+      const stageName = resolveStageName(record)
+      if (!stageName) continue
+      const isAnnotated =
+        record.verification_status === "annotated_unverified_contact" ||
+        record.is_annotated_contact === true ||
+        Boolean(
+          nonBlankString(record.contact_annotation_id) ||
+            nonBlankString(record.rationale) ||
+            nonBlankString(record.operation),
+        )
+      const target = ensureStage(stageName)
+      target.diagnostics ??= []
+      target.diagnostics.push({
+        kind: isAnnotated ? "annotated_unverified_contact" : "collision_error",
+        message:
+          nonBlankString(record.message) ??
+          `Unverified contact in stage "${stageName}"`,
+        rationale: nonBlankString(record.rationale),
+        operation: nonBlankString(record.operation),
+        sweptIntersectionVolumeMm3:
+          typeof record.swept_intersection_volume_mm3 === "number"
+            ? record.swept_intersection_volume_mm3
+            : undefined,
+      })
+    } else if (record.type === "cad_explosion_contact_annotation") {
+      const stageName = resolveStageName(record)
+      if (!stageName) continue
+      const target = ensureStage(stageName)
+      target.diagnostics ??= []
+      target.diagnostics.push({
+        kind: "annotated_unverified_contact",
+        message:
+          nonBlankString(record.message) ??
+          nonBlankString(record.rationale) ??
+          `Annotated unverified contact in stage "${stageName}"`,
+        rationale: nonBlankString(record.rationale),
+        operation: nonBlankString(record.operation),
+      })
+    } else if (record.type === "cad_explosion_collision_check_warning") {
+      const stageName = resolveStageName(record)
+      const warningMessage =
+        nonBlankString(record.message) ??
+        "Explosion collision verification is incomplete"
+      const stageNames = stageName ? [stageName] : [...stageIdToName.values()]
+      for (const name of stageNames) {
+        const target = ensureStage(name)
+        target.diagnostics ??= []
+        target.diagnostics.push({
+          kind: "incomplete_check",
+          message: warningMessage,
+        })
+      }
+    }
+  }
+
+  return metadata
+}
 
 /** Render TSX once, then use the same serialized program as JSON-only inputs. */
 export function useAssemblyExplosion(
@@ -64,15 +231,21 @@ export function useAssemblyExplosion(
         element.type === "cad_explosion_stage" ||
         element.type === "cad_explosion_move",
     )
-  const [createEvaluator, setCreateEvaluator] =
-    useState<typeof createExplosionEvaluator>()
+  const [createEvaluator, setCreateEvaluator] = useState<
+    typeof createExplosionEvaluator | undefined
+  >(() => cachedCreateEvaluator)
   const [evaluatorError, setEvaluatorError] = useState<Error>()
   useEffect(() => {
     if (!hasProgram) return
+    if (cachedCreateEvaluator) {
+      if (!createEvaluator) setCreateEvaluator(() => cachedCreateEvaluator)
+      return
+    }
     let cancelled = false
     setEvaluatorError(undefined)
     import("./create-explosion-evaluator")
       .then((module) => {
+        cachedCreateEvaluator = module.createExplosionEvaluator
         if (!cancelled)
           setCreateEvaluator(() => module.createExplosionEvaluator)
       })
@@ -85,7 +258,7 @@ export function useAssemblyExplosion(
     return () => {
       cancelled = true
     }
-  }, [hasProgram])
+  }, [hasProgram, createEvaluator])
   const authored = useMemo(() => {
     if (!hasProgram || !createEvaluator) {
       return {
@@ -103,6 +276,10 @@ export function useAssemblyExplosion(
       }
     }
   }, [assembled, rotations, hasProgram, createEvaluator, evaluatorError])
+  const stageMetadata = useMemo(
+    () => extractExplosionStageMetadata(assembled, current),
+    [assembled, current],
+  )
   // Store the source with the position so replacing a circuit resets immediately.
   const [selection, setSelection] = useState({ source: assembled, amount: 0 })
   const amount = selection.source === assembled ? selection.amount : 0
@@ -124,6 +301,7 @@ export function useAssemblyExplosion(
     assembled,
     view,
     stages: authored.stages,
+    stageMetadata,
     amount,
     setAmount: (value: number) =>
       setSelection({

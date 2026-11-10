@@ -5,11 +5,17 @@ import type { AnyCircuitElement } from "circuit-json"
 import * as THREE from "three"
 import { getAssemblyGuidePoints } from "./assembly-guide-points"
 import { useFrame, useThree } from "../react-three/ThreeContext"
+import { useCameraController } from "../contexts/CameraControllerContext"
+import {
+  fitExplosionCamera,
+  getVisibleSolidBounds,
+} from "./fit-explosion-camera"
 
 export const AssemblyExplosionContext = createContext<{
   assembled: AnyCircuitElement[]
   view?: RigidExplosionView
   showGuidelines?: boolean
+  fitRequested?: { current: boolean }
 } | null>(null)
 
 export function getAssemblyOffsets(
@@ -96,7 +102,8 @@ export function applyAssemblyTransforms(
 
 export function AssemblyExplosionScene() {
   const state = useContext(AssemblyExplosionContext)
-  const { rootObject } = useThree()
+  const { rootObject, camera } = useThree()
+  const { controlsRef, controller } = useCameraController()
   const bases = useMemo(
     () => new Map<THREE.Object3D, THREE.Matrix4>(),
     [rootObject],
@@ -146,44 +153,64 @@ export function AssemblyExplosionScene() {
         ? getAssemblyGuidePoints(rootObject, state.view)
         : []
     guides.visible = points.length > 0
-    if (!points.length) return
-    let positions = guides.geometry.getAttribute("position") as
-      | THREE.BufferAttribute
-      | undefined
-    if (!positions || positions.count < points.length) {
-      guides.geometry.dispose()
-      guides.geometry = new THREE.BufferGeometry()
-      positions = new THREE.Float32BufferAttribute(
-        new Float32Array(points.length * 3),
-        3,
-      )
-      guides.geometry.setAttribute("position", positions)
-      guides.geometry.setAttribute(
+    if (points.length) {
+      let positions = guides.geometry.getAttribute("position") as
+        | THREE.BufferAttribute
+        | undefined
+      if (!positions || positions.count < points.length) {
+        guides.geometry.dispose()
+        guides.geometry = new THREE.BufferGeometry()
+        positions = new THREE.Float32BufferAttribute(
+          new Float32Array(points.length * 3),
+          3,
+        )
+        guides.geometry.setAttribute("position", positions)
+        guides.geometry.setAttribute(
+          "lineDistance",
+          new THREE.Float32BufferAttribute(new Float32Array(points.length), 1),
+        )
+      }
+      const distances = guides.geometry.getAttribute(
         "lineDistance",
-        new THREE.Float32BufferAttribute(new Float32Array(points.length), 1),
-      )
+      ) as THREE.BufferAttribute
+      let distance = 0
+      for (let i = 0; i < points.length; i++) {
+        const point = points[i]!
+        positions.setXYZ(i, point.x, point.y, point.z)
+        if (i % 2) distance += point.distanceTo(points[i - 1]!)
+        distances.setX(i, distance)
+      }
+      positions.needsUpdate = true
+      distances.needsUpdate = true
+      guides.geometry.setDrawRange(0, points.length)
+      guides.geometry.computeBoundingSphere()
     }
-    const distances = guides.geometry.getAttribute(
-      "lineDistance",
-    ) as THREE.BufferAttribute
-    let distance = 0
-    for (let i = 0; i < points.length; i++) {
-      const point = points[i]!
-      positions.setXYZ(i, point.x, point.y, point.z)
-      if (i % 2) distance += point.distanceTo(points[i - 1]!)
-      distances.setX(i, distance)
+    if (state?.fitRequested?.current) {
+      const bounds = getVisibleSolidBounds(rootObject)
+      const center =
+        bounds && fitExplosionCamera(camera, bounds, controlsRef.current)
+      if (center) {
+        state.fitRequested.current = false
+        // Replace an in-flight camera preset so it cannot undo this explicit fit.
+        controller?.animateTo({
+          position: camera.position.toArray(),
+          target: center.toArray(),
+          up: camera.up.toArray(),
+          durationMs: 0,
+        })
+      }
     }
-    positions.needsUpdate = true
-    distances.needsUpdate = true
-    guides.geometry.setDrawRange(0, points.length)
-    guides.geometry.computeBoundingSphere()
   }, [
     rootObject,
+    camera,
     state?.view,
     state?.showGuidelines,
+    state?.fitRequested,
     transforms,
     bases,
     guides,
+    controlsRef,
+    controller,
   ])
   useEffect(
     () => () => {

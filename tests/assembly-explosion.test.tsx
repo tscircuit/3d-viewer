@@ -111,6 +111,10 @@ test("viewer scrubs stages, resets on input changes, plays serialized JSON progr
   try {
     const circuit = await createCircuit()
     await act(async () => root.render(<Harness circuit={circuit} />))
+    for (let i = 0; i < 50 && !state.stages.length; i++)
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10))
+      })
     expect(state.stages).toEqual(["case.lift", "case.slide", "case.remove-cap"])
     await act(async () => state.setAmount(1.5))
     expect(state.view).toEqual(
