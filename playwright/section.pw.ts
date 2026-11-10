@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test"
+import { readFile } from "node:fs/promises"
 
 async function openSection(page: Page, engine?: "JSCAD" | "Manifold") {
   await expect(
@@ -135,10 +136,71 @@ for (const engine of ["jscad", "manifold"])
     await page.screenshot({ path: `test-results/section-${engine}.png` })
   })
 
+for (const geometry of ["boardless", "rectangular", "routed via"] as const) {
+  test(`component GLB renders with ${geometry} geometry`, async ({ page }) => {
+    const requiresManifold = geometry === "routed via"
+    const runtimeRequests = new Set<string>()
+    await page.addInitScript(() => {
+      window.TSCIRCUIT_JSCDN_BASE_URL = "/test-runtime"
+    })
+    await page.route("**/test-runtime/manifold-3d/3.5.1/*", async (route) => {
+      const path = new URL(route.request().url()).pathname
+      const filename = path.split("/").at(-1)!
+      runtimeRequests.add(filename)
+      if (!requiresManifold) return route.abort()
+      await route.fulfill({
+        body: await readFile(
+          new URL(`../node_modules/manifold-3d/${filename}`, import.meta.url),
+        ),
+        contentType:
+          filename === "manifold.wasm" ? "application/wasm" : "text/javascript",
+      })
+    })
+    await page.route("**/component-test.glb", async (route) => {
+      await route.fulfill({
+        body: await readFile(
+          new URL(
+            "../tests/assets/prerendered-components.glb",
+            import.meta.url,
+          ),
+        ),
+        contentType: "model/gltf-binary",
+      })
+    })
+
+    const params = new URLSearchParams({ engine: "manifold", component: "1" })
+    if (geometry === "boardless") params.set("boardless", "1")
+    if (requiresManifold) params.set("via", "1")
+    await page.goto(`section.html?${params}`)
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const root = window.__TSCIRCUIT_THREE_OBJECT
+          const component = root?.children.find(
+            (object) => object.userData.cad_component_id === "test-component",
+          )
+          return !!component?.getObjectByProperty("type", "Mesh")
+        }),
+      )
+      .toBe(true)
+    expect(
+      await page.evaluate(() => {
+        const root = window.__TSCIRCUIT_THREE_OBJECT
+        return {
+          board: !!root?.getObjectByName("board-geom"),
+          via: !!root?.getObjectByName("via-test-trace_route_via_0"),
+        }
+      }),
+    ).toEqual({ board: geometry !== "boardless", via: requiresManifold })
+    expect([...runtimeRequests].sort()).toEqual(
+      requiresManifold ? ["manifold.js", "manifold.wasm"] : [],
+    )
+  })
+}
+
 test("GLB URLs render patterned caps without fetching component models", async ({
   page,
 }) => {
-  const { readFile } = await import("node:fs/promises")
   const bytes = await readFile(
     new URL("../tests/assets/prerendered-components.glb", import.meta.url),
   )

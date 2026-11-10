@@ -1,6 +1,7 @@
 import { su } from "@tscircuit/circuit-json-util"
 import { transformCircuitJsonCadComponents } from "@tscircuit/flex-utils"
 import type { AnyCircuitElement, CadComponent } from "circuit-json"
+import type { ManifoldToplevel } from "manifold-3d"
 import type React from "react"
 import { useEffect, useMemo, useState } from "react"
 import * as THREE from "three"
@@ -160,13 +161,28 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
     return addFauxBoardIfNeeded(rawCircuitJson)
   }, [circuitJsonProp, childrenCircuitJson])
 
-  const [manifoldJSModule, setManifoldJSModule] = useState<any | null>(null)
+  const [manifoldJSModule, setManifoldJSModule] =
+    useState<ManifoldToplevel | null>(null)
   const [manifoldLoadingError, setManifoldLoadingError] = useState<
     string | null
   >(null)
   const { visibility } = useLayerVisibility()
 
+  const {
+    geoms,
+    textures,
+    pcbThickness,
+    error: builderError,
+    isLoading: builderIsLoading,
+    boardData,
+    isFauxBoard,
+    requiresManifold,
+  } = useManifoldBoardBuilder(manifoldJSModule, circuitJson, visibility)
+
   useEffect(() => {
+    if (!requiresManifold || manifoldJSModule) return
+
+    setManifoldLoadingError(null)
     let isActive = true
     loadManifold()
       .then((module) => {
@@ -183,17 +199,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
     return () => {
       isActive = false
     }
-  }, [])
-
-  const {
-    geoms,
-    textures,
-    pcbThickness,
-    error: builderError,
-    isLoading: builderIsLoading,
-    boardData,
-    isFauxBoard,
-  } = useManifoldBoardBuilder(manifoldJSModule, circuitJson, visibility)
+  }, [requiresManifold, manifoldJSModule])
 
   const flex = useMemo(() => {
     try {
@@ -268,7 +274,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
     })
   }, [boardData, boardCenter, boardDimensions])
 
-  if (manifoldLoadingError) {
+  if (requiresManifold && manifoldLoadingError) {
     return (
       <div
         style={{
@@ -282,7 +288,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
       </div>
     )
   }
-  if (!manifoldJSModule) {
+  if (requiresManifold && !manifoldJSModule) {
     return <div style={{ padding: "1em" }}>Loading Manifold module...</div>
   }
   if (builderError || flex.error) {
