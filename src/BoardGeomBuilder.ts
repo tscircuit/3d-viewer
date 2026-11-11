@@ -1,12 +1,12 @@
 import { colorize } from "@jscad/modeling/src/colors"
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import type { Vec2 } from "@jscad/modeling/src/maths/types"
+import { measureBoundingBox } from "@jscad/modeling/src/measurements"
 import {
   intersect,
   subtract,
   union,
 } from "@jscad/modeling/src/operations/booleans"
-import { measureBoundingBox } from "@jscad/modeling/src/measurements"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { rotateZ, translate } from "@jscad/modeling/src/operations/transforms"
 import {
@@ -458,6 +458,21 @@ export class BoardGeomBuilder {
           height: this.ctx.pcbThickness * 1.5,
         }),
       )
+
+      const holeRotation =
+        (ph as any).hole_ccw_rotation ?? (ph as any).ccw_rotation
+      if (holeRotation) {
+        const rotationRadians = (holeRotation * Math.PI) / 180
+        const holeCenterX = ph.x + (ph.hole_offset_x || 0)
+        const holeCenterY = ph.y + (ph.hole_offset_y || 0)
+        pillHole = translate(
+          [holeCenterX, holeCenterY, 0],
+          rotateZ(
+            rotationRadians,
+            translate([-holeCenterX, -holeCenterY, 0], pillHole),
+          ),
+        )
+      }
 
       if (!opts.dontCutBoard) {
         this.boardGeom = subtract(this.boardGeom, pillHole)
