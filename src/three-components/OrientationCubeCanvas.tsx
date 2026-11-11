@@ -1,8 +1,11 @@
 import { useEffect, useRef } from "react"
 import * as THREE from "three"
 import { Text as TroikaText } from "troika-three-text"
-import { useCameraController } from "../contexts/CameraControllerContext"
 import { zIndexMap } from "../../lib/utils/z-index-map"
+import { useCameraController } from "../contexts/CameraControllerContext"
+import { createOrientationCubeAxes } from "./orientation-cube-axes"
+
+const ORIENTATION_CAMERA_DISTANCE = 2.35
 
 function computePointInFront(
   rotationVector: THREE.Euler,
@@ -52,6 +55,13 @@ export const OrientationCubeCanvas = () => {
     // Create camera
     const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000)
     camera.up.set(0, 0, 1)
+    camera.position.copy(
+      computePointInFront(
+        new THREE.Euler(0, 0, 0),
+        ORIENTATION_CAMERA_DISTANCE,
+      ),
+    )
+    camera.lookAt(0, 0, 0)
 
     // Add ambient light
     const ambientLight = new THREE.AmbientLight(0xffffff, Math.PI / 2)
@@ -137,6 +147,9 @@ export const OrientationCubeCanvas = () => {
     group.add(topText)
     group.add(bottomText)
 
+    const orientationAxes = createOrientationCubeAxes()
+    scene.add(orientationAxes.group)
+
     // Animation loop
     let animationFrameId: number | null = null
     let isVisible = true
@@ -150,7 +163,7 @@ export const OrientationCubeCanvas = () => {
       if (mainCameraRef.current) {
         const cameraPosition = computePointInFront(
           mainCameraRef.current.rotation ?? new THREE.Euler(0, 0, 0),
-          2,
+          ORIENTATION_CAMERA_DISTANCE,
         )
 
         if (!cameraPosition.equals(camera.position)) {
@@ -159,6 +172,7 @@ export const OrientationCubeCanvas = () => {
         }
       }
 
+      orientationAxes.syncToCamera(camera)
       renderer.render(scene, camera)
     }
 
@@ -174,6 +188,8 @@ export const OrientationCubeCanvas = () => {
       if (animationFrameId !== null) {
         cancelAnimationFrame(animationFrameId)
       }
+
+      orientationAxes.dispose()
 
       frontText.dispose()
       backText.dispose()
