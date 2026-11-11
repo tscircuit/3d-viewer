@@ -4,6 +4,7 @@ import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, PcbBoard, PcbRenderLayer } from "circuit-json"
 import { CircuitToCanvasDrawer } from "circuit-to-canvas"
 import * as THREE from "three"
+import { getPcbVias } from "./get-pcb-vias"
 import { calculateOutlineBounds } from "./outline-bounds"
 
 export function createPadTextureForLayer({
@@ -26,9 +27,9 @@ export function createPadTextureForLayer({
   const platedHolesOnLayer = su(circuitJson)
     .pcb_plated_hole.list()
     .filter((e) => !Array.isArray(e.layers) || e.layers.includes(layer))
-  const viasOnLayer = su(circuitJson)
-    .pcb_via.list()
-    .filter((e) => !Array.isArray(e.layers) || e.layers.includes(layer))
+  const viasOnLayer = getPcbVias(circuitJson).filter(
+    (e) => !Array.isArray(e.layers) || e.layers.includes(layer),
+  )
   const cutouts = su(circuitJson).pcb_cutout.list()
   const drillElements = [...holes, ...platedHolesOnLayer, ...viasOnLayer]
 

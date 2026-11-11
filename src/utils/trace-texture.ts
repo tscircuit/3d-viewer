@@ -8,6 +8,7 @@ import type {
   PcbRenderLayer,
 } from "circuit-json"
 import { getElementRenderLayers, su } from "@tscircuit/circuit-json-util"
+import { getPcbVias } from "./get-pcb-vias"
 import { calculateOutlineBounds } from "./outline-bounds"
 
 export function createTraceTextureForLayer({
@@ -24,7 +25,9 @@ export function createTraceTextureForLayer({
   traceTextureResolution: number
 }): THREE.CanvasTexture | null {
   const pcbTraces = su(circuitJson).pcb_trace.list()
-  const pcbVias = su(circuitJson).pcb_via.list()
+  const pcbVias = getPcbVias(circuitJson).filter(
+    (via) => !Array.isArray(via.layers) || via.layers.includes(layer),
+  )
   const pcbPlatedHoles = su(circuitJson).pcb_plated_hole.list()
   const pcbRenderLayer: PcbRenderLayer =
     layer === "top" ? "top_copper" : "bottom_copper"
