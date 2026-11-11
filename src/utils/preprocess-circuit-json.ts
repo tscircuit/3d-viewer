@@ -1,5 +1,5 @@
-import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
+import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import { createFauxBoard } from "./create-faux-board"
 
 /**
@@ -24,22 +24,36 @@ export function addFauxBoardIfNeeded(
     return circuitJson
   }
 
-  // For faux boards, adjust component z positions to sit on top of the board
-  // (same as real boards where components are at boardThickness/2)
+  // For faux boards, adjust component z positions to sit on top/bottom of the board
+  // (same as real boards where components are at ±boardThickness/2)
   const boardThickness = fauxBoard.thickness
   const componentZ = boardThickness / 2
+  const pcbComponentLayerById = new Map(
+    su(circuitJson)
+      .pcb_component.list()
+      .map((pcbComp) => [pcbComp.pcb_component_id, pcbComp.layer]),
+  )
 
   const processedCircuitJson = circuitJson.map((element) => {
     if (element.type === "cad_component" && element.pcb_component_id) {
       const cadComponent = element as CadComponent
       if (cadComponent.position) {
         const positionZOffset = cadComponent.position.z ?? 0
-        // Set z position to componentZ, preserving x and y
+        const layer =
+          cadComponent.layer ??
+          (cadComponent.pcb_component_id
+            ? pcbComponentLayerById.get(cadComponent.pcb_component_id)
+            : undefined)
+        const isBottomWithAdjustedRotation =
+          layer === "bottom" && Boolean(cadComponent.rotation)
+        // Set z position relative to faux board surface, preserving x and y
         return {
           ...cadComponent,
           position: {
             ...cadComponent.position,
-            z: positionZOffset + componentZ,
+            z: isBottomWithAdjustedRotation
+              ? positionZOffset - componentZ
+              : positionZOffset + componentZ,
           },
         }
       }

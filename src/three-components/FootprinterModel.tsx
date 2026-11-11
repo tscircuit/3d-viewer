@@ -1,34 +1,44 @@
+import * as jscadModeling from "@jscad/modeling"
 import {
   convertCSGToThreeGeom,
   getJscadModelForFootprint,
 } from "jscad-electronics/vanilla"
-import { useMemo, useEffect } from "react"
-import * as jscadModeling from "@jscad/modeling"
-import * as THREE from "three"
-import { useThree } from "src/react-three/ThreeContext"
+import { useEffect, useMemo } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
+import type { CadModelFitMode, CadModelSize } from "src/utils/cad-model-fit"
 import { configureObjectShadows } from "src/utils/configure-object-shadows"
+import * as THREE from "three"
+import { useCadModelTransformGraph } from "./useCadModelTransformGraph"
 
 export const FootprinterModel = ({
   positionOffset,
   footprint,
   rotationOffset,
+  modelOffset = [0, 0, 0],
+  modelRotation = [0, 0, 0],
+  sourceCoordinateTransform,
+  modelSize,
+  modelFitMode = "contain_within_bounds",
   onHover,
   onUnhover,
   isHovered,
   scale,
   isTranslucent = false,
 }: {
-  positionOffset: any
+  positionOffset?: [number, number, number]
   footprint: string
   rotationOffset?: [number, number, number]
+  modelOffset?: [number, number, number]
+  modelRotation?: [number, number, number]
+  sourceCoordinateTransform?: THREE.Matrix4
+  modelSize?: CadModelSize
+  modelFitMode?: CadModelFitMode
   onHover: (e: any) => void
   onUnhover: () => void
   isHovered: boolean
   scale?: number
   isTranslucent?: boolean
 }) => {
-  const { rootObject } = useThree()
   const group = useMemo(() => {
     if (!footprint) return null
     const { geometries } = getJscadModelForFootprint(footprint, jscadModeling)
@@ -64,29 +74,17 @@ export const FootprinterModel = ({
     return group
   }, [footprint, isTranslucent])
 
-  useEffect(() => {
-    if (!group || !rootObject) return
-    rootObject.add(group)
-    return () => {
-      rootObject.remove(group)
-    }
-  }, [rootObject, group])
-
-  useEffect(() => {
-    if (!group) return
-    if (positionOffset) group.position.fromArray(positionOffset)
-    if (rotationOffset) group.rotation.fromArray(rotationOffset)
-    if (scale !== undefined) group.scale.setScalar(scale)
-  }, [
-    group,
-    positionOffset?.[0],
-    positionOffset?.[1],
-    positionOffset?.[2],
-    rotationOffset?.[0],
-    rotationOffset?.[1],
-    rotationOffset?.[2],
+  const { boardTransformGroup } = useCadModelTransformGraph({
+    model: group,
+    position: positionOffset,
+    rotation: rotationOffset,
+    modelOffset,
+    modelRotation,
+    sourceCoordinateTransform,
+    modelSize,
+    modelFitMode,
     scale,
-  ])
+  })
 
   useEffect(() => {
     if (!group) return
@@ -112,7 +110,7 @@ export const FootprinterModel = ({
       isHovered={isHovered}
       onHover={onHover}
       onUnhover={onUnhover}
-      object={group}
+      object={boardTransformGroup}
     >
       {/* group is now added imperatively */}
     </ContainerWithTooltip>
