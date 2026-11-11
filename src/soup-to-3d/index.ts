@@ -1,13 +1,15 @@
 import { colorize } from "@jscad/modeling/src/colors"
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
+import { subtract } from "@jscad/modeling/src/operations/booleans"
 import { cuboid } from "@jscad/modeling/src/primitives"
 import { su } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
+import { createCutoutGeom } from "../BoardGeomBuilder"
 import { createBoardGeomWithOutline } from "../geoms/create-board-with-outline"
 import { getBoardEdgeColor } from "../utils/get-board-edge-color"
 
 /**
- * Creates a simplified board geometry (just the board shape, no components/holes).
+ * Creates a simplified board geometry (board shape + cutouts, no components/holes).
  * Used for initial display while the detailed geometry is being built.
  */
 export const createSimplifiedBoardGeom = (
@@ -60,6 +62,16 @@ export const createSimplifiedBoardGeom = (
       size: [boardOrPanel.width ?? 10, boardOrPanel.height ?? 10, pcbThickness],
       center: [boardOrPanel.center.x, boardOrPanel.center.y, 0],
     })
+  }
+
+  const cutouts = su(circuitJson).pcb_cutout.list()
+  if (cutouts.length > 0) {
+    const cutoutGeoms = cutouts
+      .map((cutout) => createCutoutGeom(cutout, pcbThickness))
+      .filter((g): g is Geom3 => g !== null)
+    if (cutoutGeoms.length > 0) {
+      boardGeom = subtract(boardGeom, ...cutoutGeoms)
+    }
   }
 
   // Colorize and return the simplified board

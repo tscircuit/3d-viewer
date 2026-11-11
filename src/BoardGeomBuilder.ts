@@ -1,12 +1,12 @@
 import { colorize } from "@jscad/modeling/src/colors"
 import type { Geom3 } from "@jscad/modeling/src/geometries/types"
 import type { Vec2 } from "@jscad/modeling/src/maths/types"
+import { measureBoundingBox } from "@jscad/modeling/src/measurements"
 import {
   intersect,
   subtract,
   union,
 } from "@jscad/modeling/src/operations/booleans"
-import { measureBoundingBox } from "@jscad/modeling/src/measurements"
 import { extrudeLinear } from "@jscad/modeling/src/operations/extrusions"
 import { rotateZ, translate } from "@jscad/modeling/src/operations/transforms"
 import {
@@ -57,14 +57,77 @@ type BuilderState =
 
 const buildStateOrder: BuilderState[] = [
   "initializing",
+  "processing_cutouts",
   "processing_plated_holes",
   "processing_holes",
-  "processing_cutouts",
-
   "processing_vias",
   "finalizing",
   "done",
 ]
+
+export function createCutoutGeom(
+  cutout: PcbCutout,
+  pcbThickness: number,
+): Geom3 | null {
+  let cutoutGeom: Geom3 | null = null
+  const cutoutHeight = pcbThickness * 1.5
+
+  switch (cutout.shape) {
+    case "rect": {
+      const rectCornerRadius = clampRectBorderRadius(
+        cutout.width,
+        cutout.height,
+        extractRectBorderRadius(cutout),
+      )
+
+      if (rectCornerRadius > 0) {
+        const rect2d = roundedRectangle({
+          size: [cutout.width, cutout.height],
+          roundRadius: rectCornerRadius,
+          segments: PAD_ROUNDED_SEGMENTS,
+        })
+        cutoutGeom = extrudeLinear({ height: cutoutHeight }, rect2d)
+        cutoutGeom = translate([0, 0, -cutoutHeight / 2], cutoutGeom)
+      } else {
+        cutoutGeom = cuboid({
+          center: [0, 0, 0],
+          size: [cutout.width, cutout.height, cutoutHeight],
+        })
+      }
+      if (cutout.rotation) {
+        const rotationRadians = (cutout.rotation * Math.PI) / 180
+        cutoutGeom = rotateZ(rotationRadians, cutoutGeom)
+      }
+      cutoutGeom = translate([cutout.center.x, cutout.center.y, 0], cutoutGeom)
+      break
+    }
+    case "circle":
+      cutoutGeom = cylinder({
+        center: [cutout.center.x, cutout.center.y, 0],
+        radius: cutout.radius,
+        height: cutoutHeight,
+      })
+      break
+    case "polygon": {
+      let pointsVec2: Vec2[] = cutout.points.map((p) => [p.x, p.y])
+      if (pointsVec2.length < 3) {
+        console.warn(
+          `PCB Cutout [${cutout.pcb_cutout_id}] polygon has fewer than 3 points, skipping.`,
+        )
+        break
+      }
+      if (arePointsClockwise(pointsVec2)) {
+        pointsVec2 = pointsVec2.reverse()
+      }
+      const polygon2d = jscadPolygon({ points: pointsVec2 })
+      cutoutGeom = extrudeLinear({ height: cutoutHeight }, polygon2d)
+      cutoutGeom = translate([0, 0, -cutoutHeight / 2], cutoutGeom)
+      break
+    }
+  }
+
+  return cutoutGeom
+}
 
 export class BoardGeomBuilder {
   private board: PcbBoard
@@ -74,6 +137,7 @@ export class BoardGeomBuilder {
   private pcb_cutouts: PcbCutout[]
 
   private boardGeom: Geom3 | null = null
+  private boardDrills: Geom3[] = []
   private platedHoleGeoms: Geom3[] = []
   private viaGeoms: Geom3[] = [] // Combined with platedHoleGeoms
   // Drills are in board space (mm, +Z up). Apply them after all copper exists,
@@ -169,7 +233,7 @@ export class BoardGeomBuilder {
         center: [this.board.center.x, this.board.center.y, 0],
       })
     }
-    this.state = "processing_plated_holes"
+    this.state = "processing_cutouts"
     this.currentIndex = 0
   }
 
@@ -237,70 +301,9 @@ export class BoardGeomBuilder {
   private processCutout(cutout: PcbCutout) {
     if (!this.boardGeom) return
 
-    let cutoutGeom: Geom3 | null = null
-    const cutoutHeight = this.ctx.pcbThickness * 1.5
-
-    switch (cutout.shape) {
-      case "rect": {
-        const rectCornerRadius = clampRectBorderRadius(
-          cutout.width,
-          cutout.height,
-          extractRectBorderRadius(cutout),
-        )
-
-        if (rectCornerRadius > 0) {
-          const rect2d = roundedRectangle({
-            size: [cutout.width, cutout.height],
-            roundRadius: rectCornerRadius,
-            segments: PAD_ROUNDED_SEGMENTS,
-          })
-          cutoutGeom = extrudeLinear({ height: cutoutHeight }, rect2d)
-          cutoutGeom = translate([0, 0, -cutoutHeight / 2], cutoutGeom)
-        } else {
-          cutoutGeom = cuboid({
-            center: [0, 0, 0],
-            size: [cutout.width, cutout.height, cutoutHeight],
-          })
-        }
-        // Apply rotation before translation (rotate around origin)
-        if (cutout.rotation) {
-          const rotationRadians = (cutout.rotation * Math.PI) / 180
-          cutoutGeom = rotateZ(rotationRadians, cutoutGeom)
-        }
-        // Translate to final position after rotation
-        cutoutGeom = translate(
-          [cutout.center.x, cutout.center.y, 0],
-          cutoutGeom,
-        )
-        break
-      }
-      case "circle":
-        cutoutGeom = cylinder({
-          center: [cutout.center.x, cutout.center.y, 0],
-          radius: cutout.radius,
-          height: cutoutHeight,
-        })
-        break
-      case "polygon": {
-        let pointsVec2: Vec2[] = cutout.points.map((p) => [p.x, p.y])
-        if (pointsVec2.length < 3) {
-          console.warn(
-            `PCB Cutout [${cutout.pcb_cutout_id}] polygon has fewer than 3 points, skipping.`,
-          )
-          break
-        }
-        if (arePointsClockwise(pointsVec2)) {
-          pointsVec2 = pointsVec2.reverse()
-        }
-        const polygon2d = jscadPolygon({ points: pointsVec2 })
-        cutoutGeom = extrudeLinear({ height: cutoutHeight }, polygon2d)
-        cutoutGeom = translate([0, 0, -cutoutHeight / 2], cutoutGeom)
-        break
-      }
-    }
-
+    const cutoutGeom = createCutoutGeom(cutout, this.ctx.pcbThickness)
     if (cutoutGeom) {
-      this.boardGeom = subtract(this.boardGeom, cutoutGeom)
+      this.boardDrills.push(cutoutGeom)
     }
   }
 
@@ -338,7 +341,7 @@ export class BoardGeomBuilder {
       }
 
       if (!opts.dontCutBoard) {
-        this.boardGeom = subtract(this.boardGeom, cyGeom)
+        this.boardDrills.push(cyGeom)
         this.copperDrills.push({
           geom: cyGeom,
           platedHoleIndex: this.platedHoleGeoms.length,
@@ -390,7 +393,7 @@ export class BoardGeomBuilder {
       }
 
       if (!opts.dontCutBoard) {
-        this.boardGeom = subtract(this.boardGeom, pillHole)
+        this.boardDrills.push(pillHole)
         this.copperDrills.push({
           geom: pillHole,
           platedHoleIndex: this.platedHoleGeoms.length,
@@ -460,7 +463,7 @@ export class BoardGeomBuilder {
       )
 
       if (!opts.dontCutBoard) {
-        this.boardGeom = subtract(this.boardGeom, pillHole)
+        this.boardDrills.push(pillHole)
         this.copperDrills.push({
           geom: pillHole,
           platedHoleIndex: this.platedHoleGeoms.length,
@@ -531,7 +534,7 @@ export class BoardGeomBuilder {
       )
 
       if (!opts.dontCutBoard) {
-        this.boardGeom = subtract(this.boardGeom, pillHole)
+        this.boardDrills.push(pillHole)
         this.copperDrills.push({
           geom: pillHole,
           platedHoleIndex: this.platedHoleGeoms.length,
@@ -559,7 +562,7 @@ export class BoardGeomBuilder {
       if (!boardHole || !copperHole) return
 
       if (!opts.dontCutBoard) {
-        this.boardGeom = subtract(this.boardGeom, boardHole)
+        this.boardDrills.push(boardHole)
         this.copperDrills.push({
           geom: boardHole,
           platedHoleIndex: this.platedHoleGeoms.length,
@@ -586,7 +589,7 @@ export class BoardGeomBuilder {
       })
 
       // normal cut for board
-      this.boardGeom = subtract(this.boardGeom, cyGeom)
+      this.boardDrills.push(cyGeom)
 
       // slightly smaller cut from plated holes (copper overlap)
       const copperCut = cylinder({
@@ -667,7 +670,7 @@ export class BoardGeomBuilder {
 
       if (boardHole) {
         const positionedBoardHole = translate([hole.x, hole.y, 0], boardHole)
-        this.boardGeom = subtract(this.boardGeom, positionedBoardHole)
+        this.boardDrills.push(positionedBoardHole)
       }
 
       if (copperCut) {
@@ -716,7 +719,7 @@ export class BoardGeomBuilder {
       })
 
       // Subtract drill from board
-      this.boardGeom = subtract(this.boardGeom, viaDrill)
+      this.boardDrills.push(viaDrill)
       this.copperDrills.push({
         geom: viaDrill,
         viaIndex: viaCopperIndex,
@@ -726,6 +729,9 @@ export class BoardGeomBuilder {
 
   private finalize() {
     if (!this.boardGeom) return
+    if (this.boardDrills.length > 0) {
+      this.boardGeom = subtract(this.boardGeom, ...this.boardDrills)
+    }
     const drillBounds = this.copperDrills.map((drill) => ({
       ...drill,
       bounds: measureBoundingBox(drill.geom),
