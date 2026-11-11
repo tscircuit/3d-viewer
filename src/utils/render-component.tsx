@@ -7,6 +7,7 @@ import {
 import { executeJscadOperations } from "jscad-planner"
 import * as THREE from "three"
 import * as jscadModeling from "@jscad/modeling"
+import { isFootprintWithout3dModel } from "../three-components/FootprinterModel"
 import { load3DModel } from "./load-model"
 import type { CadComponent } from "circuit-json"
 
@@ -80,10 +81,25 @@ export async function renderComponent(
 
   // Handle footprints
   if (component.footprinter_string) {
-    const { geometries } = getJscadModelForFootprint(
-      component.footprinter_string,
-      jscadModeling,
-    )
+    if (isFootprintWithout3dModel(component.footprinter_string)) {
+      return
+    }
+    let geometries: any[] = []
+    try {
+      geometries =
+        getJscadModelForFootprint(component.footprinter_string, jscadModeling)
+          ?.geometries ?? []
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        /Invalid footprint function,\s*got\s*"(solderjumper|fiducial|pad|smtpad|smdpads|platedhole)"/i.test(
+          error.message,
+        )
+      ) {
+        return
+      }
+      throw error
+    }
 
     // Process each operation from the footprinter
     for (const geomInfo of geometries.flat(Infinity) as any[]) {
