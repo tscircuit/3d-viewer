@@ -10,10 +10,21 @@ import { createGeometryFromPolygons } from "./utils/create-geometry-from-polygon
 import { getBoardEdgeColor } from "./utils/get-board-edge-color"
 import { renderComponent } from "./utils/render-component"
 
-interface CircuitToSvgOptions {
+export type CameraPerspective =
+  | "angled"
+  | "top"
+  | "front"
+  | "side"
+  | "isometric-angled"
+  | "isometric-top"
+  | "isometric-front"
+  | "isometric-side"
+
+export interface CircuitToSvgOptions {
   width?: number
   height?: number
   viewAngle?: "top" | "isometric" | "front" | "side"
+  perspective?: CameraPerspective
   backgroundColor?: string
   padding?: number
   zoom?: number
@@ -29,6 +40,112 @@ interface CircuitToSvgOptions {
       z: number
     }
   }
+}
+
+const getDefaultCameraPosition = (
+  perspective: CameraPerspective | undefined,
+): { x: number; y: number; z: number } => {
+  switch (perspective) {
+    case "top":
+    case "isometric-top":
+      return { x: 0, y: 0, z: 100 }
+    case "front":
+      return { x: 0, y: -10, z: 0 }
+    case "isometric-front":
+      return { x: 0, y: -100, z: 0 }
+    case "side":
+      return { x: 10, y: 0, z: 0 }
+    case "isometric-side":
+      return { x: 100, y: 0, z: 0 }
+    default:
+      return { x: 10, y: 10, z: 10 }
+  }
+}
+
+export const createCamera = (options: {
+  perspective?: CameraPerspective
+  camera?: {
+    position: {
+      x: number
+      y: number
+      z: number
+    }
+    lookAt?: {
+      x: number
+      y: number
+      z: number
+    }
+  }
+  screenSize: {
+    width: number
+    height: number
+  }
+  zoom?: number
+}): THREE.OrthographicCamera | THREE.PerspectiveCamera => {
+  const aspect = options.screenSize.width / options.screenSize.height
+  const lookAt = options.camera?.lookAt ?? { x: 0, y: 0, z: 0 }
+
+  if (options.perspective?.includes("isometric")) {
+    const camera = new THREE.OrthographicCamera()
+    const frustumSize = 100
+    const halfFrustumSize = frustumSize / 2 / (options.zoom ?? 1)
+
+    camera.left = -halfFrustumSize * aspect
+    camera.right = halfFrustumSize * aspect
+    camera.top = halfFrustumSize
+    camera.bottom = -halfFrustumSize
+    camera.near = -1000
+    camera.far = 1000
+
+    const position =
+      options.camera?.position ?? getDefaultCameraPosition(options.perspective)
+    camera.position.set(position.x, position.y, position.z)
+
+    camera.lookAt(new THREE.Vector3(lookAt.x, lookAt.y, lookAt.z))
+    camera.up.set(0, 0, 1)
+    camera.updateProjectionMatrix()
+
+    return camera
+  }
+
+  const camera = new THREE.PerspectiveCamera()
+  camera.aspect = aspect
+
+  const position =
+    options.camera?.position ?? getDefaultCameraPosition(options.perspective)
+  camera.position.set(position.x, position.y, position.z)
+
+  if (position.x !== lookAt.x || position.y !== lookAt.y) {
+    camera.up.set(0, 0, 1)
+  }
+  camera.lookAt(new THREE.Vector3(lookAt.x, lookAt.y, lookAt.z))
+  camera.up.set(0, 0, 1)
+
+  camera.updateProjectionMatrix()
+
+  return camera
+}
+
+const resolvePerspective = (
+  options: CircuitToSvgOptions,
+): CameraPerspective => {
+  if (options.perspective) {
+    return options.perspective
+  }
+  switch (options.viewAngle) {
+    case "top":
+      return "isometric-top"
+    case "front":
+      return "isometric-front"
+    case "side":
+      return "isometric-side"
+    case "isometric":
+      return "isometric-angled"
+  }
+  if (options.camera && options.zoom !== undefined) {
+    return "isometric-angled"
+  }
+  return "angled"
 }
 
 const log = Debug("tscircuit:3d-viewer:convert-circuit-json-to-3d-svg")
@@ -47,39 +164,17 @@ export async function convertCircuitJsonTo3dSvg(
 
   // Initialize scene and renderer
   const scene = new THREE.Scene()
+  scene.up.set(0, 0, 1)
   const renderer = new SVGRenderer()
   renderer.setSize(width, height)
   renderer.setClearColor(new THREE.Color(backgroundColor), 1)
 
-  // Create camera with explicit type and parameters
-  const camera = new THREE.OrthographicCamera()
-
-  // Set camera properties
-  const aspect = width / height
-  const frustumSize = 100
-  const halfFrustumSize = frustumSize / 2 / zoom
-
-  // Set camera properties
-  camera.left = -halfFrustumSize * aspect
-  camera.right = halfFrustumSize * aspect
-  camera.top = halfFrustumSize
-  camera.bottom = -halfFrustumSize
-  camera.near = -1000
-  camera.far = 1000
-
-  // Set camera position
-  const position = options.camera?.position ?? { x: 0, y: 0, z: 100 }
-  camera.position.set(position.x, position.y, position.z)
-
-  // Set camera up vector
-  camera.up.set(0, 1, 0)
-
-  // Set camera look at
-  const lookAt = options.camera?.lookAt ?? { x: 0, y: 0, z: 0 }
-  camera.lookAt(new THREE.Vector3(lookAt.x, lookAt.y, lookAt.z))
-
-  // Important: Update the camera matrix
-  camera.updateProjectionMatrix()
+  const camera = createCamera({
+    perspective: resolvePerspective(options),
+    camera: options.camera,
+    screenSize: { width, height },
+    zoom,
+  })
 
   // Add lighting
   const ambientLight = new THREE.AmbientLight(0xffffff, Math.PI / 2)
