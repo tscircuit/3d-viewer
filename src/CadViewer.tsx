@@ -93,6 +93,10 @@ export type CadViewerProps = Omit<
   glbUrl?: string
   /** In-memory alternative to glbUrl. Supply only one GLB source. */
   glbData?: ArrayBuffer
+  /** Load a Circuit JSON viewer when Exploded view is requested from a GLB. */
+  onRequestExplosionView?: () => void
+  /** Open controls on mount with circuitJson, for an on-demand renderer replacement. */
+  defaultExplosionViewOpen?: boolean
   foldPcbs?: boolean
   /** Enable right-click navigation using the same identity as the PCB viewer. */
   onViewSchematicComponent?: (event: ViewSchematicComponentEvent) => void
@@ -111,7 +115,7 @@ const CadViewerInner = (props: CadViewerProps) => {
     props.circuitJson ?? explosion.assembled
   const [explosionPanelSource, setExplosionPanelSource] = useState<
     AnyCircuitElement[] | null
-  >(null)
+  >(() => (props.defaultExplosionViewOpen ? circuitJson : null))
   const explosionPanelOpen = explosionPanelSource === circuitJson
   const hasAssembly = circuitJson.some(
     (element) => element.type === "cad_component" && !element.pcb_component_id,
@@ -145,6 +149,7 @@ const CadViewerInner = (props: CadViewerProps) => {
   const [isKeyboardShortcutsDialogOpen, setIsKeyboardShortcutsDialogOpen] =
     useState(false)
   const [autoRotate, setAutoRotate] = useState(() => {
+    if (props.defaultExplosionViewOpen) return false
     const stored = window.localStorage.getItem("cadViewerAutoRotate")
     return stored !== "false"
   })
@@ -461,9 +466,17 @@ const CadViewerInner = (props: CadViewerProps) => {
                 : undefined
             }
             explosionAvailable={
-              explosion.stages.length > 0 || !!explosion.error
+              (glbSource !== undefined && !!props.onRequestExplosionView) ||
+              explosion.stages.length > 0 ||
+              !!explosion.error
             }
             onExplosionView={() => {
+              if (glbSource !== undefined && props.onRequestExplosionView) {
+                setAutoRotate(false)
+                closeMenu()
+                props.onRequestExplosionView()
+                return
+              }
               setExplosionPanelSource(circuitJson)
               setAutoRotate(false)
               closeMenu()
