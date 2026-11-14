@@ -1,4 +1,5 @@
-import { describe, expect, test } from "bun:test"
+import { afterEach, beforeEach, describe, expect, test } from "bun:test"
+import { createCanvas } from "@napi-rs/canvas"
 import * as THREE from "three"
 import {
   createReferenceObject,
@@ -18,6 +19,17 @@ import {
 describe("reference object placement", () => {
   const boardDimensions = { width: 50, height: 40 }
   const boardCenter = { x: 12, y: -8 }
+
+  let previousDocument: Document
+  beforeEach(() => {
+    previousDocument = globalThis.document
+    Object.assign(globalThis, {
+      document: { createElement: () => createCanvas(1, 1) },
+    })
+  })
+  afterEach(() => {
+    globalThis.document = previousDocument
+  })
 
   test("exposes the requested context menu choices", () => {
     expect(REFERENCE_OBJECT_MENU_OPTIONS.map(({ label }) => label)).toEqual([

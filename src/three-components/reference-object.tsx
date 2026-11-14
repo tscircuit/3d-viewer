@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react"
+import { useEffect } from "react"
 import { useCameraController } from "../contexts/CameraControllerContext"
 import { useThree } from "../react-three/ThreeContext"
 import {
@@ -26,24 +26,20 @@ export const ReferenceObject = ({
   boardCenter,
 }: ReferenceObjectProps) => {
   const { scene } = useThree()
-  const object = useMemo(() => {
-    const nextObject = createReferenceObject(type)
+  useEffect(() => {
+    const object = createReferenceObject(type)
     const position = getReferenceObjectPosition(
       type,
       boardDimensions,
       boardCenter,
     )
-    nextObject.position.set(position.x, position.y, position.z)
-    return nextObject
-  }, [type, boardDimensions, boardCenter])
-
-  useEffect(() => {
+    object.position.set(position.x, position.y, position.z)
     scene.add(object)
     return () => {
       scene.remove(object)
       disposeReferenceObject(object)
     }
-  }, [scene, object])
+  }, [scene, type, boardDimensions, boardCenter])
 
   return null
 }
