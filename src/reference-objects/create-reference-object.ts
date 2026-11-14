@@ -1,5 +1,6 @@
 import * as THREE from "three"
 import { configureObjectShadows } from "../utils/configure-object-shadows"
+import { addReferenceObjectLabel } from "./add-reference-object-label"
 import {
   REFERENCE_OBJECT_SPECS,
   type ReferenceObjectType,
@@ -235,6 +236,13 @@ const createBanana = () => {
   normalizeObjectToSpec(banana, "banana")
   group.add(banana)
 
+  configureObjectShadows(group)
+  addReferenceObjectLabel(group, peel, REFERENCE_OBJECT_SPECS.banana, {
+    center: [0, -18.5, 29],
+    size: [92, 16, 20],
+    color: 0x282217,
+  })
+
   return group
 }
 
@@ -311,6 +319,13 @@ const createCreditCard = () => {
     group.add(stripe)
   }
 
+  configureObjectShadows(group)
+  addReferenceObjectLabel(group, body, spec, {
+    center: [14, 3, spec.depth / 2],
+    size: [56, 15, spec.depth / 2],
+    color: 0xffffff,
+  })
+
   return group
 }
 
@@ -374,6 +389,13 @@ const createMacbook = () => {
   frontNotch.name = "macbook-front-notch"
   group.add(frontNotch)
 
+  configureObjectShadows(group)
+  addReferenceObjectLabel(group, lid, spec, {
+    center: [0, -48, lidTopZ],
+    size: [220, 44, lidDepth],
+    color: 0x202428,
+  })
+
   return group
 }
 
@@ -388,7 +410,6 @@ export const createReferenceObject = (type: ReferenceObjectType) => {
   group.name = `reference-object-${type}`
   group.userData.isReferenceObject = true
   group.userData.referenceObjectType = type
-  configureObjectShadows(group)
   return group
 }
 
@@ -404,5 +425,8 @@ export const disposeReferenceObject = (object: THREE.Object3D) => {
     for (const material of childMaterials) materials.add(material)
   })
   for (const geometry of geometries) geometry.dispose()
-  for (const material of materials) material.dispose()
+  for (const material of materials) {
+    if (material instanceof THREE.MeshBasicMaterial) material.map?.dispose()
+    material.dispose()
+  }
 }

@@ -3,6 +3,7 @@ export type ReferenceObjectType = "banana" | "credit-card" | "14in-macbook"
 export interface ReferenceObjectSpec {
   type: ReferenceObjectType
   label: string
+  name: string
   width: number
   height: number
   depth: number
@@ -37,6 +38,7 @@ export const REFERENCE_OBJECT_SPECS: Record<
   banana: {
     type: "banana",
     label: "Show Banana",
+    name: "Banana",
     // USDA describes a medium banana as 7 to 7 7/8 inches long. The 190 mm
     // envelope is near the midpoint of that range.
     width: 190,
@@ -47,6 +49,7 @@ export const REFERENCE_OBJECT_SPECS: Record<
   "credit-card": {
     type: "credit-card",
     label: "Show Credit Card",
+    name: "Credit card",
     // ISO/IEC 7810 ID-1 dimensions.
     width: 85.6,
     height: 53.98,
@@ -56,6 +59,7 @@ export const REFERENCE_OBJECT_SPECS: Record<
   "14in-macbook": {
     type: "14in-macbook",
     label: "Show 14in Macbook",
+    name: "14-inch MacBook Pro",
     // Current 14-inch MacBook Pro exterior dimensions.
     width: 312.6,
     height: 221.2,
