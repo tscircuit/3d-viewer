@@ -21,6 +21,10 @@ import { processNonPlatedHolesForManifold } from "../utils/manifold/process-non-
 import { processPlatedHolesForManifold } from "../utils/manifold/process-plated-holes"
 import { processViasForManifold } from "../utils/manifold/process-vias"
 import { manifoldMeshToThreeGeometry } from "../utils/manifold-mesh-to-three-geometry"
+import {
+  createMultiBoardEnvelope,
+  getUnpanelizedBoards,
+} from "../utils/multi-board"
 
 export interface ManifoldGeoms {
   board?: {
@@ -94,8 +98,20 @@ export const useManifoldBoardBuilder = (
 
     // Skip boards that are inside a panel - only render the panel outline
     const boardsNotInPanel = boards.filter((b) => !b.pcb_panel_id)
+    if (boardsNotInPanel.length > 1) {
+      // Several standalone boards: textures span all of them
+      return createMultiBoardEnvelope(boardsNotInPanel)
+    }
     return boardsNotInPanel.length > 0 ? boardsNotInPanel[0]! : null
   }, [circuitJson])
+
+  /** Every board that gets its own mesh; more than one only without a panel. */
+  const boardsForGeometry = useMemo(() => {
+    if (!boardData) return []
+    if (circuitJson.some((e) => e.type === "pcb_panel")) return [boardData]
+    const boardsNotInPanel = getUnpanelizedBoards(circuitJson)
+    return boardsNotInPanel.length > 1 ? boardsNotInPanel : [boardData]
+  }, [circuitJson, boardData])
 
   const isFauxBoard = useMemo(() => {
     const boards = su(circuitJson).pcb_board.list()
@@ -159,57 +175,69 @@ export const useManifoldBoardBuilder = (
       const currentPcbThickness = boardData.thickness || 1.4
       setPcbThickness(currentPcbThickness)
 
-      const { boardOp: initialBoardOp, outlineCrossSection } =
-        createManifoldBoard(
+      const BOARD_CLIP_Z_MARGIN = 1
+      const clipThickness = currentPcbThickness + 2 * BOARD_CLIP_Z_MARGIN
+      const BOARD_CLIP_XY_OUTSET = 0.01
+
+      // One mesh and one clip volume per board, then merged, so that several
+      // standalone boards are all drawn (and copper is clipped to each of them).
+      const boardOps: any[] = []
+      const clipOps: any[] = []
+      for (const board of boardsForGeometry) {
+        const { boardOp, outlineCrossSection } = createManifoldBoard(
           Manifold,
           CrossSection,
-          boardData,
+          board,
           currentPcbThickness,
           manifoldInstancesForCleanup.current,
         )
-      let currentBoardOp = initialBoardOp
+        boardOps.push(boardOp)
 
-      const BOARD_CLIP_Z_MARGIN = 1
-      const clipThickness = currentPcbThickness + 2 * BOARD_CLIP_Z_MARGIN
-      let boardClipVolume: any | null = null
+        if (outlineCrossSection) {
+          let clipCrossSection = outlineCrossSection
+          if (BOARD_CLIP_XY_OUTSET > 0) {
+            const inflatedCrossSection =
+              outlineCrossSection.offset(BOARD_CLIP_XY_OUTSET)
+            manifoldInstancesForCleanup.current.push(inflatedCrossSection)
+            clipCrossSection = inflatedCrossSection
+          }
 
-      const BOARD_CLIP_XY_OUTSET = 0.01
-
-      if (outlineCrossSection) {
-        let clipCrossSection = outlineCrossSection
-        if (BOARD_CLIP_XY_OUTSET > 0) {
-          const inflatedCrossSection =
-            outlineCrossSection.offset(BOARD_CLIP_XY_OUTSET)
-          manifoldInstancesForCleanup.current.push(inflatedCrossSection)
-          clipCrossSection = inflatedCrossSection
+          const clipOp = Manifold.extrude(
+            clipCrossSection,
+            clipThickness,
+            undefined,
+            undefined,
+            undefined,
+            true,
+          )
+          manifoldInstancesForCleanup.current.push(clipOp)
+          clipOps.push(clipOp)
+        } else {
+          const clipWidth = (board.width || 0) + 2 * BOARD_CLIP_XY_OUTSET
+          const clipHeight = (board.height || 0) + 2 * BOARD_CLIP_XY_OUTSET
+          const clipCube = Manifold.cube(
+            [clipWidth, clipHeight, clipThickness],
+            true,
+          )
+          manifoldInstancesForCleanup.current.push(clipCube)
+          const translatedClipCube = clipCube.translate([
+            board.center.x,
+            board.center.y,
+            0,
+          ])
+          manifoldInstancesForCleanup.current.push(translatedClipCube)
+          clipOps.push(translatedClipCube)
         }
-
-        const clipOp = Manifold.extrude(
-          clipCrossSection,
-          clipThickness,
-          undefined,
-          undefined,
-          undefined,
-          true,
-        )
-        manifoldInstancesForCleanup.current.push(clipOp)
-        boardClipVolume = clipOp
-      } else {
-        const clipWidth = (boardData.width || 0) + 2 * BOARD_CLIP_XY_OUTSET
-        const clipHeight = (boardData.height || 0) + 2 * BOARD_CLIP_XY_OUTSET
-        const clipCube = Manifold.cube(
-          [clipWidth, clipHeight, clipThickness],
-          true,
-        )
-        manifoldInstancesForCleanup.current.push(clipCube)
-        const translatedClipCube = clipCube.translate([
-          boardData.center.x,
-          boardData.center.y,
-          0,
-        ])
-        manifoldInstancesForCleanup.current.push(translatedClipCube)
-        boardClipVolume = translatedClipCube
       }
+
+      const mergeOps = (ops: any[]) => {
+        if (ops.length === 1) return ops[0]
+        const merged = Manifold.union(ops)
+        manifoldInstancesForCleanup.current.push(merged)
+        return merged
+      }
+      let currentBoardOp = mergeOps(boardOps)
+      const boardClipVolume: any | null = mergeOps(clipOps)
 
       // --- Batch Process All Holes (non-plated, plated, vias) ---
       const allBoardDrills: any[] = []
@@ -341,7 +369,7 @@ export const useManifoldBoardBuilder = (
       manifoldInstancesForCleanup.current = []
       // boardManifold is part of manifoldInstancesForCleanup if it was assigned
     }
-  }, [manifoldJSModule, circuitJson, boardData])
+  }, [manifoldJSModule, circuitJson, boardData, boardsForGeometry])
 
   const textures = useMemo(() => {
     if (!boardData || !traceTextureResolution) return null
