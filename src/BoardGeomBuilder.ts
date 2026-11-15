@@ -38,6 +38,10 @@ import { createViaBoardDrill, createViaCopper } from "./geoms/via-geoms"
 import { getBoardEdgeColor } from "./utils/get-board-edge-color"
 import { getPcbVias } from "./utils/get-pcb-vias"
 import {
+  createMultiBoardEnvelope,
+  getUnpanelizedBoards,
+} from "./utils/multi-board"
+import {
   clampRectBorderRadius,
   extractRectBorderRadius,
 } from "./utils/rect-border-radius"
@@ -68,6 +72,7 @@ const buildStateOrder: BuilderState[] = [
 
 export class BoardGeomBuilder {
   private board: PcbBoard
+  private boardsForGeometry: PcbBoard[]
   private plated_holes: PcbPlatedHole[]
   private holes: PcbHole[]
   private pcb_vias: PcbVia[]
@@ -121,10 +126,16 @@ export class BoardGeomBuilder {
         num_layers: firstBoardInPanel?.num_layers ?? 2,
         solder_mask_color: firstBoardInPanel?.solder_mask_color,
       } as PcbBoard
+      this.boardsForGeometry = [this.board]
     } else {
       // Skip boards that are inside a panel - only render the panel outline
-      const boardsNotInPanel = boards.filter((b) => !b.pcb_panel_id)
-      this.board = boardsNotInPanel[0]!
+      const boardsNotInPanel = getUnpanelizedBoards(circuitJson)
+      this.board =
+        boardsNotInPanel.length > 1
+          ? createMultiBoardEnvelope(boardsNotInPanel)
+          : boardsNotInPanel[0]!
+      this.boardsForGeometry =
+        boardsNotInPanel.length > 1 ? boardsNotInPanel : [this.board]
     }
 
     this.plated_holes = su(circuitJson).pcb_plated_hole.list()
@@ -140,35 +151,52 @@ export class BoardGeomBuilder {
 
   private initializeBoard() {
     const clipDepth = this.ctx.pcbThickness + 2 * BOARD_CLIP_Z_MARGIN
+    const boardGeoms: Geom3[] = []
+    const clipGeoms: Geom3[] = []
 
-    if (this.board.outline && this.board.outline.length > 0) {
-      this.boardGeom = createBoardGeomWithOutline(
-        {
-          outline: this.board.outline!,
-        },
-        this.ctx.pcbThickness,
-      )
-      this.boardClipGeom = createBoardGeomWithOutline(
-        {
-          outline: this.board.outline!,
-        },
-        clipDepth,
-        { xyOutset: BOARD_CLIP_XY_OUTSET },
-      )
-    } else {
-      this.boardGeom = cuboid({
-        size: [this.board.width!, this.board.height!, this.ctx.pcbThickness],
-        center: [this.board.center.x, this.board.center.y, 0],
-      })
-      this.boardClipGeom = cuboid({
-        size: [
-          this.board.width! + 2 * BOARD_CLIP_XY_OUTSET,
-          this.board.height! + 2 * BOARD_CLIP_XY_OUTSET,
-          clipDepth,
-        ],
-        center: [this.board.center.x, this.board.center.y, 0],
-      })
+    for (const board of this.boardsForGeometry) {
+      if (board.outline && board.outline.length > 0) {
+        boardGeoms.push(
+          createBoardGeomWithOutline(
+            {
+              outline: board.outline,
+            },
+            this.ctx.pcbThickness,
+          ),
+        )
+        clipGeoms.push(
+          createBoardGeomWithOutline(
+            {
+              outline: board.outline,
+            },
+            clipDepth,
+            { xyOutset: BOARD_CLIP_XY_OUTSET },
+          ),
+        )
+      } else {
+        boardGeoms.push(
+          cuboid({
+            size: [board.width!, board.height!, this.ctx.pcbThickness],
+            center: [board.center.x, board.center.y, 0],
+          }),
+        )
+        clipGeoms.push(
+          cuboid({
+            size: [
+              board.width! + 2 * BOARD_CLIP_XY_OUTSET,
+              board.height! + 2 * BOARD_CLIP_XY_OUTSET,
+              clipDepth,
+            ],
+            center: [board.center.x, board.center.y, 0],
+          }),
+        )
+      }
     }
+
+    this.boardGeom =
+      boardGeoms.length === 1 ? boardGeoms[0]! : union(...boardGeoms)
+    this.boardClipGeom =
+      clipGeoms.length === 1 ? clipGeoms[0]! : union(...clipGeoms)
     this.state = "processing_plated_holes"
     this.currentIndex = 0
   }

@@ -1,5 +1,8 @@
 import { expect, test } from "bun:test"
+import { measureBoundingBox } from "@jscad/modeling/src/measurements"
 import type { AnyCircuitElement, PcbBoard } from "circuit-json"
+import { BoardGeomBuilder } from "../src/BoardGeomBuilder"
+import { createSimplifiedBoardGeom } from "../src/soup-to-3d"
 import {
   createMultiBoardEnvelope,
   getUnpanelizedBoards,
@@ -35,4 +38,24 @@ test("the texture envelope covers every board and has no outline", () => {
   expect(envelope.height).toBeCloseTo(48)
   expect(envelope.outline).toBeUndefined()
   expect(envelope.thickness).toBe((boards[0] as PcbBoard).thickness)
+})
+
+test("JSCAD simplified and detailed board builders render every standalone board", () => {
+  const simplifiedGeoms = createSimplifiedBoardGeom(circuitJson)
+  expect(simplifiedGeoms).toHaveLength(1)
+  const simplifiedBounds = measureBoundingBox(simplifiedGeoms[0]!)
+  expect(simplifiedBounds[0][0]).toBeCloseTo(-15)
+  expect(simplifiedBounds[1][0]).toBeCloseTo(15)
+  expect(simplifiedBounds[0][1]).toBeCloseTo(-10)
+  expect(simplifiedBounds[1][1]).toBeCloseTo(38)
+
+  const builder = new BoardGeomBuilder(circuitJson, () => {})
+  while (!builder.step(100)) {}
+  const detailedGeoms = builder.getGeoms()
+  expect(detailedGeoms.length).toBeGreaterThanOrEqual(1)
+  const detailedBounds = measureBoundingBox(detailedGeoms[0]!)
+  expect(detailedBounds[0][0]).toBeCloseTo(-15)
+  expect(detailedBounds[1][0]).toBeCloseTo(15)
+  expect(detailedBounds[0][1]).toBeCloseTo(-10)
+  expect(detailedBounds[1][1]).toBeCloseTo(38)
 })
