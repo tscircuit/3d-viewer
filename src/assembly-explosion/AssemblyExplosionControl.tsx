@@ -1,5 +1,35 @@
-import { useEffect, useRef, useState } from "react"
+import { type CSSProperties, useEffect, useRef, useState } from "react"
 import { zIndexMap } from "../../lib/utils/z-index-map"
+
+const rowStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 4,
+}
+const labelStyle: CSSProperties = {
+  ...rowStyle,
+  whiteSpace: "nowrap",
+  cursor: "pointer",
+}
+const buttonStyle: CSSProperties = {
+  display: "grid",
+  flex: "none",
+  placeItems: "center",
+  width: 26,
+  height: 26,
+  margin: 0,
+  padding: 0,
+  border: 0,
+  borderRadius: 4,
+  background: "transparent",
+  color: "inherit",
+  cursor: "pointer",
+}
+const disabledButtonStyle: CSSProperties = {
+  ...buttonStyle,
+  opacity: 0.4,
+  cursor: "default",
+}
 
 const iconPaths = {
   close: "m6 6 12 12M18 6 6 18",
@@ -80,31 +110,60 @@ export function AssemblyExplosionControl({
     onChange(value)
   }
   if (!stages.length && !error) return null
-  const stage = amount === 0 ? "Assembled" : stages[Math.ceil(amount) - 1]
-  const playLabel = playing
-    ? "Pause"
-    : amount >= stages.length
-      ? "Replay"
-      : "Play"
+  const atStart = amount === 0
+  const atEnd = amount >= stages.length
+  const reversing = playing && direction === -1
+  const resetDisabled = atStart && !playing
+  const stage = atStart ? "Assembled" : stages[Math.ceil(amount) - 1]
+  const playLabel = playing ? "Pause" : atEnd ? "Replay" : "Play"
   return (
     <section
       aria-label="Exploded view"
-      className="tscircuit-explosion-control"
-      style={{ zIndex: zIndexMap.htmlElements }}
+      style={{
+        position: "absolute",
+        bottom: 12,
+        left: 12,
+        zIndex: zIndexMap.htmlElements,
+        boxSizing: "border-box",
+        width: 344,
+        maxWidth: "calc(100% - 24px)",
+        maxHeight: "calc(100% - 24px)",
+        overflow: "auto",
+        padding: "4px 8px 6px",
+        border: "1px solid #555",
+        borderRadius: 6,
+        background: "#262626",
+        color: "#f2f2f2",
+        colorScheme: "dark",
+        accentColor: "#ddd",
+        font: "13px/1.4 system-ui, sans-serif",
+        overflowWrap: "anywhere",
+      }}
       onPointerDown={(event) => event.stopPropagation()}
       onContextMenu={(event) => event.stopPropagation()}
     >
-      <style>{explosionControlStyles}</style>
-      <div className="explosion-row">
-        <strong>Exploded view</strong>
+      <div style={rowStyle}>
+        <strong style={{ whiteSpace: "nowrap" }}>Exploded view</strong>
         {!error && (
-          <span className="explosion-stage" title={stage}>
+          <span
+            title={stage}
+            style={{
+              flex: 1,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              textAlign: "right",
+              color: "#c6c6c6",
+              fontSize: 12,
+            }}
+          >
             {stage}
           </span>
         )}
         {onClose && (
           <button
             type="button"
+            style={buttonStyle}
             aria-label="Close exploded view"
             title="Close exploded view"
             onClick={() => {
@@ -128,23 +187,47 @@ export function AssemblyExplosionControl({
             max={stages.length}
             step={0.01}
             value={amount}
+            style={{
+              display: "block",
+              width: "100%",
+              height: 20,
+              margin: 0,
+              padding: 0,
+              cursor: "pointer",
+            }}
             onChange={(event) => seek(Number(event.target.value))}
           />
-          <div className="explosion-row explosion-toolbar">
-            <div className="explosion-row" role="group" aria-label="Playback">
+          <div
+            style={{
+              ...rowStyle,
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+            }}
+          >
+            <div
+              style={{ ...rowStyle, gap: 1 }}
+              role="group"
+              aria-label="Playback"
+            >
               <button
                 type="button"
+                style={atStart ? disabledButtonStyle : buttonStyle}
                 aria-label="Previous explosion stage"
                 title="Previous stage"
-                disabled={amount === 0}
+                disabled={atStart}
                 onClick={() => seek(Math.max(0, Math.ceil(amount) - 1))}
               >
                 <Icon name="previous" />
               </button>
               <button
                 type="button"
+                style={
+                  reversing
+                    ? { ...buttonStyle, background: "#444" }
+                    : buttonStyle
+                }
                 aria-label="Play In Reverse"
-                aria-pressed={playing && direction === -1}
+                aria-pressed={reversing}
                 title="Play in reverse"
                 onClick={() => {
                   if (amount <= 0) onChange(stages.length)
@@ -156,6 +239,7 @@ export function AssemblyExplosionControl({
               </button>
               <button
                 type="button"
+                style={buttonStyle}
                 aria-label={playLabel}
                 title={playLabel}
                 onClick={() => {
@@ -170,9 +254,10 @@ export function AssemblyExplosionControl({
               </button>
               <button
                 type="button"
+                style={atEnd ? disabledButtonStyle : buttonStyle}
                 aria-label="Next explosion stage"
                 title="Next stage"
-                disabled={amount >= stages.length}
+                disabled={atEnd}
                 onClick={() =>
                   seek(Math.min(stages.length, Math.floor(amount) + 1))
                 }
@@ -181,19 +266,23 @@ export function AssemblyExplosionControl({
               </button>
               <button
                 type="button"
+                style={resetDisabled ? disabledButtonStyle : buttonStyle}
                 aria-label="Reset"
                 title="Reset to assembled"
                 onClick={() => seek(0)}
-                disabled={amount === 0 && !playing}
+                disabled={resetDisabled}
               >
                 <Icon name="reset" />
               </button>
             </div>
-            <div className="explosion-row explosion-settings">
+            <div
+              style={{ ...rowStyle, flexWrap: "wrap", gap: 8, fontSize: 12 }}
+            >
               {onShowGuidelinesChange && (
-                <label>
+                <label style={labelStyle}>
                   <input
                     type="checkbox"
+                    style={{ margin: 0, cursor: "pointer" }}
                     aria-label="Show guidelines"
                     checked={showGuidelines}
                     onChange={(event) =>
@@ -203,13 +292,25 @@ export function AssemblyExplosionControl({
                   Guidelines
                 </label>
               )}
-              <label title="Seconds per stage">
+              <label title="Seconds per stage" style={labelStyle}>
                 <input
                   aria-label="Seconds per stage"
                   type="number"
                   min={0.1}
                   step={0.1}
                   value={stageDuration}
+                  style={{
+                    boxSizing: "border-box",
+                    width: 44,
+                    height: 24,
+                    margin: 0,
+                    padding: "0 4px",
+                    border: "1px solid #656565",
+                    borderRadius: 4,
+                    background: "#1c1c1c",
+                    color: "inherit",
+                    font: "inherit",
+                  }}
                   onChange={(event) => {
                     const value = Number(event.target.value)
                     if (Number.isFinite(value) && value >= 0.1)
@@ -225,94 +326,3 @@ export function AssemblyExplosionControl({
     </section>
   )
 }
-
-// Keep the styles in the JS bundle so embedders don't need a separate CSS import.
-const explosionControlStyles = `
-.tscircuit-explosion-control {
-  position: absolute;
-  bottom: 12px;
-  left: 12px;
-  box-sizing: border-box;
-  width: 344px;
-  max-width: calc(100% - 24px);
-  max-height: calc(100% - 24px);
-  overflow: auto;
-  padding: 4px 8px 6px;
-  border: 1px solid #555;
-  border-radius: 6px;
-  background: #262626;
-  color: #f2f2f2;
-  color-scheme: dark;
-  accent-color: #ddd;
-  font: 13px/1.4 system-ui, sans-serif;
-  overflow-wrap: anywhere;
-}
-.tscircuit-explosion-control .explosion-row,
-.tscircuit-explosion-control label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.tscircuit-explosion-control strong { white-space: nowrap; }
-.tscircuit-explosion-control .explosion-stage {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: right;
-  color: #c6c6c6;
-  font-size: 12px;
-}
-.tscircuit-explosion-control .explosion-toolbar {
-  justify-content: space-between;
-  flex-wrap: wrap;
-}
-.tscircuit-explosion-control .explosion-toolbar > [role="group"] { gap: 1px; }
-.tscircuit-explosion-control .explosion-settings {
-  flex-wrap: wrap;
-  gap: 8px;
-  font-size: 12px;
-}
-.tscircuit-explosion-control :is(button, input) { margin: 0; }
-.tscircuit-explosion-control :is(label, button, input[type="checkbox"], input[type="range"]) {
-  cursor: pointer;
-}
-.tscircuit-explosion-control input[type="range"] {
-  display: block;
-  width: 100%;
-  height: 20px;
-  padding: 0;
-}
-.tscircuit-explosion-control button {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  color: inherit;
-}
-.tscircuit-explosion-control button:hover:not(:disabled),
-.tscircuit-explosion-control button[aria-pressed="true"] { background: #444; }
-.tscircuit-explosion-control button:disabled { opacity: .4; cursor: default; }
-.tscircuit-explosion-control label { white-space: nowrap; }
-.tscircuit-explosion-control input[type="number"] {
-  box-sizing: border-box;
-  width: 44px;
-  height: 24px;
-  padding: 0 4px;
-  border: 1px solid #656565;
-  border-radius: 4px;
-  background: #1c1c1c;
-  color: inherit;
-  font: inherit;
-}
-.tscircuit-explosion-control :is(button, input):focus-visible {
-  outline: 1px solid #fff;
-  outline-offset: 1px;
-}
-.tscircuit-explosion-control input[type="range"]:focus-visible { outline-offset: -1px; }
-`

@@ -50,7 +50,7 @@ for (const engine of ["manifold", "jscad"]) {
     const captureScene = () =>
       canvas.screenshot({
         style:
-          ".tscircuit-explosion-control { visibility: hidden !important; }",
+          'section[aria-label="Exploded view"] { visibility: hidden !important; }',
       })
     const assembled = await captureScene()
     await slider.fill("2.5")
