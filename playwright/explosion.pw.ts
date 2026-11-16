@@ -46,7 +46,13 @@ for (const engine of ["manifold", "jscad"]) {
       })
     await expect.poll(async () => (await positions()).length).toBe(3)
     const originalPositions = await positions()
-    const assembled = await canvas.screenshot()
+    // Keep control hover and focus states out of the scene comparison.
+    const captureScene = () =>
+      canvas.screenshot({
+        style:
+          'section[aria-label="Exploded view"] { visibility: hidden !important; }',
+      })
+    const assembled = await captureScene()
     await slider.fill("2.5")
     await expect(slider).toHaveAttribute("aria-valuetext", "case.remove-cap")
     await page.waitForTimeout(150)
@@ -57,7 +63,7 @@ for (const engine of ["manifold", "jscad"]) {
         [20, 0, 20],
       ]),
     )
-    const exploded = await canvas.screenshot()
+    const exploded = await captureScene()
     expect(exploded.equals(assembled)).toBe(false)
     await testInfo.attach(`${engine}-exploded`, {
       body: exploded,
@@ -67,7 +73,7 @@ for (const engine of ["manifold", "jscad"]) {
     await expect(slider).toHaveValue("0")
     await page.waitForTimeout(150)
     await expect.poll(positions).toEqual(originalPositions)
-    expect((await canvas.screenshot()).equals(assembled)).toBe(true)
+    expect((await captureScene()).equals(assembled)).toBe(true)
     expect(errors).toEqual([])
   })
 }
