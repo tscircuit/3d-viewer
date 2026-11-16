@@ -1,10 +1,21 @@
 import type { AnyCircuitElement } from "circuit-json"
-import { CadViewer } from "../src/CadViewer"
+import { CadViewer, type CadViewerProps } from "../src/CadViewer"
 import type { CameraController } from "../src/hooks/cameraAnimation"
 import pocketMicC5RxJson from "./fixtures/pocket-mic-c5-rx/assembled.circuit.json?raw"
-import { pocketMicC5RxBoardMoves } from "./fixtures/pocket-mic-c5-rx/board-moves"
 
 const pocketMicC5Rx = JSON.parse(pocketMicC5RxJson) as AnyCircuitElement[]
+const boardMoves: CadViewerProps["assemblyExplosionBoardMoves"] = [
+  {
+    stageName: "pocket-rx.lift-pcb",
+    pcbBoardId: "pcb_board_0",
+    translation: [0, 0, 12],
+  },
+  {
+    stageName: "pocket-rx.park-pcb",
+    pcbBoardId: "pcb_board_0",
+    translation: [0, 36, 0],
+  },
+]
 
 const frameReceiver = (controller: CameraController | null) =>
   controller?.animateTo({
@@ -16,7 +27,7 @@ const frameReceiver = (controller: CameraController | null) =>
 export const BoardRemoval = () => (
   <CadViewer
     circuitJson={pocketMicC5Rx}
-    assemblyExplosionBoardMoves={pocketMicC5RxBoardMoves}
+    assemblyExplosionBoardMoves={boardMoves}
     autoRotateDisabled
     onCameraControllerReady={frameReceiver}
   />

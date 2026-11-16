@@ -1,4 +1,4 @@
-import type { RigidExplosionView } from "./rotation-playback"
+import type { AssemblyPlaybackView } from "./board-playback"
 import { createContext, useContext, useEffect, useMemo } from "react"
 import type { AssemblyExplosionView } from "@tscircuit/core"
 import type { AnyCircuitElement } from "circuit-json"
@@ -6,9 +6,9 @@ import * as THREE from "three"
 import { getAssemblyGuidePoints } from "./assembly-guide-points"
 import { useFrame, useThree } from "../react-three/ThreeContext"
 
-function getAssemblyTransforms(
+export function getAssemblyTransforms(
   assembled: AnyCircuitElement[],
-  view?: RigidExplosionView,
+  view?: AssemblyPlaybackView,
 ) {
   const transforms =
     view?.assemblyTransforms ??
@@ -34,7 +34,7 @@ function getAssemblyTransforms(
 
 export const AssemblyExplosionContext = createContext<{
   assembled: AnyCircuitElement[]
-  view?: RigidExplosionView
+  view?: AssemblyPlaybackView
   showGuidelines?: boolean
 } | null>(null)
 

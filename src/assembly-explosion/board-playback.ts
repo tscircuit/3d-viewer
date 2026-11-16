@@ -3,6 +3,14 @@ import type { AnyCircuitElement, CadComponent, PcbBoard } from "circuit-json"
 import { Matrix4, Vector3 } from "three"
 import type { RigidExplosionView } from "./rotation-playback"
 
+export type AssemblyPlaybackView = RigidExplosionView & {
+  pcbBoardTransforms?: Map<
+    PcbBoard["pcb_board_id"] | CadComponent["cad_component_id"],
+    Matrix4
+  >
+  pcbBoardLines?: Array<{ points: { x: number; y: number; z: number }[] }>
+}
+
 /** Viewer-side motion in circuit-world millimeters, with +Z above the board. */
 export interface AssemblyExplosionBoardMove {
   stageName: string
@@ -64,7 +72,7 @@ export function createBoardPlayback(
   return (
     view: RigidExplosionView,
     options?: { throughStageRef?: string; stageProgress?: number },
-  ): RigidExplosionView => {
+  ): AssemblyPlaybackView => {
     let stop = stages.length - 1
     if (options?.throughStageRef !== undefined) {
       stop = stages.findIndex((stage) => stage.name === options.throughStageRef)
@@ -75,9 +83,9 @@ export function createBoardPlayback(
       throw new Error("Explosion progress must be between zero and one")
 
     const pcbBoardTransforms: NonNullable<
-      RigidExplosionView["pcbBoardTransforms"]
+      AssemblyPlaybackView["pcbBoardTransforms"]
     > = new Map()
-    const pcbBoardLines: NonNullable<RigidExplosionView["pcbBoardLines"]> = []
+    const pcbBoardLines: NonNullable<AssemblyPlaybackView["pcbBoardLines"]> = []
     if (!board) return { ...view, pcbBoardTransforms, pcbBoardLines }
 
     const offset = new Vector3()

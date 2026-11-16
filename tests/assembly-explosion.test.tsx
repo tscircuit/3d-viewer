@@ -14,9 +14,12 @@ import { explosionAssembly } from "../stories/fixtures/explosion-assembly"
 import { useAssemblyExplosion } from "../src/assembly-explosion/use-assembly-explosion"
 import {
   applyAssemblyOffsets,
+  applyAssemblyTransforms,
   getAssemblyOffsets,
+  getAssemblyTransforms,
 } from "../src/assembly-explosion/AssemblyExplosionScene"
 import { AssemblyExplosionControl } from "../src/assembly-explosion/AssemblyExplosionControl"
+import { createExplosionEvaluator } from "../src/assembly-explosion/create-explosion-evaluator"
 
 async function createCircuit() {
   const circuit = new Circuit()
@@ -24,6 +27,64 @@ async function createCircuit() {
   await circuit.renderUntilSettled()
   return circuit
 }
+
+test("the complete C5 fixture lifts and slides its populated board and resets", async () => {
+  const assembled: ReturnType<RootCircuit["getCircuitJson"]> = await Bun.file(
+    new URL(
+      "../stories/fixtures/pocket-mic-c5-rx/assembled.circuit.json",
+      import.meta.url,
+    ),
+  ).json()
+  const original = JSON.stringify(assembled)
+  const pcbBoardId = "pcb_board_0"
+  const evaluate = createExplosionEvaluator(assembled, {
+    boardMoves: [
+      { stageName: "pocket-rx.lift-pcb", pcbBoardId, translation: [0, 0, 12] },
+      { stageName: "pocket-rx.park-pcb", pcbBoardId, translation: [0, 36, 0] },
+    ],
+  })
+  const root = new THREE.Group()
+  const board = new THREE.Group()
+  board.userData.pcb_board_id = pcbBoardId
+  root.add(board)
+  const fitted = [board]
+  const caseParts = new Map<string, THREE.Group>()
+  for (const part of assembled) {
+    if (part.type !== "cad_component") continue
+    const group = new THREE.Group()
+    group.userData.cad_component_id = part.cad_component_id
+    root.add(group)
+    if (part.pcb_component_id) fitted.push(group)
+    else caseParts.set(part.cad_component_id, group)
+  }
+  expect(fitted).toHaveLength(62)
+
+  const bases = new Map<THREE.Object3D, THREE.Matrix4>()
+  const half = evaluate({
+    throughStageRef: "pocket-rx.lift-pcb",
+    stageProgress: 0.5,
+  })
+  for (const [view, position] of [
+    [half, [0, 0, 6]],
+    [evaluate(), [0, 36, 12]],
+  ] as const) {
+    applyAssemblyTransforms(root, getAssemblyTransforms(assembled, view), bases)
+    expect(fitted.map((group) => group.position.toArray())).toEqual(
+      fitted.map<THREE.Vector3Tuple>(() => [...position]),
+    )
+  }
+  expect(
+    caseParts.get("enclosure_cad_component_0")?.position.toArray(),
+  ).toEqual([0, 0, 0])
+  expect(
+    caseParts.get("enclosure_cad_component_1")?.position.toArray(),
+  ).toEqual([0, 0, 21])
+  applyAssemblyTransforms(root, getAssemblyTransforms(assembled), bases)
+  expect(root.children.every((child) => child.position.lengthSq() === 0)).toBe(
+    true,
+  )
+  expect(JSON.stringify(assembled)).toBe(original)
+})
 
 test("TSX stages move parent/child and multiple targets, preserve assembled data, and reset scene groups", async () => {
   const circuit = await createCircuit()

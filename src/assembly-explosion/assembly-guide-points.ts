@@ -1,10 +1,10 @@
-import type { RigidExplosionView } from "./rotation-playback"
+import type { AssemblyPlaybackView } from "./board-playback"
 import * as THREE from "three"
 
 /** Translate authored paths from CAD origins to the rendered model centers. */
 export function getAssemblyGuidePoints(
   root: THREE.Object3D,
-  view: RigidExplosionView,
+  view: AssemblyPlaybackView,
 ) {
   const points: THREE.Vector3[] =
     view.pcbBoardLines?.flatMap(({ points }) =>

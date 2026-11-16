@@ -1,13 +1,13 @@
 import {
   createRotationPlayback,
   type AssemblyExplosionRotation,
-  type RigidExplosionView,
 } from "./rotation-playback"
 import { getCircuitJsonAssemblyExplosion } from "@tscircuit/core"
 import type { AnyCircuitElement } from "circuit-json"
 import {
   createBoardPlayback,
   type AssemblyExplosionBoardMove,
+  type AssemblyPlaybackView,
 } from "./board-playback"
 
 /**
@@ -61,7 +61,7 @@ export function createExplosionEvaluator(
   }
   return (
     options?: Parameters<typeof getCircuitJsonAssemblyExplosion>[1],
-  ): RigidExplosionView => {
+  ): AssemblyPlaybackView => {
     const view = getCircuitJsonAssemblyExplosion(motion, options)
     const positions = new Map<string, { x: number; y: number; z: number }>()
     const centers = new Map<string, { x: number; y: number; z: number }>()
@@ -71,7 +71,7 @@ export function createExplosionEvaluator(
       if (element.type === "cad_reference_surface")
         centers.set(element.cad_reference_surface_id, element.center)
     }
-    let result: RigidExplosionView = {
+    let result: AssemblyPlaybackView = {
       ...view,
       circuitJson: visible.map((element) => {
         if (element.type === "cad_component")
