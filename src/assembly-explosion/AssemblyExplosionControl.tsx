@@ -1,5 +1,34 @@
 import { useEffect, useId, useRef, useState } from "react"
 import { zIndexMap } from "../../lib/utils/z-index-map"
+import { explosionControlStyles } from "./explosion-control-styles"
+
+const iconPaths = {
+  close: "m6 6 12 12M18 6 6 18",
+  previous: "M5 5v14m14-14L8 12l11 7z",
+  reverse: "M17 5 6 12l11 7z",
+  play: "m8 5 11 7-11 7z",
+  pause: "M9 5v14m6-14v14",
+  next: "M19 5v14M5 5l11 7-11 7z",
+  reset: "M3 12a9 9 0 1 1 3 6.7M3 12V6m0 6h6",
+}
+
+function Icon({ name }: { name: keyof typeof iconPaths }) {
+  return (
+    <svg
+      aria-hidden="true"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d={iconPaths[name]} />
+    </svg>
+  )
+}
 
 export function AssemblyExplosionControl({
   stages,
@@ -53,100 +82,88 @@ export function AssemblyExplosionControl({
     onChange(value)
   }
   if (!stages.length && !error) return null
-  const stage = amount === 0 ? "Assembled" : stages[Math.ceil(amount) - 1]
+  const stageNumber = Math.ceil(amount)
+  const stage = stageNumber === 0 ? "Assembled" : stages[stageNumber - 1]
+  const playLabel = playing
+    ? "Pause"
+    : amount >= stages.length
+      ? "Replay"
+      : "Play"
   return (
-    <div
-      style={{
-        position: "absolute",
-        bottom: 12,
-        left: 12,
-        maxWidth: "calc(100% - 24px)",
-        padding: "8px 12px",
-        borderRadius: 6,
-        background: "#222",
-        color: "white",
-        fontSize: 12,
-        zIndex: zIndexMap.htmlElements,
-      }}
+    <section
+      aria-label="Exploded view"
+      className="tscircuit-explosion-control"
+      style={{ zIndex: zIndexMap.htmlElements }}
       onPointerDown={(event) => event.stopPropagation()}
       onContextMenu={(event) => event.stopPropagation()}
     >
-      {onClose && (
-        <button
-          type="button"
-          aria-label="Close exploded view"
-          onClick={() => {
-            setPlaying(false)
-            onClose()
-          }}
-          style={{ float: "right", marginLeft: 12 }}
-        >
-          ×
-        </button>
-      )}
+      <style>{explosionControlStyles}</style>
+      <div className="explosion-row">
+        <strong>Exploded view</strong>
+        {onClose && (
+          <button
+            type="button"
+            aria-label="Close exploded view"
+            title="Close exploded view"
+            onClick={() => {
+              setPlaying(false)
+              onClose()
+            }}
+          >
+            <Icon name="close" />
+          </button>
+        )}
+      </div>
       {error ? (
         <div role="alert">Cannot show assembly explosion: {error.message}</div>
       ) : (
         <>
-          <label htmlFor={id}>Assembly explosion: {stage}</label>
-          {onShowGuidelinesChange && (
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
-                marginTop: 8,
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={showGuidelines}
-                onChange={(event) =>
-                  onShowGuidelinesChange(event.target.checked)
-                }
-              />
-              Show guidelines
-            </label>
-          )}
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <input
-              id={id}
-              aria-label="Assembly explosion"
-              aria-valuetext={stage}
-              type="range"
-              min={0}
-              max={stages.length}
-              step={0.01}
-              value={amount}
-              onChange={(event) => seek(Number(event.target.value))}
-            />
-            <button
-              type="button"
-              onClick={() => seek(0)}
-              disabled={amount === 0 && !playing}
-            >
-              Reset
-            </button>
+          <div className="explosion-row explosion-stage">
+            <span title={stage}>{stage}</span>
+            <span aria-hidden="true">
+              {stageNumber} / {stages.length}
+            </span>
           </div>
+          <input
+            aria-label="Assembly explosion"
+            aria-valuetext={stage}
+            type="range"
+            min={0}
+            max={stages.length}
+            step={0.01}
+            value={amount}
+            onChange={(event) => seek(Number(event.target.value))}
+          />
           <div
-            style={{
-              display: "flex",
-              gap: 8,
-              alignItems: "center",
-              marginTop: 8,
-              flexWrap: "wrap",
-            }}
+            className="explosion-row explosion-transport"
+            role="group"
+            aria-label="Playback"
           >
             <button
               type="button"
               aria-label="Previous explosion stage"
+              title="Previous stage"
               disabled={amount === 0}
               onClick={() => seek(Math.max(0, Math.ceil(amount) - 1))}
             >
-              Previous
+              <Icon name="previous" />
             </button>
             <button
               type="button"
+              aria-label="Play In Reverse"
+              aria-pressed={playing && direction === -1}
+              title="Play in reverse"
+              onClick={() => {
+                if (amount <= 0) onChange(stages.length)
+                setDirection(-1)
+                setPlaying(true)
+              }}
+            >
+              <Icon name="reverse" />
+            </button>
+            <button
+              type="button"
+              className="explosion-play"
               onClick={() => {
                 if (!playing) {
                   setDirection(1)
@@ -155,46 +172,64 @@ export function AssemblyExplosionControl({
                 setPlaying(!playing)
               }}
             >
-              {playing ? "Pause" : amount >= stages.length ? "Replay" : "Play"}
-            </button>
-            <button
-              type="button"
-              aria-pressed={playing && direction === -1}
-              onClick={() => {
-                if (amount <= 0) onChange(stages.length)
-                setDirection(-1)
-                setPlaying(true)
-              }}
-            >
-              Play In Reverse
+              <Icon name={playing ? "pause" : "play"} />
+              {playLabel}
             </button>
             <button
               type="button"
               aria-label="Next explosion stage"
+              title="Next stage"
               disabled={amount >= stages.length}
               onClick={() =>
                 seek(Math.min(stages.length, Math.floor(amount) + 1))
               }
             >
-              Next
+              <Icon name="next" />
             </button>
-            <label htmlFor={`${id}-duration`}>Seconds per stage</label>
-            <input
-              id={`${id}-duration`}
-              type="number"
-              min={0.1}
-              step={0.1}
-              value={stageDuration}
-              style={{ width: 60 }}
-              onChange={(event) => {
-                const value = Number(event.target.value)
-                if (Number.isFinite(value) && value >= 0.1)
-                  setStageDuration(value)
-              }}
-            />
+            <button
+              type="button"
+              className="explosion-reset"
+              aria-label="Reset"
+              title="Reset to assembled"
+              onClick={() => seek(0)}
+              disabled={amount === 0 && !playing}
+            >
+              <Icon name="reset" />
+            </button>
+          </div>
+          <div className="explosion-row explosion-settings">
+            {onShowGuidelinesChange && (
+              <label>
+                <input
+                  type="checkbox"
+                  aria-label="Show guidelines"
+                  checked={showGuidelines}
+                  onChange={(event) =>
+                    onShowGuidelinesChange(event.target.checked)
+                  }
+                />
+                Guidelines
+              </label>
+            )}
+            <label htmlFor={id} className="explosion-duration">
+              <input
+                id={id}
+                aria-label="Seconds per stage"
+                type="number"
+                min={0.1}
+                step={0.1}
+                value={stageDuration}
+                onChange={(event) => {
+                  const value = Number(event.target.value)
+                  if (Number.isFinite(value) && value >= 0.1)
+                    setStageDuration(value)
+                }}
+              />
+              s / stage
+            </label>
           </div>
         </>
       )}
-    </div>
+    </section>
   )
 }
