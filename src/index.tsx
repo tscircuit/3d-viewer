@@ -14,3 +14,4 @@ export { useCameraSession } from "./hooks/useCameraSession"
 export type { ViewSchematicComponentEvent } from "./utils/pick-schematic-component"
 
 export type { AssemblyExplosionRotation } from "./assembly-explosion/rotation-playback"
+export type { AssemblyExplosionBoardMove } from "./assembly-explosion/board-playback"

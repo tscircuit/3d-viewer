@@ -98,7 +98,7 @@ test("viewer scrubs stages, resets on input changes, plays serialized JSON progr
     circuitJson?: ReturnType<RootCircuit["getCircuitJson"]>
     children?: React.ReactNode
   }) {
-    state = useAssemblyExplosion(children, circuit, circuitJson)
+    state = useAssemblyExplosion({ children, circuit, circuitJson })
     return (
       <AssemblyExplosionControl
         stages={state.stages}

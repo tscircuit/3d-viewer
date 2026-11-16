@@ -407,9 +407,29 @@ phases; invalid TSX references are reported as render errors. Inputs without an 
 pre-rendered GLBs have the menu action disabled.
 
 Invalid programs show an error while retaining assembled geometry. The evaluator
-validates every stage even during partial playback. This version supports CAD and
-reference-surface translations; PCB/cable-containing movements and rotations are
-not supported. Displaying an explosion does not verify collision clearance.
+validates every stage even during partial playback. Circuit JSON moves target
+mechanical CAD and reference surfaces. Displaying an explosion does not verify
+collision clearance.
+
+Use `assemblyExplosionBoardMoves` to move one standalone PCB and its fitted
+components in the viewer. Each entry names an authored stage and a `pcb_board_id`,
+and supplies an XYZ translation in millimeters. A PCB-only stage can be empty in
+Circuit JSON. Separate stages accumulate their translations.
+
+```tsx
+;<CadViewer
+  circuitJson={assembledCircuitJson}
+  assemblyExplosionBoardMoves={[
+    {
+      stageName: "case.lift-pcb",
+      pcbBoardId: "pcb_board_0",
+      translation: [0, 0, 12],
+    },
+  ]}
+/>
+```
+
+See **Assembly / Pocket Mic C5 RX** for a full Circuit JSON example.
 
 The schema is published in `circuit-json@0.0.539` following
 [circuit-json #937](https://github.com/tscircuit/circuit-json/pull/937).

@@ -6,6 +6,10 @@ export function getAssemblyGuidePoints(
   root: THREE.Object3D,
   view: RigidExplosionView,
 ) {
+  const points: THREE.Vector3[] =
+    view.pcbBoardLines?.flatMap(({ points }) =>
+      points.map(({ x, y, z }) => new THREE.Vector3(x, y, z)),
+    ) ?? []
   if (view.motionGuides && view.assemblyTransforms) {
     root.updateWorldMatrix(true, true)
     const rootInverse = root.matrixWorld.clone().invert()
@@ -28,7 +32,7 @@ export function getAssemblyGuidePoints(
       })
       if (!box.isEmpty()) centers.set(id, box.getCenter(new THREE.Vector3()))
     })
-    return view.motionGuides.flatMap((guide) => {
+    const cadPoints = view.motionGuides.flatMap((guide) => {
       const center = centers.get(guide.targetId)
       if (!center) return []
       return guide.matrices
@@ -38,6 +42,7 @@ export function getAssemblyGuidePoints(
           center.clone().applyMatrix4(matrix),
         ])
     })
+    return [...points, ...cadPoints]
   }
   const targets = new Set(view.lines.map((line) => line.targetRef))
   const positions = new Map(
@@ -76,7 +81,6 @@ export function getAssemblyGuidePoints(
         .sub(new THREE.Vector3(position.x, position.y, position.z)),
     )
   })
-  const points: THREE.Vector3[] = []
   for (const line of view.lines) {
     const correction = corrections.get(line.targetRef)
     if (!correction) continue // Hidden or not-yet-loaded components have no guide.

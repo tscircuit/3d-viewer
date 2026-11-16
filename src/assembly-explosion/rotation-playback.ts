@@ -1,5 +1,5 @@
 import type { AssemblyExplosionView } from "@tscircuit/core"
-import type { AnyCircuitElement } from "circuit-json"
+import type { AnyCircuitElement, CadComponent, PcbBoard } from "circuit-json"
 import { Euler, Matrix4, Quaternion, Vector3, MathUtils } from "three"
 
 /** Viewer-side rotation of an authored explosion move, in circuit-world space.
@@ -16,6 +16,11 @@ export interface AssemblyExplosionRotation {
 export type RigidExplosionView = AssemblyExplosionView & {
   assemblyTransforms?: Map<string, Matrix4>
   motionGuides?: Array<{ targetId: string; matrices: Matrix4[] }>
+  pcbBoardTransforms?: Map<
+    PcbBoard["pcb_board_id"] | CadComponent["cad_component_id"],
+    Matrix4
+  >
+  pcbBoardLines?: Array<{ points: { x: number; y: number; z: number }[] }>
 }
 
 export function createRotationPlayback(
