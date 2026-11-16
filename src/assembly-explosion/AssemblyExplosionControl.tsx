@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { zIndexMap } from "../../lib/utils/z-index-map"
 import { explosionControlStyles } from "./explosion-control-styles"
 
@@ -47,7 +47,6 @@ export function AssemblyExplosionControl({
   showGuidelines?: boolean
   onShowGuidelinesChange?: (visible: boolean) => void
 }) {
-  const id = useId()
   const [playing, setPlaying] = useState(false)
   const [direction, setDirection] = useState<1 | -1>(1)
   const [stageDuration, setStageDuration] = useState(2)
@@ -82,8 +81,7 @@ export function AssemblyExplosionControl({
     onChange(value)
   }
   if (!stages.length && !error) return null
-  const stageNumber = Math.ceil(amount)
-  const stage = stageNumber === 0 ? "Assembled" : stages[stageNumber - 1]
+  const stage = amount === 0 ? "Assembled" : stages[Math.ceil(amount) - 1]
   const playLabel = playing
     ? "Pause"
     : amount >= stages.length
@@ -100,6 +98,11 @@ export function AssemblyExplosionControl({
       <style>{explosionControlStyles}</style>
       <div className="explosion-row">
         <strong>Exploded view</strong>
+        {!error && (
+          <span className="explosion-stage" title={stage}>
+            {stage}
+          </span>
+        )}
         {onClose && (
           <button
             type="button"
@@ -118,12 +121,6 @@ export function AssemblyExplosionControl({
         <div role="alert">Cannot show assembly explosion: {error.message}</div>
       ) : (
         <>
-          <div className="explosion-row explosion-stage">
-            <span title={stage}>{stage}</span>
-            <span aria-hidden="true">
-              {stageNumber} / {stages.length}
-            </span>
-          </div>
           <input
             aria-label="Assembly explosion"
             aria-valuetext={stage}
@@ -134,99 +131,95 @@ export function AssemblyExplosionControl({
             value={amount}
             onChange={(event) => seek(Number(event.target.value))}
           />
-          <div
-            className="explosion-row explosion-transport"
-            role="group"
-            aria-label="Playback"
-          >
-            <button
-              type="button"
-              aria-label="Previous explosion stage"
-              title="Previous stage"
-              disabled={amount === 0}
-              onClick={() => seek(Math.max(0, Math.ceil(amount) - 1))}
-            >
-              <Icon name="previous" />
-            </button>
-            <button
-              type="button"
-              aria-label="Play In Reverse"
-              aria-pressed={playing && direction === -1}
-              title="Play in reverse"
-              onClick={() => {
-                if (amount <= 0) onChange(stages.length)
-                setDirection(-1)
-                setPlaying(true)
-              }}
-            >
-              <Icon name="reverse" />
-            </button>
-            <button
-              type="button"
-              className="explosion-play"
-              onClick={() => {
-                if (!playing) {
-                  setDirection(1)
-                  if (amount >= stages.length) onChange(0)
-                }
-                setPlaying(!playing)
-              }}
-            >
-              <Icon name={playing ? "pause" : "play"} />
-              {playLabel}
-            </button>
-            <button
-              type="button"
-              aria-label="Next explosion stage"
-              title="Next stage"
-              disabled={amount >= stages.length}
-              onClick={() =>
-                seek(Math.min(stages.length, Math.floor(amount) + 1))
-              }
-            >
-              <Icon name="next" />
-            </button>
-            <button
-              type="button"
-              className="explosion-reset"
-              aria-label="Reset"
-              title="Reset to assembled"
-              onClick={() => seek(0)}
-              disabled={amount === 0 && !playing}
-            >
-              <Icon name="reset" />
-            </button>
-          </div>
-          <div className="explosion-row explosion-settings">
-            {onShowGuidelinesChange && (
-              <label>
-                <input
-                  type="checkbox"
-                  aria-label="Show guidelines"
-                  checked={showGuidelines}
-                  onChange={(event) =>
-                    onShowGuidelinesChange(event.target.checked)
-                  }
-                />
-                Guidelines
-              </label>
-            )}
-            <label htmlFor={id} className="explosion-duration">
-              <input
-                id={id}
-                aria-label="Seconds per stage"
-                type="number"
-                min={0.1}
-                step={0.1}
-                value={stageDuration}
-                onChange={(event) => {
-                  const value = Number(event.target.value)
-                  if (Number.isFinite(value) && value >= 0.1)
-                    setStageDuration(value)
+          <div className="explosion-row explosion-toolbar">
+            <div className="explosion-row" role="group" aria-label="Playback">
+              <button
+                type="button"
+                aria-label="Previous explosion stage"
+                title="Previous stage"
+                disabled={amount === 0}
+                onClick={() => seek(Math.max(0, Math.ceil(amount) - 1))}
+              >
+                <Icon name="previous" />
+              </button>
+              <button
+                type="button"
+                aria-label="Play In Reverse"
+                aria-pressed={playing && direction === -1}
+                title="Play in reverse"
+                onClick={() => {
+                  if (amount <= 0) onChange(stages.length)
+                  setDirection(-1)
+                  setPlaying(true)
                 }}
-              />
-              s / stage
-            </label>
+              >
+                <Icon name="reverse" />
+              </button>
+              <button
+                type="button"
+                aria-label={playLabel}
+                title={playLabel}
+                onClick={() => {
+                  if (!playing) {
+                    setDirection(1)
+                    if (amount >= stages.length) onChange(0)
+                  }
+                  setPlaying(!playing)
+                }}
+              >
+                <Icon name={playing ? "pause" : "play"} />
+              </button>
+              <button
+                type="button"
+                aria-label="Next explosion stage"
+                title="Next stage"
+                disabled={amount >= stages.length}
+                onClick={() =>
+                  seek(Math.min(stages.length, Math.floor(amount) + 1))
+                }
+              >
+                <Icon name="next" />
+              </button>
+              <button
+                type="button"
+                aria-label="Reset"
+                title="Reset to assembled"
+                onClick={() => seek(0)}
+                disabled={amount === 0 && !playing}
+              >
+                <Icon name="reset" />
+              </button>
+            </div>
+            <div className="explosion-row explosion-settings">
+              {onShowGuidelinesChange && (
+                <label>
+                  <input
+                    type="checkbox"
+                    aria-label="Show guidelines"
+                    checked={showGuidelines}
+                    onChange={(event) =>
+                      onShowGuidelinesChange(event.target.checked)
+                    }
+                  />
+                  Guidelines
+                </label>
+              )}
+              <label title="Seconds per stage">
+                <input
+                  aria-label="Seconds per stage"
+                  type="number"
+                  min={0.1}
+                  step={0.1}
+                  value={stageDuration}
+                  onChange={(event) => {
+                    const value = Number(event.target.value)
+                    if (Number.isFinite(value) && value >= 0.1)
+                      setStageDuration(value)
+                  }}
+                />
+                s / stage
+              </label>
+            </div>
           </div>
         </>
       )}
