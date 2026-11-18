@@ -89,6 +89,13 @@ test("isolating a GLB component hides untagged board geometry", async () => {
     expect(component.visible).toBe(true)
     // Meshes inside a component follow the component, not the isolation rule.
     expect(componentMesh.visible).toBe(true)
+    await renderGlb({
+      hiddenIds: new Set(),
+      isolatedId: "another-component",
+      unhiddenIds: new Set(["cad1"]),
+    })
+    expect(board.visible).toBe(false)
+    expect(component.visible).toBe(true)
     await renderGlb({ hiddenIds: new Set(["cad1"]) })
     expect(board.visible).toBe(true)
     expect(component.visible).toBe(false)

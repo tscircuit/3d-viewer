@@ -34,7 +34,25 @@ export const useObjectVisibility = (circuitKey: string | ArrayBuffer) => {
       }))
     },
     isolateObject: (id: string) => {
-      update((current) => ({ ...current, isolatedId: id }))
+      update((current) => ({
+        ...current,
+        isolatedId: id,
+        unhiddenIds: undefined,
+      }))
+    },
+    unhideObject: (id: string) => {
+      update((current) => {
+        const hiddenIds = new Set(current.hiddenIds)
+        hiddenIds.delete(id)
+        return {
+          ...current,
+          hiddenIds,
+          unhiddenIds:
+            current.isolatedId === undefined
+              ? undefined
+              : new Set([...(current.unhiddenIds ?? []), id]),
+        }
+      })
     },
     unhideAllObjects: () => {
       update(() => ALL_OBJECTS_VISIBLE)
