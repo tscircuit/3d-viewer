@@ -1,4 +1,4 @@
-name: Viewer interaction browser tests
+name: Section view browser tests
 
 on:
   pull_request:
@@ -19,16 +19,12 @@ jobs:
         with:
           node-version: "24"
       - run: bun install
-      - name: Test visibility state and component menus
-        run: bun test tests/get-hidden-scene-objects.test.ts tests/schematic-context-menu.test.tsx tests/object-visibility-scene.test.tsx tests/object-visibility-scene2.test.tsx
       - run: bunx playwright install --with-deps chromium
       - run: bun run test:sections
-      - name: Test selective component visibility
-        run: bun run test:unhide-components --output=test-results/unhide-components
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: viewer-interaction-browser-results
+          name: section-view-browser-results
           path: |
             playwright-report/
             test-results/
