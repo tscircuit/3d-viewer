@@ -34,11 +34,12 @@ for (const engine of ["manifold", "jscad"]) {
     await expect.poll(() => visible(page)).toEqual(["U3"])
 
     await backgroundMenu(page)
+    await expect(item(page, "Unhide All")).toHaveCount(0)
     const submenu = await openSubmenu(page)
     await expect(submenu.getByRole("menuitem")).toHaveText([
+      "Unhide All",
       "U1",
       "U2",
-      "Unhide All",
     ])
     if (engine === "manifold")
       await page.screenshot({
@@ -51,7 +52,7 @@ for (const engine of ["manifold", "jscad"]) {
     await backgroundMenu(page)
     await item(page, "Unhide Components").focus()
     await page.keyboard.press("ArrowRight")
-    await expect(submenu.getByRole("menuitem")).toHaveText(["U2", "Unhide All"])
+    await expect(submenu.getByRole("menuitem")).toHaveText(["Unhide All", "U2"])
     await submenu.getByRole("menuitem", { name: "U2", exact: true }).focus()
     await page.keyboard.press("Enter")
     await expect.poll(() => visible(page)).toEqual(["U1", "U2", "U3"])

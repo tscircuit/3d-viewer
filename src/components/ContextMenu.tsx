@@ -237,7 +237,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 </DropdownMenu.Item>
               </>
             )}
-            {hiddenComponents.length > 0 && onUnhideComponent && (
+            {((hiddenComponents.length > 0 && onUnhideComponent) ||
+              onUnhideAll) && (
               <DropdownMenu.Sub onOpenChange={setUnhideSubOpen}>
                 <DropdownMenu.SubTrigger
                   style={{
@@ -261,32 +262,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                     collisionPadding={10}
                     avoidCollisions
                   >
-                    {hiddenComponents.map(({ objectId, name }) => (
-                      <DropdownMenu.Item
-                        key={objectId}
-                        textValue={name}
-                        style={{
-                          ...itemStyles,
-                          backgroundColor:
-                            hoveredItem === `unhide-${objectId}`
-                              ? "#404040"
-                              : "transparent",
-                        }}
-                        onSelect={() => onUnhideComponent(objectId)}
-                        onMouseEnter={() =>
-                          setHoveredItem(`unhide-${objectId}`)
-                        }
-                        onMouseLeave={() => setHoveredItem(null)}
-                        onTouchStart={() =>
-                          setHoveredItem(`unhide-${objectId}`)
-                        }
-                      >
-                        {name}
-                      </DropdownMenu.Item>
-                    ))}
                     {onUnhideAll && (
                       <>
-                        <DropdownMenu.Separator style={separatorStyles} />
                         <DropdownMenu.Item
                           style={{
                             ...itemStyles,
@@ -303,26 +280,38 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                         >
                           Unhide All
                         </DropdownMenu.Item>
+                        {onUnhideComponent && hiddenComponents.length > 0 && (
+                          <DropdownMenu.Separator style={separatorStyles} />
+                        )}
                       </>
                     )}
+                    {onUnhideComponent &&
+                      hiddenComponents.map(({ objectId, name }) => (
+                        <DropdownMenu.Item
+                          key={objectId}
+                          textValue={name}
+                          style={{
+                            ...itemStyles,
+                            backgroundColor:
+                              hoveredItem === `unhide-${objectId}`
+                                ? "#404040"
+                                : "transparent",
+                          }}
+                          onSelect={() => onUnhideComponent(objectId)}
+                          onMouseEnter={() =>
+                            setHoveredItem(`unhide-${objectId}`)
+                          }
+                          onMouseLeave={() => setHoveredItem(null)}
+                          onTouchStart={() =>
+                            setHoveredItem(`unhide-${objectId}`)
+                          }
+                        >
+                          {name}
+                        </DropdownMenu.Item>
+                      ))}
                   </ViewportSubContent>
                 </DropdownMenu.Portal>
               </DropdownMenu.Sub>
-            )}
-            {onUnhideAll && (
-              <DropdownMenu.Item
-                style={{
-                  ...itemStyles,
-                  ...itemPaddingStyles,
-                  backgroundColor:
-                    hoveredItem === "unhide" ? "#404040" : "transparent",
-                }}
-                onSelect={onUnhideAll}
-                onMouseEnter={() => setHoveredItem("unhide")}
-                onMouseLeave={() => setHoveredItem(null)}
-              >
-                Unhide All
-              </DropdownMenu.Item>
             )}
             {(onViewSchematicComponent ||
               onHideObject ||

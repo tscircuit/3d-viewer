@@ -199,6 +199,13 @@ test("component actions snapshot the right-click, close, and restore hidden or i
       await act(
         () => new Promise<void>((resolve) => dom.window.setTimeout(resolve, 0)),
       )
+      if (
+        text === "Unhide All" &&
+        !Array.from(document.querySelectorAll('[role="menuitem"]')).some(
+          (element) => element.textContent === text,
+        )
+      )
+        await openUnhideSubmenu()
       const item = Array.from(
         document.querySelectorAll('[role="menuitem"]'),
       ).find((element) => element.textContent === text)!
@@ -234,6 +241,9 @@ test("component actions snapshot the right-click, close, and restore hidden or i
           }),
         )
       })
+      return document.querySelector(
+        `[role="menu"][aria-labelledby="${trigger.id}"]`,
+      )!
     }
     await rightClick()
     expect(document.body.textContent).not.toContain("Unhide All")
@@ -243,7 +253,14 @@ test("component actions snapshot the right-click, close, and restore hidden or i
     await select('Hide "R1"')
     expect(viewer.getAttribute("data-hidden")).toBe("case,r1")
     await rightClick(0, 0)
-    await openUnhideSubmenu()
+    expect(document.body.textContent).not.toContain("Unhide All")
+    const submenu = await openUnhideSubmenu()
+    expect(
+      Array.from(
+        submenu.querySelectorAll('[role="menuitem"]'),
+        (element) => element.textContent,
+      ),
+    ).toEqual(["Unhide All", "CASE", "R1"])
     expect(document.body.textContent).toContain("CASE")
     expect(document.body.textContent).toContain("R1")
     expect(document.body.textContent).not.toContain("R2")
