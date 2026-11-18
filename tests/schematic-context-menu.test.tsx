@@ -28,6 +28,7 @@ test("component actions snapshot the right-click, close, and restore hidden or i
     MutationObserver: globalThis.MutationObserver,
     Node: globalThis.Node,
     getComputedStyle: globalThis.getComputedStyle,
+    ResizeObserver: globalThis.ResizeObserver,
   }
 
   Object.assign(globalThis, {
@@ -41,6 +42,11 @@ test("component actions snapshot the right-click, close, and restore hidden or i
     Node: dom.window.Node,
     getComputedStyle: dom.window.getComputedStyle,
     IS_REACT_ACT_ENVIRONMENT: true,
+    ResizeObserver: class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
   })
 
   const { ContextMenu } = await import("../src/components/ContextMenu")
@@ -56,8 +62,13 @@ test("component actions snapshot the right-click, close, and restore hidden or i
     const containerRef = useRef<HTMLDivElement>(null)
     const [position, setPosition] = useState({ x: 0, y: 0 })
     const menu = useContextMenu({ containerRef, onOpen: setPosition })
-    const { objectVisibility, hideObject, isolateObject, unhideAllObjects } =
-      useObjectVisibility(circuitKey)
+    const {
+      objectVisibility,
+      hideObject,
+      isolateObject,
+      unhideObject,
+      unhideAllObjects,
+    } = useObjectVisibility(circuitKey)
     const componentId = position.x === 80 ? "case" : "r1"
     const componentName = componentId === "case" ? "CASE" : "R1"
     const canHide =
@@ -83,6 +94,17 @@ test("component actions snapshot the right-click, close, and restore hidden or i
             onDownloadGltf={() => {}}
             onOpenKeyboardShortcuts={() => {}}
             objectName={componentName}
+            hiddenComponents={[
+              { objectId: "case", name: "CASE" },
+              { objectId: "r1", name: "R1" },
+              { objectId: "r2", name: "R2" },
+            ].filter(({ objectId }) =>
+              isObjectHidden(objectVisibility, objectId),
+            )}
+            onUnhideComponent={(id) => {
+              unhideObject(id)
+              menu.setMenuVisible(false)
+            }}
             onHideObject={
               canHide
                 ? () => {
@@ -198,6 +220,21 @@ test("component actions snapshot the right-click, close, and restore hidden or i
       })
       expect(document.querySelector('[role="menu"]')).toBeNull()
     }
+    const openUnhideSubmenu = async () => {
+      const trigger = Array.from(
+        document.querySelectorAll('[role="menuitem"]'),
+      ).find((element) => element.textContent === "Unhide Components")!
+      expect(trigger).toBeDefined()
+      await act(async () => {
+        ;(trigger as HTMLElement).focus()
+        trigger.dispatchEvent(
+          new dom.window.KeyboardEvent("keydown", {
+            key: "ArrowRight",
+            bubbles: true,
+          }),
+        )
+      })
+    }
     await rightClick()
     expect(document.body.textContent).not.toContain("Unhide All")
     await select('Hide "CASE"', true)
@@ -205,6 +242,23 @@ test("component actions snapshot the right-click, close, and restore hidden or i
     await rightClick(40, 40)
     await select('Hide "R1"')
     expect(viewer.getAttribute("data-hidden")).toBe("case,r1")
+    await rightClick(0, 0)
+    await openUnhideSubmenu()
+    expect(document.body.textContent).toContain("CASE")
+    expect(document.body.textContent).toContain("R1")
+    expect(document.body.textContent).not.toContain("R2")
+    await select("CASE", true)
+    expect(viewer.getAttribute("data-hidden")).toBe("r1")
+    await rightClick(0, 0)
+    await openUnhideSubmenu()
+    expect(document.body.textContent).not.toContain("CASE")
+    await select("R1")
+    expect(viewer.getAttribute("data-hidden")).toBe("")
+    await rightClick()
+    expect(document.body.textContent).not.toContain("Unhide Components")
+    await select('Hide "CASE"')
+    await rightClick(40, 40)
+    await select('Hide "R1"')
     await rightClick(0, 0)
     expect(document.body.textContent).not.toContain('Hide "')
     await select("Unhide All", true)
@@ -214,6 +268,17 @@ test("component actions snapshot the right-click, close, and restore hidden or i
     await select('Isolate "CASE"')
     expect(viewer.getAttribute("data-isolated")).toBe("case")
     expect(viewer.getAttribute("data-hidden")).toBe("")
+    await rightClick(0, 0)
+    await openUnhideSubmenu()
+    await select("R1", true)
+    expect(viewer.getAttribute("data-isolated")).toBe("case")
+    await rightClick(0, 0)
+    await openUnhideSubmenu()
+    expect(document.body.textContent).not.toContain("R1")
+    expect(document.body.textContent).toContain("R2")
+    await select("Unhide All")
+    await rightClick()
+    await select('Isolate "CASE"')
     // Isolating CASE hides R1, so it can no longer be picked.
     await rightClick(40, 40)
     expect(document.body.textContent).not.toContain('Hide "')

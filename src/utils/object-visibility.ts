@@ -4,6 +4,8 @@ export interface ObjectVisibility {
   hiddenIds: ReadonlySet<string>
   /** Hides every other object, including geometry without an object id. */
   isolatedId?: string
+  /** Objects restored individually while another object remains isolated. */
+  unhiddenIds?: ReadonlySet<string>
 }
 
 export const ALL_OBJECTS_VISIBLE: ObjectVisibility = { hiddenIds: new Set() }
@@ -14,7 +16,11 @@ export const isObjectHidden = (
 ) => {
   if (!visibility) return false
   if (id !== undefined && visibility.hiddenIds.has(id)) return true
-  return visibility.isolatedId !== undefined && visibility.isolatedId !== id
+  return (
+    visibility.isolatedId !== undefined &&
+    visibility.isolatedId !== id &&
+    (id === undefined || !visibility.unhiddenIds?.has(id))
+  )
 }
 
 export const hasHiddenObjects = (visibility: ObjectVisibility) =>

@@ -14,6 +14,7 @@ import {
 } from "./utils/pick-scene-object"
 import { useObjectVisibility } from "./hooks/useObjectVisibility"
 import { hasHiddenObjects } from "./utils/object-visibility"
+import { getHiddenSceneObjects } from "./utils/get-hidden-scene-objects"
 import { findModelObject } from "./utils/find-model-object"
 import { configureRuntimeFont } from "./utils/configure-runtime-font"
 import {
@@ -129,8 +130,13 @@ const CadViewerInner = (props: CadViewerProps) => {
     [glbSource, circuitJson],
   )
   const circuitKey = glbSource ?? circuitJsonKey!
-  const { objectVisibility, hideObject, isolateObject, unhideAllObjects } =
-    useObjectVisibility(circuitKey)
+  const {
+    objectVisibility,
+    hideObject,
+    isolateObject,
+    unhideObject,
+    unhideAllObjects,
+  } = useObjectVisibility(circuitKey)
   const resolvedProps = {
     ...props,
     circuitJson,
@@ -427,6 +433,15 @@ const CadViewerInner = (props: CadViewerProps) => {
           <ContextMenu
             hasAssembly={hasAssembly}
             objectName={selectedObject?.name}
+            hiddenComponents={getHiddenSceneObjects(
+              circuitJson,
+              objectVisibility,
+              sceneRef.current?.rootObject,
+            )}
+            onUnhideComponent={(id) => {
+              unhideObject(id)
+              closeMenu()
+            }}
             onHideObject={
               selectedObject
                 ? () => {
