@@ -1,5 +1,5 @@
 import { su } from "@tscircuit/circuit-json-util"
-import type { AnyCircuitElement } from "circuit-json"
+import type { AnyCircuitElement, PcbBoard, PcbPanel } from "circuit-json"
 import type * as React from "react"
 import { forwardRef, useMemo } from "react"
 import type * as THREE from "three"
@@ -18,6 +18,10 @@ import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
 import { CadCable, getCadCables } from "./three-components/CadCable"
 import { getInitialCameraPosition } from "./utils/get-initial-camera-position"
+import {
+  createMultiBoardEnvelope,
+  getUnpanelizedBoards,
+} from "./utils/multi-board"
 import {
   isObjectHidden,
   type ObjectVisibility,
@@ -79,42 +83,73 @@ export const CadViewerJscad = forwardRef<
       }
     }, [internalCircuitJson])
 
-    const boardDimensions = useMemo(() => {
-      if (!internalCircuitJson) return undefined
+    const boardData = useMemo(() => {
+      if (!internalCircuitJson) return null
       try {
-        const board = su(internalCircuitJson).pcb_board.list()[0]
-        if (!board) return undefined
-        const bounds = calculateOutlineBounds(board)
+        const panels = internalCircuitJson.filter(
+          (e): e is PcbPanel => e.type === "pcb_panel",
+        )
+        const boards = su(internalCircuitJson).pcb_board.list()
+
+        if (panels.length > 0) {
+          const panel = panels[0]!
+          const firstBoardInPanel = boards.find(
+            (b) => b.pcb_panel_id === panel.pcb_panel_id,
+          )
+          return {
+            type: "pcb_board",
+            pcb_board_id: panel.pcb_panel_id,
+            center: panel.center,
+            width: panel.width,
+            height: panel.height,
+            thickness: firstBoardInPanel?.thickness ?? 1.4,
+            material: firstBoardInPanel?.material ?? "fr4",
+            num_layers: firstBoardInPanel?.num_layers ?? 2,
+            solder_mask_color: firstBoardInPanel?.solder_mask_color,
+          } as PcbBoard
+        }
+
+        const boardsNotInPanel = getUnpanelizedBoards(internalCircuitJson)
+        if (boardsNotInPanel.length > 1) {
+          return createMultiBoardEnvelope(boardsNotInPanel)
+        }
+        return boardsNotInPanel.length > 0 ? boardsNotInPanel[0]! : null
+      } catch (e) {
+        console.error(e)
+        return null
+      }
+    }, [internalCircuitJson])
+
+    const boardDimensions = useMemo(() => {
+      if (!boardData) return undefined
+      try {
+        const bounds = calculateOutlineBounds(boardData)
         return { width: bounds.width, height: bounds.height }
       } catch (e) {
         console.error(e)
         return undefined
       }
-    }, [internalCircuitJson])
+    }, [boardData])
 
     const boardCenter = useMemo(() => {
-      if (!internalCircuitJson) return undefined
+      if (!boardData) return undefined
       try {
-        const board = su(internalCircuitJson).pcb_board.list()[0]
-        if (!board) return undefined
-        const bounds = calculateOutlineBounds(board)
+        const bounds = calculateOutlineBounds(boardData)
         return { x: bounds.centerX, y: bounds.centerY }
       } catch (e) {
         console.error(e)
         return undefined
       }
-    }, [internalCircuitJson])
+    }, [boardData])
 
     const cameraSessionScope = useMemo(() => {
-      if (!internalCircuitJson) return undefined
-      const board = su(internalCircuitJson).pcb_board.list()[0]
-      if (!board) return undefined
+      if (!boardData) return undefined
       return JSON.stringify({
-        pcbBoardId: board.pcb_board_id,
+        pcbBoardId: boardData.pcb_board_id,
         center: boardCenter,
         dimensions: boardDimensions,
       })
-    }, [internalCircuitJson, boardCenter, boardDimensions])
+    }, [boardData, boardCenter, boardDimensions])
 
     const initialCameraPosition = useMemo(() => {
       return getInitialCameraPosition({ boardDimensions, boardCenter })
@@ -126,13 +161,7 @@ export const CadViewerJscad = forwardRef<
     const { stls: boardStls, loading } = useStlsFromGeom(boardGeom)
 
     // Match JscadBoardTextures, which renders a panel in place of its boards.
-    const renderedBoardId = useMemo(() => {
-      const panel = internalCircuitJson.find((e) => e.type === "pcb_panel")
-      if (panel?.type === "pcb_panel") return panel.pcb_panel_id
-      return su(internalCircuitJson)
-        .pcb_board.list()
-        .find((board) => !board.pcb_panel_id)?.pcb_board_id
-    }, [internalCircuitJson])
+    const renderedBoardId = boardData?.pcb_board_id
 
     const cad_components = su(internalCircuitJson)
       .cad_component.list()

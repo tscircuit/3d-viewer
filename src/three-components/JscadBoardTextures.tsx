@@ -14,6 +14,10 @@ import { useThree } from "../react-three/ThreeContext"
 import { configureObjectShadows } from "../utils/configure-object-shadows"
 import { createBoardReliefTextures } from "../utils/create-board-relief-textures"
 import { getLayerTextureResolution } from "../utils/layer-texture-resolution"
+import {
+  createMultiBoardEnvelope,
+  getUnpanelizedBoards,
+} from "../utils/multi-board"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
 
 interface JscadBoardTexturesProps {
@@ -58,9 +62,11 @@ export function JscadBoardTextures({
     }
 
     // Skip boards that are inside a panel to avoid rendering them individually
-    const boardsNotInPanel = boards.filter(
-      (b): b is PcbBoard => !b.pcb_panel_id,
-    )
+    const boardsNotInPanel = getUnpanelizedBoards(circuitJson)
+    if (boardsNotInPanel.length > 1) {
+      // Several standalone boards: textures span all of them
+      return createMultiBoardEnvelope(boardsNotInPanel)
+    }
     return boardsNotInPanel.length > 0 ? boardsNotInPanel[0]! : null
   }, [circuitJson])
 
