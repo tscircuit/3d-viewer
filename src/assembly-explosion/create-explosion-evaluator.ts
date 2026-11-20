@@ -1,10 +1,14 @@
 import {
   createRotationPlayback,
   type AssemblyExplosionRotation,
-  type RigidExplosionView,
 } from "./rotation-playback"
 import { getCircuitJsonAssemblyExplosion } from "@tscircuit/core"
 import type { AnyCircuitElement } from "circuit-json"
+import {
+  createBoardPlayback,
+  type AssemblyExplosionBoardMove,
+  type AssemblyPlaybackView,
+} from "./board-playback"
 
 /**
  * Core clones its input for each pose. Keep mesh/JSCAD payloads out of that
@@ -13,11 +17,18 @@ import type { AnyCircuitElement } from "circuit-json"
  */
 export function createExplosionEvaluator(
   assembled: AnyCircuitElement[],
-  rotations: readonly AssemblyExplosionRotation[] = [],
+  {
+    rotations = [],
+    boardMoves = [],
+  }: {
+    rotations?: readonly AssemblyExplosionRotation[]
+    boardMoves?: readonly AssemblyExplosionBoardMove[]
+  } = {},
 ) {
-  const rotate = rotations.length
-    ? createRotationPlayback(assembled, rotations)
-    : undefined
+  let rotate: ReturnType<typeof createRotationPlayback> | undefined
+  if (rotations.length) rotate = createRotationPlayback(assembled, rotations)
+  let moveBoards: ReturnType<typeof createBoardPlayback> | undefined
+  if (boardMoves.length) moveBoards = createBoardPlayback(assembled, boardMoves)
   const motion: AnyCircuitElement[] = []
   const visible = assembled.filter(
     (element) =>
@@ -50,7 +61,7 @@ export function createExplosionEvaluator(
   }
   return (
     options?: Parameters<typeof getCircuitJsonAssemblyExplosion>[1],
-  ): RigidExplosionView => {
+  ): AssemblyPlaybackView => {
     const view = getCircuitJsonAssemblyExplosion(motion, options)
     const positions = new Map<string, { x: number; y: number; z: number }>()
     const centers = new Map<string, { x: number; y: number; z: number }>()
@@ -60,7 +71,7 @@ export function createExplosionEvaluator(
       if (element.type === "cad_reference_surface")
         centers.set(element.cad_reference_surface_id, element.center)
     }
-    const result = {
+    let result: AssemblyPlaybackView = {
       ...view,
       circuitJson: visible.map((element) => {
         if (element.type === "cad_component")
@@ -76,6 +87,8 @@ export function createExplosionEvaluator(
         return element
       }),
     }
-    return rotate ? rotate(result, options) : result
+    if (rotate) result = rotate(result, options)
+    if (moveBoards) result = moveBoards(result, options)
+    return result
   }
 }

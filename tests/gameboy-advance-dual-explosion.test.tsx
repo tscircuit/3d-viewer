@@ -310,7 +310,9 @@ test("parking segments and the full cover flip have continuous bounds clearance 
 test("GBA cover flips inside-up, then analog sticks and buttons separate while PCB geometry stays fixed", async () => {
   const json = await load()
   expect(hash(gameboyExplosionRotations)).toBe(generation.rotationsSha256)
-  const evaluate = createExplosionEvaluator(json, gameboyExplosionRotations)
+  const evaluate = createExplosionEvaluator(json, {
+    rotations: gameboyExplosionRotations,
+  })
   const flip = evaluate({ throughStageRef: "EnclosureR43.flip-front-cover" })
   const matrix = flip.assemblyTransforms!.get("cad_component_178")!
   expect(new THREE.Vector3(0, 0, 1).transformDirection(matrix).z).toBeCloseTo(

@@ -1,4 +1,5 @@
 import type { RootCircuit } from "@tscircuit/core"
+import type { AssemblyExplosionBoardMove } from "./board-playback"
 import type { AssemblyExplosionRotation } from "./rotation-playback"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import type { AnyCircuitElement } from "circuit-json"
@@ -8,12 +9,19 @@ import type { createExplosionEvaluator } from "./create-explosion-evaluator"
 const EMPTY: AnyCircuitElement[] = []
 
 /** Render TSX once, then use the same serialized program as JSON-only inputs. */
-export function useAssemblyExplosion(
-  children?: ReactNode,
-  circuit?: RootCircuit,
-  circuitJson?: AnyCircuitElement[],
-  rotations?: readonly AssemblyExplosionRotation[],
-) {
+export function useAssemblyExplosion({
+  children,
+  circuit,
+  circuitJson,
+  rotations,
+  boardMoves,
+}: {
+  children?: ReactNode
+  circuit?: RootCircuit
+  circuitJson?: AnyCircuitElement[]
+  rotations?: readonly AssemblyExplosionRotation[]
+  boardMoves?: readonly AssemblyExplosionBoardMove[]
+}) {
   const [showGuidelines, setShowGuidelines] = useState(true)
   const [rendered, setRendered] = useState<{
     children: ReactNode
@@ -59,6 +67,7 @@ export function useAssemblyExplosion(
   const assembled = source.assembled
   const hasProgram =
     Boolean(rotations?.length) ||
+    Boolean(boardMoves?.length) ||
     assembled.some(
       (element) =>
         element.type === "cad_explosion_stage" ||
@@ -94,7 +103,7 @@ export function useAssemblyExplosion(
       }
     }
     try {
-      const evaluate = createEvaluator(assembled, rotations)
+      const evaluate = createEvaluator(assembled, { rotations, boardMoves })
       return { stages: evaluate().stages, evaluate }
     } catch (error) {
       return {
@@ -102,7 +111,14 @@ export function useAssemblyExplosion(
         error: error instanceof Error ? error : new Error(String(error)),
       }
     }
-  }, [assembled, rotations, hasProgram, createEvaluator, evaluatorError])
+  }, [
+    assembled,
+    rotations,
+    boardMoves,
+    hasProgram,
+    createEvaluator,
+    evaluatorError,
+  ])
   // Store the source with the position so replacing a circuit resets immediately.
   const [selection, setSelection] = useState({ source: assembled, amount: 0 })
   const amount = selection.source === assembled ? selection.amount : 0

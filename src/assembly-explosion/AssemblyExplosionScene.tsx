@@ -1,4 +1,4 @@
-import type { RigidExplosionView } from "./rotation-playback"
+import type { AssemblyPlaybackView } from "./board-playback"
 import { createContext, useContext, useEffect, useMemo } from "react"
 import type { AssemblyExplosionView } from "@tscircuit/core"
 import type { AnyCircuitElement } from "circuit-json"
@@ -6,9 +6,35 @@ import * as THREE from "three"
 import { getAssemblyGuidePoints } from "./assembly-guide-points"
 import { useFrame, useThree } from "../react-three/ThreeContext"
 
+export function getAssemblyTransforms(
+  assembled: AnyCircuitElement[],
+  view?: AssemblyPlaybackView,
+) {
+  const transforms =
+    view?.assemblyTransforms ??
+    new Map(
+      [...getAssemblyOffsets(assembled, view)].map(([id, offset]) => [
+        id,
+        new THREE.Matrix4().makeTranslation(offset.x, offset.y, offset.z),
+      ]),
+    )
+  if (!view?.pcbBoardTransforms?.size) return transforms
+
+  const combined = new Map(transforms)
+  for (const [id, boardPose] of view.pcbBoardTransforms) {
+    const localPose = transforms.get(id)
+    if (localPose) {
+      combined.set(id, boardPose.clone().multiply(localPose))
+    } else {
+      combined.set(id, boardPose)
+    }
+  }
+  return combined
+}
+
 export const AssemblyExplosionContext = createContext<{
   assembled: AnyCircuitElement[]
-  view?: RigidExplosionView
+  view?: AssemblyPlaybackView
   showGuidelines?: boolean
 } | null>(null)
 
@@ -76,14 +102,16 @@ export function applyAssemblyTransforms(
     matrix.decompose(object.position, object.quaternion, object.scale)
   }
   root.traverse((object) => {
-    const id = object.userData.cad_component_id
+    const { cad_component_id, pcb_board_id } = object.userData
+    const id = cad_component_id ?? pcb_board_id
     if (typeof id !== "string") return
+    const pose = transforms.get(id)
+    if (!cad_component_id && !pose && !bases.has(object)) return
     if (!bases.has(object)) {
       if (object.matrixAutoUpdate) object.updateMatrix()
       bases.set(object, object.matrix.clone())
     }
     const base = bases.get(object)!
-    const pose = transforms.get(id)
     restore(object, pose ? pose.clone().multiply(base) : base)
   })
   for (const [object, base] of bases)
@@ -101,20 +129,9 @@ export function AssemblyExplosionScene() {
     () => new Map<THREE.Object3D, THREE.Matrix4>(),
     [rootObject],
   )
-  const offsets = useMemo(
-    () => getAssemblyOffsets(state?.assembled ?? [], state?.view),
-    [state?.assembled, state?.view],
-  )
   const transforms = useMemo(
-    () =>
-      state?.view?.assemblyTransforms ??
-      new Map(
-        [...offsets].map(([id, offset]) => [
-          id,
-          new THREE.Matrix4().makeTranslation(offset.x, offset.y, offset.z),
-        ]),
-      ),
-    [state?.view, offsets],
+    () => getAssemblyTransforms(state?.assembled ?? [], state?.view),
+    [state?.assembled, state?.view],
   )
   const guides = useMemo(() => {
     const lines = new THREE.LineSegments(

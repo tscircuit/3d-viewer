@@ -43,6 +43,7 @@ const readStoredCameraType = (): "perspective" | "orthographic" | undefined => {
 
 import type { RootCircuit } from "@tscircuit/core"
 import { useAssemblyExplosion } from "./assembly-explosion/use-assembly-explosion"
+import type { AssemblyExplosionBoardMove } from "./assembly-explosion/board-playback"
 import { AssemblyExplosionContext } from "./assembly-explosion/AssemblyExplosionScene"
 import { AssemblyExplosionControl } from "./assembly-explosion/AssemblyExplosionControl"
 import type { AnyCircuitElement } from "circuit-json"
@@ -87,6 +88,8 @@ export type CadViewerProps = Omit<
   circuit?: RootCircuit
   /** Optional rotations for authored explosion moves; pivots are in circuit-world mm. */
   assemblyExplosionRotations?: readonly AssemblyExplosionRotation[]
+  /** Move a standalone PCB and its fitted components during named explosion stages. */
+  assemblyExplosionBoardMoves?: readonly AssemblyExplosionBoardMove[]
   /**
    * Pre-rendered circuit-json-to-gltf GLB URL. Bypasses geometry/model generation.
    * Changing the GLB preserves the camera. Change the viewer key to frame a different board.
@@ -102,12 +105,17 @@ export type CadViewerProps = Omit<
 const CadViewerInner = (props: CadViewerProps) => {
   const section = useSection()
   const glbSource = props.glbUrl ?? props.glbData
-  const explosion = useAssemblyExplosion(
-    props.circuitJson || glbSource !== undefined ? undefined : props.children,
-    props.circuitJson || glbSource !== undefined ? undefined : props.circuit,
-    glbSource === undefined ? props.circuitJson : undefined,
-    glbSource === undefined ? props.assemblyExplosionRotations : undefined,
-  )
+  const explosionInput: Parameters<typeof useAssemblyExplosion>[0] = {}
+  if (glbSource === undefined) {
+    explosionInput.circuitJson = props.circuitJson
+    explosionInput.rotations = props.assemblyExplosionRotations
+    explosionInput.boardMoves = props.assemblyExplosionBoardMoves
+    if (!props.circuitJson) {
+      explosionInput.children = props.children
+      explosionInput.circuit = props.circuit
+    }
+  }
+  const explosion = useAssemblyExplosion(explosionInput)
   const circuitJson: AnyCircuitElement[] =
     props.circuitJson ?? explosion.assembled
   const [explosionPanelSource, setExplosionPanelSource] = useState<

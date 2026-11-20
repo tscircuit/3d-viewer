@@ -55,7 +55,7 @@ const close = (actual: number[], expected: number[]) =>
   actual.forEach((v, i) => expect(v).toBeCloseTo(expected[i]!, 6))
 
 test("rotation uses the authored pivot and preserves previous moves through seeking and subsequent world-space translation", () => {
-  const evaluate = createExplosionEvaluator(fixture, rotations)
+  const evaluate = createExplosionEvaluator(fixture, { rotations })
   for (const [progress, expected] of [
     [0, [2, 0, 10]],
     [0.5, [0, 0, 8]],
@@ -91,7 +91,7 @@ test("rotation updates baked geometry, draws an anchored arc, and restores orien
   mesh.position.x = 2
   group.add(mesh)
   const bases = new Map<THREE.Object3D, THREE.Matrix4>()
-  const evaluate = createExplosionEvaluator(fixture, rotations)
+  const evaluate = createExplosionEvaluator(fixture, { rotations })
   const view = evaluate({ throughStageRef: "flip", stageProgress: 0.5 })
   applyAssemblyTransforms(root, view.assemblyTransforms!, bases)
   applyAssemblyTransforms(root, view.assemblyTransforms!, bases)
@@ -114,17 +114,19 @@ test("rotation updates baked geometry, draws an anchored arc, and restores orien
 
 test("invalid or duplicate rotation cues fail before playback", () => {
   expect(() =>
-    createExplosionEvaluator(fixture, [
-      { ...rotations[0]!, stageName: "missing" },
-    ]),
+    createExplosionEvaluator(fixture, {
+      rotations: [{ ...rotations[0]!, stageName: "missing" }],
+    }),
   ).toThrow("Unknown rotation")
   expect(() =>
-    createExplosionEvaluator(fixture, [rotations[0]!, rotations[0]!]),
+    createExplosionEvaluator(fixture, {
+      rotations: [rotations[0]!, rotations[0]!],
+    }),
   ).toThrow("Duplicate rotation")
   expect(() =>
-    createExplosionEvaluator(fixture, [
-      { ...rotations[0]!, angleDegrees: NaN },
-    ]),
+    createExplosionEvaluator(fixture, {
+      rotations: [{ ...rotations[0]!, angleDegrees: NaN }],
+    }),
   ).toThrow("finite")
 })
 
@@ -142,7 +144,7 @@ test("the lazy assembly hook preserves rotations and reevaluates changes to rota
   })
   let state!: ReturnType<typeof useAssemblyExplosion>
   function Harness({ cues }: { cues: readonly AssemblyExplosionRotation[] }) {
-    state = useAssemblyExplosion(undefined, undefined, fixture, cues)
+    state = useAssemblyExplosion({ circuitJson: fixture, rotations: cues })
     return null
   }
   const root = createRoot(document.getElementById("root")!)
