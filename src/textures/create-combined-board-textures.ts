@@ -8,6 +8,7 @@ import * as THREE from "three"
 import type { LayerVisibilityState } from "../contexts/LayerVisibilityContext"
 import { colors as defaultColors } from "../geoms/constants"
 import { calculateOutlineBounds } from "../utils/outline-bounds"
+import { withCastellatedOutlinePlatedHoles } from "../utils/castellated-outline-holes"
 import { createPadTextureForLayer } from "../utils/pad-texture"
 import { createPanelOutlineTextureForLayer } from "../utils/panel-outline-texture"
 import { createTraceTextureForLayer } from "../utils/trace-texture"
@@ -239,7 +240,7 @@ const createMaskedCopperMask = ({
 }
 
 export function createCombinedBoardTextures({
-  circuitJson,
+  circuitJson: rawCircuitJson,
   boardData,
   traceTextureResolution,
   visibility,
@@ -249,6 +250,7 @@ export function createCombinedBoardTextures({
   traceTextureResolution: number
   visibility?: Partial<LayerVisibilityState>
 }): CombinedBoardTextures {
+  const circuitJson = withCastellatedOutlinePlatedHoles(rawCircuitJson)
   const traceColor = toRgb(defaultColors.copper)
   const silkscreenColor = "rgb(255,255,255)"
   const copperColor = toRgb(defaultColors.copper)

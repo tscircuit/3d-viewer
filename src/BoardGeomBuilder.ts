@@ -36,6 +36,8 @@ import { createHoleWithPolygonPadHoleGeom } from "./geoms/create-hole-with-polyg
 import { platedHole } from "./geoms/plated-hole"
 import { createViaBoardDrill, createViaCopper } from "./geoms/via-geoms"
 import { getBoardEdgeColor } from "./utils/get-board-edge-color"
+import { withCastellatedOutlinePlatedHoles } from "./utils/castellated-outline-holes"
+import { processEdgePlatedPadsForJscad } from "./utils/edge-plated-pads"
 import { getPcbVias } from "./utils/get-pcb-vias"
 import {
   clampRectBorderRadius,
@@ -67,6 +69,7 @@ const buildStateOrder: BuilderState[] = [
 ]
 
 export class BoardGeomBuilder {
+  private circuitJson: AnyCircuitElement[]
   private board: PcbBoard
   private plated_holes: PcbPlatedHole[]
   private holes: PcbHole[]
@@ -92,9 +95,11 @@ export class BoardGeomBuilder {
   private finalGeoms: Geom3[] = []
 
   constructor(
-    circuitJson: AnyCircuitElement[],
+    rawCircuitJson: AnyCircuitElement[],
     onComplete: (geoms: Geom3[]) => void,
   ) {
+    const circuitJson = withCastellatedOutlinePlatedHoles(rawCircuitJson)
+    this.circuitJson = circuitJson
     this.onCompleteCallback = onComplete
 
     // Extract elements - check for panel first, then board
@@ -758,6 +763,28 @@ export class BoardGeomBuilder {
     this.viaGeoms = this.viaGeoms.map((geom, index) =>
       cutCopper(geom, index, "viaIndex"),
     )
+    const edgePlating = processEdgePlatedPadsForJscad({
+      circuitJson: this.circuitJson,
+      board: this.board,
+      pcbThickness: this.ctx.pcbThickness,
+    })
+    let edgePlatedCopperGeom = edgePlating.edgePlatedCopperGeom
+    if (edgePlating.edgePlatedSubtractGeom) {
+      this.boardGeom = subtract(
+        this.boardGeom,
+        edgePlating.edgePlatedSubtractGeom,
+      )
+    }
+    if (edgePlatedCopperGeom && this.copperDrills.length > 0) {
+      edgePlatedCopperGeom = colorize(
+        colors.copper,
+        subtract(
+          edgePlatedCopperGeom,
+          union(...this.copperDrills.map((d) => d.geom)),
+        ),
+      )
+    }
+
     // Colorize the final board geometry
     const boardEdgeColor = getBoardEdgeColor(this.board)
     this.boardGeom = colorize(
@@ -769,6 +796,7 @@ export class BoardGeomBuilder {
       this.boardGeom,
       ...this.platedHoleGeoms,
       ...this.viaGeoms,
+      ...(edgePlatedCopperGeom ? [edgePlatedCopperGeom] : []),
     ]
 
     if (this.onCompleteCallback) {

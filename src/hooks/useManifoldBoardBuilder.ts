@@ -15,6 +15,7 @@ import {
 } from "../geoms/constants"
 import { getBoardEdgeColor } from "../utils/get-board-edge-color"
 import { getLayerTextureResolution } from "../utils/layer-texture-resolution"
+import { processEdgePlatedPadsForManifold } from "../utils/edge-plated-pads"
 import { createManifoldBoard } from "../utils/manifold/create-manifold-board"
 import { processCutoutsForManifold } from "../utils/manifold/process-cutouts"
 import { processNonPlatedHolesForManifold } from "../utils/manifold/process-non-plated-holes"
@@ -325,12 +326,61 @@ export const useManifoldBoardBuilder = (
         manifoldInstancesForCleanup.current,
       )
 
+      let unionedCutouts: any = null
       if (cutoutOps.length > 0) {
-        const unionedCutouts = Manifold.union(cutoutOps)
+        unionedCutouts = Manifold.union(cutoutOps)
         manifoldInstancesForCleanup.current.push(unionedCutouts)
         const nextBoardAfterCutouts = currentBoardOp.subtract(unionedCutouts)
         manifoldInstancesForCleanup.current.push(nextBoardAfterCutouts)
         currentBoardOp = nextBoardAfterCutouts
+      }
+
+      // Render side-face rim copper where SMT pads reach or overhang the board outline
+      if (!isFauxBoard) {
+        const { edgePlatedCopperOp, edgePlatedSubtractOp } =
+          processEdgePlatedPadsForManifold({
+            Manifold,
+            CrossSection,
+            circuitJson,
+            boards: boardsForGeometry,
+            pcbThickness: currentPcbThickness,
+            manifoldInstancesForCleanup: manifoldInstancesForCleanup.current,
+          })
+
+        if (edgePlatedCopperOp && edgePlatedSubtractOp) {
+          const nextBoardAfterEdgePlating =
+            currentBoardOp.subtract(edgePlatedSubtractOp)
+          manifoldInstancesForCleanup.current.push(nextBoardAfterEdgePlating)
+          currentBoardOp = nextBoardAfterEdgePlating
+
+          let finalEdgePlatedCopper = edgePlatedCopperOp
+          if (holeUnion) {
+            const afterHoles = finalEdgePlatedCopper.subtract(holeUnion)
+            manifoldInstancesForCleanup.current.push(afterHoles)
+            finalEdgePlatedCopper = afterHoles
+          }
+          if (unionedCutouts) {
+            const afterCutouts = finalEdgePlatedCopper.subtract(unionedCutouts)
+            manifoldInstancesForCleanup.current.push(afterCutouts)
+            finalEdgePlatedCopper = afterCutouts
+          }
+
+          const edgePlatedGeom = manifoldMeshToThreeGeometry(
+            finalEdgePlatedCopper.getMesh(),
+          )
+          currentGeoms.platedHoles = [
+            ...(currentGeoms.platedHoles ?? []),
+            {
+              key: "plated_hole-edge-plating",
+              geometry: edgePlatedGeom,
+              color: new THREE.Color(
+                defaultColors.copper[0],
+                defaultColors.copper[1],
+                defaultColors.copper[2],
+              ),
+            },
+          ]
+        }
       }
 
       boardManifold = currentBoardOp // Final board manifold
