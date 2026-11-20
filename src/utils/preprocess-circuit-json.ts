@@ -1,5 +1,6 @@
 import type { AnyCircuitElement, CadComponent } from "circuit-json"
 import { su } from "@tscircuit/circuit-json-util"
+import { withCastellatedOutlinePlatedHoles } from "./castellated-outline-holes"
 import { createFauxBoard } from "./create-faux-board"
 
 /**
@@ -7,8 +8,9 @@ import { createFauxBoard } from "./create-faux-board"
  * This ensures consistent board processing for both real and faux boards
  */
 export function addFauxBoardIfNeeded(
-  circuitJson: AnyCircuitElement[],
+  rawCircuitJson: AnyCircuitElement[],
 ): AnyCircuitElement[] {
+  const circuitJson = withCastellatedOutlinePlatedHoles(rawCircuitJson)
   const boards = su(circuitJson).pcb_board.list()
 
   // If board already exists, return as-is

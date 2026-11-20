@@ -9,6 +9,7 @@ import {
   SMOOTH_CIRCLE_SEGMENTS,
 } from "../../geoms/constants"
 import { createCircleHoleDrill, createPlatedHoleDrill } from "../hole-geoms"
+import { withCastellatedOutlinePlatedHoles } from "../castellated-outline-holes"
 import { manifoldMeshToThreeGeometry } from "../manifold-mesh-to-three-geometry"
 import { createRoundedRectPrism } from "../pad-geoms"
 import { extractRectBorderRadius } from "../rect-border-radius"
@@ -65,7 +66,9 @@ export function processPlatedHolesForManifold(
   boardClipVolume?: any,
 ): ProcessPlatedHolesResult {
   const platedHoleBoardDrills: any[] = []
-  const pcbPlatedHoles = su(circuitJson).pcb_plated_hole.list()
+  const pcbPlatedHoles = su(
+    withCastellatedOutlinePlatedHoles(circuitJson),
+  ).pcb_plated_hole.list()
   const platedHoleCopperGeoms: Array<{
     key: string
     geometry: THREE.BufferGeometry
