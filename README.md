@@ -428,3 +428,36 @@ rendered through circuit-json-to-gltf, including halfway through bolt removal.
 
 Run browser regressions with
 `bunx playwright test --config playwright.explosion.config.ts`.
+
+### Load explosion geometry on demand from a GLB preview
+
+A GLB preview cannot evaluate an assembly explosion program. If the host has
+Circuit JSON with explosion stages, pass `onRequestExplosionView` to enable
+**Advanced → Exploded view** without loading individual component models yet.
+The callback should load the model assets and replace the GLB viewer with a
+Circuit JSON viewer. Set `defaultExplosionViewOpen` on the replacement to open
+the controls immediately, and disable `clickToInteractEnabled` so the user does
+not need to activate the viewer again.
+
+```tsx
+const [showExplosion, setShowExplosion] = useState(false)
+
+return showExplosion ? (
+  <CadViewer
+    key="explosion"
+    circuitJson={circuitJson}
+    defaultExplosionViewOpen
+    clickToInteractEnabled={false}
+  />
+) : (
+  <CadViewer
+    key="glb"
+    glbUrl={glbUrl}
+    onRequestExplosionView={() => setShowExplosion(true)}
+  />
+)
+```
+
+Only provide the callback when explosion data can be loaded. Without it, a
+GLB-only viewer keeps the explosion menu disabled. Reset the host's selection
+when switching designs; `defaultExplosionViewOpen` is an initial mount option.
