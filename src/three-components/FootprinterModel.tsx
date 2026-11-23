@@ -1,13 +1,39 @@
+import * as jscadModeling from "@jscad/modeling"
 import {
   convertCSGToThreeGeom,
   getJscadModelForFootprint,
 } from "jscad-electronics/vanilla"
-import { useMemo, useEffect } from "react"
-import * as jscadModeling from "@jscad/modeling"
-import * as THREE from "three"
-import { useThree } from "src/react-three/ThreeContext"
+import { useEffect, useState } from "react"
 import ContainerWithTooltip from "src/ContainerWithTooltip"
+import { useThree } from "src/react-three/ThreeContext"
 import { configureObjectShadows } from "src/utils/configure-object-shadows"
+import * as THREE from "three"
+
+export const disposeFootprinterGroup = (group: THREE.Object3D) => {
+  const geometries = new Set<THREE.BufferGeometry>()
+  const materials = new Set<THREE.Material>()
+  const textures = new Set<THREE.Texture>()
+
+  group.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) return
+    if (child.geometry) geometries.add(child.geometry)
+    if (child.material) {
+      const childMaterials = Array.isArray(child.material)
+        ? child.material
+        : [child.material]
+      for (const material of childMaterials) {
+        materials.add(material)
+        for (const value of Object.values(material)) {
+          if (value instanceof THREE.Texture) textures.add(value)
+        }
+      }
+    }
+  })
+
+  for (const texture of textures) texture.dispose()
+  for (const material of materials) material.dispose()
+  for (const geometry of geometries) geometry.dispose()
+}
 
 export const FootprinterModel = ({
   positionOffset,
@@ -29,11 +55,19 @@ export const FootprinterModel = ({
   isTranslucent?: boolean
 }) => {
   const { rootObject } = useThree()
-  const group = useMemo(() => {
-    if (!footprint) return null
+  const [group, setGroup] = useState<THREE.Group | null>(null)
+
+  // Geometry belongs to the footprint, not the display mode. Own these
+  // resources in an effect so replacements, unmounts and StrictMode replay
+  // all release them cleanly.
+  useEffect(() => {
+    if (!footprint) {
+      setGroup(null)
+      return
+    }
     const { geometries } = getJscadModelForFootprint(footprint, jscadModeling)
 
-    const group = new THREE.Group()
+    const nextGroup = new THREE.Group()
 
     for (const geomInfo of geometries.flat(Infinity) as any[]) {
       const geom = geomInfo.geom
@@ -48,21 +82,17 @@ export const FootprinterModel = ({
       const material = new THREE.MeshStandardMaterial({
         vertexColors: true,
         side: THREE.DoubleSide,
-        transparent: isTranslucent,
-        opacity: isTranslucent ? 0.5 : 1,
-        depthWrite: !isTranslucent,
       })
       const mesh = new THREE.Mesh(threeGeom, material)
-      mesh.renderOrder = isTranslucent ? 2 : 1
-      configureObjectShadows(mesh, {
-        castShadow: !isTranslucent,
-        receiveShadow: true,
-      })
-      group.add(mesh)
+      nextGroup.add(mesh)
     }
 
-    return group
-  }, [footprint, isTranslucent])
+    setGroup(nextGroup)
+
+    return () => {
+      disposeFootprinterGroup(nextGroup)
+    }
+  }, [footprint])
 
   useEffect(() => {
     if (!group || !rootObject) return
@@ -71,6 +101,26 @@ export const FootprinterModel = ({
       rootObject.remove(group)
     }
   }, [rootObject, group])
+
+  useEffect(() => {
+    if (!group) return
+    group.traverse((child) => {
+      if (
+        child instanceof THREE.Mesh &&
+        child.material instanceof THREE.MeshStandardMaterial
+      ) {
+        child.material.transparent = isTranslucent
+        child.material.opacity = isTranslucent ? 0.5 : 1
+        child.material.depthWrite = !isTranslucent
+        child.material.needsUpdate = true
+        child.renderOrder = isTranslucent ? 2 : 1
+        configureObjectShadows(child, {
+          castShadow: !isTranslucent,
+          receiveShadow: true,
+        })
+      }
+    })
+  }, [group, isTranslucent])
 
   useEffect(() => {
     if (!group) return
