@@ -6,7 +6,10 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useLayerVisibility } from "./contexts/LayerVisibilityContext"
 import { usePcbThickness } from "./hooks/usePcbThickness"
 import { Html } from "./react-three/Html"
-import { FootprinterModel } from "./three-components/FootprinterModel"
+import {
+  FootprinterModel,
+  isFootprintWithout3dModel,
+} from "./three-components/FootprinterModel"
 import { GltfModel } from "./three-components/GltfModel"
 import { JscadModel } from "./three-components/JscadModel"
 import { MixedStlModel } from "./three-components/MixedStlModel"
@@ -190,7 +193,8 @@ export const AnyCadComponent = ({
     if (
       stepUrl &&
       !cad_component.model_jscad &&
-      !cad_component.footprinter_string
+      (!cad_component.footprinter_string ||
+        isFootprintWithout3dModel(cad_component.footprinter_string))
     ) {
       components.push(
         <StepModel
@@ -289,6 +293,9 @@ export const AnyCadComponent = ({
       />
     )
   } else if (cad_component.footprinter_string) {
+    if (isFootprintWithout3dModel(cad_component.footprinter_string)) {
+      return null
+    }
     modelComponent = (
       <FootprinterModel
         positionOffset={adjustedPosition}
