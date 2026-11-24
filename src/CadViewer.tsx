@@ -114,9 +114,12 @@ const CadViewerInner = (props: CadViewerProps) => {
     AnyCircuitElement[] | null
   >(null)
   const explosionPanelOpen = explosionPanelSource === circuitJson
-  const hasAssembly = circuitJson.some(
-    (element) => element.type === "cad_component" && !element.pcb_component_id,
-  )
+  const hasAssembly =
+    !props.hideCadComponents &&
+    circuitJson.some(
+      (element) =>
+        element.type === "cad_component" && !element.pcb_component_id,
+    )
   const hasBends = circuitJson.some((element) => element.type === "pcb_bend")
   const hasFlexGeometry =
     hasBends || circuitJson.some((element) => element.type === "pcb_stiffener")
@@ -390,6 +393,7 @@ const CadViewerInner = (props: CadViewerProps) => {
           <CadViewerGlb
             source={glbSource}
             objectVisibility={objectVisibility}
+            hideCadComponents={props.hideCadComponents}
             autoRotateDisabled={props.autoRotateDisabled || !autoRotate}
             clickToInteractEnabled={props.clickToInteractEnabled}
             onUserInteraction={handleUserInteraction}

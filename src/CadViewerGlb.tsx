@@ -4,14 +4,14 @@ import {
   useLayoutEffect,
   useState,
 } from "react"
-import { useGlbModel } from "./hooks/useGlbModel"
 import * as THREE from "three"
 import { CadViewerContainer } from "./CadViewerContainer"
 import type { CameraController } from "./hooks/cameraAnimation"
-import type { ReferenceObjectType } from "./reference-objects/reference-object"
-import { useThree } from "./react-three/ThreeContext"
+import { useGlbModel } from "./hooks/useGlbModel"
 import { useHover } from "./react-three/HoverContext"
 import { Html } from "./react-three/Html"
+import { useThree } from "./react-three/ThreeContext"
+import type { ReferenceObjectType } from "./reference-objects/reference-object"
 import { FitCameraToComparison } from "./three-components/reference-object"
 import {
   isObjectHidden,
@@ -22,9 +22,11 @@ import { getGlbComponentMetadata } from "./utils/prerendered-glb"
 export function GlbScene({
   model,
   objectVisibility,
+  hideCadComponents = false,
 }: {
   model: THREE.Group
   objectVisibility?: ObjectVisibility
+  hideCadComponents?: boolean
 }) {
   const { rootObject } = useThree()
   const { addHoverable, removeHoverable } = useHover()
@@ -45,17 +47,19 @@ export function GlbScene({
     // carry neither: they have no identity to hide by, but isolating another
     // object hides them.
     const applyVisibility = (object: THREE.Object3D, inObject: boolean) => {
-      const id =
-        object.userData.cad_component_id ?? object.userData.pcb_board_id
+      const cadComponentId = object.userData.cad_component_id
+      const id = cadComponentId ?? object.userData.pcb_board_id
       if (typeof id === "string")
-        object.visible = !isObjectHidden(objectVisibility, id)
+        object.visible =
+          !(hideCadComponents && typeof cadComponentId === "string") &&
+          !isObjectHidden(objectVisibility, id)
       else if (!inObject && object instanceof THREE.Mesh)
         object.visible = !isObjectHidden(objectVisibility, undefined)
       for (const child of object.children)
         applyVisibility(child, inObject || typeof id === "string")
     }
     applyVisibility(model, false)
-  }, [model, objectVisibility])
+  }, [model, objectVisibility, hideCadComponents])
   useEffect(() => {
     const meshes: THREE.Mesh[] = []
     model.traverse((mesh) => {
@@ -89,7 +93,13 @@ export function GlbScene({
     return () => {
       for (const mesh of meshes) removeHoverable(mesh)
     }
-  }, [model, objectVisibility, addHoverable, removeHoverable])
+  }, [
+    model,
+    objectVisibility,
+    hideCadComponents,
+    addHoverable,
+    removeHoverable,
+  ])
   return (
     <>
       {hover && (
@@ -114,10 +124,12 @@ export function GlbScene({
 export function CadViewerGlb({
   source,
   objectVisibility,
+  hideCadComponents = false,
   ...containerProps
 }: {
   source: string | ArrayBuffer
   objectVisibility?: ObjectVisibility
+  hideCadComponents?: boolean
   autoRotateDisabled?: boolean
   clickToInteractEnabled?: boolean
   onUserInteraction?: () => void
@@ -136,6 +148,7 @@ export function CadViewerGlb({
       <GlbViewport
         model={model}
         objectVisibility={objectVisibility}
+        hideCadComponents={hideCadComponents}
         {...containerProps}
       />
       {(isLoading || error) && (
@@ -150,10 +163,12 @@ export function CadViewerGlb({
 function GlbViewport({
   model,
   objectVisibility,
+  hideCadComponents = false,
   ...containerProps
 }: Omit<ComponentProps<typeof CadViewerContainer>, "children"> & {
   model: THREE.Group
   objectVisibility?: ObjectVisibility
+  hideCadComponents?: boolean
 }) {
   const [framing, setFraming] = useState(() => getGlbFraming(model))
   useEffect(() => {
@@ -169,7 +184,11 @@ function GlbViewport({
       boardCenter={framing?.boardCenter}
     >
       {framing && <FitCameraToComparison bounds={framing.bounds} />}
-      <GlbScene model={model} objectVisibility={objectVisibility} />
+      <GlbScene
+        model={model}
+        objectVisibility={objectVisibility}
+        hideCadComponents={hideCadComponents}
+      />
     </CadViewerContainer>
   )
 }
