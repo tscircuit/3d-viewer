@@ -25,3 +25,14 @@ export const isObjectHidden = (
 
 export const hasHiddenObjects = (visibility: ObjectVisibility) =>
   visibility.hiddenIds.size > 0 || visibility.isolatedId !== undefined
+
+export const getVisibleCadComponents = <T extends { cad_component_id: string }>(
+  cadComponents: readonly T[],
+  visibility: ObjectVisibility | undefined,
+  hideCadComponents = false,
+): T[] => {
+  if (hideCadComponents) return []
+  return cadComponents.filter(
+    (cad) => !isObjectHidden(visibility, cad.cad_component_id),
+  )
+}

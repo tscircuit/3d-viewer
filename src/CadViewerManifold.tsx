@@ -13,16 +13,17 @@ import { useManifoldBoardBuilder } from "./hooks/useManifoldBoardBuilder"
 import { useThree } from "./react-three/ThreeContext"
 import type { ReferenceObjectType } from "./reference-objects/reference-object"
 import { createTextureMeshes } from "./textures"
+import { BoardGroup } from "./three-components/BoardGroup"
 import { CadCable, getCadCables } from "./three-components/CadCable"
 import { Error3d } from "./three-components/Error3d"
 import { FitCameraToComparison } from "./three-components/reference-object"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
-import { BoardGroup } from "./three-components/BoardGroup"
 import { createFlexMeshes } from "./utils/flex-meshes"
 import { getInitialCameraPosition } from "./utils/get-initial-camera-position"
 import { createGeometryMeshes } from "./utils/manifold/create-three-geometry-meshes"
 import { loadManifold } from "./utils/manifold/load-manifold"
 import {
+  getVisibleCadComponents,
   isObjectHidden,
   type ObjectVisibility,
 } from "./utils/object-visibility"
@@ -137,6 +138,7 @@ type CadViewerManifoldProps = {
   resolveStaticAsset?: (modelUrl: string) => string
   referenceObject?: ReferenceObjectType | null
   objectVisibility?: ObjectVisibility
+  hideCadComponents?: boolean
 } & (
   | { circuitJson: AnyCircuitElement[]; children?: React.ReactNode }
   | { circuitJson?: never; children: React.ReactNode }
@@ -153,6 +155,7 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   resolveStaticAsset,
   referenceObject,
   objectVisibility,
+  hideCadComponents = false,
 }) => {
   const childrenCircuitJson = useConvertChildrenToCircuitJson(children)
   const circuitJson = useMemo(() => {
@@ -228,12 +231,12 @@ const CadViewerManifold: React.FC<CadViewerManifoldProps> = ({
   ])
   const cadComponents = useMemo(
     () =>
-      su(flex.posedJson)
-        .cad_component.list()
-        .filter(
-          (cad) => !isObjectHidden(objectVisibility, cad.cad_component_id),
-        ),
-    [flex.posedJson, objectVisibility],
+      getVisibleCadComponents(
+        su(flex.posedJson).cad_component.list(),
+        objectVisibility,
+        hideCadComponents,
+      ),
+    [flex.posedJson, objectVisibility, hideCadComponents],
   )
   const cadCables = useMemo(
     () =>

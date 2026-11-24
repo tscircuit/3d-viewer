@@ -11,14 +11,15 @@ import { useStlsFromGeom } from "./hooks/use-stls-from-geom"
 import { useBoardGeomBuilder } from "./hooks/useBoardGeomBuilder"
 import { usePcbThickness } from "./hooks/usePcbThickness"
 import type { ReferenceObjectType } from "./reference-objects/reference-object"
-import { Error3d } from "./three-components/Error3d"
 import { BoardGroup } from "./three-components/BoardGroup"
+import { CadCable, getCadCables } from "./three-components/CadCable"
+import { Error3d } from "./three-components/Error3d"
 import { JscadBoardTextures } from "./three-components/JscadBoardTextures"
 import { ThreeErrorBoundary } from "./three-components/ThreeErrorBoundary"
 import { VisibleSTLModel } from "./three-components/VisibleSTLModel"
-import { CadCable, getCadCables } from "./three-components/CadCable"
 import { getInitialCameraPosition } from "./utils/get-initial-camera-position"
 import {
+  getVisibleCadComponents,
   isObjectHidden,
   type ObjectVisibility,
 } from "./utils/object-visibility"
@@ -39,6 +40,7 @@ interface Props {
   resolveStaticAsset?: (modelUrl: string) => string
   referenceObject?: ReferenceObjectType | null
   objectVisibility?: ObjectVisibility
+  hideCadComponents?: boolean
 }
 
 export const CadViewerJscad = forwardRef<
@@ -56,6 +58,7 @@ export const CadViewerJscad = forwardRef<
       resolveStaticAsset,
       referenceObject,
       objectVisibility,
+      hideCadComponents = false,
     },
     ref,
   ) => {
@@ -134,9 +137,11 @@ export const CadViewerJscad = forwardRef<
         .find((board) => !board.pcb_panel_id)?.pcb_board_id
     }, [internalCircuitJson])
 
-    const cad_components = su(internalCircuitJson)
-      .cad_component.list()
-      .filter((cad) => !isObjectHidden(objectVisibility, cad.cad_component_id))
+    const cad_components = getVisibleCadComponents(
+      su(internalCircuitJson).cad_component.list(),
+      objectVisibility,
+      hideCadComponents,
+    )
     const cadCables = getCadCables(internalCircuitJson).filter(
       (cable) => !isObjectHidden(objectVisibility, cable.cad_cable_id),
     )
