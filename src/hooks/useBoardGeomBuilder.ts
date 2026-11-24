@@ -64,6 +64,7 @@ export const useBoardGeomBuilder = (
     // Cleanup function
     return () => {
       isCancelled = true // Signal cancellation to the async loop
+      isProcessingRef.current = false // Allow the next effect's build to start
     }
   }, [circuitJson]) // Rerun if circuitJson changes
 
