@@ -117,6 +117,7 @@ export async function convertCircuitJsonTo3dSvg(
     const edgeColor = getBoardEdgeColor({
       material: boardData?.material ?? "fr4",
       solder_mask_color: boardData?.solder_mask_color,
+      coverlay_color: boardData?.coverlay_color,
     })
 
     for (const geom of boardGeom) {
