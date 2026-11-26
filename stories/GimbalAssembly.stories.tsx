@@ -30,6 +30,15 @@ export const GimbalAssembly = () => (
   />
 )
 
+// This published assembly predates component metadata. Hover REF_Phone to check its node label.
+export const GimbalLegacyGlb = () => (
+  <CadViewer
+    glbUrl="https://api.tscircuit.com/package_files/download?package_file_id=8fbcea4b-5ced-41d6-b9f2-335670a81eac"
+    autoRotateDisabled
+    onCameraControllerReady={showFullAssembly}
+  />
+)
+
 export default {
   title: "Assembly/Gimbal",
   component: GimbalAssembly,
